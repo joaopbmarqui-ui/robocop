@@ -22,6 +22,8 @@ class JobDetailScreen(Screen[None]):
         super().__init__()
         self.job_id = job_id
         self.cancel_on_mount = cancel_on_mount
+        self._tail_offset = 0
+        self._tail_lines: deque[str] = deque(maxlen=80)
 
     @property
     def job_dir(self):
@@ -62,11 +64,22 @@ class JobDetailScreen(Screen[None]):
         path = self.job_dir / "run.log"
         if not path.exists():
             return "run.log not created yet"
-        lines: deque[str] = deque(maxlen=80)
-        with path.open("r", encoding="utf-8", errors="replace") as handle:
-            for line in handle:
-                lines.append(line.rstrip())
-        return "\n".join(lines)
+        try:
+            size = path.stat().st_size
+        except OSError:
+            return "\n".join(self._tail_lines)
+        # Reset on truncation - the file can only grow under nohup, but
+        # if the Job dir is recreated mid-session we should not seek past EOF.
+        if size < self._tail_offset:
+            self._tail_offset = 0
+            self._tail_lines.clear()
+        if size > self._tail_offset:
+            with path.open("r", encoding="utf-8", errors="replace") as handle:
+                handle.seek(self._tail_offset)
+                for line in handle:
+                    self._tail_lines.append(line.rstrip())
+                self._tail_offset = handle.tell()
+        return "\n".join(self._tail_lines)
 
     def action_cancel(self) -> None:
         item = manifest.load(self.job_dir / "manifest.json")

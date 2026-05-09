@@ -7,7 +7,7 @@ from textual.containers import Vertical
 from textual.widgets import Footer, Header, Static
 
 from .version import __version__
-from .screens.new_job import NewJobScreen
+from .screens.dashboard import DashboardScreen
 
 
 class DispatchApp(App[None]):
@@ -30,7 +30,6 @@ class DispatchApp(App[None]):
     """
 
     BINDINGS = [
-        ("n", "new_job", "New Job"),
         ("q", "quit", "Quit"),
     ]
 
@@ -44,8 +43,7 @@ class DispatchApp(App[None]):
             yield Static(f"Dispatch v{__version__}", id="title")
             yield Static("Server-side Impala Job launcher")
             yield Static(f"Launch-time CWD: {self.launch_cwd}", classes="muted")
-            yield Static("[N]ew Job  [Q]uit")
         yield Footer()
 
-    def action_new_job(self) -> None:
-        self.push_screen(NewJobScreen(self.launch_cwd))
+    def on_mount(self) -> None:
+        self.push_screen(DashboardScreen(self.launch_cwd))

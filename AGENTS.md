@@ -49,3 +49,17 @@ There are no automated tests in this repository. Validation is limited to:
 - `monthly_query_processor.py` imports from `Query_Impala_Parametrized.py` — they must reside in the same directory on the remote server.
 - The Python scripts will fail at runtime without `impala-shell` and Kerberos — this is expected in the cloud dev environment.
 - No build step is required — all scripts are interpreted directly.
+
+## Agent skills
+
+### Issue tracker
+
+Work is tracked in **GitHub Issues** for `pedrochagasmaster/robocop` using the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical triage roles use the default label strings (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+**Single-context** layout: optional root `CONTEXT.md` and `docs/adr/` when they exist; skills read them before deep exploration. See `docs/agents/domain.md`.

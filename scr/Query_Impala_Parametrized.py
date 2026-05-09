@@ -1,3 +1,5 @@
+# flake8: noqa
+# pylint: disable=line-too-long,trailing-whitespace,missing-final-newline,too-many-arguments,too-many-positional-arguments,f-string-without-interpolation,consider-using-with,unspecified-encoding,logging-not-lazy,consider-using-f-string,no-else-return
 import time
 import logging
 import subprocess

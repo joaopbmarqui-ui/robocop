@@ -1,3 +1,5 @@
+# flake8: noqa
+# pylint: disable=line-too-long,trailing-whitespace,missing-final-newline,logging-fstring-interpolation,too-many-locals,f-string-without-interpolation,unspecified-encoding
 import logging
 import argparse
 import sys

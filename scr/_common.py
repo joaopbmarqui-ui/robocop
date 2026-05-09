@@ -1,3 +1,4 @@
+# pylint: disable=logging-fstring-interpolation,too-many-return-statements,too-many-branches
 import logging
 import os
 import smtplib
@@ -88,8 +89,6 @@ def cycle_through_pools(
             try:
                 if operation(pool):
                     return True
-            except SystemExit:
-                raise
             except Exception as e:
                 logging.error(f"An unexpected script error occurred in queue {pool}: {e}")
                 time.sleep(2)

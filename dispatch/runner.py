@@ -45,6 +45,7 @@ def _set_terminal_state(state: manifest_io.JobState, exit_code: int) -> None:
 def _handle_sigterm(_signum: int, _frame: FrameType | None) -> None:
     signal.signal(signal.SIGTERM, signal.SIG_IGN)
     _log("[runner] SIGTERM received; cancelling current orchestrator")
+    _set_terminal_state("Cancelled", -signal.SIGTERM)
     if CURRENT_PROC is not None and CURRENT_PROC.poll() is None:
         CURRENT_PROC.terminate()
         deadline = time.monotonic() + 10
@@ -53,7 +54,6 @@ def _handle_sigterm(_signum: int, _frame: FrameType | None) -> None:
         if CURRENT_PROC.poll() is None:
             CURRENT_PROC.kill()
             CURRENT_PROC.wait()
-    _set_terminal_state("Cancelled", -signal.SIGTERM)
     raise SystemExit(0)
 
 

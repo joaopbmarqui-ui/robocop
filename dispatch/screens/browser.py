@@ -18,7 +18,7 @@ class BrowserScreen(Screen[None]):
     ]
 
     def compose(self) -> ComposeResult:
-        with Vertical(id="browser">
+        with Vertical(id="browser"):
             yield Static("Browse Impala Metadata")
             yield Input(value="dw_settle", placeholder="Schema", id="schema")
             yield Input(value="*", placeholder="Filter", id="filter")

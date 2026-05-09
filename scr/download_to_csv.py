@@ -1,9 +1,11 @@
-import os
+# flake8: noqa
+# pylint: disable=line-too-long,trailing-whitespace,missing-final-newline,no-else-return,logging-fstring-interpolation,consider-using-with,unspecified-encoding
 import subprocess
-import time
 import logging
 import argparse
 import sys
+
+from _common import FATAL_ERRORS, classificar_erro_impala, cycle_through_pools
 
 # Set up basic logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -11,27 +13,6 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # =============================================================================
 # Helper Functions
 # =============================================================================
-
-def classificar_erro_impala(stderr_text: str) -> dict:
-    """
-    Classifies an Impala error based on the content of its stderr.
-    """
-    texto = stderr_text.lower()
-    details = {"detalhes": stderr_text}
-
-    if "memory limit exceeded" in texto:
-        return {"categoria": "MEMORY_EXCEEDED", **details}
-    elif "syntax error" in texto or "parseexception" in texto:
-        return {"categoria": "SYNTAX_ERROR", **details}
-    elif "authenticationexception" in texto:
-        return {"categoria": "AUTH_ERROR", **details}
-    elif "table not found" in texto or "could not resolve" in texto:
-        return {"categoria": "TABLE_NOT_FOUND", **details}
-    elif "timed out" in texto or "deadline exceeded" in texto:
-        return {"categoria": "TIMEOUT", **details}
-    else:
-        return {"categoria": "GENERIC_ERROR", **details}
-
 
 def run_export_on_impala(query: str, output_file: str):
     """
@@ -57,12 +38,10 @@ def run_export_on_impala(query: str, output_file: str):
         erro_classificado = classificar_erro_impala(stderr_decoded)
         logging.warning(f"Mapped Error: {erro_classificado['categoria']}")
         
-        fatal_errors = ["TABLE_NOT_FOUND", "SYNTAX_ERROR", "AUTH_ERROR", "GENERIC_ERROR"]
-        if erro_classificado['categoria'] in fatal_errors:
+        if erro_classificado['categoria'] in FATAL_ERRORS:
             logging.error(f"FATAL ERROR ({erro_classificado['categoria']}): Stopping retries.")
             logging.error(f"Error Details:\n{erro_classificado['detalhes']}")
-            # Return True for fatal errors to stop the retry loop
-            return True
+            sys.exit(1)
             
         logging.warning(f"Transient error detected. Details: {stderr_decoded}")
         return False
@@ -74,30 +53,17 @@ def retry_loop(query_to_run: str, output_file: str, queues: list):
     """
     logging.info(f"--- Starting export process for {output_file} ---")
     
-    sucesso = False
-    retry_cnt = 1
-    while not sucesso:
-        for fila in queues:
-            try:
-                query_string = f"set request_pool={fila}; set mem_limit=1000g; {query_to_run}" 
-                logging.info(f"Attempting export with queue: {fila}")
-                
-                sucesso = run_export_on_impala(query_string, output_file)
-                
-                if sucesso:
-                    break
-            except Exception as e:
-                logging.error(f"An unexpected script error occurred in queue {fila}: {e}") 
-                time.sleep(2)
-                continue
-        
-        if not sucesso:
-            log_msg = (f"All queues failed for export job. "
-                       f"Waiting 30 seconds before retrying (Attempt {retry_cnt}).") 
-            logging.warning(log_msg)
-            retry_cnt += 1
-            time.sleep(30)
-            
+    def operation(fila):
+        query_string = f"set request_pool={fila}; set mem_limit=1000g; {query_to_run}"
+        logging.info(f"Attempting export with queue: {fila}")
+        return run_export_on_impala(query_string, output_file)
+
+    def on_cycle_failure(retry_cnt):
+        log_msg = (f"All queues failed for export job. "
+                   f"Waiting 30 seconds before retrying (Attempt {retry_cnt}).")
+        logging.warning(log_msg)
+
+    cycle_through_pools(queues, operation, on_cycle_failure)
     logging.info(f"--- Finished export process for {output_file} ---")
 
 

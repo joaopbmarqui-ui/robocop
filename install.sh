@@ -5,11 +5,16 @@ ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 USER_NAME=${USER:-$(id -un)}
 DATA_ROOT=${DISPATCH_DATA_ROOT:-/ads_storage/$USER_NAME}
 DISPATCH_HOME="$DATA_ROOT/.dispatch"
-LOCK_HOME="$HOME/.dispatch"
-LOCK_FILE="$LOCK_HOME/install.lock"
 PYTHON_BIN=${DISPATCH_PYTHON_BIN:-/sys_apps_01/python/python310/bin/python3.10}
 
-mkdir -p "$LOCK_HOME"
+if [ ! -d "$DATA_ROOT" ] || [ ! -w "$DATA_ROOT" ]; then
+  echo "$DATA_ROOT must exist and be writable" >&2
+  exit 1
+fi
+
+mkdir -p "$DISPATCH_HOME/jobs"
+
+LOCK_FILE="$DISPATCH_HOME/install.lock"
 exec 9>"$LOCK_FILE"
 flock 9
 
@@ -21,9 +26,6 @@ fi
 
 command -v klist >/dev/null 2>&1 || { echo "klist not found on PATH" >&2; exit 1; }
 command -v impala-shell >/dev/null 2>&1 || { echo "impala-shell not found on PATH" >&2; exit 1; }
-
-mkdir -p "$DISPATCH_HOME/jobs"
-test -w "$DATA_ROOT" || { echo "$DATA_ROOT is not writable" >&2; exit 1; }
 
 "$PYTHON_BIN" -m venv "$DISPATCH_HOME/venv"
 if [ -n "$(find "$ROOT_DIR/vendor" -maxdepth 1 -name '*.whl' -print -quit 2>/dev/null)" ]; then

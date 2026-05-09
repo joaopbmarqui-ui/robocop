@@ -12,7 +12,7 @@ export PATH="$DISPATCH_MOCKS_DIR/bin:$PATH"
 
 mkdir -p "$DISPATCH_DATA_ROOT/.dispatch/jobs" "$DISPATCH_MOCKS_DIR/sent_emails" "$DISPATCH_MOCK_STATE_DIR"
 
-if ! kill -0 "${DISPATCH_SMTPD_PID:-0}" 2>/dev/null; then
+if [ -z "${DISPATCH_SMTPD_PID:-}" ] || ! kill -0 "$DISPATCH_SMTPD_PID" 2>/dev/null; then
   python3 "$DISPATCH_MOCKS_DIR/smtpd.py" "$DISPATCH_MOCKS_DIR/sent_emails" >/tmp/dispatch_mock_smtpd.log 2>&1 &
   export DISPATCH_SMTPD_PID=$!
 fi

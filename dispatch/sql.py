@@ -16,6 +16,13 @@ def template_is_complete(sql_text: str) -> bool:
     return "{date_inicio}" in sql_text and "{date_fim}" in sql_text
 
 
+def is_malformed_template(sql_text: str) -> bool:
+    """True when only one of `{date_inicio}` / `{date_fim}` appears - a likely typo."""
+    has_start = "{date_inicio}" in sql_text
+    has_end = "{date_fim}" in sql_text
+    return has_start != has_end
+
+
 def table_wrapper(sql_text: str, schema: str, table_name: str, user: str) -> str:
     prefix = schema.split("_", 1)[0]
     full_table = f"{schema}.{table_name}"

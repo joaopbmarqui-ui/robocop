@@ -10,7 +10,7 @@ from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Input, Static
 
-from .. import config, kerberos, manifest, process, sql
+from .. import config, jobs, kerberos, manifest, process, sql
 from .preview import PreviewScreen
 
 
@@ -94,11 +94,16 @@ class NewJobScreen(Screen[None]):
         destination_type = self._input_value("destination")
         if (source_type, destination_type) not in manifest.LEGAL_CELLS:
             return f"Illegal Source/Destination cell: {source_type}/{destination_type}"
+        if not jobs.can_launch():
+            return f"Already at the {jobs.RUNNING_CAP}-Job concurrency cap; wait for one to finish"
         if self.kerberos_ttl is None:
             return "Kerberos ticket missing"
         if self.kerberos_ttl < 300:
             return "Kerberos ticket TTL is under 5 minutes"
-        if source_type == "SqlTemplate" and not sql.template_is_complete(self._read_sql()):
+        sql_text = self._read_sql()
+        if sql.is_malformed_template(sql_text):
+            return "SQL contains only one of {date_inicio}/{date_fim} - likely a typo"
+        if source_type == "SqlTemplate" and not sql.template_is_complete(sql_text):
             return "SqlTemplate requires both {date_inicio} and {date_fim}"
         return None
 

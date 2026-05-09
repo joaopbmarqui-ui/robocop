@@ -180,6 +180,8 @@ class NewJobScreen(Screen[None]):
             process.run_interactive(editor, self._input_value("sql-file"))
         self._detect_sql()
 
-    def action_kinit(self) -> None:
+    async def action_kinit(self) -> None:
         with self.app.suspend():
             process.run_interactive("kinit")
+        self.kerberos_ttl = await kerberos.ticket_ttl_seconds()
+        self._refresh_kerberos()

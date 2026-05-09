@@ -11,6 +11,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Input, Static
 
 from .. import config, kerberos, manifest, process, sql
+from .preview import PreviewScreen
 
 
 class NewJobScreen(Screen[None]):
@@ -150,7 +151,7 @@ class NewJobScreen(Screen[None]):
             )
         else:
             preview = sql.table_wrapper(sql_text, schema, table, config.current_user())
-        self.query_one("#warning", Static).update(preview[:1500])
+        self.app.push_screen(PreviewScreen("SQL Preview", preview))
 
     async def action_launch(self) -> None:
         error = self._validate()

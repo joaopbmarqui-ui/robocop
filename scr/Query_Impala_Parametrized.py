@@ -190,7 +190,9 @@ def send_email(messageBody, subject, to_email):
     msg.attach(MIMEText(messageBody))
     
     try:
-        server = smtplib.SMTP("mailhost.mclocal.int")
+        mailhost = os.environ.get("MAILHOST", "mailhost.mclocal.int")
+        host, _, port = mailhost.partition(":")
+        server = smtplib.SMTP(host, int(port) if port else 0)
         server.sendmail(from_email, to_email.split(';'), msg.as_string())
         server.quit()
         logging.info(f"Email sent to {to_email} with subject: {subject}")

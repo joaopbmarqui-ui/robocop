@@ -1,0 +1,7 @@
+mocks/sent_emails/
+*.pyc
+__pycache__/
+.pytest_cache/
+.pylint.d/
+build/
+*.egg-info/

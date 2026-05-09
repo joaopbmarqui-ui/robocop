@@ -1,0 +1,5 @@
+{
+  "description": "Queues are busy until adhoc_small, which succeeds on the first cycle.",
+  "success_pool": "adhoc_small",
+  "delay_seconds": 0
+}

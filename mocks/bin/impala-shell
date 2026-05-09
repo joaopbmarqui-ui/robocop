@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+"""Mock impala-shell used by Dispatch offline tests.
+
+Accepts the orchestrator argv documented in docs/plan.md section 13.1:
+unknown flags are tolerated, `-q` carries SQL, and `-o` requests CSV output.
+Resource Pool extraction follows the documented regex exactly.
+"""
+
+import argparse
+import json
+import os
+import re
+import sys
+import time
+from pathlib import Path
+
+
+POOL_RE = re.compile(r"\s*set\s+request_pool\s*=\s*(\w+)\s*;", re.IGNORECASE)
+
+
+def _scenario_path(name: str) -> Path:
+    root = Path(__file__).resolve().parents[1]
+    return root / "scenarios" / f"{name}.json"
+
+
+def _load_scenario() -> dict:
+    name = os.environ.get("DISPATCH_MOCK_SCENARIO", "happy_path")
+    path = _scenario_path(name)
+    if not path.exists():
+        print(f"Unknown DISPATCH_MOCK_SCENARIO={name}", file=sys.stderr)
+        sys.exit(2)
+    with path.open("r", encoding="utf-8") as handle:
+        scenario = json.load(handle)
+    scenario["name"] = name
+    return scenario
+
+
+def _state_file(scenario: str) -> Path:
+    root = Path(os.environ.get("DISPATCH_MOCK_STATE_DIR", "/tmp/dispatch_mock_state"))
+    root.mkdir(parents=True, exist_ok=True)
+    return root / f"{scenario}.count"
+
+
+def _increment_count(scenario: str) -> int:
+    path = _state_file(scenario)
+    try:
+        value = int(path.read_text(encoding="utf-8").strip() or "0")
+    except FileNotFoundError:
+        value = 0
+    value += 1
+    path.write_text(str(value), encoding="utf-8")
+    return value
+
+
+def _write_csv(path: str) -> None:
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text("id,value\n1,mock\n", encoding="utf-8")
+
+
+def _fail(message: str) -> int:
+    print(message, file=sys.stderr)
+    return 1
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("-q", "--query", dest="query", default="")
+    parser.add_argument("-o", "--output-file", dest="output_file")
+    args, _unknown = parser.parse_known_args()
+
+    scenario = _load_scenario()
+    query = args.query or ""
+    match = POOL_RE.match(query)
+    pool = match.group(1) if match else "unknown"
+    count = _increment_count(scenario["name"])
+
+    delay = float(os.environ.get("DISPATCH_MOCK_DELAY", scenario.get("delay_seconds", 0)))
+    if delay:
+        time.sleep(delay)
+
+    name = scenario["name"]
+    if name == "syntax_error":
+        return _fail("AnalysisException: Syntax error in line 1: SELCT")
+    if name == "auth_error":
+        return _fail("AuthenticationException: unable to obtain Kerberos principal")
+    if name == "all_queues_full":
+        return _fail(f"Admission for query exceeded timeout: queue is full ({pool})")
+    if name == "memory_exceeded" and count <= int(scenario.get("failures_before_success", 2)):
+        return _fail("Memory limit exceeded: Not enough memory available")
+    if name == "happy_path" and pool != scenario.get("success_pool", "adhoc_small"):
+        return _fail(f"Admission for query exceeded timeout: queue is full ({pool})")
+
+    if args.output_file:
+        _write_csv(args.output_file)
+    print(f"Mock impala-shell scenario={name} pool={pool} succeeded")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

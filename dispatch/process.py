@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import os
 import signal
+import subprocess
 import sys
 from pathlib import Path
 
@@ -42,3 +43,8 @@ async def launch_runner(job_dir: Path) -> int:
 
 def cancel_process_group(pid: int) -> None:
     os.killpg(pid, signal.SIGTERM)
+
+
+def run_interactive(*argv: str) -> int:
+    proc = subprocess.Popen(argv)
+    return proc.wait()

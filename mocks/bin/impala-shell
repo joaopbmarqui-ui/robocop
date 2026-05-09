@@ -80,6 +80,20 @@ def main() -> int:
         time.sleep(delay)
 
     name = scenario["name"]
+    normalized_query = " ".join(query.lower().split())
+    if normalized_query.startswith("show tables"):
+        print("dispatch_result")
+        print("dispatch_monthly_fulljoin")
+        return 0
+    if normalized_query.startswith("describe"):
+        print("name|type|comment")
+        print("id|int|mock identifier")
+        print("value|string|mock value")
+        return 0
+    if normalized_query.startswith("drop table"):
+        print("Table dropped")
+        return 0
+
     if name == "syntax_error":
         return _fail("AnalysisException: Syntax error in line 1: SELCT")
     if name == "auth_error":

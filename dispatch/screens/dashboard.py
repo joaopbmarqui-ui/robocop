@@ -10,6 +10,8 @@ from textual.screen import Screen
 from textual.widgets import Button, Input, Static
 
 from .. import jobs
+from .browser import BrowserScreen
+from .history import HistoryScreen
 from .job_detail import JobDetailScreen
 from .new_job import NewJobScreen
 
@@ -83,13 +85,9 @@ class DashboardScreen(Screen[None]):
             self.app.push_screen(JobDetailScreen(job_id, cancel_on_mount=True))
 
     def action_history(self) -> None:
-        from .history import HistoryScreen
-
         self.app.push_screen(HistoryScreen())
 
     def action_browser(self) -> None:
-        from .browser import BrowserScreen
-
         self.app.push_screen(BrowserScreen())
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

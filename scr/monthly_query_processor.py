@@ -1,6 +1,3 @@
-import os
-import subprocess
-import time
 import logging
 import argparse
 import sys
@@ -10,7 +7,8 @@ import calendar
 # --- Import functions from the main script ---
 # Assumes Query_Impala_Parametrized.py is in the same directory on the remote server.
 try:
-    from Query_Impala_Parametrized import send_email, run_on_impala
+    from Query_Impala_Parametrized import run_on_impala
+    from _common import cycle_through_pools, send_email
 except ImportError:
     logging.error("Fatal Error: Could not import functions from Query_Impala_Parametrized.py.")
     sys.exit(1)
@@ -33,33 +31,28 @@ def execute_step_with_retry(query: str, operation_desc: str, args):
     """
     logging.info(f"--- Starting Step: {operation_desc} ---")
     filas = ["adhoc_fast", "adhoc_small", "acs_small", "acs_large", "adhoc"]
-    finished_or_failed = False
-    retry_cycle_cnt = 1
-    
-    while not finished_or_failed:
-        for fila in filas:
-            full_query = f"set request_pool={fila}; {query}"
-            step_subject = f"{args.subject} - Step: {operation_desc}"
-            
-            finished_or_failed = run_on_impala(
-                query=full_query,
-                subject=step_subject,
-                to_email=args.to_email,
-                tablecreated=operation_desc,
-                user=args.user,
-                queue=fila
-            )
-            
-            if finished_or_failed:
-                logging.info(f"Step '{operation_desc}' finished on queue {fila}. Check email notifications for final status.")
-                return
+    def operation(fila):
+        full_query = f"set request_pool={fila}; {query}"
+        step_subject = f"{args.subject} - Step: {operation_desc}"
+        finished = run_on_impala(
+            query=full_query,
+            subject=step_subject,
+            to_email=args.to_email,
+            tablecreated=operation_desc,
+            user=args.user,
+            queue=fila
+        )
+        if finished:
+            logging.info(f"Step '{operation_desc}' finished on queue {fila}. Check email notifications for final status.")
+        return finished
 
-        if not finished_or_failed:
-            logging.warning(f"All queues failed for step '{operation_desc}' with retryable errors. Waiting 30 seconds.")
-            time.sleep(30)
-            retry_cycle_cnt += 1
-            if retry_cycle_cnt > 10:
-                 raise TimeoutError(f"Step '{operation_desc}' failed after 10 retry cycles. Halting job.")
+    def on_cycle_failure(_retry_cnt):
+        logging.warning(f"All queues failed for step '{operation_desc}' with retryable errors. Waiting 30 seconds.")
+
+    try:
+        cycle_through_pools(filas, operation, on_cycle_failure, max_cycles=10)
+    except TimeoutError as exc:
+        raise TimeoutError(f"Step '{operation_desc}' failed after 10 retry cycles. Halting job.") from exc
 
 # --- NEW Core Processing Function ---
 

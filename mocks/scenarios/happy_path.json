@@ -1,5 +1,4 @@
 {
-  "description": "Queues are busy until adhoc_small, which succeeds on the first cycle.",
-  "success_pool": "adhoc_small",
+  "description": "Every Resource Pool accepts the query on the first attempt.",
   "delay_seconds": 0
 }

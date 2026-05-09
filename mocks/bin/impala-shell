@@ -102,8 +102,7 @@ def main() -> int:
         return _fail(f"Admission for query exceeded timeout: queue is full ({pool})")
     if name == "memory_exceeded" and count <= int(scenario.get("failures_before_success", 2)):
         return _fail("Memory limit exceeded: Not enough memory available")
-    if name == "happy_path" and pool != scenario.get("success_pool", "adhoc_small"):
-        return _fail(f"Admission for query exceeded timeout: queue is full ({pool})")
+    # happy_path: every Resource Pool succeeds on first attempt - falls through
 
     if args.output_file:
         _write_csv(args.output_file)

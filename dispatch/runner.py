@@ -1,4 +1,5 @@
 """Stdlib runner that owns Dispatch Job lifecycle."""
+# pylint: disable=global-statement
 
 from __future__ import annotations
 
@@ -92,16 +93,15 @@ def run(job_dir: Path) -> int:
         try:
             for call in manifest["orchestrator_calls"]:
                 _log(f"[runner] starting {call['script']}: {' '.join(call['argv'])}")
-                CURRENT_PROC = subprocess.Popen(call["argv"], stdout=log, stderr=log)
-                rc = CURRENT_PROC.wait()
+                with subprocess.Popen(call["argv"], stdout=log, stderr=log) as proc:
+                    CURRENT_PROC = proc
+                    rc = proc.wait()
                 _log(f"[runner] finished {call['script']} exit={rc}")
                 if rc != 0:
                     _set_terminal_state("Failed", rc)
                     return rc
             _set_terminal_state("Succeeded", 0)
             return 0
-        except SystemExit:
-            raise
         except Exception as exc:
             _log(f"[runner] Unhandled error: {exc}")
             _set_terminal_state("Failed", -1)

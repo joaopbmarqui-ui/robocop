@@ -1,4 +1,5 @@
 """Job manifest schema and helpers."""
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 
 from __future__ import annotations
 

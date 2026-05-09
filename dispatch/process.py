@@ -46,5 +46,5 @@ def cancel_process_group(pid: int) -> None:
 
 
 def run_interactive(*argv: str) -> int:
-    proc = subprocess.Popen(argv)
-    return proc.wait()
+    with subprocess.Popen(argv) as proc:
+        return proc.wait()

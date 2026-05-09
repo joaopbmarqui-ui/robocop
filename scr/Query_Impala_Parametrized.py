@@ -1,6 +1,5 @@
 # flake8: noqa
 # pylint: disable=line-too-long,trailing-whitespace,missing-final-newline,too-many-arguments,too-many-positional-arguments,f-string-without-interpolation,consider-using-with,unspecified-encoding,logging-not-lazy,consider-using-f-string,no-else-return
-import time
 import logging
 import subprocess
 import argparse
@@ -27,7 +26,6 @@ def main():
     parser.add_argument('--subject', dest='subject', required=True,
                         help='Subject line for the notification email.')
     parser.add_argument('--user', required=True, help='The remote user ID running the script.')
-    parser.add_argument('--download', action='store_true', help='If set, export the created table to a CSV file.')
     parser.add_argument('--session-folder', dest='session_folder', required=True,
                         help='Full path to a unique session folder for all outputs.')
 
@@ -47,7 +45,6 @@ def main():
     print(f"Table to be created: {tablecreated}")
     print(f"Recipient Emails: {to_email}")
     print(f"Email Subject: {subject}")
-    print(f"Download Requested: {'Yes' if args.download else 'No'}")
     print("--------------------------")
 
     ## The sql_query variable is now populated from the file content
@@ -63,10 +60,7 @@ def main():
         print(f"Error creating session directory: {e}")
         sys.exit(1)
 
-    SUCCESS = retry_loop(sql_query, filas, to_email, subject, tablecreated, args.user)
-    if SUCCESS and args.download:
-        time.sleep(10)
-        export_table_to_csv(tablecreated, args.user, args.session_folder, to_email, subject)
+    retry_loop(sql_query, filas, to_email, subject, tablecreated, args.user)
 
 def retry_loop(sql_query, filas, to_email, subject, tablecreated, user):
     messageBody = (
@@ -101,56 +95,6 @@ def retry_loop(sql_query, filas, to_email, subject, tablecreated, user):
 # =============================================================================
 # Helper Functions
 # =============================================================================
-
-def export_table_to_csv(table_name, user, session_folder, to_email, subject):
-    """
-    Exports an Impala table to a CSV file and notifies via email.
-    """
-    print("\n--- Starting CSV Export Process ---")
-    
-    start_message = (
-        f"User: {user}\n"
-        f"Process: CSV Export\n"
-        f"Table: {table_name}\n\n"
-        f"The table creation was successful. Now starting the CSV export process. "
-        f"The output will be placed in the session folder:\n{session_folder}"
-    )
-    send_email(start_message, f"{subject} - CSV EXPORT STARTED", to_email)
-
-    try:
-        table_name_only = table_name.split('.')[-1]
-        output_csv_file = os.path.join(session_folder, f"{table_name_only}.csv")
-        print(f"Calling download_to_csv.py to export {table_name} to {output_csv_file}...")
-        scr_dir = os.environ.get('DISPATCH_SCR_DIR', '/ads_storage/dispatch/scr')
-        download_script = os.path.join(scr_dir, 'download_to_csv.py')
-        command_export = ['python', download_script, '--table-name', table_name, '--output-file', output_csv_file]
-        process = subprocess.Popen(command_export)
-        if process.wait() != 0:
-            raise RuntimeError("download_to_csv.py failed")
-        print(f"Successfully exported data to {output_csv_file}")
-        
-        success_message = (
-            f"User: {user}\n"
-            f"Process: CSV Export\n"
-            f"Status: SUCCESS\n\n"
-            f"The table '{table_name}' has been successfully exported.\n"
-            f"The final file is located at:\n{output_csv_file}"
-        )
-        send_email(success_message, f"{subject} - CSV EXPORT FINISHED", to_email)
-        print(f"\n[SUCCESS] Export process completed.")
-
-    except (FileNotFoundError, Exception) as e:
-        error_message = (
-            f"User: {user}\n"
-            f"Process: CSV Export\n"
-            f"Status: FAILED\n\n"
-            f"An error occurred during the CSV export for table '{table_name}'.\n"
-            f"Please check the script logs for more details.\n\n"
-            f"Error Details:\n{e}"
-        )
-        send_email(error_message, f"{subject} - CSV EXPORT FAILED", to_email)
-        print(f"\n[ERROR] An error occurred during the CSV export process: {e}")
-        raise
 
 def load_query(path):
     try:

@@ -1,7 +1,8 @@
 #!/usr/bin/env sh
 # Source this file to run Dispatch against local fakes.
 
-DISPATCH_MOCKS_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+DISPATCH_MOCKS_FILE=${BASH_SOURCE:-$0}
+DISPATCH_MOCKS_DIR=$(CDPATH= cd -- "$(dirname -- "$DISPATCH_MOCKS_FILE")" && pwd)
 export DISPATCH_MOCKS_DIR
 export DISPATCH_DATA_ROOT="${DISPATCH_DATA_ROOT:-/tmp/ads_storage/${USER:-dispatch}}"
 export DISPATCH_MOCK_SCENARIO="${DISPATCH_MOCK_SCENARIO:-happy_path}"

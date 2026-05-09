@@ -98,19 +98,20 @@ downstream analytical use, not bulk CSV export.
 │   ├── app.py                             # Textual App
 │   ├── process.py                         # SOLE sanctioned subprocess entry point
 │   ├── runner.py                          # the runner script (spawned via nohup+setsid)
-│   ├── manifest.py                        # Job manifest schema + I/O
-│   ├── jobs.py                            # Job listing, state queries, concurrency cap
-│   ├── kerberos.py                        # klist parsing, suspend-and-run kinit
-│   ├── sql.py                             # template detection, SQL preview, partition preview
-│   ├── impala.py                          # SHOW TABLES / DESCRIBE / DROP for the browser
-│   ├── config.py                          # ~/.dispatch/config.json read/write
-│   ├── version.py                         # __version__ constant; compared to deployed VERSION
+│   ├── manifest.py                        # Job manifest schema (TypedDict) + read/write/validate
+│   ├── jobs.py                            # Job listing, state queries, concurrency cap helpers
+│   ├── kerberos.py                        # klist -s pre-flight, TTL parsing, suspend-and-run kinit
+│   ├── sql.py                             # {date_inicio}/{date_fim} detection, DDL preview,
+│   │                                      # monthly-partition resolution preview
+│   ├── impala.py                          # SHOW TABLES / DESCRIBE / DROP via mock-friendly impala-shell
+│   ├── config.py                          # /ads_storage/<user>/.dispatch/config.json read/write
+│   ├── version.py                         # __version__ constant; compared against deployed VERSION
 │   └── screens/
-│       ├── dashboard.py
-│       ├── new_job.py
-│       ├── job_detail.py
-│       ├── history.py
-│       └── browser.py
+│       ├── dashboard.py                   # Active + recently-finished tables; key bindings
+│       ├── new_job.py                     # Source x Destination wizard; pre-flight checks
+│       ├── job_detail.py                  # Job header + RichLog tailing run.log; cancel
+│       ├── history.py                     # Jobs older than 7 days; search by table/date
+│       └── browser.py                     # Impala metadata browser (schema, tables, describe)
 ├── mocks/                                 # NEW — see ADR-0004
 │   ├── bin/
 │   ├── smtpd.py
@@ -186,20 +187,36 @@ v1.0.
 
 A small stdlib-only Python script the TUI launches via `nohup` + `setsid`.
 
+### 7.1 CLI contract
+
+```
+python -m dispatch.runner --job-dir <absolute path to a Job directory>
+```
+
+The job directory MUST already contain a valid `manifest.json` with
+`state: "Pending"`, a populated `orchestrator_calls` list, and the SQL
+snapshot at `job.sql`. The runner mutates the manifest in place. No
+other CLI flags. No reading from stdin.
+
+### 7.2 Lifecycle
+
 ```python
 # Pseudocode — dispatch/runner.py
-def main(jobid: str) -> None:
-    job_dir = Path(os.environ.get("DISPATCH_DATA_ROOT",
-                                  f"/ads_storage/{os.environ['USER']}/.dispatch")) / "jobs" / jobid
+def main(job_dir: Path) -> None:
     manifest = Manifest.load(job_dir / "manifest.json")
+    assert manifest["state"] == "Pending"
+
     log = open(job_dir / "run.log", "ab", buffering=0)
     (job_dir / "run.pid").write_text(str(os.getpid()))
+    install_signal_handlers()
 
     manifest.update(state="Running", started_at=now_utc(), pid=os.getpid())
 
     try:
         for call in manifest["orchestrator_calls"]:
-            rc = subprocess.run(call["argv"], stdout=log, stderr=log).returncode
+            global current_proc
+            current_proc = subprocess.Popen(call["argv"], stdout=log, stderr=log)
+            rc = current_proc.wait()
             if rc != 0:
                 manifest.update(state="Failed", exit_code=rc, finished_at=now_utc())
                 return
@@ -209,13 +226,57 @@ def main(jobid: str) -> None:
         manifest.update(state="Failed", exit_code=-1, finished_at=now_utc())
 ```
 
-The runner is `setsid`-spawned by the TUI via `dispatch/process.py`, so its
-PID is its process group leader. Cancel from the TUI is
+The runner is `setsid`-spawned by the TUI via `dispatch/process.py`, so
+its PID is its process group leader. Cancel from the TUI is
 `os.killpg(manifest["pid"], signal.SIGTERM)`.
+
+### 7.3 Signal handling
+
+- **`SIGTERM`** (sent by the TUI on cancel): trap it, forward `SIGTERM`
+  to the current orchestrator process, wait up to 10 seconds, escalate
+  to `SIGKILL` if still alive, write
+  `state: "Cancelled"`, `exit_code: -signal.SIGTERM`, `finished_at` to
+  the manifest, exit 0.
+- **`SIGHUP`** (ssh disconnect): explicitly ignored. The whole point of
+  `nohup` + `setsid` is that the runner outlives the TUI's ssh session.
+- **`SIGINT`**: ignored for the same reason.
+
+### 7.4 Failure modes
+
+| Condition | Runner behaviour |
+|---|---|
+| Manifest unreadable / corrupt | Write `manifest.error.json` with the exception, exit code 3. The TUI must validate manifests on write so this is "should never happen". |
+| `manifest["state"] != "Pending"` at start | Exit code 4 without modifying the manifest. Prevents double-spawn. |
+| Orchestrator argv malformed | Not validated by the runner. `subprocess.Popen` raises; we catch, write the exception to `run.log`, set state `Failed`, exit_code `-1`. |
+| `setsid` fails | Treated as fatal pre-flight. Runner writes `[runner] could not detach` to `run.log`, sets state `Failed`, exit_code `-2`, exits. The TUI must surface this. |
 
 ---
 
 ## 8. The TUI
+
+### Startup sequence
+
+When the user runs `dispatch`:
+
+1. Capture `Path.cwd()` once and store on the `App` — this is the
+   "launch-time CWD" that `Csv` Job paths will be relative to. Never
+   re-read `cwd()` mid-session; the user may navigate the filesystem
+   inside the TUI but their initial directory is sticky for output
+   purposes.
+2. Read `/ads_storage/<user>/.dispatch/config.json`. If absent, the
+   user hasn't run `install.sh`; show a one-screen "run `install.sh`"
+   message and exit.
+3. Compare `installed_version` against the deployed `VERSION`; show a
+   non-blocking warning banner if older.
+4. Pre-flight Kerberos via `klist -s`. If absent, dim the launch
+   button and show "Kerberos ticket missing — press K to kinit". If
+   present, parse TTL and start a 60s refresh timer.
+5. Scan `/ads_storage/<user>/.dispatch/jobs/` once to populate the
+   dashboard, then re-scan every 2 seconds via a background task.
+6. Render the Dashboard tab.
+
+Crash-resistance: any step 2–5 failure logs to `~/.dispatch/dispatch.log`
+and proceeds with degraded UI rather than blocking the user.
 
 ### Navigation
 
@@ -390,27 +451,155 @@ At v1.0 ship:
 Even though every primitive is in v1.0 (no "phase 2"), the PR sequence
 matters for safe, reviewable, mock-validated progress.
 
-| # | PR | Lands |
-|---|---|---|
-| 1 | `mocks/` substrate | ADR-0004 in code; CI can run end-to-end against fakes |
-| 2 | `dispatch/` package skeleton + `pyproject.toml` + `requirements.txt` + `vendor/` | `python -m dispatch` opens an empty Textual app on the dev VM |
-| 3 | Manifest schema + runner script + `dispatch/process.py` | ADR-0001 in code; runner can be smoke-tested against mock scenarios |
-| 4 | New Job wizard with Source × Destination logic, `$EDITOR` shell-out, template auto-detect, Kerberos pre-flight | First end-to-end "I can launch a Job" PR |
-| 5 | Dashboard with active/finished tables, attach to live tail, cancel | First "I can supervise a Job" PR |
-| 6 | History view with 7-day collapse | Closes the Job-lifecycle category |
-| 7 | Impala metadata browser | `SHOW TABLES` / `DESCRIBE` / `DROP` |
-| 8 | SQL preview + monthly partition preview | Pre-launch trust-builder primitives |
-| 9 | `install.sh` + `VERSION` file + version-mismatch banner | Distribution path |
-| 10 | `scr/` de-duplication + `_common.py` + path externalisation | ADR-0005 in code |
-| 11 | Hard delete legacy GUI; README rewrite | v1.0 ship |
+| # | PR | Depends on | Lands |
+|---|---|---|---|
+| 1 | `mocks/` substrate **+ MAILHOST bootstrap exception** | — | ADR-0004 in code; CI can run end-to-end against fakes. Includes a single one-line `scr/Query_Impala_Parametrized.send_email` change to read `MAILHOST` from the env var (default = current hardcoded `"mailhost.mclocal.int"`). Without this, the mock SMTP catcher cannot intercept the orchestrators' emails. |
+| 2 | `dispatch/` package skeleton + `pyproject.toml` + `requirements.txt` + `vendor/` | 1 | `python -m dispatch` opens a non-empty Textual screen; installs cleanly via `pip install -e .` |
+| 3 | Manifest schema + runner script + `dispatch/process.py` | 2 | ADR-0001 in code; runner can be smoke-tested against mock scenarios |
+| 4 | New Job wizard (Source × Destination logic, `$EDITOR` shell-out, template auto-detect, Kerberos pre-flight) | 3 | First end-to-end "I can launch a Job" PR |
+| 5 | Dashboard (active/finished tables, attach to live tail, cancel) | 3 | First "I can supervise a Job" PR |
+| 6 | History view with 7-day collapse | 5 | Closes the Job-lifecycle category |
+| 7 | Impala metadata browser (`SHOW TABLES` / `DESCRIBE` / `DROP`) | 2 | Browser tab functional |
+| 8 | SQL preview + monthly partition preview | 4 | Pre-launch trust-builder primitives |
+| 9 | `install.sh` + `VERSION` file + version-mismatch banner | 2 | Distribution path |
+| 10 | `scr/` de-duplication + `_common.py` + remaining path externalisation | 1 | ADR-0005 in code |
+| 11 | Hard delete legacy GUI; README rewrite | 5, 6, 7, 8, 9 | v1.0 ship |
 
-PRs 1–3 are blocking dependencies for everything after. Beyond that, 4–8
-can be parallelised by different contributors. PR 10 cannot land before
-PR 1 (ADR-0005 requires the mock layer).
+PRs 1–3 are blocking dependencies for everything after. Beyond that,
+PRs 4–9 can be parallelised by different contributors. PR 10 cannot
+land before PR 1 (ADR-0005 requires the mock layer). PR 11 is the
+last; it gates on every user-facing capability being live.
+
+### 12.1 Per-PR definition of done
+
+Every PR must satisfy this baseline:
+
+- [ ] All listed deliverables exist and pass `python3.10 -m py_compile`.
+- [ ] `flake8 . --max-line-length=120` clean on changed files (per `AGENTS.md`).
+- [ ] `pylint <changed-files> --disable=C0114,C0115,C0116,C0103,W0718 --max-line-length=120` clean (per `AGENTS.md`).
+- [ ] PR description includes the validation table or screenshot called out in the PR-specific row below.
+- [ ] One commit per logical change; no force-pushes.
+- [ ] Cross-references to relevant ADRs in the PR body.
+- [ ] Opened as draft until reviewed.
+
+PR-specific extras:
+
+| PR | Validation artefact required in PR body |
+|---|---|
+| 1 | A 6×3 table (six scenarios × three orchestrators) showing `✓` or a one-line note for each cell, plus a directory listing of `mocks/sent_emails/` showing captured `.eml` files. |
+| 2 | A screenshot of `python -m dispatch` rendering its initial Textual screen on a Linux VM. Plus `pip install -e .` clean output. |
+| 3 | Manifest reaches `Succeeded` / `Failed` / `Cancelled` for each scenario; demonstrate that `kill -HUP` of the parent shell does not affect the runner. |
+| 4 | Source × Destination matrix exhaustively reachable in the wizard (one screenshot per legal cell); auto-detect tested with both `{date_*}`-bearing and bare SQL files. |
+| 5 | Live-tail latency screenshot under 1s; demonstrate that cancel terminates the orchestrator's process group (`ps -ef \| grep impala-shell` empty after cancel). |
+| 6 | Screenshot of a Job at day 6 still in dashboard, day 8 in history. (Use file mtime fudging if needed.) |
+| 7 | Screenshot of `SHOW TABLES` and `DESCRIBE` rendering against the mock. |
+| 8 | Screenshot of the auto-generated `DROP TABLE / CREATE TABLE STORED AS PARQUET LOCATION ... AS` wrapper for a `Table` Job; screenshot of resolved monthly partitions for a `SqlTemplate` Job. |
+| 9 | `install.sh` re-run preserves existing config and `jobs/`; demonstrate via diff. |
+| 10 | Side-by-side log captures from pre-change and post-change orchestrator runs against all six `mocks/scenarios/` (per ADR-0005). |
+| 11 | `git diff --stat` showing only the deletions (`run_query.ps1`, `run_query_engine.bat`) plus the README rewrite. |
+
+### 12.2 Anti-patterns (do not merge code that does any of these)
+
+- **Spawning subprocesses outside `dispatch/process.py`.** Single
+  sanctioned entry point per ADR-0001 and ADR-0002.
+- **Spawning an orchestrator directly from the TUI.** Always go through
+  the runner. Even in tests.
+- **Calling `subprocess.run(...)` from a Textual callback.** Use
+  `asyncio.create_subprocess_exec` or `loop.run_in_executor` via
+  `dispatch.process`.
+- **Backing Jobs with `tmux` or `screen`.** Use `nohup` + `setsid`
+  (ADR-0001).
+- **Gzipping CSV output.** ADR-0003 forbids it.
+- **Storing CSV under `~/.dispatch/`.** They go to the user's
+  launch-time CWD (ADR-0003).
+- **Modifying `scr/` outside the rules in ADR-0005.** PR #1 has the
+  documented bootstrap exception (`MAILHOST`); PR #10 does the larger
+  de-duplication. Anything in between requires its own ADR.
+- **Installing third-party deps into `/sys_apps_01/python/python310/`**
+  (the orchestrators' interpreter). All TUI deps live in the per-user
+  venv only.
+- **Reading passwords inside the TUI.** Use `App.suspend()` and let
+  `kinit` own the terminal.
+- **Retrying a fatal classified error in the runner.** The orchestrators
+  already classify and short-circuit fatals; the runner runs each
+  orchestrator exactly once.
+- **Assuming `$HOME` and `/ads_storage/<user>/` are the same volume.**
+  They aren't always; the data dir is anchored at
+  `/ads_storage/<user>/.dispatch/` for a reason.
+- **Blocking the Textual event loop on filesystem I/O during dashboard
+  refresh.** Manifest reads are cheap individually but should be
+  backgrounded if scanning more than ~50 jobs.
 
 ---
 
-## 13. Known risks
+## 13. Quick reference for implementers
+
+### 13.1 Exact `argv` emitted by the orchestrators today
+
+Verified by reading the source. Mocks and the runner must accept these
+unchanged. The fake `impala-shell` should be permissive about argument
+order and unknown flags (the orchestrators may add flags later).
+
+**`Query_Impala_Parametrized.run_on_impala`** (file:
+`scr/Query_Impala_Parametrized.py`, line ~248):
+
+```
+impala-shell -k -i dw.prod.impala.mastercard.int:21000 --ssl
+             --delimited --print_header --output_delimiter=|
+             -q "<query>"
+```
+
+`<query>` = `set request_pool=<pool>; <user_sql>`. Extract pool with
+`re.match(r'\s*set\s+request_pool\s*=\s*(\w+)\s*;', query, re.IGNORECASE)`.
+
+**`download_to_csv.run_export_on_impala`** (file:
+`scr/download_to_csv.py`, line ~40):
+
+```
+impala-shell -k -i dw.prod.impala.mastercard.int:21000 --ssl
+             --delimited --print_header --output_delimiter=,
+             -q "<query>" -o <output_file>
+```
+
+`<query>` = `set request_pool=<pool>; set mem_limit=1000g; <user_sql>`.
+
+`monthly_query_processor.py` does not call `impala-shell` directly; it
+imports `run_on_impala` from `Query_Impala_Parametrized`, which means
+testing it requires the importing module to be on `PYTHONPATH`
+(typically by running from `scr/`).
+
+### 13.2 Manifest's `orchestrator_calls` for each legal cell
+
+| Cell | Calls (in order) |
+|---|---|
+| `(SqlFile, Table)` | `Query_Impala_Parametrized.py --sql-file <jobdir>/job.sql --table-name <s.t> --to-email <email> --subject <subj> --user <user> --session-folder <jobdir>` |
+| `(SqlFile, Csv)` | `download_to_csv.py --query-file <jobdir>/job.sql --output-file <pwd>/<name>.csv` |
+| `(SqlFile, Table+Csv)` | (1) `Query_Impala_Parametrized.py …` (no `--download`); (2) `download_to_csv.py --table-name <s.t> --output-file <pwd>/<name>.csv` |
+| `(SqlTemplate, Table)` | `monthly_query_processor.py --sql-file <jobdir>/job.sql --schema <s> --table-name <t> --start-date <m/d/y> --end-date <m/d/y> --user <user> --to-email <email> --subject <subj>` |
+| `(ExistingTable, Csv)` | `download_to_csv.py --table-name <s.t> --output-file <pwd>/<name>.csv` |
+
+Note: the orchestrators' date format is `MM/DD/YYYY` (American); the
+TUI must convert from a YYYY-MM-DD picker to that string before
+populating `argv`.
+
+### 13.3 Hardcoded values worth knowing
+
+- Impala host: `dw.prod.impala.mastercard.int:21000`.
+- Resource pool order: `["adhoc_fast", "acs_small", "adhoc_small",
+  "acs_large", "adhoc"]` in `Query_Impala_Parametrized.py` and
+  `monthly_query_processor.py`; `["adhoc_fast", "adhoc_small",
+  "adhoc"]` in `download_to_csv.py`. (Yes, `download_to_csv.py` uses a
+  shorter list. This is one of the de-duplications PR #10 fixes.)
+- Retry interval after a full cycle: 30 seconds.
+- `monthly_query_processor.py` halts after 10 retry cycles per step
+  (~5 minutes wall-clock per step minimum); the other two retry
+  forever.
+- Sender email: `AutoQueryExecution_Analytics@mastercard.com`.
+- HDFS table location pattern (auto-generated wrapper): `/das/<schema-prefix>/enc/<user>/<table>` where `<schema-prefix>` is the part of `<schema>` before the first underscore (e.g. `dw_settle` → `dw`).
+
+---
+
+## 14. Known risks
 
 | Risk | Mitigation |
 |---|---|
@@ -423,7 +612,7 @@ PR 1 (ADR-0005 requires the mock layer).
 
 ---
 
-## 14. Out of scope for v1.0
+## 15. Out of scope for v1.0
 
 Recorded so they don't get re-litigated:
 

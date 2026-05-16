@@ -34,6 +34,7 @@ class DashboardScreen(Screen[None]):
         self.launch_cwd = launch_cwd
         self.kerberos_ttl: int | None = None
         self._events: deque[str] = deque(maxlen=5)
+        self._selected_job_id_cache: str | None = None
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -202,20 +203,31 @@ class DashboardScreen(Screen[None]):
     def _selected_job_id(self) -> str | None:
         for table_id in ("#active-table", "#recent-table"):
             table_widget = self.query_one(table_id, DataTable)
-            if table_widget.has_focus:
-                try:
-                    row_key = table_widget.get_row_at(table_widget.cursor_row)
-                    candidate = str(row_key[0])
-                    if candidate and not candidate.startswith("No "):
-                        all_jobs = jobs.active_jobs()
-                        for j in all_jobs:
-                            if j["id"].startswith(candidate):
-                                return j["id"]
-                except Exception:
-                    pass
-        active = jobs.active_jobs()
-        if active:
-            return active[0]["id"]
+            candidate = self._job_id_from_table(table_widget)
+            if candidate and table_widget.has_focus:
+                self._selected_job_id_cache = candidate
+                return candidate
+
+        if self._selected_job_id_cache:
+            all_job_ids = {job["id"] for job in jobs.active_jobs()}
+            if self._selected_job_id_cache in all_job_ids:
+                return self._selected_job_id_cache
+            self._selected_job_id_cache = None
+
+        return None
+
+    def _job_id_from_table(self, table_widget: DataTable) -> str | None:
+        try:
+            row_key = table_widget.get_row_at(table_widget.cursor_row)
+        except Exception:
+            return None
+        candidate = str(row_key[0])
+        if not candidate or candidate.startswith("No "):
+            return None
+        all_jobs = jobs.active_jobs()
+        for job in all_jobs:
+            if job["id"].startswith(candidate):
+                return job["id"]
         return None
 
     def action_new_job(self) -> None:
@@ -248,7 +260,12 @@ class DashboardScreen(Screen[None]):
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         row_key = str(event.row_key.value) if event.row_key else ""
         if row_key and row_key != "__empty__":
+            self._selected_job_id_cache = row_key
             self.app.push_screen(JobDetailScreen(row_key))
+
+    def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        row_key = str(event.row_key.value) if event.row_key else ""
+        self._selected_job_id_cache = row_key if row_key and row_key != "__empty__" else None
 
     def on_nav_item_selected(self, event: NavItem.Selected) -> None:
         if event.item_id == "new_job":

@@ -149,16 +149,14 @@ class BrowserScreen(Screen[None]):
         if not full:
             return
 
-        async def _do_drop(confirmed: bool) -> None:
-            if not confirmed:
-                return
-            try:
-                result = await impala.drop_table(full)
-                self.query_one("#describe-body", Static).update(f"[green]{result}[/]")
-            except Exception as exc:
-                self.query_one("#describe-body", Static).update(f"[red]{exc}[/]")
-
-        await self.app.push_screen_wait(DropConfirmModal(full), _do_drop)
+        confirmed = await self.app.push_screen_wait(DropConfirmModal(full))
+        if not confirmed:
+            return
+        try:
+            result = await impala.drop_table(full)
+            self.query_one("#describe-body", Static).update(f"[green]{result}[/]")
+        except Exception as exc:
+            self.query_one("#describe-body", Static).update(f"[red]{exc}[/]")
 
 
 class DropConfirmModal(ModalScreen[bool]):

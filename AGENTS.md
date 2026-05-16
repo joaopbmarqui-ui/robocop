@@ -38,7 +38,7 @@ The legacy Windows GUI is not the product direction. Do not reintroduce Windows 
 For any work touching `dispatch/app.py`, `dispatch/screens/`, `dispatch/widgets/`, UI styling, async/process behavior, mock scenarios, or TUI tests, use:
 
 ```text
-.claude/skills/dispatch-textual-tui/SKILL.md
+.agents/skills/dispatch-textual-tui/SKILL.md
 ```
 
 The skill contains the project-specific rules for Textual architecture, performance, SSH-terminal UX, mocks, and validation.

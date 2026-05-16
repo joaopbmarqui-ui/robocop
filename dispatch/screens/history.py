@@ -40,7 +40,6 @@ class HistoryScreen(Screen[None]):
                         placeholder="\U0001f50d Search by table/date/job id",
                         id="search",
                     )
-                    yield Input(placeholder="\u2192 Job id to view", id="job-id")
 
                 yield DataTable(id="history-table")
 
@@ -59,9 +58,10 @@ class HistoryScreen(Screen[None]):
         table.cursor_type = "row"
         self.refresh_history()
 
-    def on_input_changed(self, _event: Input.Changed) -> None:
-        self._page = 0
-        self.refresh_history()
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if event.input.id == "search":
+            self._page = 0
+            self.refresh_history()
 
     def refresh_history(self) -> None:
         needle = self.query_one("#search", Input).value.lower().strip()
@@ -98,9 +98,10 @@ class HistoryScreen(Screen[None]):
                 table_name[:25],
                 state_display,
                 item["finished_at"] or "",
+                key=item["id"],
             )
         if not page_items:
-            table.add_row("(no history)", "", "", "")
+            table.add_row("(no history)", "", "", "", key="__empty__")
 
         total_pages = max(1, (total + PAGE_SIZE - 1) // PAGE_SIZE)
         self.query_one("#page-info", Static).update(
@@ -112,10 +113,19 @@ class HistoryScreen(Screen[None]):
             f"[dim]\u276e Prev    Page {self._page + 1} of {total_pages}    Next \u276f[/]"
         )
 
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        row_key = str(event.row_key.value) if event.row_key else ""
+        if row_key and row_key != "__empty__":
+            self.app.push_screen(JobDetailScreen(row_key))
+
     def action_view_logs(self) -> None:
-        job_id = self.query_one("#job-id", Input).value.strip()
-        if job_id:
-            self.app.push_screen(JobDetailScreen(job_id))
+        table = self.query_one("#history-table", DataTable)
+        try:
+            row_key = str(table.get_row_at(table.cursor_row)[0])
+        except Exception:
+            return
+        if row_key and not row_key.startswith("("):
+            self.app.push_screen(JobDetailScreen(row_key))
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "view-logs":

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
-from textual.screen import Screen
+from textual.screen import ModalScreen, Screen
 from textual.widgets import Button, DataTable, Footer, Header, Input, Static
 
 from .. import impala
@@ -148,8 +148,49 @@ class BrowserScreen(Screen[None]):
         full = self._full_table()
         if not full:
             return
-        try:
-            result = await impala.drop_table(full)
-            self.query_one("#describe-body", Static).update(f"[green]{result}[/]")
-        except Exception as exc:
-            self.query_one("#describe-body", Static).update(f"[red]{exc}[/]")
+
+        async def _do_drop(confirmed: bool) -> None:
+            if not confirmed:
+                return
+            try:
+                result = await impala.drop_table(full)
+                self.query_one("#describe-body", Static).update(f"[green]{result}[/]")
+            except Exception as exc:
+                self.query_one("#describe-body", Static).update(f"[red]{exc}[/]")
+
+        await self.app.push_screen_wait(DropConfirmModal(full), _do_drop)
+
+
+class DropConfirmModal(ModalScreen[bool]):
+    """Yes/No confirmation before DROP TABLE."""
+
+    BINDINGS = [
+        ("y", "confirm", "Yes"),
+        ("n", "cancel", "No"),
+        ("escape", "cancel", "No"),
+    ]
+
+    def __init__(self, full_table: str) -> None:
+        super().__init__()
+        self.full_table = full_table
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="drop-confirm-dialog"):
+            yield Static(
+                f"[bold red]DROP TABLE[/] [cyan]{self.full_table}[/]?\n\n"
+                "[red]This cannot be undone.[/]\n\n"
+                "Press [bold]Y[/] to confirm or [bold]N[/] / Esc to cancel.",
+                id="drop-confirm-text",
+            )
+            with Horizontal(id="drop-confirm-buttons"):
+                yield Button("Yes, DROP [Y]", id="yes", variant="error")
+                yield Button("No, Cancel [N]", id="no", variant="primary")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.dismiss(event.button.id == "yes")
+
+    def action_confirm(self) -> None:
+        self.dismiss(True)
+
+    def action_cancel(self) -> None:
+        self.dismiss(False)

@@ -3,10 +3,10 @@
 from pathlib import Path
 
 from textual.app import App, ComposeResult
-from textual.containers import Vertical
+from textual.reactive import reactive
 from textual.widgets import Footer, Header, Static
 
-from . import config
+from . import config, kerberos
 from .version import __version__
 from .screens.dashboard import DashboardScreen
 
@@ -492,10 +492,85 @@ DataTable > .datatable--header {
     padding: 1 2;
 }
 
+/* ── Version-mismatch banner ── */
+#version-warning {
+    background: $warning 80%;
+    color: $text;
+    padding: 0 2;
+    height: auto;
+    text-align: center;
+    text-style: bold;
+}
+
+/* ── Kerberos indicator ── */
+KerberosIndicator {
+    dock: right;
+    width: auto;
+    padding: 0 2;
+    color: $text-muted;
+}
+
+KerberosIndicator.krb-missing {
+    color: $error;
+    text-style: bold;
+}
+
+KerberosIndicator.krb-low {
+    color: $warning;
+}
+
 .muted {
     color: $text-muted;
 }
+
+/* ── Drop confirm modal ── */
+DropConfirmModal {
+    align: center middle;
+}
+
+#drop-confirm-dialog {
+    width: 60;
+    height: auto;
+    border: double $error;
+    padding: 1 2;
+    background: $surface;
+}
+
+#drop-confirm-text {
+    height: auto;
+    padding: 0 0 1 0;
+}
+
+#drop-confirm-buttons {
+    height: auto;
+    align: center middle;
+    padding: 1 0 0 0;
+}
+
+#drop-confirm-buttons Button {
+    margin: 0 1;
+}
 """
+
+
+class KerberosIndicator(Static):
+    """Persistent header widget showing current Kerberos TTL."""
+
+    ttl_seconds: reactive[int | None] = reactive(None)
+
+    def render(self) -> str:
+        if self.ttl_seconds is None:
+            return "Kerberos: MISSING"
+        hours, remainder = divmod(self.ttl_seconds, 3600)
+        minutes = remainder // 60
+        return f"Kerberos: {hours}h {minutes:02d}m"
+
+    def watch_ttl_seconds(self, value: int | None) -> None:
+        self.remove_class("krb-missing", "krb-low")
+        if value is None:
+            self.add_class("krb-missing")
+        elif value < 3600:
+            self.add_class("krb-low")
 
 
 class DispatchApp(App[None]):
@@ -512,22 +587,31 @@ class DispatchApp(App[None]):
         self.launch_cwd = Path.cwd()
 
     def compose(self) -> ComposeResult:
+        yield Static("", id="version-warning", markup=True)
         yield Header(show_clock=True)
-        with Vertical(id="startup"):
-            yield Static(f"Dispatch v{__version__}", id="title")
-            yield Static("Server-side Impala Job launcher")
-            yield Static(f"Launch-time CWD: {self.launch_cwd}", classes="muted")
-            yield Static(self._version_banner(), id="version-banner")
+        yield KerberosIndicator(id="krb-indicator")
         yield Footer()
 
-    def on_mount(self) -> None:
+    async def on_mount(self) -> None:
+        version_warning = self._build_version_warning()
+        w = self.query_one("#version-warning", Static)
+        if version_warning:
+            w.update(version_warning)
+        else:
+            w.display = False
         self.push_screen(DashboardScreen(self.launch_cwd))
+        await self._refresh_kerberos_indicator()
+        self.set_interval(60.0, self._refresh_kerberos_indicator)
 
-    def _version_banner(self) -> str:
+    async def _refresh_kerberos_indicator(self) -> None:
+        ttl = await kerberos.ticket_ttl_seconds()
+        self.query_one(KerberosIndicator).ttl_seconds = ttl
+
+    def _build_version_warning(self) -> str:
         try:
             installed = config.installed_version_path().read_text(encoding="utf-8").strip()
         except OSError:
-            return "Install state: missing config/version; run install.sh"
+            return f"\u26a0 Install incomplete: version file missing. Run install.sh. (running {__version__})"
         if installed != __version__:
-            return f"Warning: installed version {installed}, deployed version {__version__}"
-        return "Install state: current"
+            return f"\u26a0 Version mismatch: installed {installed}, running {__version__}. Run install.sh."
+        return ""

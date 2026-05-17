@@ -70,6 +70,15 @@ class BrowserScreen(Screen[None]):
         table = self.query_one("#browser-table", DataTable)
         table.add_columns("Name", "Type")
         table.cursor_type = "row"
+        self._show_detail_placeholder()
+
+    def _show_detail_placeholder(self) -> None:
+        self.query_one("#file-preview-title", Static).update("[dim]No table selected[/]")
+        self.query_one("#file-preview-path", Static).update("")
+        self.query_one("#meta-info", Static).update("")
+        self.query_one("#describe-body", Static).update(
+            "[dim]Select a table and press Enter to view its schema.[/]"
+        )
 
     def _schema(self) -> str:
         return self.query_one("#schema", Input).value.strip()
@@ -116,6 +125,10 @@ class BrowserScreen(Screen[None]):
         )
         if not self._tables:
             table.add_row("(no tables)", "")
+            self._show_detail_placeholder()
+        else:
+            table.cursor_coordinate = (0, 0)
+            await self.action_describe()
 
     async def action_describe(self) -> None:
         full = self._full_table()
@@ -171,10 +184,15 @@ class BrowserScreen(Screen[None]):
         self.app.push_screen(
             ConfirmScreen(
                 "DROP TABLE",
-                f"Drop [cyan]{full_table}[/]?\n\n[red]This cannot be undone.[/]",
+                (
+                    f"Drop [cyan]{full_table}[/]?\n\n"
+                    "[red]This cannot be undone.[/]\n"
+                    "Type the full table name to confirm."
+                ),
                 danger=True,
                 confirm_label="Drop",
                 cancel_label="Keep Table",
+                required_confirmation_text=full_table,
             ),
             callback=on_result,
         )

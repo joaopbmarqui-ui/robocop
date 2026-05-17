@@ -19,6 +19,8 @@ class HistoryScreen(Screen[None]):
         ("b", "app.pop_screen", "Back"),
         ("escape", "app.pop_screen", "Back"),
         ("enter", "view_logs", "View Logs"),
+        ("[", "prev_page", "Prev Page"),
+        ("]", "next_page", "Next Page"),
     ]
 
     def __init__(self) -> None:
@@ -57,6 +59,7 @@ class HistoryScreen(Screen[None]):
         table.add_columns("ID", "Table", "State", "Finished At \u2193")
         table.cursor_type = "row"
         self.refresh_history()
+        table.focus()
 
     def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id == "search":
@@ -113,6 +116,17 @@ class HistoryScreen(Screen[None]):
             f"[dim]\u276e Prev    Page {self._page + 1} of {total_pages}    Next \u276f[/]"
         )
 
+    def action_next_page(self) -> None:
+        total_pages = max(1, (len(self._filtered) + PAGE_SIZE - 1) // PAGE_SIZE)
+        if self._page < total_pages - 1:
+            self._page += 1
+            self.refresh_history()
+
+    def action_prev_page(self) -> None:
+        if self._page > 0:
+            self._page -= 1
+            self.refresh_history()
+
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         row_key = str(event.row_key.value) if event.row_key else ""
         if row_key and row_key != "__empty__":
@@ -121,10 +135,11 @@ class HistoryScreen(Screen[None]):
     def action_view_logs(self) -> None:
         table = self.query_one("#history-table", DataTable)
         try:
-            row_key = str(table.get_row_at(table.cursor_row)[0])
+            cell_key = table.coordinate_to_cell_key(table.cursor_coordinate)
+            row_key = str(cell_key.row_key.value)
         except Exception:
             return
-        if row_key and not row_key.startswith("("):
+        if row_key and row_key != "__empty__":
             self.app.push_screen(JobDetailScreen(row_key))
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

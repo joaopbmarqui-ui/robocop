@@ -6,6 +6,8 @@ import asyncio
 import os
 from pathlib import Path
 
+from textual.widgets import Input
+
 from dispatch.app import DispatchApp
 from dispatch.screens.browser import BrowserScreen
 from dispatch.screens.job_detail import JobDetailScreen
@@ -34,13 +36,15 @@ def test_browser_drop_requires_confirmation(mock_env_with_config, monkeypatch) -
 
             task = asyncio.create_task(screen.action_drop())
             await pilot.pause()
-            await pilot.press("n")
+            await pilot.press("escape")
             await task
             assert calls == []
 
             task = asyncio.create_task(screen.action_drop())
             await pilot.pause()
-            await pilot.press("y")
+            confirm_input = app.screen.query_one("#confirm-input", Input)
+            confirm_input.value = "dw_settle.danger_table"
+            await pilot.press("enter")
             await task
             assert calls == ["dw_settle.danger_table"]
 

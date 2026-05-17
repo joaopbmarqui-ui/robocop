@@ -22,8 +22,11 @@ import asyncio
 import os
 from pathlib import Path
 
+from textual.app import App
+
 from dispatch.app import DispatchApp
 from dispatch import manifest
+from dispatch.screens.confirm import ConfirmScreen
 
 
 # ---------------------------------------------------------------------------
@@ -131,3 +134,30 @@ def test_dashboard_shows_job_data(mock_env_with_config, tmp_path) -> None:
     assert "FAILED" in text, (
         "Expected 'FAILED' job state label in dashboard screenshot"
     )
+
+
+def test_confirm_screen_enter_confirms() -> None:
+    """Enter follows the modal's advertised confirm shortcut."""
+
+    class ConfirmTestApp(App[None]):
+        def __init__(self) -> None:
+            super().__init__()
+            self.result: bool | None = None
+
+        def on_mount(self) -> None:
+            self.push_screen(
+                ConfirmScreen("Launch job?", "Start the selected job?"),
+                callback=self._capture_result,
+            )
+
+        def _capture_result(self, result: bool) -> None:
+            self.result = result
+            self.exit()
+
+    async def run() -> bool | None:
+        app = ConfirmTestApp()
+        async with app.run_test() as pilot:
+            await pilot.press("enter")
+        return app.result
+
+    assert asyncio.run(run()) is True

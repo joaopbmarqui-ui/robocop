@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections import deque
 
 from textual.app import ComposeResult
@@ -10,6 +11,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, RichLog, Static
 
 from .. import config, manifest, process
+from .confirm import ConfirmScreen
 from .sidebar import Sidebar
 
 
@@ -82,9 +84,9 @@ class JobDetailScreen(Screen[None]):
                     yield Button("Back [B]", id="back", variant="default")
         yield Footer()
 
-    def on_mount(self) -> None:
+    async def on_mount(self) -> None:
         if self.cancel_on_mount:
-            self.action_cancel()
+            await self.action_cancel()
         self.refresh_detail()
         self.set_interval(1.0, self.refresh_detail)
 
@@ -166,20 +168,45 @@ class JobDetailScreen(Screen[None]):
                     log_widget.write(stripped)
                 self._tail_offset = handle.tell()
 
-    def action_cancel(self) -> None:
+    async def action_cancel(self) -> None:
         try:
             item = manifest.load(self.job_dir / "manifest.json")
         except Exception:
             return
         pid = item.get("pid")
         if item["state"] == "Running" and pid:
+            confirmed = await self._confirm_cancel(item["id"], pid)
+            if not confirmed:
+                return
             process.cancel_process_group(pid)
             self.query_one("#job-status-line", Static).update(
                 "[yellow]Cancellation requested\u2026[/]"
             )
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
+    async def _confirm_cancel(self, job_id: str, pid: int) -> bool:
+        loop_future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()
+
+        def on_result(result: bool | None) -> None:
+            if not loop_future.done():
+                loop_future.set_result(bool(result))
+
+        self.app.push_screen(
+            ConfirmScreen(
+                "Cancel Job",
+                (
+                    f"Cancel Job [cyan]{job_id}[/]?\n\n"
+                    f"This sends SIGTERM to process group PID [bold]{pid}[/]."
+                ),
+                danger=True,
+                confirm_label="Cancel Job",
+                cancel_label="Keep Running",
+            ),
+            callback=on_result,
+        )
+        return await loop_future
+
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "cancel":
-            self.action_cancel()
+            await self.action_cancel()
         elif event.button.id == "back":
             self.app.pop_screen()

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import calendar
+import asyncio
 import os
 from datetime import date
 from pathlib import Path
@@ -13,6 +14,7 @@ from textual.screen import Screen
 from textual.widgets import Button, DataTable, Footer, Header, Input, RadioButton, RadioSet, Static
 
 from .. import config, jobs, kerberos, manifest, process, sql
+from .confirm import ConfirmScreen
 from .preview import PreviewScreen
 from .sidebar import NavItem, Sidebar
 
@@ -323,6 +325,9 @@ class NewJobScreen(Screen[None]):
             if sql_text is None:
                 return
         source, destination = self._source_destination()
+        confirmed = await self._confirm_launch(source, destination)
+        if not confirmed:
+            return
         job_dir, _job_manifest = manifest.create_job(
             source=source,
             destination=destination,
@@ -332,6 +337,42 @@ class NewJobScreen(Screen[None]):
         )
         await process.launch_runner(job_dir)
         self._show_message(f"\u2713 Launched Job {job_dir.name}", "success")
+
+    async def _confirm_launch(
+        self,
+        source: manifest.Source,
+        destination: manifest.Destination,
+    ) -> bool:
+        loop_future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()
+
+        def on_result(result: bool | None) -> None:
+            if not loop_future.done():
+                loop_future.set_result(bool(result))
+
+        source_type = source["type"]
+        source_detail = source.get("table_name") or source.get("sql_path_at_launch") or "--"
+        dest_type = destination["type"]
+        schema = destination.get("schema") or "--"
+        table = destination.get("table_name") or "--"
+        csv_path = destination.get("csv_path") or "--"
+        body = (
+            f"Source: [cyan]{source_type}[/]  {source_detail}\n"
+            f"Destination: [cyan]{dest_type}[/]\n"
+            f"Target table: [cyan]{schema}.{table}[/]\n"
+            f"CSV path: {csv_path}\n"
+            f"Email: {self._input_value('email') or '--'}"
+        )
+        self.app.push_screen(
+            ConfirmScreen(
+                "Launch Job",
+                body,
+                danger=True,
+                confirm_label="Launch",
+                cancel_label="Review",
+            ),
+            callback=on_result,
+        )
+        return await loop_future
 
     def action_edit_sql(self) -> None:
         editor = os.environ.get("EDITOR", "vi")

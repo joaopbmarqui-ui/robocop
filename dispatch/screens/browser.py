@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import asyncio
+
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
-from textual.screen import ModalScreen, Screen
+from textual.screen import Screen
 from textual.widgets import Button, DataTable, Footer, Header, Input, Static
 
 from .. import impala
+from .confirm import ConfirmScreen
 from .sidebar import Sidebar
 
 
@@ -149,7 +152,7 @@ class BrowserScreen(Screen[None]):
         if not full:
             return
 
-        confirmed = await self.app.push_screen_wait(DropConfirmModal(full))
+        confirmed = await self._confirm_drop(full)
         if not confirmed:
             return
         try:
@@ -158,37 +161,21 @@ class BrowserScreen(Screen[None]):
         except Exception as exc:
             self.query_one("#describe-body", Static).update(f"[red]{exc}[/]")
 
+    async def _confirm_drop(self, full_table: str) -> bool:
+        loop_future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()
 
-class DropConfirmModal(ModalScreen[bool]):
-    """Yes/No confirmation before DROP TABLE."""
+        def on_result(result: bool | None) -> None:
+            if not loop_future.done():
+                loop_future.set_result(bool(result))
 
-    BINDINGS = [
-        ("y", "confirm", "Yes"),
-        ("n", "cancel", "No"),
-        ("escape", "cancel", "No"),
-    ]
-
-    def __init__(self, full_table: str) -> None:
-        super().__init__()
-        self.full_table = full_table
-
-    def compose(self) -> ComposeResult:
-        with Vertical(id="drop-confirm-dialog"):
-            yield Static(
-                f"[bold red]DROP TABLE[/] [cyan]{self.full_table}[/]?\n\n"
-                "[red]This cannot be undone.[/]\n\n"
-                "Press [bold]Y[/] to confirm or [bold]N[/] / Esc to cancel.",
-                id="drop-confirm-text",
-            )
-            with Horizontal(id="drop-confirm-buttons"):
-                yield Button("Yes, DROP [Y]", id="yes", variant="error")
-                yield Button("No, Cancel [N]", id="no", variant="primary")
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        self.dismiss(event.button.id == "yes")
-
-    def action_confirm(self) -> None:
-        self.dismiss(True)
-
-    def action_cancel(self) -> None:
-        self.dismiss(False)
+        self.app.push_screen(
+            ConfirmScreen(
+                "DROP TABLE",
+                f"Drop [cyan]{full_table}[/]?\n\n[red]This cannot be undone.[/]",
+                danger=True,
+                confirm_label="Drop",
+                cancel_label="Keep Table",
+            ),
+            callback=on_result,
+        )
+        return await loop_future

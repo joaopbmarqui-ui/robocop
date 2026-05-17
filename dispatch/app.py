@@ -523,31 +523,46 @@ KerberosIndicator.krb-low {
     color: $text-muted;
 }
 
-/* ── Drop confirm modal ── */
-DropConfirmModal {
+/* ── Confirmation modal ── */
+ConfirmScreen {
     align: center middle;
 }
 
-#drop-confirm-dialog {
+#confirm-dialog {
     width: 60;
     height: auto;
-    border: double $error;
+    border: double $primary;
     padding: 1 2;
     background: $surface;
 }
 
-#drop-confirm-text {
+#confirm-dialog.danger {
+    border: double $error;
+}
+
+#confirm-title {
     height: auto;
     padding: 0 0 1 0;
 }
 
-#drop-confirm-buttons {
+#confirm-body {
+    height: auto;
+    padding: 0 0 1 0;
+}
+
+#confirm-help {
+    height: auto;
+    color: $text-muted;
+    padding: 0 0 1 0;
+}
+
+#confirm-buttons {
     height: auto;
     align: center middle;
     padding: 1 0 0 0;
 }
 
-#drop-confirm-buttons Button {
+#confirm-buttons Button {
     margin: 0 1;
 }
 """

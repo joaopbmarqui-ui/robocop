@@ -25,7 +25,7 @@ class PreviewScreen(Screen[None]):
     BINDINGS = [
         ("b", "app.pop_screen", "Back"),
         ("escape", "app.pop_screen", "Back"),
-        ("l", "launch", "Launch"),
+        ("enter", "accept", "Accept"),
     ]
 
     def __init__(
@@ -73,15 +73,15 @@ class PreviewScreen(Screen[None]):
                     yield Static(dest_label)
 
                 with Horizontal(classes="button-row"):
-                    yield Button("Launch [L]", id="launch", variant="primary")
-                    yield Button("Back [Esc]", id="back", variant="default")
+                    yield Button("Accept & Return [Enter]", id="accept", variant="primary")
+                    yield Button("Back [B/Esc]", id="back", variant="default")
         yield Footer()
 
-    def action_launch(self) -> None:
+    def action_accept(self) -> None:
         self.app.pop_screen()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "back":
             self.app.pop_screen()
-        elif event.button.id == "launch":
-            self.action_launch()
+        elif event.button.id == "accept":
+            self.action_accept()

@@ -1,0 +1,11 @@
+host: "your-user@edge-node"
+repo_path: "/ads_storage/dispatch"
+session_name: "robocop-prod-test"
+terminal_width: 120
+terminal_height: 40
+ssh_options: "-o StrictHostKeyChecking=no"
+smoke_query_sql: "SELECT 1 AS smoke_test_value"
+scratch_schema: "dw_settle"
+table_prefix: "dispatch_smoke"
+max_smoke_job_wait_seconds: 120
+operator_email: ""

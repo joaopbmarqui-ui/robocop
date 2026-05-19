@@ -1,4 +1,7 @@
 mocks/sent_emails/
+tools/prod_tui/screens/
+tools/prod_tui/reports/
+tools/prod_tui/logs/
 *.pyc
 __pycache__/
 .pytest_cache/

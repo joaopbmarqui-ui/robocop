@@ -96,8 +96,9 @@ class HistoryScreen(Screen[None]):
                 state_display = "[dim]\u25cf CANCELLED[/]"
             else:
                 state_display = f"\u25cf {state}"
+            display_id = item["id"][9:] if len(item["id"]) > 20 else item["id"]
             table.add_row(
-                item["id"][:24],
+                display_id,
                 table_name[:25],
                 state_display,
                 item["finished_at"] or "",

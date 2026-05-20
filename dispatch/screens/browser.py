@@ -40,7 +40,7 @@ class BrowserScreen(Screen[None]):
                     with Vertical(id="browser-left"):
                         with Horizontal(id="search-row"):
                             yield Input(value="dw_settle", placeholder="Schema", id="schema")
-                            yield Input(value="*", placeholder="Filter pattern", id="filter")
+                            yield Input(value="*", placeholder="Filter (e.g. dispatch_*)", id="filter")
                         yield Button("SHOW TABLES", id="show", variant="primary")
                         yield DataTable(id="browser-table")
                         with Horizontal(id="browser-status"):
@@ -108,12 +108,14 @@ class BrowserScreen(Screen[None]):
             self.app.pop_screen()
 
     async def action_show_tables(self) -> None:
+        self.query_one("#describe-body", Static).update("[dim]Loading tables\u2026[/]")
         try:
             schema = self._schema()
             filter_val = self.query_one("#filter", Input).value.strip() or "*"
             self._tables = await impala.show_tables(schema, filter_val)
         except Exception as exc:
             self.query_one("#describe-body", Static).update(f"[red]{exc}[/]")
+            self.notify(f"SHOW TABLES failed: {exc}", severity="error")
             return
 
         table = self.query_one("#browser-table", DataTable)
@@ -121,7 +123,7 @@ class BrowserScreen(Screen[None]):
         for name in self._tables:
             table.add_row(name, "table")
         self.query_one("#browser-count", Static).update(
-            f"[dim]{len(self._tables)} items[/]"
+            f"[dim]{len(self._tables)} tables[/]"
         )
         if not self._tables:
             table.add_row("(no tables)", "")
@@ -134,6 +136,7 @@ class BrowserScreen(Screen[None]):
         full = self._full_table()
         if not full:
             return
+        self.query_one("#describe-body", Static).update("[dim]Loading schema\u2026[/]")
         try:
             result = await impala.describe_table(full)
         except Exception as exc:
@@ -143,22 +146,43 @@ class BrowserScreen(Screen[None]):
         self.query_one("#file-preview-title", Static).update(
             f"[bold cyan]{full}[/]"
         )
-        self.query_one("#file-preview-path", Static).update(
-            f"[dim]{self._schema()}.{self._selected_table()}[/]"
-        )
+        self.query_one("#file-preview-path", Static).update("")
+
+        columns = self._parse_describe(result)
+        col_count = len(columns)
         self.query_one("#meta-info", Static).update(
-            f"[dim]Type: Impala Table   Schema: {self._schema()}[/]"
+            f"[dim]Impala Table \u00b7 {col_count} columns \u00b7 Schema: {self._schema()}[/]"
         )
 
-        lines = result.splitlines()
-        width = len(str(len(lines)))
-        numbered = []
-        for i, line in enumerate(lines, 1):
-            numbered.append(f"[dim]{i:>{width}}[/] \u2502 {line}")
-        self.query_one("#describe-body", Static).update("\n".join(numbered))
+        if columns:
+            header = f"{'Name':<30} {'Type':<20} {'Comment'}"
+            sep = "\u2500" * 30 + " " + "\u2500" * 20 + " " + "\u2500" * 20
+            lines = [f"[bold]{header}[/]", f"[dim]{sep}[/]"]
+            for col in columns:
+                lines.append(f"{col['name']:<30} [cyan]{col['type']:<20}[/] [dim]{col['comment']}[/]")
+            self.query_one("#describe-body", Static).update("\n".join(lines))
+        else:
+            self.query_one("#describe-body", Static).update(result)
+
         self.query_one("#browser-selected", Static).update(
             f"[cyan]Selected: {full}[/]"
         )
+
+    @staticmethod
+    def _parse_describe(raw: str) -> list[dict[str, str]]:
+        """Parse pipe-delimited DESCRIBE output into column dicts."""
+        columns = []
+        for line in raw.splitlines():
+            if not line.strip() or line.startswith("#"):
+                continue
+            parts = [p.strip() for p in line.split("|")]
+            if len(parts) >= 2:
+                columns.append({
+                    "name": parts[0],
+                    "type": parts[1],
+                    "comment": parts[2] if len(parts) > 2 else "",
+                })
+        return columns
 
     async def action_drop(self) -> None:
         full = self._full_table()
@@ -171,8 +195,10 @@ class BrowserScreen(Screen[None]):
         try:
             result = await impala.drop_table(full)
             self.query_one("#describe-body", Static).update(f"[green]{result}[/]")
+            self.notify(f"Dropped {full}", severity="information")
         except Exception as exc:
             self.query_one("#describe-body", Static).update(f"[red]{exc}[/]")
+            self.notify(f"DROP failed: {exc}", severity="error")
 
     async def _confirm_drop(self, full_table: str) -> bool:
         loop_future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()

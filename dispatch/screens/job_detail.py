@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from collections import deque
+from datetime import datetime, timezone
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
@@ -59,6 +60,8 @@ class JobDetailScreen(Screen[None]):
                         with Vertical():
                             yield Static("[dim]Started:[/]", classes="summary-label")
                             yield Static("--", id="sum-started", classes="summary-value")
+                            yield Static("[dim]Elapsed:[/]", classes="summary-label")
+                            yield Static("--", id="sum-elapsed", classes="summary-value")
                             yield Static("[dim]Target Table:[/]", classes="summary-label")
                             yield Static("--", id="sum-table", classes="summary-value")
                             yield Static("[dim]CSV Path:[/]", classes="summary-label")
@@ -79,9 +82,10 @@ class JobDetailScreen(Screen[None]):
 
                 yield Static("", id="job-status-line")
 
-                with Horizontal(classes="button-row"):
-                    yield Button("Cancel Job [C]", id="cancel", variant="error")
+                with Horizontal(classes="button-row"): 
                     yield Button("Back [B]", id="back", variant="default")
+                    yield Static("    ", classes="button-spacer")
+                    yield Button("Cancel Job [C]", id="cancel", variant="error")
         yield Footer()
 
     async def on_mount(self) -> None:
@@ -128,8 +132,13 @@ class JobDetailScreen(Screen[None]):
             self.query_one("#log-streaming", Static).update("")
 
         self.query_one("#sum-started", Static).update(item.get("started_at") or "--")
+        self.query_one("#sum-elapsed", Static).update(self._format_elapsed(item))
         self.query_one("#sum-table", Static).update(full_table)
-        self.query_one("#sum-csv", Static).update(dest.get("csv_path") or "--")
+        csv_path = dest.get("csv_path") or ""
+        if dest.get("type") in ("Csv", "Table+Csv") and csv_path:
+            self.query_one("#sum-csv", Static).update(csv_path)
+        else:
+            self.query_one("#sum-csv", Static).update("[dim]N/A (table-only)[/]")
 
         self._update_log()
 
@@ -145,6 +154,35 @@ class JobDetailScreen(Screen[None]):
         if item.get("finished_at"):
             status_parts.append(f"Finished: {item['finished_at']}")
         self.query_one("#job-status-line", Static).update("  ".join(status_parts))
+
+    @staticmethod
+    def _format_elapsed(item: dict) -> str:
+        started = item.get("started_at")
+        if not started:
+            return "--"
+        try:
+            start_dt = datetime.strptime(started, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        except ValueError:
+            return "--"
+        if item["state"] == "Running":
+            delta = datetime.now(timezone.utc) - start_dt
+        else:
+            finished = item.get("finished_at")
+            if not finished:
+                return "--"
+            try:
+                end_dt = datetime.strptime(finished, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+            except ValueError:
+                return "--"
+            delta = end_dt - start_dt
+        total = int(delta.total_seconds())
+        if total < 60:
+            return f"{total}s"
+        minutes = total // 60
+        if minutes < 60:
+            return f"{minutes}m {total % 60}s"
+        hours = minutes // 60
+        return f"{hours}h {minutes % 60}m"
 
     def _update_log(self) -> None:
         path = self.job_dir / "run.log"
@@ -165,8 +203,17 @@ class JobDetailScreen(Screen[None]):
                 for line in handle:
                     stripped = line.rstrip()
                     self._tail_lines.append(stripped)
-                    log_widget.write(stripped)
+                    styled = self._style_log_line(stripped)
+                    log_widget.write(styled)
                 self._tail_offset = handle.tell()
+
+    @staticmethod
+    def _style_log_line(line: str) -> str:
+        """Dim timestamp prefixes in log lines for visual separation."""
+        if line.startswith("[") and "]" in line:
+            idx = line.index("]") + 1
+            return f"[dim]{line[:idx]}[/]{line[idx:]}"
+        return line
 
     async def action_cancel(self) -> None:
         try:
@@ -179,6 +226,7 @@ class JobDetailScreen(Screen[None]):
             if not confirmed:
                 return
             process.cancel_process_group(pid)
+            self.notify(f"Cancellation requested for Job {item['id']}", severity="warning")
             self.query_one("#job-status-line", Static).update(
                 "[yellow]Cancellation requested\u2026[/]"
             )

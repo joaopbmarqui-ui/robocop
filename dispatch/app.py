@@ -1,14 +1,18 @@
 """Textual application shell for Dispatch."""
 
+import logging
 from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.reactive import reactive
 from textual.widgets import Footer, Header, Static
 
-from . import config, kerberos
+from . import config, kerberos, setup_logging
 from .version import __version__
 from .screens.dashboard import DashboardScreen
+from .screens.help import HelpScreen
+
+logger = logging.getLogger("dispatch.app")
 
 APP_CSS = """
 /* ── Global ── */
@@ -157,6 +161,11 @@ DataTable > .datatable--header {
     margin: 0 1;
 }
 
+.button-spacer {
+    width: 4;
+    height: auto;
+}
+
 /* ── Show-more link ── */
 .show-more {
     text-align: right;
@@ -280,6 +289,11 @@ DataTable > .datatable--header {
     margin: 0 1;
     border: round $primary-background-darken-1;
     overflow-y: auto;
+}
+
+#sql-display RichLog {
+    height: 1fr;
+    padding: 0 1;
 }
 
 #sql-display Static {
@@ -565,6 +579,25 @@ ConfirmScreen {
 #confirm-buttons Button {
     margin: 0 1;
 }
+
+/* ── Help modal ── */
+HelpScreen {
+    align: center middle;
+}
+
+#help-dialog {
+    width: 60;
+    height: auto;
+    max-height: 80%;
+    border: double $primary;
+    padding: 1 2;
+    background: $surface;
+    overflow-y: auto;
+}
+
+#help-body {
+    height: auto;
+}
 """
 
 
@@ -595,11 +628,20 @@ class DispatchApp(App[None]):
 
     BINDINGS = [
         ("q", "quit", "Quit"),
+        ("question_mark", "help", "Help"),
     ]
+
+    def action_help(self) -> None:
+        self.push_screen(HelpScreen())
 
     def __init__(self) -> None:
         super().__init__()
+        setup_logging()
         self.launch_cwd = Path.cwd()
+        logger.info(
+            "Dispatch %s starting, cwd=%s, data_root=%s",
+            __version__, self.launch_cwd, config.data_root(),
+        )
 
     def compose(self) -> ComposeResult:
         yield Static("", id="version-warning", markup=True)
@@ -614,9 +656,35 @@ class DispatchApp(App[None]):
             w.update(version_warning)
         else:
             w.display = False
+
+        if not config.dispatch_home().exists():
+            logger.error("Dispatch home %s does not exist", config.dispatch_home())
+            self.notify(
+                "Dispatch is not installed for this user. "
+                "Run install.sh to set up.",
+                severity="error",
+                timeout=0,
+            )
+
+        if self.size.width < 80 or self.size.height < 24:
+            self.notify(
+                f"Terminal too small ({self.size.width}\u00d7{self.size.height}). "
+                "Minimum: 80\u00d724. Some layouts may break.",
+                severity="warning",
+                timeout=0,
+            )
+
         self.push_screen(DashboardScreen(self.launch_cwd))
         await self._refresh_kerberos_indicator()
         self.set_interval(60.0, self._refresh_kerberos_indicator)
+
+    def on_resize(self) -> None:
+        if self.size.width < 80 or self.size.height < 24:
+            self.notify(
+                f"Terminal too small ({self.size.width}\u00d7{self.size.height}). "
+                "Minimum: 80\u00d724.",
+                severity="warning",
+            )
 
     async def _refresh_kerberos_indicator(self) -> None:
         ttl = await kerberos.ticket_ttl_seconds()

@@ -49,3 +49,23 @@ def write_config(config: dict[str, Any], user: str | None = None) -> None:
     with path.open("w", encoding="utf-8") as handle:
         json.dump(config, handle, indent=2, sort_keys=True)
         handle.write("\n")
+
+
+def read_form_defaults(user: str | None = None) -> dict[str, str]:
+    """Read last-used form defaults from config, returning empty dict on failure."""
+    try:
+        cfg = read_config(user)
+        defaults = cfg.get("form_defaults", {})
+        return defaults if isinstance(defaults, dict) else {}
+    except (OSError, ValueError, json.JSONDecodeError):
+        return {}
+
+
+def save_form_defaults(values: dict[str, str], user: str | None = None) -> None:
+    """Merge form defaults into the existing config, creating if needed."""
+    try:
+        cfg = read_config(user)
+    except (OSError, ValueError, json.JSONDecodeError):
+        cfg = {}
+    cfg["form_defaults"] = values
+    write_config(cfg, user)

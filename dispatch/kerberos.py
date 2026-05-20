@@ -8,18 +8,29 @@ and `MM/DD/YYYY HH:MM:SS` expiry timestamps.
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 
 from . import process
 
+logger = logging.getLogger("dispatch.kerberos")
+
 
 async def has_ticket() -> bool:
-    rc, _stdout, _stderr = await process.run_exec("klist", "-s", timeout=5)
-    return rc == 0
+    try:
+        rc, _stdout, _stderr = await process.run_exec("klist", "-s", timeout=5)
+        return rc == 0
+    except (OSError, FileNotFoundError):
+        logger.warning("klist not found on PATH")
+        return False
 
 
 async def ticket_ttl_seconds() -> int | None:
-    rc, stdout, _stderr = await process.run_exec("klist", timeout=5)
+    try:
+        rc, stdout, _stderr = await process.run_exec("klist", timeout=5)
+    except (OSError, FileNotFoundError):
+        logger.warning("klist not found on PATH; Kerberos unavailable")
+        return None
     if rc != 0:
         return None
     return parse_ttl_seconds(stdout)

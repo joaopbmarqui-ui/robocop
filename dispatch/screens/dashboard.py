@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
+
+logger = logging.getLogger("dispatch.dashboard")
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
@@ -47,7 +50,7 @@ class DashboardScreen(Screen[None]):
                     with Vertical(classes="stat-card"):
                         yield Static("RUNNING", classes="stat-label")
                         yield Static("0 / 2", id="stat-running", classes="stat-value stat-green")
-                        yield Static("active / limit", classes="stat-sub")
+                        yield Static("running / cap", classes="stat-sub")
                     with Vertical(classes="stat-card"):
                         yield Static("FINISHED (7D)", classes="stat-label")
                         yield Static("0", id="stat-finished", classes="stat-value stat-green")
@@ -144,7 +147,7 @@ class DashboardScreen(Screen[None]):
         if running:
             for item in running:
                 active_table.add_row(
-                    item["id"][:24],
+                    self._display_id(item["id"]),
                     self._source_label(item),
                     self._dest_label(item),
                     "[green]\u25cf RUNNING[/]",
@@ -171,7 +174,7 @@ class DashboardScreen(Screen[None]):
                 else:
                     state_display = f"\u25cf {state}"
                 recent_table.add_row(
-                    item["id"][:24],
+                    self._display_id(item["id"]),
                     self._source_label(item),
                     self._dest_label(item),
                     state_display,
@@ -183,6 +186,13 @@ class DashboardScreen(Screen[None]):
                 "No recently finished Jobs", "", "", "", "",
                 key="__empty__",
             )
+
+    @staticmethod
+    def _display_id(job_id: str) -> str:
+        """Show timestamp + token suffix to distinguish same-day jobs."""
+        if len(job_id) > 20:
+            return job_id[9:]
+        return job_id
 
     def _source_label(self, item: dict) -> str:
         src = item.get("source", {})

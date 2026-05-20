@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from . import config, manifest
+
+logger = logging.getLogger("dispatch.jobs")
 
 ACTIVE_WINDOW = timedelta(days=7)
 RUNNING_CAP = 2
@@ -25,7 +28,8 @@ def list_manifests(root: Path | None = None) -> list[manifest.JobManifest]:
     for path in sorted(base.glob("*/manifest.json"), reverse=True):
         try:
             loaded.append(manifest.load(path))
-        except Exception:
+        except Exception as exc:
+            logger.warning("Skipping corrupt manifest %s: %s", path, exc)
             continue
     return loaded
 

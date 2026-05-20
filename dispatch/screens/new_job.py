@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import calendar
 import asyncio
+import logging
 import os
 from datetime import date
 from pathlib import Path
+
+logger = logging.getLogger("dispatch.new_job")
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
@@ -123,10 +126,12 @@ class NewJobScreen(Screen[None]):
         matrix.add_row("ExistingTable", "[dim]\u2014[/]", "[green]\u2713[/]", "[dim]\u2014[/]")
         matrix.show_cursor = False
 
+        self._apply_saved_defaults()
         self.kerberos_ttl = await kerberos.ticket_ttl_seconds()
         self._refresh_kerberos()
         self._detect_sql()
         self._update_field_visibility()
+        self._inline_validate()
 
     @staticmethod
     def _default_start_date() -> str:
@@ -160,6 +165,34 @@ class NewJobScreen(Screen[None]):
 
     def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
         self._update_field_visibility()
+        self._inline_validate()
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        self._inline_validate()
+
+    def _inline_validate(self) -> None:
+        """Provide real-time field validation indicators."""
+        source = self._selected_source()
+        msgs = []
+        if source in ("SqlFile", "SqlTemplate"):
+            sql_path = Path(self._input_value("sql-file"))
+            if sql_path.exists():
+                msgs.append("[green]\u2713[/] SQL file found")
+            elif self._input_value("sql-file"):
+                msgs.append("[red]\u2717[/] SQL file not found")
+        email = self._input_value("email")
+        if email:
+            if "@" in email and "." in email.split("@")[-1]:
+                msgs.append("[green]\u2713[/] Email")
+            else:
+                msgs.append("[red]\u2717[/] Invalid email format")
+        if self.kerberos_ttl is None:
+            msgs.append("[red]\u2717[/] Kerberos missing")
+        elif self.kerberos_ttl < 300:
+            msgs.append("[yellow]\u26a0[/] Kerberos TTL low")
+        else:
+            msgs.append("[green]\u2713[/] Kerberos")
+        self.query_one("#warning-text", Static).update("  ".join(msgs))
 
     def _update_field_visibility(self) -> None:
         source = self._selected_source()
@@ -195,11 +228,18 @@ class NewJobScreen(Screen[None]):
 
     def _refresh_kerberos(self) -> None:
         label = self.query_one("#kerberos-status", Static)
+        launch_btn = self.query_one("#launch", Button)
         if self.kerberos_ttl is None:
             label.update("[yellow]Kerberos ticket missing \u2014 press K to kinit[/]")
+            launch_btn.disabled = True
+        elif self.kerberos_ttl < 300:
+            minutes = self.kerberos_ttl // 60
+            label.update(f"[yellow]Kerberos: {minutes}m remaining (< 5 min \u2014 press K to renew)[/]")
+            launch_btn.disabled = True
         else:
             minutes = self.kerberos_ttl // 60
             label.update(f"[dim]Kerberos: {minutes}m remaining[/]")
+            launch_btn.disabled = False
 
     def _read_sql(self) -> str | None:
         sql_path = Path(self._input_value("sql-file"))
@@ -309,13 +349,19 @@ class NewJobScreen(Screen[None]):
         else:
             preview = sql.table_wrapper(sql_text, schema, table, config.current_user())
         self.app.push_screen(
-            PreviewScreen("SQL Preview", preview, schema=schema, table=table)
+            PreviewScreen(
+                "SQL Preview", preview,
+                schema=schema, table=table,
+                source_type=source_type,
+                dest_type=self._selected_destination(),
+            )
         )
 
     async def action_launch(self) -> None:
         error = self._validate()
         if error:
             self._show_message(error, "error")
+            self.notify(error, severity="error")
             return
         source_type = self._selected_source()
         if source_type == "ExistingTable":
@@ -336,6 +382,9 @@ class NewJobScreen(Screen[None]):
             sql_text=sql_text,
         )
         await process.launch_runner(job_dir)
+        logger.info("Launched Job %s source=%s dest=%s", job_dir.name, source["type"], destination["type"])
+        self._save_form_defaults()
+        self.notify(f"\u2713 Launched Job {job_dir.name}", severity="information")
         self._show_message(f"\u2713 Launched Job {job_dir.name}", "success")
 
     async def _confirm_launch(
@@ -386,6 +435,38 @@ class NewJobScreen(Screen[None]):
         self.kerberos_ttl = await kerberos.ticket_ttl_seconds()
         self._refresh_kerberos()
         await self.app._refresh_kerberos_indicator()
+        if self.kerberos_ttl is not None:
+            self.notify(f"Kerberos refreshed: {self.kerberos_ttl // 60}m", severity="information")
+        else:
+            self.notify("Kerberos ticket still missing", severity="warning")
+
+    def _apply_saved_defaults(self) -> None:
+        defaults = config.read_form_defaults()
+        if not defaults:
+            return
+        field_map = {
+            "schema": "schema",
+            "email": "email",
+            "subject": "subject",
+        }
+        for key, widget_id in field_map.items():
+            if key in defaults and defaults[key]:
+                try:
+                    self.query_one(f"#{widget_id}", Input).value = defaults[key]
+                except Exception:
+                    pass
+
+    def _save_form_defaults(self) -> None:
+        values = {
+            "schema": self._input_value("schema"),
+            "email": self._input_value("email"),
+            "subject": self._input_value("subject"),
+            "destination_type": self._selected_destination(),
+        }
+        try:
+            config.save_form_defaults(values)
+        except OSError:
+            pass
 
     def on_nav_item_selected(self, event: NavItem.Selected) -> None:
         if event.item_id == "overview":

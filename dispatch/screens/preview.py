@@ -5,20 +5,45 @@ from __future__ import annotations
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Static
+from textual.widgets import Button, Footer, Header, RichLog, Static
 
 from .sidebar import Sidebar
 
+_SQL_KEYWORDS = {
+    "SELECT", "FROM", "WHERE", "INSERT", "INTO", "UPDATE", "DELETE",
+    "CREATE", "DROP", "ALTER", "TABLE", "IF", "EXISTS", "NOT",
+    "AS", "AND", "OR", "IN", "IS", "NULL", "ON", "JOIN", "LEFT",
+    "RIGHT", "INNER", "OUTER", "GROUP", "BY", "ORDER", "HAVING",
+    "LIMIT", "OFFSET", "UNION", "ALL", "DISTINCT", "SET",
+    "STORED", "PARQUET", "LOCATION", "LIKE", "BETWEEN",
+    "CASE", "WHEN", "THEN", "ELSE", "END", "CAST", "WITH",
+    "VALUES", "COUNT", "SUM", "AVG", "MIN", "MAX",
+}
 
-def _numbered_sql(body: str) -> str:
-    """Add line numbers via Rich markup."""
+
+def _highlight_sql(line: str) -> str:
+    """Apply basic keyword highlighting via Rich markup."""
+    tokens = []
+    for word in line.split(" "):
+        if word.upper() in _SQL_KEYWORDS:
+            tokens.append(f"[bold cyan]{word}[/]")
+        elif word.startswith("'") or word.startswith('"'):
+            tokens.append(f"[green]{word}[/]")
+        else:
+            tokens.append(word)
+    return " ".join(tokens)
+
+
+def _numbered_sql(body: str) -> list[str]:
+    """Add line numbers and keyword highlighting via Rich markup."""
     lines = body.splitlines()
     width = len(str(len(lines)))
     result = []
     for i, line in enumerate(lines, 1):
         num = f"[dim]{i:>{width}}[/]"
-        result.append(f"{num} \u2502 {line}")
-    return "\n".join(result)
+        highlighted = _highlight_sql(line)
+        result.append(f"{num} \u2502 {highlighted}")
+    return result
 
 
 class PreviewScreen(Screen[None]):
@@ -35,12 +60,16 @@ class PreviewScreen(Screen[None]):
         *,
         schema: str = "",
         table: str = "",
+        source_type: str = "",
+        dest_type: str = "",
     ) -> None:
         super().__init__()
         self._title = title
         self.body = body
         self.schema = schema
         self.table = table
+        self.source_type = source_type or "SqlFile"
+        self.dest_type = dest_type or "Table"
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -63,19 +92,24 @@ class PreviewScreen(Screen[None]):
                     yield Static(meta, id="preview-meta")
 
                 with Vertical(id="sql-display"):
-                    yield Static(_numbered_sql(self.body), id="preview-body")
+                    yield RichLog(id="preview-body", highlight=True, markup=True)
 
                 with Horizontal(id="preview-footer-info"):
-                    yield Static("[dim]Source Type: table[/]")
-                    dest_label = ""
-                    if self.schema:
-                        dest_label = "[dim]Destination: " + self.schema + "." + self.table + "[/]"
+                    yield Static(f"[dim]Source: {self.source_type}[/]")
+                    dest_label = f"[dim]Destination: {self.dest_type}[/]"
+                    if self.schema and self.table:
+                        dest_label = f"[dim]Destination: {self.dest_type} \u2192 {self.schema}.{self.table}[/]"
                     yield Static(dest_label)
 
                 with Horizontal(classes="button-row"):
                     yield Button("Accept & Return [Enter]", id="accept", variant="primary")
                     yield Button("Back [B/Esc]", id="back", variant="default")
         yield Footer()
+
+    def on_mount(self) -> None:
+        log = self.query_one("#preview-body", RichLog)
+        for line in _numbered_sql(self.body):
+            log.write(line)
 
     def action_accept(self) -> None:
         self.app.pop_screen()

@@ -71,6 +71,7 @@ class BrowserScreen(Screen[None]):
         table.add_columns("Name", "Type")
         table.cursor_type = "row"
         self._show_detail_placeholder()
+        self._update_action_state()
 
     def _show_detail_placeholder(self) -> None:
         self.query_one("#file-preview-title", Static).update("[dim]No table selected[/]")
@@ -96,6 +97,12 @@ class BrowserScreen(Screen[None]):
         if not selected:
             return ""
         return selected if "." in selected else f"{self._schema()}.{selected}"
+
+    def _update_action_state(self) -> None:
+        """Enable/disable DESCRIBE and DROP based on whether a table is selected."""
+        has_selection = bool(self._full_table())
+        self.query_one("#describe", Button).disabled = not has_selection
+        self.query_one("#drop", Button).disabled = not has_selection
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "show":
@@ -131,6 +138,7 @@ class BrowserScreen(Screen[None]):
         else:
             table.cursor_coordinate = (0, 0)
             await self.action_describe()
+        self._update_action_state()
 
     async def action_describe(self) -> None:
         full = self._full_table()
@@ -167,6 +175,7 @@ class BrowserScreen(Screen[None]):
         self.query_one("#browser-selected", Static).update(
             f"[cyan]Selected: {full}[/]"
         )
+        self._update_action_state()
 
     @staticmethod
     def _parse_describe(raw: str) -> list[dict[str, str]]:
@@ -183,6 +192,10 @@ class BrowserScreen(Screen[None]):
                     "comment": parts[2] if len(parts) > 2 else "",
                 })
         return columns
+
+    def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        """Update button state whenever the cursor moves to a different row."""
+        self._update_action_state()
 
     async def action_drop(self) -> None:
         full = self._full_table()

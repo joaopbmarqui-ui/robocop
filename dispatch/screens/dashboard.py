@@ -122,7 +122,7 @@ class DashboardScreen(Screen[None]):
             except ValueError:
                 return "--"
             delta = end_dt - start_dt
-        total_seconds = int(delta.total_seconds())
+        total_seconds = max(0, int(delta.total_seconds()))
         if total_seconds < 60:
             return f"{total_seconds}s"
         minutes = total_seconds // 60

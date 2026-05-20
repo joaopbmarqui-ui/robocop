@@ -81,29 +81,37 @@ class NewJobScreen(Screen[None]):
                                 yield RadioButton("Table+Csv", id="dst-table-csv")
 
                 with Vertical(id="form-grid"):
-                    yield Static("SQL File", classes="field-label", id="lbl-sql-file")
-                    yield Input(value=self._default_sql_file(), placeholder="SQL File", id="sql-file")
+                    with Horizontal(classes="form-row", id="row-sql-file"):
+                        yield Static("SQL File", classes="field-label", id="lbl-sql-file")
+                        yield Input(value=self._default_sql_file(), placeholder="SQL File", id="sql-file")
 
-                    yield Static("Existing Table", classes="field-label", id="lbl-existing-table")
-                    yield Input(value="", placeholder="e.g. analytics.events_existing", id="existing-table")
+                    with Horizontal(classes="form-row", id="row-existing-table"):
+                        yield Static("Existing Table", classes="field-label", id="lbl-existing-table")
+                        yield Input(value="", placeholder="e.g. analytics.events_existing", id="existing-table")
 
-                    yield Static("Schema", classes="field-label", id="lbl-schema")
-                    yield Input(value="dw_settle", placeholder="Schema", id="schema")
+                    with Horizontal(classes="form-row", id="row-schema"):
+                        yield Static("Schema", classes="field-label", id="lbl-schema")
+                        yield Input(value="dw_settle", placeholder="Schema", id="schema")
 
-                    yield Static("Table Name", classes="field-label", id="lbl-table-name")
-                    yield Input(value="dispatch_result", placeholder="Table name", id="table-name")
+                    with Horizontal(classes="form-row", id="row-table-name"):
+                        yield Static("Table Name", classes="field-label", id="lbl-table-name")
+                        yield Input(value="dispatch_result", placeholder="Table name", id="table-name")
 
-                    yield Static("Start Date (YYYY-MM-DD)", classes="field-label", id="lbl-start-date")
-                    yield Input(value=self._default_start_date(), placeholder="YYYY-MM-DD", id="start-date")
+                    with Horizontal(classes="form-row", id="row-start-date"):
+                        yield Static("Start Date (YYYY-MM-DD)", classes="field-label", id="lbl-start-date")
+                        yield Input(value=self._default_start_date(), placeholder="YYYY-MM-DD", id="start-date")
 
-                    yield Static("End Date (YYYY-MM-DD)", classes="field-label", id="lbl-end-date")
-                    yield Input(value=self._default_end_date(), placeholder="YYYY-MM-DD", id="end-date")
+                    with Horizontal(classes="form-row", id="row-end-date"):
+                        yield Static("End Date (YYYY-MM-DD)", classes="field-label", id="lbl-end-date")
+                        yield Input(value=self._default_end_date(), placeholder="YYYY-MM-DD", id="end-date")
 
-                    yield Static("Email (notifications)", classes="field-label", id="lbl-email")
-                    yield Input(value="", placeholder="dataops@company.com", id="email")
+                    with Horizontal(classes="form-row", id="row-email"):
+                        yield Static("Email (notifications)", classes="field-label", id="lbl-email")
+                        yield Input(value="", placeholder="dataops@company.com", id="email")
 
-                    yield Static("Subject (email)", classes="field-label", id="lbl-subject")
-                    yield Input(value="Dispatch Job", placeholder="Subject line", id="subject")
+                    with Horizontal(classes="form-row", id="row-subject"):
+                        yield Static("Subject (email)", classes="field-label", id="lbl-subject")
+                        yield Input(value="Dispatch Job", placeholder="Subject line", id="subject")
 
                 yield Static("", id="warning-text")
 
@@ -208,23 +216,12 @@ class NewJobScreen(Screen[None]):
         is_template = source == "SqlTemplate"
         needs_table = destination in ("Table", "Table+Csv") or is_template
 
-        self.query_one("#lbl-sql-file", Static).display = is_sql
-        self.query_one("#sql-file", Input).display = is_sql
-
-        self.query_one("#lbl-existing-table", Static).display = is_existing
-        self.query_one("#existing-table", Input).display = is_existing
-
-        self.query_one("#lbl-schema", Static).display = needs_table
-        self.query_one("#schema", Input).display = needs_table
-
-        self.query_one("#lbl-table-name", Static).display = needs_table
-        self.query_one("#table-name", Input).display = needs_table
-
-        self.query_one("#lbl-start-date", Static).display = is_template
-        self.query_one("#start-date", Input).display = is_template
-
-        self.query_one("#lbl-end-date", Static).display = is_template
-        self.query_one("#end-date", Input).display = is_template
+        self.query_one("#row-sql-file").display = is_sql
+        self.query_one("#row-existing-table").display = is_existing
+        self.query_one("#row-schema").display = needs_table
+        self.query_one("#row-table-name").display = needs_table
+        self.query_one("#row-start-date").display = is_template
+        self.query_one("#row-end-date").display = is_template
 
     def _refresh_kerberos(self) -> None:
         label = self.query_one("#kerberos-status", Static)

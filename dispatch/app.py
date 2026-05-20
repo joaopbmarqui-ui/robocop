@@ -5,7 +5,7 @@ from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.reactive import reactive
-from textual.widgets import Footer, Header, Static
+from textual.widgets import Header, Static
 
 from . import config, kerberos, setup_logging
 from .version import __version__
@@ -224,21 +224,25 @@ DataTable > .datatable--header {
 }
 
 #form-grid {
-    layout: grid;
-    grid-size: 2 6;
-    grid-gutter: 1;
     height: auto;
     padding: 1;
-    grid-columns: 1fr 1fr;
 }
 
-#form-grid .field-label {
+.form-row {
+    height: auto;
+    margin: 0 0 1 0;
+    align-vertical: middle;
+}
+
+.form-row .field-label {
+    width: 22;
     color: $accent;
-    height: 1;
-    padding: 0;
+    height: 3;
+    content-align-vertical: middle;
 }
 
-#form-grid Input {
+.form-row Input {
+    width: 1fr;
     height: 3;
 }
 
@@ -322,9 +326,11 @@ DataTable > .datatable--header {
 
 #job-summary-panel {
     height: auto;
+    max-height: 14;
     padding: 1;
     margin: 1;
     border: round $primary-background-darken-1;
+    overflow-y: auto;
 }
 
 #job-summary-panel .section-title {
@@ -645,9 +651,7 @@ class DispatchApp(App[None]):
 
     def compose(self) -> ComposeResult:
         yield Static("", id="version-warning", markup=True)
-        yield Header(show_clock=True)
         yield KerberosIndicator(id="krb-indicator")
-        yield Footer()
 
     async def on_mount(self) -> None:
         version_warning = self._build_version_warning()

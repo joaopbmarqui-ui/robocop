@@ -106,7 +106,9 @@ class JobDetailScreen(Screen[None]):
         state = item["state"]
 
         self.query_one("#sum-source", Static).update(
-            source.get("table_name") or source.get("sql_path_at_launch") or source.get("type", "--")
+            self._truncate_path(
+                source.get("table_name") or source.get("sql_path_at_launch") or source.get("type", "--")
+            )
         )
         schema = dest.get("schema", "")
         table = dest.get("table_name", "")
@@ -136,7 +138,7 @@ class JobDetailScreen(Screen[None]):
         self.query_one("#sum-table", Static).update(full_table)
         csv_path = dest.get("csv_path") or ""
         if dest.get("type") in ("Csv", "Table+Csv") and csv_path:
-            self.query_one("#sum-csv", Static).update(csv_path)
+            self.query_one("#sum-csv", Static).update(self._truncate_path(csv_path))
         else:
             self.query_one("#sum-csv", Static).update("[dim]N/A (table-only)[/]")
 
@@ -175,7 +177,7 @@ class JobDetailScreen(Screen[None]):
             except ValueError:
                 return "--"
             delta = end_dt - start_dt
-        total = int(delta.total_seconds())
+        total = max(0, int(delta.total_seconds()))
         if total < 60:
             return f"{total}s"
         minutes = total // 60
@@ -206,6 +208,13 @@ class JobDetailScreen(Screen[None]):
                     styled = self._style_log_line(stripped)
                     log_widget.write(styled)
                 self._tail_offset = handle.tell()
+
+    @staticmethod
+    def _truncate_path(value: str, max_len: int = 40) -> str:
+        """Shorten long paths to last max_len chars with an ellipsis prefix."""
+        if len(value) <= max_len:
+            return value
+        return f"\u2026{value[-max_len:]}"
 
     @staticmethod
     def _style_log_line(line: str) -> str:

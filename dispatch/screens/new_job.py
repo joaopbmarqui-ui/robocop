@@ -84,6 +84,7 @@ class NewJobScreen(Screen[None]):
                     with Horizontal(classes="form-row", id="row-sql-file"):
                         yield Static("SQL File", classes="field-label", id="lbl-sql-file")
                         yield Input(value=self._default_sql_file(), placeholder="SQL File", id="sql-file")
+                    yield Static("", classes="path-hint", id="path-hint")
 
                     with Horizontal(classes="form-row", id="row-existing-table"):
                         yield Static("Existing Table", classes="field-label", id="lbl-existing-table")
@@ -177,6 +178,8 @@ class NewJobScreen(Screen[None]):
 
     def on_input_changed(self, event: Input.Changed) -> None:
         self._inline_validate()
+        if event.input.id == "sql-file":
+            self._refresh_path_hint()
 
     def _inline_validate(self) -> None:
         """Provide real-time field validation indicators."""
@@ -223,7 +226,25 @@ class NewJobScreen(Screen[None]):
         self.query_one("#row-start-date").display = is_template
         self.query_one("#row-end-date").display = is_template
 
+        hint = self.query_one("#path-hint", Static)
+        hint.display = is_sql
+        if is_sql:
+            self._refresh_path_hint()
+
+    def _refresh_path_hint(self) -> None:
+        """Update the path hint to show just the filename of the SQL file."""
+        raw = self._input_value("sql-file")
+        hint = self.query_one("#path-hint", Static)
+        if raw:
+            name = Path(raw).name
+            exists = Path(raw).exists()
+            icon = "[green]\u2713[/]" if exists else "[red]\u2717[/]"
+            hint.update(f"{icon} [dim]{name}[/]")
+        else:
+            hint.update("")
+
     def _refresh_kerberos(self) -> None:
+
         label = self.query_one("#kerberos-status", Static)
         launch_btn = self.query_one("#launch", Button)
         if self.kerberos_ttl is None:
@@ -464,9 +485,3 @@ class NewJobScreen(Screen[None]):
             config.save_form_defaults(values)
         except OSError:
             pass
-
-    def on_nav_item_selected(self, event: NavItem.Selected) -> None:
-        if event.item_id == "overview":
-            self.app.pop_screen()
-        elif event.item_id != "new_job":
-            self.dismiss()

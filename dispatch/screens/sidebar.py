@@ -53,11 +53,8 @@ class Sidebar(Widget):
                 for label, item_id, icon in NAV_ITEMS:
                     yield NavItem(label, item_id, icon)
             with Vertical(id="sidebar-footer"):
-                yield Static("[dim]Q Quit   ? Help[/]")
+                yield Static("[dim]? Help[/]")
 
     def watch_active_screen(self, value: str) -> None:
         for child in self.query(NavItem):
             child.active = child.item_id == value
-
-    def on_nav_item_selected(self, event: NavItem.Selected) -> None:
-        self.active_screen = event.item_id

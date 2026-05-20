@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -20,11 +21,17 @@ import pytest
 
 MOCKS_BIN = Path(__file__).resolve().parents[1] / "mocks" / "bin"
 IMPALA_SHELL = MOCKS_BIN / "impala-shell"
+IMPALA_SHELL_CMD = (
+    [sys.executable, str(IMPALA_SHELL)]
+    if os.name == "nt"
+    else [str(IMPALA_SHELL)]
+)
+
 
 # Base flags as used by Query_Impala_Parametrized.run_on_impala and
 # download_to_csv.run_export_on_impala (docs/plan.md §13.1)
 BASE_ARGV = [
-    str(IMPALA_SHELL),
+    *IMPALA_SHELL_CMD,
     "-k",
     "-i", "dw.prod.impala.mastercard.int:21000",
     "--ssl",
@@ -134,8 +141,7 @@ class TestQueryImpalaParametrizedArgv:
         """The orchestrators may add flags in future; the mock must not reject them."""
         state_dir = str(tmp_path / "state")
         result = subprocess.run(
-            [
-                str(IMPALA_SHELL),
+            IMPALA_SHELL_CMD + [
                 "-k", "--ssl", "--delimited", "--print_header",
                 "--output_delimiter=|",
                 "--future-unknown-flag", "somevalue",

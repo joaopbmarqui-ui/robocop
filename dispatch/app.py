@@ -1,5 +1,7 @@
 """Textual application shell for Dispatch."""
 
+from __future__ import annotations
+
 import logging
 from pathlib import Path
 
@@ -8,9 +10,14 @@ from textual.reactive import reactive
 from textual.widgets import Header, Static
 
 from . import config, kerberos, setup_logging
+from .screens.browser import BrowserScreen
 from .version import __version__
 from .screens.dashboard import DashboardScreen
 from .screens.help import HelpScreen
+from .screens.history import HistoryScreen
+from .screens.job_detail import JobDetailScreen
+from .screens.new_job import NewJobScreen
+from .screens.sidebar import NavItem
 
 logger = logging.getLogger("dispatch.app")
 
@@ -180,6 +187,27 @@ DataTable > .datatable--header {
     padding: 0;
 }
 
+/* ── Empty state panels ── */
+.empty-state {
+    height: auto;
+    padding: 2 4;
+    margin: 1 2;
+    content-align: center middle;
+    text-align: center;
+    color: $text-muted;
+    border: dashed $primary-background-darken-2;
+}
+
+.empty-state .empty-icon {
+    text-align: center;
+    color: $primary-background-darken-1;
+}
+
+.empty-state .empty-hint {
+    color: $text-muted;
+    text-align: center;
+}
+
 /* ── New Job screen ── */
 #new-job-content {
     height: 1fr;
@@ -200,7 +228,45 @@ DataTable > .datatable--header {
 
 #matrix-table {
     height: auto;
-    max-height: 8;
+    max-height: 6;
+    margin: 0;
+}
+
+#radio-panel {
+    height: auto;
+    margin: 0 1 1 1;
+}
+
+#radio-row {
+    height: auto;
+}
+
+.radio-group {
+    width: 1fr;
+    height: auto;
+    padding: 0 1;
+}
+
+.radio-group .field-label {
+    color: $accent;
+    text-style: bold;
+    height: 1;
+    margin: 0 0 1 0;
+}
+
+.path-hint {
+    color: $text-muted;
+    padding: 0 0 0 22;
+    height: 1;
+    overflow: hidden;
+}
+
+Button:disabled {
+    opacity: 0.4;
+}
+
+#describe-table {
+    height: 1fr;
     margin: 0;
 }
 
@@ -290,6 +356,7 @@ DataTable > .datatable--header {
 
 #sql-display {
     height: 1fr;
+    min-height: 6;
     margin: 0 1;
     border: round $primary-background-darken-1;
     overflow-y: auto;
@@ -406,6 +473,14 @@ DataTable > .datatable--header {
 #search-row Input {
     width: 1fr;
     margin: 0 1;
+}
+
+#search-label {
+    width: auto;
+    height: 3;
+    content-align-vertical: middle;
+    padding: 0 1;
+    color: $text-muted;
 }
 
 #history-table {
@@ -604,6 +679,14 @@ HelpScreen {
 #help-body {
     height: auto;
 }
+
+#help-quick {
+    height: auto;
+    padding: 0 0 1 0;
+    margin: 0 0 1 0;
+    border-bottom: solid $primary-background-darken-2;
+    color: $text-muted;
+}
 """
 
 
@@ -702,3 +785,58 @@ class DispatchApp(App[None]):
         if installed != __version__:
             return f"\u26a0 Version mismatch: installed {installed}, running {__version__}. Run install.sh."
         return ""
+
+    def on_nav_item_selected(self, event: NavItem.Selected) -> None:
+        item_id = event.item_id
+        current = self.screen
+
+        # If we are selecting the item we are already on, do nothing
+        if item_id == "overview" and isinstance(current, DashboardScreen):
+            return
+        if item_id == "new_job" and isinstance(current, NewJobScreen):
+            return
+        if item_id == "history" and isinstance(current, HistoryScreen):
+            return
+        if item_id == "browse" and isinstance(current, BrowserScreen):
+            return
+        if item_id == "view_logs" and isinstance(current, JobDetailScreen):
+            return
+
+        if item_id == "view_logs":
+            job_id = self._sidebar_selected_job_id(current)
+            if job_id and job_id != "__empty__":
+                self.call_after_refresh(self._navigate_from_sidebar, "view_logs", job_id)
+            else:
+                self.notify(
+                    "Please select a job from the Overview or History table first.",
+                    severity="warning",
+                )
+            return
+
+        self.call_after_refresh(self._navigate_from_sidebar, item_id, None)
+
+    def _navigate_from_sidebar(self, item_id: str, job_id: str | None) -> None:
+        self._pop_to_dashboard()
+
+        if item_id == "overview":
+            return
+        if item_id == "new_job":
+            self.push_screen(NewJobScreen(self.launch_cwd))
+        elif item_id == "history":
+            self.push_screen(HistoryScreen())
+        elif item_id == "browse":
+            self.push_screen(BrowserScreen())
+        elif item_id == "view_logs" and job_id:
+            self.push_screen(JobDetailScreen(job_id))
+
+    def _pop_to_dashboard(self) -> None:
+        while len(self.screen_stack) > 2:
+            self.pop_screen()
+
+    @staticmethod
+    def _sidebar_selected_job_id(current: object) -> str | None:
+        if isinstance(current, DashboardScreen):
+            return current._selected_job_id()
+        if isinstance(current, HistoryScreen):
+            return current._selected_job_id()
+        return None

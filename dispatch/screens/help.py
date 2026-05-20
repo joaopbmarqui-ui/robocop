@@ -7,6 +7,10 @@ from textual.containers import Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Static
 
+QUICK_HELP = """\
+[bold cyan]Quick Reference[/]  [dim]N[/] New Job  [dim]V[/] View Logs  [dim]H[/] History  [dim]B[/] Browser  [dim]?[/] Help  [dim]Q[/] Quit\
+"""
+
 HELP_TEXT = """\
 [bold cyan]Dispatch Keyboard Shortcuts[/]
 
@@ -20,7 +24,7 @@ HELP_TEXT = """\
   [cyan]C[/]       Cancel selected job
   [cyan]H[/]       Open History
   [cyan]B[/]       Open Impala Browser
-  [cyan]↑ ↓[/]     Navigate job rows
+  [cyan]\u2191 \u2193[/]     Navigate job rows
   [cyan]Enter[/]   Open detail for selected row
 
 [bold]New Job[/]
@@ -48,7 +52,7 @@ HELP_TEXT = """\
   [cyan]D[/]       Drop selected table (with typed confirmation)
   [cyan]B / Esc[/] Back
 
-[dim]Press Esc or ? to close this screen.[/]\
+[dim]Press Esc or ? to close.[/]\
 """
 
 
@@ -60,4 +64,5 @@ class HelpScreen(ModalScreen[None]):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="help-dialog"):
+            yield Static(QUICK_HELP, id="help-quick")
             yield Static(HELP_TEXT, id="help-body")

@@ -41,7 +41,7 @@ class BrowserScreen(Screen[None]):
                         with Horizontal(id="search-row"):
                             yield Input(value="dw_settle", placeholder="Schema", id="schema")
                             yield Input(value="*", placeholder="Filter (e.g. dispatch_*)", id="filter")
-                        yield Button("SHOW TABLES", id="show", variant="primary")
+                        yield Button("SHOW TABLES", id="show", variant="default")
                         yield DataTable(id="browser-table")
                         with Horizontal(id="browser-status"):
                             yield Static("", id="browser-selected")
@@ -53,6 +53,7 @@ class BrowserScreen(Screen[None]):
                         with Vertical(id="file-meta"):
                             yield Static("", id="meta-info")
                         with Vertical(id="file-preview-code"):
+                            yield DataTable(id="describe-table")
                             yield Static("", id="describe-body")
 
                 with Horizontal(classes="button-row"):
@@ -70,6 +71,10 @@ class BrowserScreen(Screen[None]):
         table = self.query_one("#browser-table", DataTable)
         table.add_columns("Name", "Type")
         table.cursor_type = "row"
+        describe_table = self.query_one("#describe-table", DataTable)
+        describe_table.add_columns("Column", "Type", "Comment")
+        describe_table.show_cursor = False
+        describe_table.display = False
         self._show_detail_placeholder()
         self._update_action_state()
 
@@ -77,9 +82,32 @@ class BrowserScreen(Screen[None]):
         self.query_one("#file-preview-title", Static).update("[dim]No table selected[/]")
         self.query_one("#file-preview-path", Static).update("")
         self.query_one("#meta-info", Static).update("")
-        self.query_one("#describe-body", Static).update(
-            "[dim]Select a table and press Enter to view its schema.[/]"
+        self.query_one("#browser-selected", Static).update("")
+        self._show_detail_message(
+            "Select a table and press Enter to view its schema.",
+            severity="dim",
         )
+
+    def _show_table_list_message(self, message: str, severity: str = "info") -> None:
+        self.query_one("#file-preview-title", Static).update("[dim]Table list[/]")
+        self.query_one("#file-preview-path", Static).update("")
+        self.query_one("#meta-info", Static).update(
+            f"[dim]Schema: {self._schema()}[/]" if self._schema() else ""
+        )
+        self.query_one("#browser-selected", Static).update("")
+        self._show_detail_message(message, severity=severity)
+
+    def _show_detail_message(self, message: str, severity: str = "info") -> None:
+        color = {
+            "dim": "dim",
+            "info": "cyan",
+            "success": "green",
+            "error": "red",
+        }.get(severity, "dim")
+        body = self.query_one("#describe-body", Static)
+        body.update(f"[{color}]{message}[/]")
+        body.display = True
+        self.query_one("#describe-table").display = False
 
     def _schema(self) -> str:
         return self.query_one("#schema", Input).value.strip()
@@ -115,13 +143,13 @@ class BrowserScreen(Screen[None]):
             self.app.pop_screen()
 
     async def action_show_tables(self) -> None:
-        self.query_one("#describe-body", Static).update("[dim]Loading tables\u2026[/]")
+        self._show_table_list_message("Loading tables…", severity="dim")
         try:
             schema = self._schema()
             filter_val = self.query_one("#filter", Input).value.strip() or "*"
             self._tables = await impala.show_tables(schema, filter_val)
         except Exception as exc:
-            self.query_one("#describe-body", Static).update(f"[red]{exc}[/]")
+            self._show_table_list_message(str(exc), severity="error")
             self.notify(f"SHOW TABLES failed: {exc}", severity="error")
             return
 
@@ -145,6 +173,8 @@ class BrowserScreen(Screen[None]):
         if not full:
             return
         self.query_one("#describe-body", Static).update("[dim]Loading schema\u2026[/]")
+        self.query_one("#describe-body").display = True
+        self.query_one("#describe-table").display = False
         try:
             result = await impala.describe_table(full)
         except Exception as exc:
@@ -163,14 +193,16 @@ class BrowserScreen(Screen[None]):
         )
 
         if columns:
-            header = f"{'Name':<30} {'Type':<20} {'Comment'}"
-            sep = "\u2500" * 30 + " " + "\u2500" * 20 + " " + "\u2500" * 20
-            lines = [f"[bold]{header}[/]", f"[dim]{sep}[/]"]
+            dt = self.query_one("#describe-table", DataTable)
+            dt.clear()
             for col in columns:
-                lines.append(f"{col['name']:<30} [cyan]{col['type']:<20}[/] [dim]{col['comment']}[/]")
-            self.query_one("#describe-body", Static).update("\n".join(lines))
+                dt.add_row(col["name"], col["type"], col["comment"])
+            self.query_one("#describe-body").display = False
+            dt.display = True
         else:
             self.query_one("#describe-body", Static).update(result)
+            self.query_one("#describe-body").display = True
+            self.query_one("#describe-table").display = False
 
         self.query_one("#browser-selected", Static).update(
             f"[cyan]Selected: {full}[/]"
@@ -207,10 +239,10 @@ class BrowserScreen(Screen[None]):
             return
         try:
             result = await impala.drop_table(full)
-            self.query_one("#describe-body", Static).update(f"[green]{result}[/]")
+            self._show_detail_message(result, severity="success")
             self.notify(f"Dropped {full}", severity="information")
         except Exception as exc:
-            self.query_one("#describe-body", Static).update(f"[red]{exc}[/]")
+            self._show_detail_message(str(exc), severity="error")
             self.notify(f"DROP failed: {exc}", severity="error")
 
     async def _confirm_drop(self, full_table: str) -> bool:

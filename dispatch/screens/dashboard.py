@@ -65,8 +65,16 @@ class DashboardScreen(Screen[None]):
                         yield Static("remaining", classes="stat-sub")
                 yield Static("Active Jobs", classes="section-title")
                 yield DataTable(id="active-table")
+                with Vertical(id="active-empty", classes="empty-state"):
+                    yield Static("\u25a1", classes="empty-icon")
+                    yield Static("No active jobs", classes="summary-label")
+                    yield Static("[dim]Press [bold]N[/bold] to create one[/]", classes="empty-hint")
                 yield Static("Recently Finished (last 7 days)", classes="section-title")
                 yield DataTable(id="recent-table")
+                with Vertical(id="recent-empty", classes="empty-state"):
+                    yield Static("\u25a1", classes="empty-icon")
+                    yield Static("No recently finished jobs", classes="summary-label")
+                    yield Static("[dim]Completed jobs appear here for 7 days[/]", classes="empty-hint")
                 yield Static("", id="event-trail")
                 with Horizontal(classes="button-row"):
                     yield Button("New Job [N]", id="new-job", variant="primary")
@@ -81,6 +89,9 @@ class DashboardScreen(Screen[None]):
         recent_table = self.query_one("#recent-table", DataTable)
         recent_table.add_columns("ID", "Source", "Destination", "State", "Elapsed")
         recent_table.cursor_type = "row"
+        # Hide empty states initially
+        self.query_one("#active-empty").display = False
+        self.query_one("#recent-empty").display = False
         self._add_event("dispatch started")
         self.refresh_jobs()
         self.set_interval(2.0, self.refresh_jobs)
@@ -154,11 +165,11 @@ class DashboardScreen(Screen[None]):
                     self._elapsed(item),
                     key=item["id"],
                 )
+            active_table.display = True
+            self.query_one("#active-empty").display = False
         else:
-            active_table.add_row(
-                "No active Jobs \u2014 press N to create one", "", "", "", "",
-                key="__empty__",
-            )
+            active_table.display = False
+            self.query_one("#active-empty").display = True
 
         recent_table = self.query_one("#recent-table", DataTable)
         recent_table.clear()
@@ -181,11 +192,17 @@ class DashboardScreen(Screen[None]):
                     self._elapsed(item),
                     key=item["id"],
                 )
+            recent_table.display = True
+            self.query_one("#recent-empty").display = False
         else:
-            recent_table.add_row(
-                "No recently finished Jobs", "", "", "", "",
-                key="__empty__",
-            )
+            recent_table.display = False
+            self.query_one("#recent-empty").display = True
+
+        focused = self.focused
+        if not active_table.display and recent_table.display and focused is active_table:
+            recent_table.focus()
+        elif active_table.display and not recent_table.display and focused is recent_table:
+            active_table.focus()
 
     @staticmethod
     def _display_id(job_id: str) -> str:
@@ -276,15 +293,3 @@ class DashboardScreen(Screen[None]):
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         row_key = str(event.row_key.value) if event.row_key else ""
         self._selected_job_id_cache = row_key if row_key and row_key != "__empty__" else None
-
-    def on_nav_item_selected(self, event: NavItem.Selected) -> None:
-        if event.item_id == "new_job":
-            self.app.push_screen(NewJobScreen(self.launch_cwd))
-        elif event.item_id == "view_logs":
-            job_id = self._selected_job_id()
-            if job_id:
-                self.app.push_screen(JobDetailScreen(job_id))
-        elif event.item_id == "history":
-            self.app.push_screen(HistoryScreen())
-        elif event.item_id == "browse":
-            self.app.push_screen(BrowserScreen())

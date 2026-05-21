@@ -6,6 +6,7 @@ import logging
 from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import TYPE_CHECKING, cast
 
 logger = logging.getLogger("dispatch.dashboard")
 
@@ -15,11 +16,10 @@ from textual.screen import Screen
 from textual.widgets import Button, DataTable, Footer, Header, Static
 
 from .. import jobs, kerberos
-from .browser import BrowserScreen
-from .history import HistoryScreen
-from .job_detail import JobDetailScreen
-from .new_job import NewJobScreen
-from .sidebar import NavItem, Sidebar
+from .sidebar import Sidebar
+
+if TYPE_CHECKING:
+    from ..app import DispatchApp
 
 
 class DashboardScreen(Screen[None]):
@@ -32,9 +32,8 @@ class DashboardScreen(Screen[None]):
         ("q", "app.quit", "Quit"),
     ]
 
-    def __init__(self, launch_cwd: Path) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        self.launch_cwd = launch_cwd
         self.kerberos_ttl: int | None = None
         self._events: deque[str] = deque(maxlen=5)
         self._selected_job_id_cache: str | None = None
@@ -257,24 +256,27 @@ class DashboardScreen(Screen[None]):
                 return job["id"]
         return None
 
+    def _dispatch_app(self) -> "DispatchApp":
+        return cast("DispatchApp", self.app)
+
     def action_new_job(self) -> None:
-        self.app.push_screen(NewJobScreen(self.launch_cwd))
+        self._dispatch_app().open_top_level("new_job")
 
     def action_view_logs(self) -> None:
         job_id = self._selected_job_id()
         if job_id:
-            self.app.push_screen(JobDetailScreen(job_id))
+            self._dispatch_app().open_job_detail(job_id)
 
     def action_cancel(self) -> None:
         job_id = self._selected_job_id()
         if job_id:
-            self.app.push_screen(JobDetailScreen(job_id, cancel_on_mount=True))
+            self._dispatch_app().open_job_detail(job_id, cancel_on_mount=True)
 
     def action_history(self) -> None:
-        self.app.push_screen(HistoryScreen())
+        self._dispatch_app().open_top_level("history")
 
     def action_browser(self) -> None:
-        self.app.push_screen(BrowserScreen())
+        self._dispatch_app().open_top_level("browse")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "new-job":
@@ -288,7 +290,7 @@ class DashboardScreen(Screen[None]):
         row_key = str(event.row_key.value) if event.row_key else ""
         if row_key and row_key != "__empty__":
             self._selected_job_id_cache = row_key
-            self.app.push_screen(JobDetailScreen(row_key))
+            self._dispatch_app().open_job_detail(row_key)
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         row_key = str(event.row_key.value) if event.row_key else ""

@@ -232,6 +232,51 @@ def test_sidebar_view_logs_from_history_uses_selected_job(
     asyncio.run(run())
 
 
+def test_dashboard_top_level_actions_open_expected_screens(
+    mock_env_with_config, tmp_path
+) -> None:
+    """Dashboard keyboard actions should still open the same top-level screens."""
+    (tmp_path / "query.sql").write_text("select 1\n", encoding="utf-8")
+
+    async def run() -> None:
+        app = DispatchApp()
+        app.launch_cwd = tmp_path
+        async with app.run_test(size=(120, 40)) as pilot:
+            dashboard = app.screen
+            dashboard.action_new_job()
+            await pilot.pause()
+            assert isinstance(app.screen, NewJobScreen)
+            assert [type(screen).__name__ for screen in app.screen_stack] == [
+                "Screen",
+                "DashboardScreen",
+                "NewJobScreen",
+            ]
+
+            app.pop_screen()
+            await pilot.pause()
+            dashboard.action_history()
+            await pilot.pause()
+            assert isinstance(app.screen, HistoryScreen)
+            assert [type(screen).__name__ for screen in app.screen_stack] == [
+                "Screen",
+                "DashboardScreen",
+                "HistoryScreen",
+            ]
+
+            app.pop_screen()
+            await pilot.pause()
+            dashboard.action_browser()
+            await pilot.pause()
+            assert isinstance(app.screen, BrowserScreen)
+            assert [type(screen).__name__ for screen in app.screen_stack] == [
+                "Screen",
+                "DashboardScreen",
+                "BrowserScreen",
+            ]
+
+    asyncio.run(run())
+
+
 def test_dashboard_recent_table_takes_focus_when_active_jobs_are_empty(
     mock_env_with_config,
 ) -> None:

@@ -19,7 +19,7 @@ from textual.widgets import Button, DataTable, Footer, Header, Input, RadioButto
 from .. import config, jobs, kerberos, manifest, process, sql
 from .confirm import ConfirmScreen
 from .preview import PreviewScreen
-from .sidebar import NavItem, Sidebar
+from .sidebar import Sidebar
 
 _SOURCE_IDS = {"src-sqlfile": "SqlFile", "src-sqltemplate": "SqlTemplate", "src-existingtable": "ExistingTable"}
 _DEST_IDS = {"dst-table": "Table", "dst-csv": "Csv", "dst-table-csv": "Table+Csv"}

@@ -761,7 +761,7 @@ class DispatchApp(App[None]):
                 timeout=0,
             )
 
-        self.push_screen(DashboardScreen(self.launch_cwd))
+        self.push_screen(DashboardScreen())
         await self._refresh_kerberos_indicator()
         self.set_interval(60.0, self._refresh_kerberos_indicator)
 
@@ -790,22 +790,13 @@ class DispatchApp(App[None]):
         item_id = event.item_id
         current = self.screen
 
-        # If we are selecting the item we are already on, do nothing
-        if item_id == "overview" and isinstance(current, DashboardScreen):
-            return
-        if item_id == "new_job" and isinstance(current, NewJobScreen):
-            return
-        if item_id == "history" and isinstance(current, HistoryScreen):
-            return
-        if item_id == "browse" and isinstance(current, BrowserScreen):
-            return
-        if item_id == "view_logs" and isinstance(current, JobDetailScreen):
+        if self._sidebar_destination_for_screen(current) == item_id:
             return
 
         if item_id == "view_logs":
-            job_id = self._sidebar_selected_job_id(current)
+            job_id = self._selected_job_id_from_screen(current)
             if job_id and job_id != "__empty__":
-                self.call_after_refresh(self._navigate_from_sidebar, "view_logs", job_id)
+                self.call_after_refresh(self._open_job_detail_from_sidebar, job_id)
             else:
                 self.notify(
                     "Please select a job from the Overview or History table first.",
@@ -813,28 +804,54 @@ class DispatchApp(App[None]):
                 )
             return
 
-        self.call_after_refresh(self._navigate_from_sidebar, item_id, None)
+        self.call_after_refresh(self.open_top_level, item_id)
 
-    def _navigate_from_sidebar(self, item_id: str, job_id: str | None) -> None:
+    def open_top_level(self, item_id: str) -> None:
+        """Open a top-level destination while keeping the stack anchored on Overview."""
+        if self._sidebar_destination_for_screen(self.screen) == item_id:
+            return
         self._pop_to_dashboard()
 
         if item_id == "overview":
             return
+        self.push_screen(self._build_top_level_screen(item_id))
+
+    def open_job_detail(self, job_id: str, *, cancel_on_mount: bool = False) -> None:
+        self.push_screen(JobDetailScreen(job_id, cancel_on_mount=cancel_on_mount))
+
+    def _open_job_detail_from_sidebar(self, job_id: str) -> None:
+        self._pop_to_dashboard()
+        self.open_job_detail(job_id)
+
+    def _build_top_level_screen(self, item_id: str):
         if item_id == "new_job":
-            self.push_screen(NewJobScreen(self.launch_cwd))
-        elif item_id == "history":
-            self.push_screen(HistoryScreen())
-        elif item_id == "browse":
-            self.push_screen(BrowserScreen())
-        elif item_id == "view_logs" and job_id:
-            self.push_screen(JobDetailScreen(job_id))
+            return NewJobScreen(self.launch_cwd)
+        if item_id == "history":
+            return HistoryScreen()
+        if item_id == "browse":
+            return BrowserScreen()
+        raise ValueError(f"Unknown top-level destination: {item_id}")
 
     def _pop_to_dashboard(self) -> None:
         while len(self.screen_stack) > 2:
             self.pop_screen()
 
     @staticmethod
-    def _sidebar_selected_job_id(current: object) -> str | None:
+    def _sidebar_destination_for_screen(current: object) -> str | None:
+        if isinstance(current, DashboardScreen):
+            return "overview"
+        if isinstance(current, NewJobScreen):
+            return "new_job"
+        if isinstance(current, HistoryScreen):
+            return "history"
+        if isinstance(current, BrowserScreen):
+            return "browse"
+        if isinstance(current, JobDetailScreen):
+            return "view_logs"
+        return None
+
+    @staticmethod
+    def _selected_job_id_from_screen(current: object) -> str | None:
         if isinstance(current, DashboardScreen):
             return current._selected_job_id()
         if isinstance(current, HistoryScreen):

@@ -380,13 +380,8 @@ def test_browser_placeholder_and_auto_describe_after_show_tables(
         async with app.run_test(size=(120, 40)) as pilot:
             screen = BrowserScreen()
             app.push_screen(screen)
-            await pilot.pause()
+            await pilot.pause(0.5)
 
-            body = screen.query_one("#describe-body")
-            assert "Select a table and press Enter" in str(body.render())
-
-            await screen.action_show_tables()
-            await pilot.pause()
             assert "dw_settle.dispatch_result" in str(
                 screen.query_one("#file-preview-title").render()
             )
@@ -409,7 +404,7 @@ def test_browser_show_tables_failure_replaces_stale_schema_with_error(
     async def fake_show_tables(schema: str, pattern: str = "*") -> list[str]:
         nonlocal show_tables_calls
         show_tables_calls += 1
-        if show_tables_calls == 1:
+        if show_tables_calls <= 1:
             return ["dispatch_result"]
         raise RuntimeError("metadata backend offline")
 
@@ -424,14 +419,11 @@ def test_browser_show_tables_failure_replaces_stale_schema_with_error(
         async with app.run_test(size=(120, 40)) as pilot:
             screen = BrowserScreen()
             app.push_screen(screen)
-            await pilot.pause()
-
-            await screen.action_show_tables()
-            await pilot.pause()
+            await pilot.pause(0.5)
             assert screen.query_one("#describe-table", DataTable).display is True
 
             await screen.action_show_tables()
-            await pilot.pause()
+            await pilot.pause(0.5)
 
             describe_table = screen.query_one("#describe-table", DataTable)
             describe_body = screen.query_one("#describe-body")
@@ -457,11 +449,12 @@ def test_browser_drop_requires_typing_full_table_name(
     async def run() -> None:
         app = DispatchApp()
         async with app.run_test(size=(120, 40)) as pilot:
-            screen = BrowserScreen()
+            screen = BrowserScreen(auto_load=False)
             app.push_screen(screen)
             await pilot.pause()
             table = screen.query_one("#browser-table")
             table.add_row("danger_table", "table")
+            table.cursor_coordinate = (0, 0)
 
             task = asyncio.create_task(screen.action_drop())
             await pilot.pause()
@@ -494,11 +487,12 @@ def test_typed_drop_confirmation_button_does_not_bypass_input(
     async def run() -> None:
         app = DispatchApp()
         async with app.run_test(size=(120, 40)) as pilot:
-            screen = BrowserScreen()
+            screen = BrowserScreen(auto_load=False)
             app.push_screen(screen)
             await pilot.pause()
             table = screen.query_one("#browser-table")
             table.add_row("danger_table", "table")
+            table.cursor_coordinate = (0, 0)
 
             task = asyncio.create_task(screen.action_drop())
             await pilot.pause()
@@ -569,7 +563,7 @@ def test_browser_drop_replaces_schema_table_with_persistent_result_message(
     async def run() -> None:
         app = DispatchApp()
         async with app.run_test(size=(120, 40)) as pilot:
-            screen = BrowserScreen()
+            screen = BrowserScreen(auto_load=False)
             app.push_screen(screen)
             await pilot.pause()
             table = screen.query_one("#browser-table", DataTable)

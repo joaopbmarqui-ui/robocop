@@ -12,42 +12,54 @@ QUICK_HELP = """\
 """
 
 HELP_TEXT = """\
-[bold cyan]Dispatch Keyboard Shortcuts[/]
+[bold $accent]Dispatch Keyboard Shortcuts[/]
 
-[bold]Global[/]
+[bold $accent]Global[/]
   [cyan]Q[/]       Quit Dispatch
   [cyan]?[/]       Toggle this help screen
 
-[bold]Dashboard[/]
+───────────────
+
+[bold $accent]Dashboard[/]
   [cyan]N[/]       New Job wizard
-  [cyan]V[/]       View / Attach to selected job logs
+  [cyan]V[/]       View logs for selected job
+  [cyan]J/K[/]     Move selection in tables
   [cyan]C[/]       Cancel selected job
   [cyan]H[/]       Open History
   [cyan]B[/]       Open Impala Browser
   [cyan]\u2191 \u2193[/]     Navigate job rows
   [cyan]Enter[/]   Open detail for selected row
 
-[bold]New Job[/]
+───────────────
+
+[bold $accent]New Job[/]
   [cyan]L[/]       Launch job (requires Kerberos)
   [cyan]P[/]       Preview generated SQL
   [cyan]E[/]       Edit SQL file in $EDITOR
   [cyan]K[/]       Refresh Kerberos (kinit)
   [cyan]B / Esc[/] Back to Dashboard
 
-[bold]SQL Preview[/]
-  [cyan]Enter[/]   Accept & return to New Job
+[bold $accent]SQL Preview[/]
+  [cyan]Enter[/]   Back to form
+  [cyan]Y[/]       Copy SQL
   [cyan]B / Esc[/] Back
 
-[bold]Job Detail[/]
+[bold $accent]Job Detail[/]
+  [cyan]Space/F[/] Toggle log follow mode
+  [cyan]G/g[/]     Jump to bottom / top of log
+  [cyan]/[/]       Search log
+  [cyan]Y[/]       Copy job ID
+  [cyan]R[/]       Clone job to New Job
   [cyan]C[/]       Cancel job (with confirmation)
   [cyan]B / Esc[/] Back
 
-[bold]History[/]
+[bold $accent]History[/]
+  [cyan]S[/]       Cycle sort order
   [cyan]Enter[/]   View logs for selected row
   [cyan][ / ][/]   Previous / Next page
   [cyan]B / Esc[/] Back
 
-[bold]Browser[/]
+[bold $accent]Browser[/]
   [cyan]Enter[/]   Describe selected table
   [cyan]D[/]       Drop selected table (with typed confirmation)
   [cyan]B / Esc[/] Back

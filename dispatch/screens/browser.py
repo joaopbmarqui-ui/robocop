@@ -20,10 +20,13 @@ class BrowserScreen(Screen[None]):
         ("escape", "app.pop_screen", "Back"),
         ("enter", "describe", "Describe"),
         ("d", "drop", "Drop"),
+        ("j", "cursor_down", "Down"),
+        ("k", "cursor_up", "Up"),
     ]
 
-    def __init__(self) -> None:
+    def __init__(self, *, auto_load: bool = True) -> None:
         super().__init__()
+        self._auto_load = auto_load
         self._tables: list[str] = []
         self._describe_text: str = ""
 
@@ -67,7 +70,7 @@ class BrowserScreen(Screen[None]):
                 )
         yield Footer()
 
-    def on_mount(self) -> None:
+    async def on_mount(self) -> None:
         table = self.query_one("#browser-table", DataTable)
         table.add_columns("Name", "Type")
         table.cursor_type = "row"
@@ -77,6 +80,8 @@ class BrowserScreen(Screen[None]):
         describe_table.display = False
         self._show_detail_placeholder()
         self._update_action_state()
+        if self._auto_load:
+            await self.action_show_tables()
 
     def _show_detail_placeholder(self) -> None:
         self.query_one("#file-preview-title", Static).update("[dim]No table selected[/]")
@@ -142,7 +147,7 @@ class BrowserScreen(Screen[None]):
         elif event.button.id == "back":
             self.app.pop_screen()
 
-    async def action_show_tables(self) -> None:
+    async def action_show_tables(self, *, describe_selection: bool = True) -> None:
         self._show_table_list_message("Loading tables…", severity="dim")
         try:
             schema = self._schema()
@@ -163,7 +168,7 @@ class BrowserScreen(Screen[None]):
         if not self._tables:
             table.add_row("(no tables)", "")
             self._show_detail_placeholder()
-        else:
+        elif describe_selection:
             table.cursor_coordinate = (0, 0)
             await self.action_describe()
         self._update_action_state()
@@ -229,6 +234,14 @@ class BrowserScreen(Screen[None]):
         """Update button state whenever the cursor moves to a different row."""
         self._update_action_state()
 
+    def action_cursor_down(self) -> None:
+        if self.query_one("#browser-table", DataTable).has_focus:
+            self.query_one("#browser-table", DataTable).action_cursor_down()
+
+    def action_cursor_up(self) -> None:
+        if self.query_one("#browser-table", DataTable).has_focus:
+            self.query_one("#browser-table", DataTable).action_cursor_up()
+
     async def action_drop(self) -> None:
         full = self._full_table()
         if not full:
@@ -239,8 +252,9 @@ class BrowserScreen(Screen[None]):
             return
         try:
             result = await impala.drop_table(full)
-            self._show_detail_message(result, severity="success")
             self.notify(f"Dropped {full}", severity="information")
+            await self.action_show_tables(describe_selection=False)
+            self._show_detail_message(result, severity="success")
         except Exception as exc:
             self._show_detail_message(str(exc), severity="error")
             self.notify(f"DROP failed: {exc}", severity="error")

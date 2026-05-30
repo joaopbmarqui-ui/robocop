@@ -23,6 +23,9 @@ _SQL_KEYWORDS = {
 
 def _highlight_sql(line: str) -> str:
     """Apply basic keyword highlighting via Rich markup."""
+    stripped = line.lstrip()
+    if stripped.startswith("--"):
+        return f"[dim]{line}[/]"
     tokens = []
     for word in line.split(" "):
         if word.upper() in _SQL_KEYWORDS:
@@ -51,6 +54,7 @@ class PreviewScreen(Screen[None]):
         ("b", "app.pop_screen", "Back"),
         ("escape", "app.pop_screen", "Back"),
         ("enter", "accept", "Accept"),
+        ("y", "copy_sql", "Copy SQL"),
     ]
 
     def __init__(
@@ -102,7 +106,7 @@ class PreviewScreen(Screen[None]):
                     yield Static(dest_label)
 
                 with Horizontal(classes="button-row"):
-                    yield Button("Accept & Return [Enter]", id="accept", variant="primary")
+                    yield Button("Back to Form [Enter]", id="accept", variant="primary")
                     yield Button("Back [B/Esc]", id="back", variant="default")
         yield Footer()
 
@@ -113,6 +117,13 @@ class PreviewScreen(Screen[None]):
 
     def action_accept(self) -> None:
         self.app.pop_screen()
+
+    def action_copy_sql(self) -> None:
+        try:
+            self.app.copy_to_clipboard(self.body)
+            self.notify("SQL copied to clipboard", severity="information")
+        except Exception:
+            self.notify("Copy unavailable in this terminal", severity="warning")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "back":

@@ -76,6 +76,84 @@ NavItem.nav-active {
     padding: 1 2;
 }
 
+Sidebar.sidebar-collapsed {
+    width: 5;
+}
+
+Sidebar.sidebar-collapsed #sidebar-brand {
+    text-align: center;
+    padding: 1 0;
+}
+
+Sidebar.sidebar-collapsed NavItem {
+    text-align: center;
+    padding: 0;
+}
+
+#stats-compact {
+    display: none;
+    padding: 0 2;
+    color: $text-muted;
+    height: auto;
+}
+
+.dashboard-compact #dashboard-content {
+    padding: 0;
+}
+
+#new-job-action-bar {
+    dock: bottom;
+    height: auto;
+    layout: horizontal;
+    padding: 1;
+    background: $surface-darken-1;
+    border-top: solid $primary-background-darken-2;
+    align-vertical: middle;
+}
+
+#new-job-action-bar #validation-summary {
+    width: 1fr;
+    padding: 0 1;
+}
+
+#new-job-action-bar Button {
+    margin: 0 1;
+}
+
+.date-hint {
+    color: $text-muted;
+    padding: 0 0 0 22;
+    height: 1;
+}
+
+#dest-hint {
+    color: $text-muted;
+    padding: 0 1;
+    height: auto;
+}
+
+.radio-group {
+    border: round $primary-background-darken-2;
+}
+
+#error-banner {
+    margin: 0 1 1 1;
+    padding: 1;
+    border: round $error;
+    height: auto;
+}
+
+#truncation-hint {
+    padding: 0 2;
+    height: auto;
+}
+
+#log-search-input {
+    dock: bottom;
+    margin: 0 1 1 1;
+    display: none;
+}
+
 /* ── Main content area ── */
 #main-content {
     width: 1fr;
@@ -674,6 +752,7 @@ HelpScreen {
     padding: 1 2;
     background: $surface;
     overflow-y: auto;
+    scrollbar-size: 1 1;
 }
 
 #help-body {
@@ -718,10 +797,17 @@ class DispatchApp(App[None]):
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("question_mark", "help", "Help"),
+        ("ctrl+b", "toggle_sidebar", "Sidebar"),
     ]
 
     def action_help(self) -> None:
         self.push_screen(HelpScreen())
+
+    def action_toggle_sidebar(self) -> None:
+        from .screens.sidebar import Sidebar
+
+        for sidebar in self.query(Sidebar):
+            sidebar.toggle_collapsed()
 
     def __init__(self) -> None:
         super().__init__()
@@ -818,6 +904,10 @@ class DispatchApp(App[None]):
 
     def open_job_detail(self, job_id: str, *, cancel_on_mount: bool = False) -> None:
         self.push_screen(JobDetailScreen(job_id, cancel_on_mount=cancel_on_mount))
+
+    def open_new_job_prefill(self, prefill: dict) -> None:
+        self._pop_to_dashboard()
+        self.push_screen(NewJobScreen(self.launch_cwd, prefill=prefill))
 
     def _open_job_detail_from_sidebar(self, job_id: str) -> None:
         self._pop_to_dashboard()

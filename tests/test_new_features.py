@@ -74,23 +74,29 @@ class TestBrowserDescribeParsing:
 class TestJobDetailElapsed:
     def test_format_elapsed_running_job(self) -> None:
         from datetime import datetime, timezone
+        from dispatch.formatting import format_elapsed
+
         now = datetime.now(timezone.utc)
         started = (now - __import__("datetime").timedelta(minutes=5)).strftime("%Y-%m-%dT%H:%M:%SZ")
         item = {"state": "Running", "started_at": started}
-        result = JobDetailScreen._format_elapsed(item)
+        result = format_elapsed(item)
         assert "5m" in result or "4m" in result
 
     def test_format_elapsed_no_started_at(self) -> None:
         item = {"state": "Running", "started_at": None}
-        assert JobDetailScreen._format_elapsed(item) == "--"
+        from dispatch.formatting import format_elapsed
+
+        assert format_elapsed(item) == "--"
 
     def test_format_elapsed_succeeded_job(self) -> None:
+        from dispatch.formatting import format_elapsed
+
         item = {
             "state": "Succeeded",
             "started_at": "2026-05-16T10:00:00Z",
             "finished_at": "2026-05-16T10:45:00Z",
         }
-        result = JobDetailScreen._format_elapsed(item)
+        result = format_elapsed(item)
         assert "45m" in result
 
     def test_style_log_line_dims_timestamp(self) -> None:
@@ -160,13 +166,17 @@ class TestKerberosGraceful:
 
 class TestDashboardDisplayId:
     def test_display_id_strips_date_prefix(self) -> None:
+        from dispatch.formatting import format_job_id
+
         job_id = "20260516T100000Z_aabbcc"
-        result = DashboardScreen._display_id(job_id)
+        result = format_job_id(job_id)
         assert "aabbcc" in result
         assert "20260516" not in result
 
     def test_display_id_short_id_unchanged(self) -> None:
-        assert DashboardScreen._display_id("short") == "short"
+        from dispatch.formatting import format_job_id
+
+        assert format_job_id("short") == "short"
 
 
 # =============================================================================

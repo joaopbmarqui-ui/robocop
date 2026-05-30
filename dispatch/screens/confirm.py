@@ -52,17 +52,17 @@ class ConfirmScreen(ModalScreen[bool]):
                     id="confirm-input",
                 )
             help_text = (
-                "Type the exact name and press [bold]Enter[/] to confirm; "
-                "[bold]Esc[/] cancels."
+                "Type the exact name, then [bold][Y][/] or [bold]Enter[/] to confirm; "
+                "[bold][N][/] or [bold]Esc[/] cancels."
                 if self.required_confirmation_text
-                else "Press [bold]Enter[/] or [bold]Y[/] to confirm; "
-                "[bold]N[/] or [bold]Esc[/] to cancel."
+                else "[bold][Y][/] or [bold]Enter[/] to confirm; "
+                "[bold][N][/] or [bold]Esc[/] to cancel."
             )
             yield Static(help_text, id="confirm-help")
             with Horizontal(id="confirm-buttons"):
                 variant = "error" if self.danger else "primary"
-                yield Button(f"{self.confirm_label} [Y]", id="confirm-yes", variant=variant)
-                yield Button(f"{self.cancel_label} [N]", id="confirm-no", variant="default")
+                yield Button(self.confirm_label, id="confirm-yes", variant=variant)
+                yield Button(self.cancel_label, id="confirm-no", variant="default")
 
     def on_mount(self) -> None:
         if self.required_confirmation_text:

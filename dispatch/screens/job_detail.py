@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import asyncio
 from collections import deque
-from datetime import datetime, timezone
+from typing import Any
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
+from textual.reactive import reactive
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, RichLog, Static
+from textual.widgets import Button, Footer, Header, Input, RichLog, Static
 
-from .. import config, manifest, process
+from .. import config, errors, manifest, process
+from ..formatting import format_elapsed, format_job_id
 from .confirm import ConfirmScreen
 from .sidebar import Sidebar
 
@@ -21,15 +23,26 @@ class JobDetailScreen(Screen[None]):
         ("b", "app.pop_screen", "Back"),
         ("c", "cancel", "Cancel Job"),
         ("escape", "app.pop_screen", "Back"),
+        ("space", "toggle_follow", "Follow"),
+        ("f", "toggle_follow", "Follow"),
+        ("g", "log_top", "Log Top"),
+        ("G", "log_bottom", "Log Bottom"),
+        ("/", "log_search", "Search"),
+        ("y", "copy_job_id", "Copy ID"),
+        ("r", "clone_job", "Clone"),
     ]
+
+    follow_mode = reactive(True)
 
     def __init__(self, job_id: str, cancel_on_mount: bool = False) -> None:
         super().__init__()
         self.job_id = job_id
         self.cancel_on_mount = cancel_on_mount
         self._tail_offset = 0
-        self._last_line_count = 0
         self._tail_lines: deque[str] = deque(maxlen=200)
+        self._evicted_line_count = 0
+        self._search_query = ""
+        self._error_code: str | None = None
 
     @property
     def job_dir(self):
@@ -43,7 +56,7 @@ class JobDetailScreen(Screen[None]):
         with Vertical(id="main-content"):
             with Vertical(id="job-detail-content"):
                 yield Static(
-                    f"[dim]\u2039[/] Job [bold cyan]{self.job_id}[/]",
+                    f"[dim]\u2039[/] Job [bold cyan]{format_job_id(self.job_id, 'full')}[/]",
                     classes="section-title",
                 )
 
@@ -67,40 +80,82 @@ class JobDetailScreen(Screen[None]):
                             yield Static("[dim]CSV Path:[/]", classes="summary-label")
                             yield Static("--", id="sum-csv", classes="summary-value")
 
+                yield Static("", id="error-banner")
+
                 with Horizontal(id="log-header"):
-                    yield Static(
-                        "[bold cyan]Live Logs[/]",
-                        classes="section-title",
-                    )
-                    yield Static(
-                        "",
-                        id="log-streaming",
-                    )
+                    yield Static("[bold cyan]Live Logs[/]", classes="section-title")
+                    yield Static("", id="log-streaming")
+
+                yield Static("", id="truncation-hint")
 
                 with Vertical(id="log-panel"):
                     yield RichLog(id="log-display", highlight=True, markup=True)
+                    yield Input(placeholder="Search log…", id="log-search-input")
 
                 yield Static("", id="job-status-line")
 
-                with Horizontal(classes="button-row"): 
+                with Horizontal(classes="button-row"):
                     yield Button("Back [B]", id="back", variant="default")
                     yield Static("    ", classes="button-spacer")
+                    yield Button("Clone [R]", id="clone", variant="default")
                     yield Button("Cancel Job [C]", id="cancel", variant="error")
         yield Footer()
 
     async def on_mount(self) -> None:
+        self.query_one("#log-search-input").display = False
+        self.query_one("#truncation-hint").display = False
+        self.query_one("#error-banner").display = False
+        self.query_one("#clone", Button).display = False
         if self.cancel_on_mount:
             await self.action_cancel()
-        self.refresh_detail()
-        self.set_interval(1.0, self.refresh_detail)
+        await self._refresh_detail_async()
+        self.set_interval(1.0, self._refresh_detail_async)
 
-    def refresh_detail(self) -> None:
-        try:
-            item = manifest.load(self.job_dir / "manifest.json")
-        except Exception as exc:
-            self.query_one("#sum-source", Static).update(f"Error: {exc}")
+    async def _refresh_detail_async(self) -> None:
+        manifest_path = self.job_dir / "manifest.json"
+        log_path = self.job_dir / "run.log"
+
+        def _read() -> dict[str, Any] | None:
+            try:
+                item = manifest.load(manifest_path)
+            except Exception:
+                return None
+            new_lines: list[str] = []
+            if log_path.exists():
+                try:
+                    size = log_path.stat().st_size
+                except OSError:
+                    size = self._tail_offset
+                offset = self._tail_offset
+                if size < offset:
+                    offset = 0
+                if size > offset:
+                    with log_path.open("r", encoding="utf-8", errors="replace") as handle:
+                        handle.seek(offset)
+                        new_lines = [line.rstrip() for line in handle]
+                        new_offset = handle.tell()
+                else:
+                    new_offset = offset
+            else:
+                new_offset = self._tail_offset
+            error_code = None
+            if item["state"] == "Failed":
+                error_code = errors.classify(log_path)
+            return {
+                "item": item,
+                "new_lines": new_lines,
+                "new_offset": new_offset,
+                "error_code": error_code,
+            }
+
+        snapshot = await asyncio.to_thread(_read)
+        self._apply_detail_snapshot(snapshot)
+
+    def _apply_detail_snapshot(self, snapshot: dict[str, Any] | None) -> None:
+        if snapshot is None:
             return
-
+        item = snapshot["item"]
+        self._error_code = snapshot["error_code"]
         dest = item["destination"]
         source = item["source"]
         state = item["state"]
@@ -117,9 +172,7 @@ class JobDetailScreen(Screen[None]):
 
         if state == "Running":
             self.query_one("#sum-state", Static).update("[green]\u25cf RUNNING[/]")
-            self.query_one("#log-streaming", Static).update(
-                "[green]Streaming logs\u2026 (auto-scroll) \u25cf[/]"
-            )
+            self._update_streaming_indicator()
         elif state == "Succeeded":
             self.query_one("#sum-state", Static).update("[green]\u25cf SUCCEEDED[/]")
             self.query_one("#log-streaming", Static).update("[dim]Complete[/]")
@@ -134,7 +187,7 @@ class JobDetailScreen(Screen[None]):
             self.query_one("#log-streaming", Static).update("")
 
         self.query_one("#sum-started", Static).update(item.get("started_at") or "--")
-        self.query_one("#sum-elapsed", Static).update(self._format_elapsed(item))
+        self.query_one("#sum-elapsed", Static).update(format_elapsed(item))
         self.query_one("#sum-table", Static).update(full_table)
         csv_path = dest.get("csv_path") or ""
         if dest.get("type") in ("Csv", "Table+Csv") and csv_path:
@@ -142,7 +195,13 @@ class JobDetailScreen(Screen[None]):
         else:
             self.query_one("#sum-csv", Static).update("[dim]N/A (table-only)[/]")
 
-        self._update_log()
+        cancel_btn = self.query_one("#cancel", Button)
+        cancel_btn.disabled = state != "Running"
+        clone_btn = self.query_one("#clone", Button)
+        clone_btn.display = state in ("Succeeded", "Failed", "Cancelled")
+
+        self._update_error_banner(state)
+        self._append_log_lines(snapshot["new_lines"], snapshot["new_offset"])
 
         status_parts = []
         if state == "Running":
@@ -157,68 +216,133 @@ class JobDetailScreen(Screen[None]):
             status_parts.append(f"Finished: {item['finished_at']}")
         self.query_one("#job-status-line", Static).update("  ".join(status_parts))
 
-    @staticmethod
-    def _format_elapsed(item: dict) -> str:
-        started = item.get("started_at")
-        if not started:
-            return "--"
-        try:
-            start_dt = datetime.strptime(started, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-        except ValueError:
-            return "--"
-        if item["state"] == "Running":
-            delta = datetime.now(timezone.utc) - start_dt
+    def _update_streaming_indicator(self) -> None:
+        if self.follow_mode:
+            self.query_one("#log-streaming", Static).update(
+                "[green]Streaming logs\u2026 (auto-scroll) \u25cf[/]"
+            )
         else:
-            finished = item.get("finished_at")
-            if not finished:
-                return "--"
-            try:
-                end_dt = datetime.strptime(finished, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-            except ValueError:
-                return "--"
-            delta = end_dt - start_dt
-        total = max(0, int(delta.total_seconds()))
-        if total < 60:
-            return f"{total}s"
-        minutes = total // 60
-        if minutes < 60:
-            return f"{minutes}m {total % 60}s"
-        hours = minutes // 60
-        return f"{hours}h {minutes % 60}m"
+            self.query_one("#log-streaming", Static).update("[yellow][PAUSED][/]")
 
-    def _update_log(self) -> None:
-        path = self.job_dir / "run.log"
-        if not path.exists():
+    def _update_error_banner(self, state: str) -> None:
+        banner = self.query_one("#error-banner", Static)
+        if state != "Failed":
+            banner.display = False
             return
+        log_path = self.job_dir / "run.log"
+        code = self._error_code
+        line = errors.first_matching_line(log_path, code)
+        if code:
+            banner.update(
+                f"[bold red]{code}[/]: {line}\n[dim]{errors.suggestion(code)}[/]"
+            )
+        else:
+            banner.update("[red]Job failed.[/] [dim]Check log for details.[/]")
+        banner.display = True
+
+    def _append_log_lines(self, new_lines: list[str], new_offset: int) -> None:
+        if not new_lines and new_offset == self._tail_offset:
+            return
+        log_widget = self.query_one("#log-display", RichLog)
+        for line in new_lines:
+            before = len(self._tail_lines)
+            self._tail_lines.append(line)
+            if len(self._tail_lines) == before and before == self._tail_lines.maxlen:
+                self._evicted_line_count += 1
+            styled = self._style_log_line(line)
+            if self._search_query and self._search_query.lower() in line.lower():
+                styled = f"[reverse]{styled}[/]"
+            log_widget.write(styled)
+        self._tail_offset = new_offset
+        hint = self.query_one("#truncation-hint", Static)
+        if self._evicted_line_count:
+            hint.update(f"[dim][\u2026 {self._evicted_line_count} earlier lines not shown][/]")
+            hint.display = True
+        else:
+            hint.display = False
+        if self.follow_mode and new_lines:
+            log_widget.scroll_end(animate=False)
+
+    def watch_follow_mode(self, value: bool) -> None:
+        self._update_streaming_indicator()
+
+    def action_toggle_follow(self) -> None:
+        self.follow_mode = not self.follow_mode
+        if self.follow_mode:
+            self.query_one("#log-display", RichLog).scroll_end(animate=False)
+
+    def action_log_top(self) -> None:
+        self.follow_mode = False
+        self.query_one("#log-display", RichLog).scroll_home(animate=False)
+
+    def action_log_bottom(self) -> None:
+        self.follow_mode = True
+        self.query_one("#log-display", RichLog).scroll_end(animate=False)
+
+    def action_log_search(self) -> None:
+        search = self.query_one("#log-search-input", Input)
+        search.display = not search.display
+        if search.display:
+            search.focus()
+        else:
+            self._search_query = ""
+            search.value = ""
+            self.query_one("#log-display", RichLog).focus()
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if event.input.id == "log-search-input":
+            self._search_query = event.value.strip()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.input.id == "log-search-input":
+            self.action_log_search()
+
+    def action_copy_job_id(self) -> None:
         try:
-            size = path.stat().st_size
-        except OSError:
+            self.app.copy_to_clipboard(self.job_id)
+            self.notify("Job ID copied to clipboard", severity="information")
+        except Exception:
+            self.notify(self.job_id, title="Job ID", severity="information")
+
+    def action_clone_job(self) -> None:
+        from ..app import DispatchApp
+
+        try:
+            item = manifest.load(self.job_dir / "manifest.json")
+        except Exception as exc:
+            self.notify(f"Cannot clone: {exc}", severity="error")
             return
-        if size < self._tail_offset:
-            self._tail_offset = 0
-            self._tail_lines.clear()
-            self._last_line_count = 0
-        if size > self._tail_offset:
-            log_widget = self.query_one("#log-display", RichLog)
-            with path.open("r", encoding="utf-8", errors="replace") as handle:
-                handle.seek(self._tail_offset)
-                for line in handle:
-                    stripped = line.rstrip()
-                    self._tail_lines.append(stripped)
-                    styled = self._style_log_line(stripped)
-                    log_widget.write(styled)
-                self._tail_offset = handle.tell()
+        cast_app = self.app
+        if isinstance(cast_app, DispatchApp):
+            cast_app.open_new_job_prefill(self._prefill_from_manifest(item))
+
+    @staticmethod
+    def _prefill_from_manifest(item: dict) -> dict:
+        source = item.get("source", {})
+        dest = item.get("destination", {})
+        return {
+            "source_type": source.get("type", "SqlFile"),
+            "sql_file": source.get("sql_path_at_launch", ""),
+            "existing_table": source.get("table_name", ""),
+            "schema": dest.get("schema", ""),
+            "table_name": dest.get("table_name", ""),
+            "dest_type": dest.get("type", "Table"),
+            "email": item.get("email", ""),
+            "subject": item.get("subject", "Dispatch Job"),
+            "start_date": source.get("start_date", ""),
+            "end_date": source.get("end_date", ""),
+        }
 
     @staticmethod
     def _truncate_path(value: str, max_len: int = 40) -> str:
-        """Shorten long paths to last max_len chars with an ellipsis prefix."""
         if len(value) <= max_len:
             return value
         return f"\u2026{value[-max_len:]}"
 
     @staticmethod
     def _style_log_line(line: str) -> str:
-        """Dim timestamp prefixes in log lines for visual separation."""
+        if line.lstrip().startswith("--"):
+            return f"[dim]{line}[/]"
         if line.startswith("[") and "]" in line:
             idx = line.index("]") + 1
             return f"[dim]{line[:idx]}[/]{line[idx:]}"
@@ -267,3 +391,5 @@ class JobDetailScreen(Screen[None]):
             await self.action_cancel()
         elif event.button.id == "back":
             self.app.pop_screen()
+        elif event.button.id == "clone":
+            self.action_clone_job()

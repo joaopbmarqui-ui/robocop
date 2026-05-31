@@ -28,11 +28,12 @@ def test_browser_drop_requires_confirmation(mock_env_with_config, monkeypatch) -
     async def run() -> None:
         app = DispatchApp()
         async with app.run_test(size=(120, 40)) as pilot:
-            screen = BrowserScreen()
+            screen = BrowserScreen(auto_load=False)
             app.push_screen(screen)
             await pilot.pause()
             table = screen.query_one("#browser-table")
             table.add_row("danger_table", "table")
+            table.cursor_coordinate = (0, 0)
 
             task = asyncio.create_task(screen.action_drop())
             await pilot.pause()

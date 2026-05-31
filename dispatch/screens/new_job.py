@@ -14,7 +14,7 @@ logger = logging.getLogger("dispatch.new_job")
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
-from textual.widgets import Button, DataTable, Footer, Header, Input, RadioButton, RadioSet, Static
+from textual.widgets import Button, Collapsible, DataTable, Footer, Header, Input, RadioButton, RadioSet, Static
 
 from .. import config, jobs, kerberos, manifest, process, sql
 from .confirm import ConfirmScreen
@@ -33,12 +33,15 @@ class NewJobScreen(Screen[None]):
         ("k", "kinit", "kinit"),
         ("l", "launch", "Launch"),
         ("p", "preview", "Preview SQL"),
+        ("m", "toggle_matrix", "Matrix"),
     ]
 
-    def __init__(self, launch_cwd: Path) -> None:
+    def __init__(self, launch_cwd: Path, prefill: dict | None = None) -> None:
         super().__init__()
         self.launch_cwd = launch_cwd
+        self.prefill = prefill or {}
         self.kerberos_ttl: int | None = None
+        self._matrix_collapsed = bool(config.read_form_defaults())
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -50,8 +53,11 @@ class NewJobScreen(Screen[None]):
             with Vertical(id="new-job-content"):
                 yield Static("New Job", classes="section-title")
 
-                with Vertical(id="matrix-panel"):
-                    yield Static("Source \u00d7 Destination legal cells", classes="section-title")
+                with Collapsible(
+                    title="Source \u00d7 Destination legal cells",
+                    collapsed=self._matrix_collapsed,
+                    id="matrix-collapsible",
+                ):
                     yield DataTable(id="matrix-table")
 
                 with Vertical(id="info-panel"):
@@ -79,6 +85,7 @@ class NewJobScreen(Screen[None]):
                                 yield RadioButton("Table", id="dst-table")
                                 yield RadioButton("Csv", value=True, id="dst-csv")
                                 yield RadioButton("Table+Csv", id="dst-table-csv")
+                    yield Static("", id="dest-hint")
 
                 with Vertical(id="form-grid"):
                     with Horizontal(classes="form-row", id="row-sql-file"):
@@ -101,14 +108,20 @@ class NewJobScreen(Screen[None]):
                     with Horizontal(classes="form-row", id="row-start-date"):
                         yield Static("Start Date (YYYY-MM-DD)", classes="field-label", id="lbl-start-date")
                         yield Input(value=self._default_start_date(), placeholder="YYYY-MM-DD", id="start-date")
+                    yield Static("[dim]Format: YYYY-MM-DD[/]", id="start-date-hint", classes="date-hint")
 
                     with Horizontal(classes="form-row", id="row-end-date"):
                         yield Static("End Date (YYYY-MM-DD)", classes="field-label", id="lbl-end-date")
                         yield Input(value=self._default_end_date(), placeholder="YYYY-MM-DD", id="end-date")
+                    yield Static("[dim]Format: YYYY-MM-DD[/]", id="end-date-hint", classes="date-hint")
 
                     with Horizontal(classes="form-row", id="row-email"):
                         yield Static("Email (notifications)", classes="field-label", id="lbl-email")
-                        yield Input(value="", placeholder="dataops@company.com", id="email")
+                        yield Input(
+                            value=os.environ.get("DISPATCH_EMAIL", ""),
+                            placeholder=os.environ.get("DISPATCH_EMAIL", "user@example.com"),
+                            id="email",
+                        )
 
                     with Horizontal(classes="form-row", id="row-subject"):
                         yield Static("Subject (email)", classes="field-label", id="lbl-subject")
@@ -116,15 +129,16 @@ class NewJobScreen(Screen[None]):
 
                 yield Static("", id="warning-text")
 
-                with Horizontal(classes="button-row"):
-                    yield Button("Preview SQL [P]", id="preview", variant="primary")
-                    yield Button("Launch [L]", id="launch", variant="success")
-
                 yield Static(
                     "[dim]\u24d8 Use Preview SQL to validate the generated statement before launching.\n"
                     "  Job will be submitted to Impala over SSH.[/]",
                     id="launch-info",
                 )
+
+            with Horizontal(id="new-job-action-bar"):
+                yield Static("", id="validation-summary")
+                yield Button("Preview SQL [P]", id="preview", variant="primary")
+                yield Button("Launch [L]", id="launch", variant="success")
         yield Footer()
 
     async def on_mount(self) -> None:
@@ -136,11 +150,13 @@ class NewJobScreen(Screen[None]):
         matrix.show_cursor = False
 
         self._apply_saved_defaults()
+        self._apply_prefill()
         self.kerberos_ttl = await kerberos.ticket_ttl_seconds()
         self._refresh_kerberos()
         self._detect_sql()
         self._update_field_visibility()
         self._inline_validate()
+        self._update_validation_summary()
 
     @staticmethod
     def _default_start_date() -> str:
@@ -175,11 +191,17 @@ class NewJobScreen(Screen[None]):
     def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
         self._update_field_visibility()
         self._inline_validate()
+        self._update_validation_summary()
 
     def on_input_changed(self, event: Input.Changed) -> None:
         self._inline_validate()
+        self._update_validation_summary()
         if event.input.id == "sql-file":
             self._refresh_path_hint()
+
+    def action_toggle_matrix(self) -> None:
+        collapsible = self.query_one("#matrix-collapsible", Collapsible)
+        collapsible.collapsed = not collapsible.collapsed
 
     def _inline_validate(self) -> None:
         """Provide real-time field validation indicators."""
@@ -204,6 +226,32 @@ class NewJobScreen(Screen[None]):
         else:
             msgs.append("[green]\u2713[/] Kerberos")
         self.query_one("#warning-text", Static).update("  ".join(msgs))
+
+    def _validation_issues(self) -> list[str]:
+        issues: list[str] = []
+        source = self._selected_source()
+        if source in ("SqlFile", "SqlTemplate"):
+            sql_path = Path(self._input_value("sql-file"))
+            if self._input_value("sql-file") and not sql_path.exists():
+                issues.append("SQL file not found")
+        email = self._input_value("email")
+        if email and ("@" not in email or "." not in email.split("@")[-1]):
+            issues.append("Invalid email format")
+        if self.kerberos_ttl is None:
+            issues.append("Kerberos missing")
+        elif self.kerberos_ttl < 300:
+            issues.append("Kerberos TTL low")
+        return issues
+
+    def _update_validation_summary(self) -> None:
+        issues = self._validation_issues()
+        summary = self.query_one("#validation-summary", Static)
+        if issues:
+            first = issues[0]
+            extra = f" (+{len(issues) - 1} more)" if len(issues) > 1 else ""
+            summary.update(f"[red]\u2717 {len(issues)} issue(s): {first}{extra}[/]")
+        else:
+            summary.update("[green]\u2713 Ready to launch (checks passing)[/]")
 
     def _update_field_visibility(self) -> None:
         source = self._selected_source()
@@ -230,6 +278,19 @@ class NewJobScreen(Screen[None]):
         hint.display = is_sql
         if is_sql:
             self._refresh_path_hint()
+
+        self.query_one("#start-date-hint", Static).display = is_template
+        self.query_one("#end-date-hint", Static).display = is_template
+
+        dest_hint = self.query_one("#dest-hint", Static)
+        if source == "SqlTemplate":
+            dest_hint.update("[dim]SqlTemplate supports Table only[/]")
+            dest_hint.display = True
+        elif source == "ExistingTable":
+            dest_hint.update("[dim]ExistingTable supports Csv only[/]")
+            dest_hint.display = True
+        else:
+            dest_hint.display = False
 
     def _refresh_path_hint(self) -> None:
         """Update the path hint to show just the filename of the SQL file."""
@@ -457,6 +518,40 @@ class NewJobScreen(Screen[None]):
             self.notify(f"Kerberos refreshed: {self.kerberos_ttl // 60}m", severity="information")
         else:
             self.notify("Kerberos ticket still missing", severity="warning")
+
+    def _apply_prefill(self) -> None:
+        if not self.prefill:
+            return
+        mapping = {
+            "sql_file": "sql-file",
+            "existing_table": "existing-table",
+            "schema": "schema",
+            "table_name": "table-name",
+            "email": "email",
+            "subject": "subject",
+            "start_date": "start-date",
+            "end_date": "end-date",
+        }
+        for key, widget_id in mapping.items():
+            value = self.prefill.get(key, "")
+            if value:
+                self.query_one(f"#{widget_id}", Input).value = str(value)
+        source_type = self.prefill.get("source_type")
+        source_btn = {
+            "SqlFile": "src-sqlfile",
+            "SqlTemplate": "src-sqltemplate",
+            "ExistingTable": "src-existingtable",
+        }.get(source_type or "")
+        if source_btn:
+            self.query_one(f"#{source_btn}", RadioButton).value = True
+        dest_type = self.prefill.get("dest_type")
+        dest_btn = {
+            "Table": "dst-table",
+            "Csv": "dst-csv",
+            "Table+Csv": "dst-table-csv",
+        }.get(dest_type or "")
+        if dest_btn:
+            self.query_one(f"#{dest_btn}", RadioButton).value = True
 
     def _apply_saved_defaults(self) -> None:
         defaults = config.read_form_defaults()

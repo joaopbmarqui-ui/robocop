@@ -13,11 +13,26 @@ logger = logging.getLogger("dispatch.jobs")
 ACTIVE_WINDOW = timedelta(days=7)
 RUNNING_CAP = 2
 
+_manifest_cache: dict[Path, tuple[float, manifest.JobManifest]] = {}
+
 
 def parse_time(value: str | None) -> datetime | None:
     if not value:
         return None
     return datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+
+
+def _load_manifest_cached(path: Path) -> manifest.JobManifest:
+    try:
+        mtime = path.stat().st_mtime
+    except OSError as exc:
+        raise ValueError(str(exc)) from exc
+    cached = _manifest_cache.get(path)
+    if cached is not None and cached[0] == mtime:
+        return cached[1]
+    loaded = manifest.load(path)
+    _manifest_cache[path] = (mtime, loaded)
+    return loaded
 
 
 def list_manifests(root: Path | None = None) -> list[manifest.JobManifest]:
@@ -27,7 +42,7 @@ def list_manifests(root: Path | None = None) -> list[manifest.JobManifest]:
     loaded: list[manifest.JobManifest] = []
     for path in sorted(base.glob("*/manifest.json"), reverse=True):
         try:
-            loaded.append(manifest.load(path))
+            loaded.append(_load_manifest_cached(path))
         except Exception as exc:
             logger.warning("Skipping corrupt manifest %s: %s", path, exc)
             continue

@@ -8,6 +8,7 @@ from textual.screen import Screen
 from textual.widgets import Button, DataTable, Footer, Header, Input, Static
 
 from .. import jobs
+from ..formatting import format_job_id
 from .job_detail import JobDetailScreen
 from .sidebar import Sidebar
 
@@ -21,12 +22,19 @@ class HistoryScreen(Screen[None]):
         ("enter", "view_logs", "View Logs"),
         ("[", "prev_page", "Prev Page"),
         ("]", "next_page", "Next Page"),
+        ("s", "cycle_sort", "Sort"),
+        ("j", "cursor_down", "Down"),
+        ("k", "cursor_up", "Up"),
     ]
+
+    SORT_MODES = ("date", "state", "table")
 
     def __init__(self) -> None:
         super().__init__()
         self._page = 0
         self._filtered: list[dict] = []
+        self._sort_mode = "date"
+        self._sort_reverse = True
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -36,11 +44,12 @@ class HistoryScreen(Screen[None]):
         with Vertical(id="main-content"):
             with Vertical(id="history-content"):
                 yield Static("Recently Finished (all time)", classes="section-title")
+                yield Static("[dim]Sorted by: date \u2193[/]", id="sort-indicator")
 
                 with Horizontal(id="search-row"):
                     yield Static("[dim]Search:[/]", id="search-label")
                     yield Input(
-                        placeholder="\U0001f50d table \u00b7 date \u00b7 job-id",
+                        placeholder="Filter: table, date, or job-id",
                         id="search",
                     )
 
@@ -88,6 +97,8 @@ class HistoryScreen(Screen[None]):
             if needle and needle not in haystack:
                 continue
             self._filtered.append(item)
+
+        self._filtered.sort(key=self._sort_key, reverse=self._sort_reverse)
 
         total = len(self._filtered)
         total_pages = max(1, (total + PAGE_SIZE - 1) // PAGE_SIZE)
@@ -141,6 +152,37 @@ class HistoryScreen(Screen[None]):
         self.query_one("#page-controls", Static).update(
             f"[dim]\u276e Prev    Page {self._page + 1} of {total_pages}    Next \u276f[/]"
         )
+        arrow = "\u2193" if self._sort_reverse else "\u2191"
+        self.query_one("#sort-indicator", Static).update(
+            f"[dim]Sorted by: {self._sort_mode} {arrow}[/]"
+        )
+
+    def _sort_key(self, item: dict) -> str:
+        if self._sort_mode == "state":
+            return item.get("state", "")
+        if self._sort_mode == "table":
+            dest = item.get("destination", {})
+            return f"{dest.get('schema', '')}.{dest.get('table_name', '')}"
+        return item.get("finished_at") or item.get("id", "")
+
+    def action_cycle_sort(self) -> None:
+        idx = self.SORT_MODES.index(self._sort_mode)
+        next_idx = (idx + 1) % len(self.SORT_MODES)
+        if next_idx == 0:
+            self._sort_reverse = not self._sort_reverse
+        self._sort_mode = self.SORT_MODES[next_idx]
+        self._page = 0
+        self.refresh_history()
+
+    def action_cursor_down(self) -> None:
+        table = self.query_one("#history-table", DataTable)
+        if table.has_focus:
+            table.action_cursor_down()
+
+    def action_cursor_up(self) -> None:
+        table = self.query_one("#history-table", DataTable)
+        if table.has_focus:
+            table.action_cursor_up()
 
     def action_next_page(self) -> None:
         total_pages = max(1, (len(self._filtered) + PAGE_SIZE - 1) // PAGE_SIZE)
@@ -155,10 +197,7 @@ class HistoryScreen(Screen[None]):
 
     @staticmethod
     def _display_id(job_id: str) -> str:
-        """Strip date prefix from job ID if it matches 202xxxxxTxxxxxxZ_ format."""
-        if len(job_id) > 17 and job_id[15] == "Z" and "_" in job_id:
-            return job_id.split("_", 1)[1]
-        return job_id
+        return format_job_id(job_id)
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         row_key = str(event.row_key.value) if event.row_key else ""

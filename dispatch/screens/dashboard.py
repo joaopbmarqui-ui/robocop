@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections import deque
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
@@ -15,7 +16,8 @@ from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, DataTable, Footer, Header, Static
 
-from .. import jobs, kerberos
+from .. import config, errors, jobs, kerberos
+from ..formatting import format_elapsed, format_job_id
 from .sidebar import Sidebar
 
 if TYPE_CHECKING:
@@ -25,10 +27,12 @@ if TYPE_CHECKING:
 class DashboardScreen(Screen[None]):
     BINDINGS = [
         ("n", "new_job", "New Job"),
-        ("v", "view_logs", "View / Attach"),
+        ("v", "view_logs", "View Logs"),
         ("c", "cancel", "Cancel"),
         ("h", "history", "History"),
         ("b", "browser", "Browse"),
+        ("j", "cursor_down", "Down"),
+        ("k", "cursor_up", "Up"),
         ("q", "app.quit", "Quit"),
     ]
 
@@ -37,6 +41,9 @@ class DashboardScreen(Screen[None]):
         self.kerberos_ttl: int | None = None
         self._events: deque[str] = deque(maxlen=5)
         self._selected_job_id_cache: str | None = None
+        self._error_cache: dict[str, str | None] = {}
+        self._last_states: dict[str, str] = {}
+        self._compact_stats = False
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -62,13 +69,18 @@ class DashboardScreen(Screen[None]):
                         yield Static("KERBEROS", classes="stat-label")
                         yield Static("--", id="stat-kerberos", classes="stat-value stat-yellow")
                         yield Static("remaining", classes="stat-sub")
-                yield Static("Active Jobs", classes="section-title")
+                yield Static("", id="stats-compact", classes="stats-compact-line")
+                yield Static("Active Jobs [dim]newest first[/]", classes="section-title", id="active-title")
                 yield DataTable(id="active-table")
                 with Vertical(id="active-empty", classes="empty-state"):
                     yield Static("\u25a1", classes="empty-icon")
                     yield Static("No active jobs", classes="summary-label")
                     yield Static("[dim]Press [bold]N[/bold] to create one[/]", classes="empty-hint")
-                yield Static("Recently Finished (last 7 days)", classes="section-title")
+                yield Static(
+                    "Recently Finished (last 7 days) [dim]newest first[/]",
+                    classes="section-title",
+                    id="recent-title",
+                )
                 yield DataTable(id="recent-table")
                 with Vertical(id="recent-empty", classes="empty-state"):
                     yield Static("\u25a1", classes="empty-icon")
@@ -77,7 +89,7 @@ class DashboardScreen(Screen[None]):
                 yield Static("", id="event-trail")
                 with Horizontal(classes="button-row"):
                     yield Button("New Job [N]", id="new-job", variant="primary")
-                    yield Button("View / Attach [V]", id="view-logs", variant="default")
+                    yield Button("View Logs [V]", id="view-logs", variant="default")
                     yield Button("Cancel [C]", id="cancel", variant="error")
         yield Footer()
 
@@ -88,14 +100,27 @@ class DashboardScreen(Screen[None]):
         recent_table = self.query_one("#recent-table", DataTable)
         recent_table.add_columns("ID", "Source", "Destination", "State", "Elapsed")
         recent_table.cursor_type = "row"
-        # Hide empty states initially
         self.query_one("#active-empty").display = False
         self.query_one("#recent-empty").display = False
+        self.query_one("#stats-compact").display = False
         self._add_event("dispatch started")
-        self.refresh_jobs()
-        self.set_interval(2.0, self.refresh_jobs)
+        self._update_layout_mode()
+        await self._refresh_jobs_async()
+        self.set_interval(2.0, self._refresh_jobs_async)
         self.kerberos_ttl = await kerberos.ticket_ttl_seconds()
         self._refresh_kerberos()
+
+    def on_resize(self) -> None:
+        self._update_layout_mode()
+
+    def _update_layout_mode(self) -> None:
+        compact = self.app.size.width < 100
+        if compact == self._compact_stats:
+            return
+        self._compact_stats = compact
+        self.set_class(compact, "dashboard-compact")
+        self.query_one("#stats-row").display = not compact
+        self.query_one("#stats-compact").display = compact
 
     def _add_event(self, text: str, severity: str = "info") -> None:
         now_str = datetime.now().strftime("%H:%M")
@@ -110,45 +135,62 @@ class DashboardScreen(Screen[None]):
         if self.kerberos_ttl is None:
             label.update("N/A")
         else:
-            minutes = self.kerberos_ttl // 60
-            label.update(f"{minutes}m")
+            hours, remainder = divmod(self.kerberos_ttl, 3600)
+            minutes = remainder // 60
+            if hours:
+                label.update(f"{hours}h {minutes}m")
+            else:
+                label.update(f"{minutes}m")
 
-    def _elapsed(self, item: dict) -> str:
-        started = item.get("started_at")
-        if not started:
-            return "--"
+    async def _refresh_jobs_async(self) -> None:
         try:
-            start_dt = datetime.strptime(started, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-        except ValueError:
-            return "--"
-        if item["state"] == "Running":
-            delta = datetime.now(timezone.utc) - start_dt
-        else:
-            finished = item.get("finished_at")
-            if not finished:
-                return "--"
-            try:
-                end_dt = datetime.strptime(finished, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-            except ValueError:
-                return "--"
-            delta = end_dt - start_dt
-        total_seconds = max(0, int(delta.total_seconds()))
-        if total_seconds < 60:
-            return f"{total_seconds}s"
-        minutes = total_seconds // 60
-        if minutes < 60:
-            return f"{minutes}m"
-        hours = minutes // 60
-        return f"{hours}h {minutes % 60}m"
+            active = await asyncio.to_thread(jobs.active_jobs)
+            kerberos_ttl = await kerberos.ticket_ttl_seconds()
+            error_cache: dict[str, str | None] = {}
+            for item in active:
+                if item["state"] != "Failed":
+                    continue
+                job_id = item["id"]
+                if job_id in self._error_cache:
+                    error_cache[job_id] = self._error_cache[job_id]
+                else:
+                    log_path = config.jobs_dir() / job_id / "run.log"
+                    error_cache[job_id] = await asyncio.to_thread(errors.classify, log_path)
+            self._apply_jobs_snapshot(
+                {"active": active, "kerberos_ttl": kerberos_ttl, "error_cache": error_cache}
+            )
+        except Exception as exc:
+            self.notify(f"Job refresh failed: {exc}", severity="error")
 
-    def refresh_jobs(self) -> None:
-        active = jobs.active_jobs()
+    def _apply_jobs_snapshot(self, snapshot: dict) -> None:
+        active = snapshot["active"]
+        self.kerberos_ttl = snapshot["kerberos_ttl"]
+        self._error_cache.update(snapshot["error_cache"])
+
         running = [j for j in active if j["state"] == "Running"]
         recent = [j for j in active if j["state"] != "Running"]
-
-        self.query_one("#stat-running", Static).update(f"{len(running)} / 2")
         finished_count = sum(1 for j in active if j["state"] == "Succeeded")
         failed_count = sum(1 for j in active if j["state"] == "Failed")
+
+        self._detect_state_transitions(active)
+        self._refresh_kerberos()
+
+        if self._compact_stats:
+            if self.kerberos_ttl is None:
+                krb_text = "N/A"
+            else:
+                hours, remainder = divmod(self.kerberos_ttl, 3600)
+                minutes = remainder // 60
+                krb_text = f"{hours}h {minutes}m" if hours else f"{minutes}m"
+            compact = self.query_one("#stats-compact", Static)
+            compact.update(
+                f"● Running: {len(running)}/2  "
+                f"✓ Finished: {finished_count}  "
+                f"✗ Failed: {failed_count}  "
+                f"🔑 Kerberos: {krb_text}"
+            )
+
+        self.query_one("#stat-running", Static).update(f"{len(running)} / 2")
         self.query_one("#stat-finished", Static).update(str(finished_count))
         self.query_one("#stat-failed", Static).update(str(failed_count))
 
@@ -157,11 +199,11 @@ class DashboardScreen(Screen[None]):
         if running:
             for item in running:
                 active_table.add_row(
-                    self._display_id(item["id"]),
+                    format_job_id(item["id"]),
                     self._source_label(item),
                     self._dest_label(item),
                     "[green]\u25cf RUNNING[/]",
-                    self._elapsed(item),
+                    format_elapsed(item),
                     key=item["id"],
                 )
             active_table.display = True
@@ -174,21 +216,12 @@ class DashboardScreen(Screen[None]):
         recent_table.clear()
         if recent:
             for item in recent[:8]:
-                state = item["state"]
-                if state == "Succeeded":
-                    state_display = "[green]\u25cf SUCCEEDED[/]"
-                elif state == "Failed":
-                    state_display = "[red]\u25cf FAILED[/]"
-                elif state == "Cancelled":
-                    state_display = "[dim]\u25cf CANCELLED[/]"
-                else:
-                    state_display = f"\u25cf {state}"
                 recent_table.add_row(
-                    self._display_id(item["id"]),
+                    format_job_id(item["id"]),
                     self._source_label(item),
                     self._dest_label(item),
-                    state_display,
-                    self._elapsed(item),
+                    self._state_display(item),
+                    format_elapsed(item),
                     key=item["id"],
                 )
             recent_table.display = True
@@ -203,12 +236,29 @@ class DashboardScreen(Screen[None]):
         elif active_table.display and not recent_table.display and focused is recent_table:
             active_table.focus()
 
-    @staticmethod
-    def _display_id(job_id: str) -> str:
-        """Show timestamp + token suffix to distinguish same-day jobs."""
-        if len(job_id) > 20:
-            return job_id[9:]
-        return job_id
+    def _detect_state_transitions(self, active: list[dict]) -> None:
+        current: dict[str, str] = {item["id"]: item["state"] for item in active}
+        for job_id, state in current.items():
+            prev = self._last_states.get(job_id)
+            if prev == "Running" and state in ("Succeeded", "Failed", "Cancelled"):
+                self.app.notify(
+                    f"Job {format_job_id(job_id)} {state.lower()}",
+                    severity="information" if state == "Succeeded" else "warning",
+                )
+        self._last_states = current
+
+    def _state_display(self, item: dict) -> str:
+        state = item["state"]
+        if state == "Succeeded":
+            return "[green]\u25cf SUCCEEDED[/]"
+        if state == "Failed":
+            code = self._error_cache.get(item["id"])
+            if code:
+                return f"[red]\u25cf FAILED ({code})[/]"
+            return "[red]\u25cf FAILED[/]"
+        if state == "Cancelled":
+            return "[dim]\u25cf CANCELLED[/]"
+        return f"\u25cf {state}"
 
     def _source_label(self, item: dict) -> str:
         src = item.get("source", {})
@@ -225,6 +275,23 @@ class DashboardScreen(Screen[None]):
         if schema and table:
             return f"{schema}.{table}"[:30]
         return dest.get("type", "")[:30]
+
+    def _focused_table(self) -> DataTable | None:
+        for table_id in ("#active-table", "#recent-table"):
+            table = self.query_one(table_id, DataTable)
+            if table.has_focus and table.display:
+                return table
+        return None
+
+    def action_cursor_down(self) -> None:
+        table = self._focused_table()
+        if table is not None:
+            table.action_cursor_down()
+
+    def action_cursor_up(self) -> None:
+        table = self._focused_table()
+        if table is not None:
+            table.action_cursor_up()
 
     def _selected_job_id(self) -> str | None:
         for table_id in ("#active-table", "#recent-table"):
@@ -250,9 +317,8 @@ class DashboardScreen(Screen[None]):
         candidate = str(row_key[0])
         if not candidate or candidate.startswith("No "):
             return None
-        all_jobs = jobs.active_jobs()
-        for job in all_jobs:
-            if job["id"].startswith(candidate):
+        for job in jobs.active_jobs():
+            if job["id"].startswith(candidate) or format_job_id(job["id"]) == candidate:
                 return job["id"]
         return None
 

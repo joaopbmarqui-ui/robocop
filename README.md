@@ -20,6 +20,8 @@ On the Edge Node, from the deployed `/ads_storage/dispatch/` tree:
 
 The installer is idempotent. Re-running it preserves `config.json` and `jobs/`, refreshes the per-user venv, updates `installed_version`, and keeps the `dispatch` shortcut pointed at the current install.
 
+For the full first-time remote setup flow, including what to upload to the server and how `vendor/` is used, see [docs/edge-node-first-time-setup.md](docs/edge-node-first-time-setup.md).
+
 For local development on a non-Hadoop machine:
 
 ```bash

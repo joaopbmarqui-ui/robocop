@@ -14,7 +14,7 @@
 - [ ] Verify `/ads_storage/<user>/` is writable: `touch /ads_storage/$USER/.dispatch/.smoke_test`
 - [ ] Run `install.sh`: `DISPATCH_EMAIL=you@example.com DISPATCH_PYTHON_BIN=$(command -v python3.10) ./install.sh`
 - [ ] Verify install completed: `which dispatch` → `~/.local/bin/dispatch`
-- [ ] Verify version file matches: `cat ~/.dispatch/installed_version` matches `cat VERSION`
+- [ ] Verify version file matches: `cat /ads_storage/$USER/.dispatch/installed_version` matches `cat VERSION`
 
 ## Level 1 — Safe Smoke (no job launch)
 

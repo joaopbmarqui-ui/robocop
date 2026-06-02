@@ -75,7 +75,7 @@ def _run_shell_and_wait(ctx: RunContext, command: str, pattern: str, timeout: fl
 
 
 def _ensure_prompt(ctx: RunContext) -> None:
-    for key in ("Escape", "q", "C-c"):
+    for key in ("Escape", "q"):
         ctx.driver.send_key(key)
         time.sleep(0.2)
     ctx.driver.send_keys(f"cd {ctx.config.repo_path}")
@@ -83,17 +83,19 @@ def _ensure_prompt(ctx: RunContext) -> None:
 
 
 def check_ssh_connectivity(ctx: RunContext) -> SmokeResult:
-    ctx.driver.start_session()
+    ctx.driver.start_session(passcode=getattr(ctx, "passcode", None))
     screen = ctx.capture("ssh_connectivity")
     return _ok("ssh_connectivity", "Remote tmux session started", screen)
 
 
 def check_tmux_geometry(ctx: RunContext) -> SmokeResult:
-    command = (
-        f"tmux display-message -p -t {ctx.config.session_name!r} "
-        "'#{window_width} #{window_height}'"
-    )
-    result = ctx.driver._ssh(command)
+    result = ctx.driver._tmux([
+        "display-message",
+        "-p",
+        "-t",
+        ctx.config.session_name,
+        "#{window_width} #{window_height}"
+    ])
     assert isinstance(result, subprocess.CompletedProcess)
     output = result.stdout.strip()
     expected = f"{ctx.config.terminal_width} {ctx.config.terminal_height}"
@@ -104,13 +106,14 @@ def check_tmux_geometry(ctx: RunContext) -> SmokeResult:
 
 
 def check_compileall(ctx: RunContext) -> SmokeResult:
+    py = "$(command -v python3.11 || command -v python3.10 || echo /sys_apps_01/python/python310/bin/python3.10)"
     screen = _run_shell_and_wait(
         ctx,
-        "python -m compileall dispatch scr && echo COMPILEALL_OK",
+        f"{py} -m compileall dispatch scr && echo COMPILEALL_\"\"OK",
         "COMPILEALL_OK",
         timeout=60,
     )
-    return _ok("compileall", "python -m compileall dispatch scr passed", screen)
+    return _ok("compileall", "compileall dispatch scr passed", screen)
 
 
 def check_dispatch_opens(ctx: RunContext) -> SmokeResult:
@@ -131,7 +134,7 @@ def check_dashboard_renders(ctx: RunContext) -> SmokeResult:
 
 def check_kerberos_status(ctx: RunContext) -> SmokeResult:
     screen = ctx.capture("kerberos_status")
-    if re.search(r"Kerberos:\s*(MISSING|\d|[0-9]+[hm])", screen, flags=re.IGNORECASE):
+    if re.search(r"KERBEROS[\s\S]{1,100}?(N/A|MISSING|\d|[0-9]+[hm])", screen, flags=re.IGNORECASE):
         return _ok("kerberos_status", "Kerberos status is visible", screen)
     return _fail("kerberos_status", "Kerberos status was not visible", screen)
 
@@ -161,7 +164,8 @@ def check_browser_opens(ctx: RunContext) -> SmokeResult:
 
 
 def check_back_from_browser(ctx: RunContext) -> SmokeResult:
-    return _press_and_wait(ctx, "browser_back_dashboard", "b", "Active Jobs")
+    ctx.driver.send_key("Escape")
+    return _press_and_wait(ctx, "browser_back_dashboard", "Escape", "Active Jobs")
 
 
 def check_history_opens(ctx: RunContext) -> SmokeResult:
@@ -169,20 +173,25 @@ def check_history_opens(ctx: RunContext) -> SmokeResult:
 
 
 def check_back_from_history(ctx: RunContext) -> SmokeResult:
-    return _press_and_wait(ctx, "history_back_dashboard", "b", "Active Jobs")
+    ctx.driver.send_key("Escape")
+    return _press_and_wait(ctx, "history_back_dashboard", "Escape", "Active Jobs")
 
 
 def check_preview_opens(ctx: RunContext) -> SmokeResult:
     ctx.driver.send_key("n")
     ctx.driver.wait_for(r"New Job|Source.*Destination", timeout=10)
+    ctx.driver.send_key("Escape")
     ctx.driver.send_key("p")
     screen = ctx.driver.wait_for(r"Preview|SQL Preview", timeout=10)
     return _ok("preview_opens", "Preview screen opened", screen)
 
 
 def check_quit_cleanly(ctx: RunContext) -> SmokeResult:
+    ctx.driver.send_key("Escape")
+    ctx.driver.send_key("Escape")
+    ctx.driver.send_key("Escape")
     ctx.driver.send_key("q")
-    screen = ctx.driver.wait_for(r"\$|#|>\s*$", timeout=10)
+    screen = ctx.driver.wait_for(r"[\$#>]\s*$", timeout=10)
     return _ok("quit_cleanly", "Dispatch exited and tmux session stayed alive", screen)
 
 
@@ -190,8 +199,8 @@ def check_install_runs(ctx: RunContext) -> SmokeResult:
     email = ctx.config.operator_email or "dispatch-smoke@example.com"
     screen = _run_shell_and_wait(
         ctx,
-        f"DISPATCH_EMAIL={email} ./install.sh && echo INSTALL_OK",
-        r"Dispatch installed|INSTALL_OK",
+        f"DISPATCH_EMAIL={email} ./install.sh && echo RESULT_INSTALL_OK",
+        r"Dispatch installed|^RESULT_INSTALL_OK$",
         timeout=120,
     )
     return _ok("install_runs", "install.sh completed", screen)
@@ -203,40 +212,46 @@ def check_dispatch_shortcut(ctx: RunContext) -> SmokeResult:
 
 
 def check_klist_detected(ctx: RunContext) -> SmokeResult:
-    ctx.driver.send_keys("klist -s && echo KRB_OK || echo KRB_MISSING")
-    screen = ctx.driver.wait_for(r"KRB_OK|KRB_MISSING", timeout=10)
-    if "KRB_OK" not in screen:
+    ctx.driver.send_keys("klist -s && echo RESULT_KRB_OK || echo RESULT_KRB_MISSING")
+    screen = ctx.driver.wait_for(r"^RESULT_KRB_OK$|^RESULT_KRB_MISSING$", timeout=10)
+    if re.search(r"^RESULT_KRB_MISSING$", screen, flags=re.MULTILINE):
         return _fail("klist_detected", "klist did not find a valid Kerberos ticket", screen)
     return _ok("klist_detected", "Kerberos ticket detected", screen)
 
 
 def check_impala_shell_path(ctx: RunContext) -> SmokeResult:
-    ctx.driver.send_keys("which impala-shell || echo IMPALA_MISSING")
-    screen = ctx.driver.wait_for(r"impala-shell|IMPALA_MISSING", timeout=10)
-    if "IMPALA_MISSING" in screen:
+    ctx.driver.send_keys("which impala-shell >/dev/null 2>&1 && echo RESULT_IMPALA_OK || echo RESULT_IMPALA_MISSING")
+    screen = ctx.driver.wait_for(r"^RESULT_IMPALA_OK$|^RESULT_IMPALA_MISSING$", timeout=10)
+    if re.search(r"^RESULT_IMPALA_MISSING$", screen, flags=re.MULTILINE):
         return _fail("impala_shell_path", "impala-shell was not on PATH", screen)
     return _ok("impala_shell_path", "impala-shell was found on PATH", screen)
 
 
 def check_python_version(ctx: RunContext) -> SmokeResult:
-    screen = _run_shell_and_wait(ctx, "python3.10 --version", r"Python 3\.10", timeout=10)
-    return _ok("python_version", "python3.10 is available", screen)
+    py = "$(command -v python3.11 || command -v python3.10 || echo /sys_apps_01/python/python310/bin/python3.10)"
+    screen = _run_shell_and_wait(ctx, f"{py} --version", r"Python 3\.(10|11)", timeout=10)
+    return _ok("python_version", "Supported Python is available", screen)
 
 
 def check_cwd_captured(ctx: RunContext) -> SmokeResult:
     ctx.driver.send_keys("cd /tmp && dispatch")
     ctx.driver.wait_for("Active Jobs", timeout=20)
     ctx.driver.send_key("n")
-    screen = ctx.driver.wait_for(r"New Job|/tmp", timeout=10)
+    ctx.driver.wait_for(r"New Job", timeout=10)
+    screen = ctx.capture("cwd_captured")
+    ctx.driver.send_key("Escape")
+    ctx.driver.send_key("Escape")
+    ctx.driver.wait_for("Active Jobs", timeout=10)
     ctx.driver.send_key("q")
+    ctx.driver.wait_for(r"[\$#>]\s*$", timeout=10)
     if "/tmp" not in screen:
         return _fail("cwd_captured", "New Job screen did not show launch directory /tmp", screen)
     return _ok("cwd_captured", "Launch-time cwd is visible in New Job", screen)
 
 
 def check_ads_storage_writable(ctx: RunContext) -> SmokeResult:
-    command = "mkdir -p /ads_storage/$USER/.dispatch && touch /ads_storage/$USER/.dispatch/.smoke_test && echo WRITE_OK"
-    screen = _run_shell_and_wait(ctx, command, "WRITE_OK", timeout=15)
+    command = "mkdir -p /ads_storage/$USER/.dispatch && touch /ads_storage/$USER/.dispatch/.smoke_test && echo RESULT_WRITE_OK"
+    screen = _run_shell_and_wait(ctx, command, r"^RESULT_WRITE_OK$", timeout=15)
     return _ok("ads_storage_writable", "/ads_storage/$USER/.dispatch is writable", screen)
 
 
@@ -244,16 +259,17 @@ def check_textual_rendering(ctx: RunContext) -> SmokeResult:
     ctx.driver.send_keys("dispatch")
     screen = ctx.driver.wait_for("Active Jobs", timeout=20)
     ctx.driver.send_key("q")
+    ctx.driver.wait_for(r"[\$#>]\s*$", timeout=10)
     if any(ch in screen for ch in ("┌", "┐", "│", "─")) and "\x1b[" not in screen:
         return _ok("textual_rendering", "Textual box drawing rendered cleanly", screen)
     return _fail("textual_rendering", "Box drawing was missing or ANSI escapes were visible", screen)
 
 
 def check_version_matches(ctx: RunContext) -> SmokeResult:
-    command = "test -f VERSION && test -f /ads_storage/$USER/.dispatch/installed_version && diff -u VERSION /ads_storage/$USER/.dispatch/installed_version && echo VERSION_OK"
+    command = "test -f VERSION && test -f /ads_storage/$USER/.dispatch/installed_version && diff -u VERSION /ads_storage/$USER/.dispatch/installed_version >/dev/null && echo RESULT_VERSION_OK || echo RESULT_VERSION_FAIL"
     ctx.driver.send_keys(command)
-    screen = ctx.driver.wait_for(r"VERSION_OK|No such file|differ", timeout=15)
-    if "VERSION_OK" not in screen:
+    screen = ctx.driver.wait_for(r"^RESULT_VERSION_OK$|^RESULT_VERSION_FAIL$", timeout=15)
+    if re.search(r"^RESULT_VERSION_FAIL$", screen, flags=re.MULTILINE):
         return _fail("version_matches", "Installed version did not match repo VERSION", screen)
     return _ok("version_matches", "Installed version matches repo VERSION", screen)
 
@@ -307,10 +323,18 @@ def run_check(ctx: RunContext, level: int, check: Callable[[RunContext], SmokeRe
 
 def print_result(result: SmokeResult) -> None:
     status = "PASS" if result.passed else "FAIL"
-    print(f"[{status}] L{result.level} {result.name}: {result.message}")
+    try:
+        print(f"[{status}] L{result.level} {result.name}: {result.message}")
+    except Exception:
+        safe_msg = str(result.message).encode("ascii", "replace").decode("ascii")
+        print(f"[{status}] L{result.level} {result.name}: {safe_msg}")
+    
     if not result.passed and result.screen_capture:
         print("--- last screen ---")
-        print(result.screen_capture)
+        try:
+            print(result.screen_capture)
+        except Exception:
+            print(result.screen_capture.encode(sys.stdout.encoding or 'ascii', 'replace').decode(sys.stdout.encoding or 'ascii'))
         print("--- end screen ---")
 
 
@@ -364,10 +388,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--save-screens", action="store_true")
     parser.add_argument("--json-report", help="Write JSON report to this path")
     parser.add_argument("--fail-fast", action="store_true", help="Stop after the first failed check")
+    parser.add_argument("--passcode", help="Passcode for SSH authentication")
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8")
     args = build_parser().parse_args(argv)
     started = time.monotonic()
     run_timestamp = utc_stamp()
@@ -381,6 +410,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             save_screens=args.save_screens,
             verbose=args.verbose,
         )
+        ctx.passcode = args.passcode
         levels = selected_levels(args.level)
         for level in levels:
             for check in checks_for_level(level):

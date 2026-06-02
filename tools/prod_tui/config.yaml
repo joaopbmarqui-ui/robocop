@@ -1,9 +1,10 @@
-host: "your-user@edge-node"
+host: "e176097@hde2stl020003.mastercard.int"
 repo_path: "/ads_storage/dispatch"
 session_name: "robocop-prod-test"
 terminal_width: 120
 terminal_height: 40
-ssh_options: "-o StrictHostKeyChecking=no"
+ssh_options: "-p 2222 -o StrictHostKeyChecking=no"
+ssh_connect_timeout: 20
 smoke_query_sql: "SELECT 1 AS smoke_test_value"
 scratch_schema: "dw_settle"
 table_prefix: "dispatch_smoke"

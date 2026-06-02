@@ -241,7 +241,7 @@ def collect_preconditions(run: ControlledRun) -> list[str]:
     return violations
 
 
-def run_level_1_and_2(config: ProdTuiConfig, driver: TmuxDriver, run_timestamp: str, fail_fast: bool) -> list[SmokeResult]:
+def run_level_1_and_2(config: ProdTuiConfig, driver: TmuxDriver, run_timestamp: str, fail_fast: bool, passcode: str | None = None) -> list[SmokeResult]:
     ctx = RunContext(
         config=config,
         driver=driver,
@@ -249,6 +249,7 @@ def run_level_1_and_2(config: ProdTuiConfig, driver: TmuxDriver, run_timestamp: 
         save_screens=True,
         screens_dir=SCREENS_DIR / f"controlled_prereq_{run_timestamp}",
     )
+    ctx.passcode = passcode
     for level in selected_levels("all"):
         for check in checks_for_level(level):
             result = run_check(ctx, level, check)
@@ -281,7 +282,7 @@ def write_json_report(run: ControlledRun, prereq_results: list[SmokeResult], sta
 
 def controlled_lifecycle(run: ControlledRun, *, dry_run: bool) -> None:
     started = time.monotonic()
-    run.driver.start_session()
+    run.driver.start_session(passcode=getattr(run, "passcode", None))
     run.record("start_session", True, "Remote tmux session started", started, run.capture("start_session"))
 
     started = time.monotonic()
@@ -336,6 +337,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--json-report", help="Write JSON report to this path")
     parser.add_argument("--fail-fast", action="store_true")
     parser.add_argument("--skip-level12", action="store_true", help="Skip Level 1/2 prerequisite smoke checks")
+    parser.add_argument("--passcode", help="Passcode for SSH authentication")
     return parser
 
 
@@ -346,10 +348,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     config = load_config(args.config)
     driver = TmuxDriver.from_config(config, retries=2)
     run = ControlledRun(config=config, driver=driver, table_name=generate_smoke_table_name(config))
+    run.passcode = args.passcode
     exit_code = 0
     try:
         if not args.skip_level12:
-            prereq_results = run_level_1_and_2(config, driver, run.run_timestamp, args.fail_fast)
+            prereq_results = run_level_1_and_2(config, driver, run.run_timestamp, args.fail_fast, passcode=args.passcode)
             if any(not result.passed for result in prereq_results):
                 exit_code = 1
                 raise RuntimeError("Level 1/2 prerequisite checks failed")

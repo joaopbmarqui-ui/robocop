@@ -9,28 +9,9 @@ It covers:
 - installing Dispatch for one user on the Edge Node
 - validating that the TUI starts correctly
 
-## What gets deployed
-
-Dispatch is deployed as a repo checkout under `/ads_storage/dispatch`.
-
-Important detail: `install.sh` does **not** install a prebuilt Dispatch application wheel. It does two separate things:
-
-1. installs pinned dependency wheels from `vendor/`
-2. installs the repo itself from the deployed checkout with `pip install --no-deps -e "$ROOT_DIR"`
-
-That means the remote server needs:
-
-- `dispatch/`
-- `scr/`
-- `vendor/`
-- `install.sh`
-- `pyproject.toml`
-- `requirements.txt`
-- `VERSION`
-
 ## 1. Prepare the deployable tree locally
 
-From your local checkout, confirm the vendored wheels exist:
+Confirm the vendored wheels exist:
 
 ```bash
 ls vendor/*.whl
@@ -42,58 +23,43 @@ If `vendor/` needs to be refreshed, rebuild it locally:
 python -m pip download -r requirements.txt -d vendor
 ```
 
-For this repo, that downloads the pinned Textual dependency set used by the TUI. The current app code itself still comes from the uploaded repo tree, not from a built wheel.
+### Recommendation: Zip for Upload
+For Windows-to-Linux transfers or unstable connections, upload a single ZIP archive to avoid `scp`/`rsync` overhead and potential file corruption.
+
+```powershell
+Compress-Archive -Path dispatch, scr, vendor, install.sh, pyproject.toml, requirements.txt, VERSION, README.md, docs -DestinationPath dispatch_deploy.zip
+```
 
 ## 2. Upload the repo to the Edge Node
 
-Recommended target:
+Recommended target: `/ads_storage/dispatch`
 
-```bash
-/ads_storage/dispatch
+```powershell
+scp -P 2222 dispatch_deploy.zip <user>@<edge-node>:/ads_storage/dispatch/
 ```
 
-Example using `rsync`:
-
+On the server, unzip and clean up:
 ```bash
-rsync -av --delete \
-  dispatch scr vendor install.sh pyproject.toml requirements.txt VERSION README.md docs \
-  <user>@<edge-node>:/ads_storage/dispatch/
+cd /ads_storage/dispatch
+unzip dispatch_deploy.zip
+rm dispatch_deploy.zip
 ```
-
-Example using `scp`:
-
-```bash
-scp -r \
-  dispatch scr vendor install.sh pyproject.toml requirements.txt VERSION README.md docs \
-  <user>@<edge-node>:/ads_storage/dispatch/
-```
-
-If you use another deploy mechanism, preserve the same directory layout on the server.
 
 ## 3. Verify Edge Node prerequisites
 
-SSH to the Edge Node:
+SSH to the Edge Node and verify:
 
 ```bash
-ssh <user>@<edge-node>
-```
+# Check Python versions (3.10 or 3.11 are supported)
+python3.11 --version || python3.10 --version
 
-Then verify the required runtime environment:
-
-```bash
-python3.10 --version
 which impala-shell
 which klist
+
+# Ensure writable storage
 mkdir -p /ads_storage/$USER/.dispatch
 touch /ads_storage/$USER/.dispatch/.smoke_test
 ```
-
-Dispatch expects:
-
-- Python 3.10
-- `impala-shell` on `PATH`
-- `klist` on `PATH`
-- writable `/ads_storage/$USER/`
 
 ## 4. Run the installer
 
@@ -101,77 +67,35 @@ From the deployed tree:
 
 ```bash
 cd /ads_storage/dispatch
-DISPATCH_EMAIL=you@example.com DISPATCH_PYTHON_BIN=$(command -v python3.10) ./install.sh
+chmod +x install.sh
+DISPATCH_EMAIL=you@example.com DISPATCH_PYTHON_BIN=$(command -v python3.11) ./install.sh
 ```
 
-What `install.sh` does:
 
-- creates `/ads_storage/$USER/.dispatch/jobs`
-- creates or refreshes `/ads_storage/$USER/.dispatch/venv`
-- installs dependencies from `/ads_storage/dispatch/vendor`
-- installs the Dispatch repo into that venv
-- creates `~/.local/bin/dispatch` as a shortcut to the venv entrypoint
-- writes `/ads_storage/$USER/.dispatch/config.json` on first run
-- writes `/ads_storage/$USER/.dispatch/installed_version`
 
-The installer is idempotent. Re-running it preserves `config.json` and `jobs/`.
+## 5. Post-install validation
 
-## 5. Start the TUI
-
-Open a new shell after install, or reload your shell startup file if needed, then launch from the directory containing your SQL files:
-
+Launch the TUI:
 ```bash
-cd /path/to/sql/files
 dispatch
 ```
 
-Dispatch captures the launch-time current working directory once. CSV outputs are resolved relative to that launch directory for the whole session.
+Confirm:
+- Dashboard renders correctly.
+- Kerberos indicator is visible.
+- Navigation (`N`, `H`, `B`) works.
 
-## 6. Post-install validation
+## Gotchas & Troubleshooting
 
-From `/ads_storage/dispatch`:
+| Issue | Cause | Fix |
+|---|---|---|
+| `IndentationError` in dispatch script | Heredoc with spaces | Use `cat <<'EOF'` to avoid variable expansion and ensure exact spacing. |
+| SSH Disconnections | Idle timeout | Connect with `ssh -o ServerAliveInterval=30`. |
+| Permission Denied in `/ads_storage` | Sticky bits or ownership | Use `/ads_storage/$USER/` for personal data (venv, logs, jobs). |
 
-```bash
-python3.10 -m compileall dispatch scr
-python3.10 -m dispatch --help
-```
-
-Then verify the installed shortcut and version marker:
-
-```bash
-which dispatch
-cat /ads_storage/$USER/.dispatch/installed_version
-cat /ads_storage/dispatch/VERSION
-```
-
-Then launch the TUI:
-
-```bash
-cd /path/to/sql/files
-dispatch
-```
-
-At minimum, confirm:
-
-- the dashboard renders
-- the Kerberos indicator is visible
-- `N` opens the New Job screen
-- `H` opens History
-- `B` opens Browser
-- `Q` exits cleanly
-
-## 7. Production validation harness
+## 6. Production validation harness
 
 For repeatable real-environment validation over SSH and tmux, use the production harness:
 
 - [tools/prod_tui/README.md](../tools/prod_tui/README.md)
 - [docs/edge-node-smoke-test.md](./edge-node-smoke-test.md)
-
-The harness is the right path when you want controlled remote validation rather than a one-off manual launch.
-
-## Common mistakes
-
-- Uploading only source code and forgetting `vendor/`. Offline dependency install will fail.
-- Building a Dispatch app wheel unnecessarily. The current installer uses the uploaded repo checkout for the app itself.
-- Running `dispatch` from the wrong directory. CSV outputs are tied to the launch-time working directory.
-- Verifying `installed_version` under `~/.dispatch`. In this repo, the default install root is `/ads_storage/$USER/.dispatch`.

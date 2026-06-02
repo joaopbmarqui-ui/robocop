@@ -1,14 +1,24 @@
 # Dispatch Production TUI Harness
 
-This directory contains the SSH + tmux harness for validating the real Dispatch Textual TUI on a Hadoop Edge Node. It does not embed Dispatch in-process; it starts a persistent remote tmux session, sends keys, captures the pane, and lets an operator attach to the same session.
+This directory contains the **local tmux/psmux + SSH** harness for validating the real Dispatch Textual TUI on a Hadoop Edge Node.
+
+Instead of SSHing into the Edge Node and spinning up tmux there, the harness creates a **local** tmux session whose pane is the SSH connection itself.  All pane control (key injection, screen capture, attach) happens locally.  One-off remote commands (file writes, `impala-shell` queries) still use a separate SSH connection.
 
 ## Prerequisites
 
-- Local machine can SSH to the Edge Node with key-based auth or a pre-authenticated SSH agent.
-- `tmux`, `python3.10`, `klist`, and `impala-shell` are available on the Edge Node.
-- The Dispatch repo is deployed on the Edge Node at `repo_path`.
+**Local machine:**
+
+- **Linux / macOS:** `tmux` available on `PATH`.
+- **Windows:** [`psmux`](https://github.com/nicholasgasior/psmux) installed — provides a `tmux.exe` shim with the same CLI.  Install via `winget install psmux`, `scoop install psmux`, or `cargo install psmux`.
+- `ssh` available on `PATH` and configured for key-based (or agent-forwarded) auth to the Edge Node.
+
+**Edge Node:**
+
+- `python3.10`, `klist`, and `impala-shell` are available.
+- The Dispatch repo is deployed at `repo_path`.
 - Kerberos has been initialized before Level 2 or Level 3 checks.
-- Optional local dependency for config parsing: `python -m pip install -r tools/prod_tui/requirements.txt`.
+
+**Optional local dep for config parsing:** `python -m pip install -r tools/prod_tui/requirements.txt` (adds PyYAML).
 
 ## Configure
 
@@ -30,9 +40,27 @@ operator_email: "you@example.com"
 
 `ssh_options` accepts normal OpenSSH options such as `-J jump-host`, `-i ~/.ssh/key`, or `-o StrictHostKeyChecking=no`.
 
-## Manual tmux CLI
+## How sessions work
 
-Use these commands to manually drive a production session:
+```
+┌─────────────────────────────────┐
+│  local machine                  │
+│  tmux session "robocop-prod-…"  │
+│  ┌───────────────────────────┐  │
+│  │  pane: ssh user@edge-node │  │
+│  │   cd /ads_storage/dispatch│  │
+│  │   $ _                     │  │
+│  └───────────────────────────┘  │
+└─────────────────────────────────┘
+```
+
+`start` → opens the session above.
+`send` / `keys` → `tmux send-keys -t <session>` locally.
+`capture` → `tmux capture-pane -t <session>` locally.
+`attach` → `tmux attach -t <session>` locally.
+`stop` → `tmux kill-session -t <session>` locally.
+
+## Manual tmux CLI
 
 ```bash
 python tools/prod_tui/robocop_tmux.py --config tools/prod_tui/config.yaml start
@@ -43,7 +71,7 @@ python tools/prod_tui/robocop_tmux.py --config tools/prod_tui/config.yaml attach
 python tools/prod_tui/robocop_tmux.py --config tools/prod_tui/config.yaml stop
 ```
 
-`capture` prints the current tmux pane. `attach` hands your terminal to the remote tmux session; detach with the normal tmux prefix sequence.
+`capture` prints the current tmux pane. `attach` hands your terminal to the local tmux session; detach with the normal tmux prefix sequence (`Ctrl-b d`).
 
 ## Level 1 and 2 Smoke Tests
 
@@ -91,7 +119,7 @@ By default Level 3 first runs Level 1 and 2. Use `--skip-level12` only when an o
 
 `agent_loop.py` provides a safety-gated loop for automation:
 
-1. Capture the tmux screen.
+1. Capture the tmux pane.
 2. Parse the screen into `ScreenState`.
 3. Ask a step to choose an `Action`.
 4. Classify the action with `safety.classify()`.

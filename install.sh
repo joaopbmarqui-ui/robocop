@@ -1,11 +1,20 @@
 #!/usr/bin/env sh
 set -eu
 
-ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" && pwd)
 USER_NAME=${USER:-$(id -un)}
 DATA_ROOT=${DISPATCH_DATA_ROOT:-/ads_storage/$USER_NAME}
 DISPATCH_HOME="$DATA_ROOT/.dispatch"
-PYTHON_BIN=${DISPATCH_PYTHON_BIN:-/sys_apps_01/python/python310/bin/python3.10}
+PYTHON_BIN=${DISPATCH_PYTHON_BIN:-}
+if [ -z "$PYTHON_BIN" ]; then
+  if command -v python3.11 >/dev/null 2>&1; then
+    PYTHON_BIN=$(command -v python3.11)
+  elif command -v python3.10 >/dev/null 2>&1; then
+    PYTHON_BIN=$(command -v python3.10)
+  else
+    PYTHON_BIN=/sys_apps_01/python/python310/bin/python3.10
+  fi
+fi
 
 if [ ! -d "$DATA_ROOT" ] || [ ! -w "$DATA_ROOT" ]; then
   echo "$DATA_ROOT must exist and be writable" >&2
@@ -15,8 +24,8 @@ fi
 mkdir -p "$DISPATCH_HOME/jobs"
 
 LOCK_FILE="$DISPATCH_HOME/install.lock"
-exec 9>"$LOCK_FILE"
-flock 9
+# exec 9>"$LOCK_FILE"
+# flock 9
 
 if [ ! -x "$PYTHON_BIN" ]; then
   echo "Python 3.10 not found at $PYTHON_BIN" >&2
@@ -34,11 +43,16 @@ else
   "$DISPATCH_HOME/venv/bin/pip" install --index-url "${DISPATCH_PIP_INDEX_URL:-https://pypi.org/simple}" \
     -r "$ROOT_DIR/requirements.txt"
 fi
-"$DISPATCH_HOME/venv/bin/pip" install --no-deps -e "$ROOT_DIR"
+# "$DISPATCH_HOME/venv/bin/pip" install --no-deps -e "$ROOT_DIR"
 
 LOCAL_BIN="$HOME/.local/bin"
 mkdir -p "$LOCAL_BIN"
-ln -sfn "$DISPATCH_HOME/venv/bin/dispatch" "$LOCAL_BIN/dispatch"
+cat > "$LOCAL_BIN/dispatch" <<EOF
+#!/bin/bash
+export PYTHONPATH="$ROOT_DIR"
+exec "$DISPATCH_HOME/venv/bin/python" -m dispatch "\$@"
+EOF
+chmod +x "$LOCAL_BIN/dispatch"
 
 case ":$PATH:" in
   *":$LOCAL_BIN:"*) ;;

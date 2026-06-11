@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable
 
@@ -53,6 +54,11 @@ class DispatchApp(App[None]):
     def __init__(self) -> None:
         super().__init__()
         setup_logging()
+        # Dispatch runs over SSH/VPN where animation frames translate into
+        # extra terminal writes and visible lag; disable them unless the user
+        # explicitly opted in via TEXTUAL_ANIMATIONS.
+        if "TEXTUAL_ANIMATIONS" not in os.environ:
+            self.animation_level = "none"
         self.launch_cwd = Path.cwd()
         self.title = "Dispatch"
         self.sub_title = f"Impala jobs \u00b7 {self._short_cwd()}"

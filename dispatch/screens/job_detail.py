@@ -51,7 +51,16 @@ class JobDetailScreen(Screen[None]):
         self._evicted_line_count = 0
         self._search_query = ""
         self._error_code: str | None = None
+        self._error_line = ""
+        # Error classification reads the log tail; do it once per failure,
+        # not on every 1s refresh tick.
+        self._error_checked = False
         self._job_state: str | None = None
+        # Manifest mtime cache: skip the JSON parse when the file is unchanged.
+        self._manifest_mtime: float | None = None
+        self._manifest_item: dict[str, Any] | None = None
+        # Last markup painted per Static, to skip no-op repaints over SSH.
+        self._static_cache: dict[str, str] = {}
 
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
         """Hide actions that do not apply to the Job's current state."""
@@ -66,7 +75,7 @@ class JobDetailScreen(Screen[None]):
         return config.jobs_dir() / self.job_id
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=True)
+        yield Header(show_clock=False)
         sidebar = Sidebar()
         sidebar.active_screen = "view_logs"
         yield sidebar
@@ -123,48 +132,67 @@ class JobDetailScreen(Screen[None]):
 
         def _read() -> dict[str, Any] | None:
             try:
-                item = manifest.load(manifest_path)
-            except Exception:
+                manifest_mtime = manifest_path.stat().st_mtime
+            except OSError:
                 return None
-            new_lines: list[str] = []
-            if log_path.exists():
-                try:
-                    size = log_path.stat().st_size
-                except OSError:
-                    size = self._tail_offset
-                offset = self._tail_offset
-                if size < offset:
-                    offset = 0
-                if size > offset:
-                    with log_path.open("r", encoding="utf-8", errors="replace") as handle:
-                        handle.seek(offset)
-                        new_lines = [line.rstrip() for line in handle]
-                        new_offset = handle.tell()
-                else:
-                    new_offset = offset
+            if manifest_mtime == self._manifest_mtime and self._manifest_item is not None:
+                item = self._manifest_item
             else:
-                new_offset = self._tail_offset
-            error_code = None
-            if item["state"] == "Failed":
+                try:
+                    item = manifest.load(manifest_path)
+                except Exception:
+                    return None
+                self._manifest_mtime = manifest_mtime
+                self._manifest_item = item
+            new_lines: list[str] = []
+            try:
+                size = log_path.stat().st_size
+            except OSError:
+                size = self._tail_offset
+            offset = self._tail_offset
+            if size < offset:
+                offset = 0
+            if size > offset:
+                with log_path.open("r", encoding="utf-8", errors="replace") as handle:
+                    handle.seek(offset)
+                    new_lines = [line.rstrip() for line in handle]
+                    new_offset = handle.tell()
+            else:
+                new_offset = offset
+            error_code = self._error_code
+            error_line = self._error_line
+            if item["state"] == "Failed" and not self._error_checked:
                 error_code = errors.classify(log_path)
+                error_line = errors.first_matching_line(log_path, error_code)
             return {
                 "item": item,
                 "new_lines": new_lines,
                 "new_offset": new_offset,
                 "error_code": error_code,
+                "error_line": error_line,
             }
 
         snapshot = await asyncio.to_thread(_read)
         self._apply_detail_snapshot(snapshot)
+
+    def _set_static(self, selector: str, markup: str) -> None:
+        """Update a Static only when its content actually changed."""
+        if self._static_cache.get(selector) == markup:
+            return
+        self._static_cache[selector] = markup
+        self.query_one(selector, Static).update(markup)
 
     def _apply_detail_snapshot(self, snapshot: dict[str, Any] | None) -> None:
         if snapshot is None:
             return
         item = snapshot["item"]
         self._error_code = snapshot["error_code"]
+        self._error_line = snapshot["error_line"]
         dest = item["destination"]
         source = item["source"]
         state = item["state"]
+        if state == "Failed":
+            self._error_checked = True
 
         if state != self._job_state:
             self._job_state = state
@@ -173,16 +201,17 @@ class JobDetailScreen(Screen[None]):
         source_text = self._truncate_path(
             source.get("table_name") or source.get("sql_path_at_launch") or source.get("type", "--")
         )
-        self.query_one("#sum-source", Static).update(f"[dim]Source[/]       {source_text}")
+        self._set_static("#sum-source", f"[dim]Source[/]       {source_text}")
         schema = dest.get("schema", "")
         table = dest.get("table_name", "")
         full_table = f"{schema}.{table}" if schema and table else dest.get("type", "--")
-        self.query_one("#sum-dest", Static).update(
-            f"[dim]Destination[/]  {dest.get('type', '--')} \u2192 {full_table}"
+        self._set_static(
+            "#sum-dest",
+            f"[dim]Destination[/]  {dest.get('type', '--')} \u2192 {full_table}",
         )
 
-        self.query_one("#sum-state", Static).update(
-            f"[dim]State[/]        {format_state(state, self._error_code)}"
+        self._set_static(
+            "#sum-state", f"[dim]State[/]        {format_state(state, self._error_code)}"
         )
         if state == "Running":
             self._update_streaming_indicator()
@@ -192,20 +221,18 @@ class JobDetailScreen(Screen[None]):
                 "Failed": "[red]Failed[/]",
                 "Cancelled": "[dim]Cancelled[/]",
             }.get(state, "")
-            self.query_one("#log-streaming", Static).update(streaming)
+            self._set_static("#log-streaming", streaming)
 
-        self.query_one("#sum-started", Static).update(
-            f"[dim]Started[/]  {format_timestamp(item.get('started_at'))}"
+        self._set_static(
+            "#sum-started", f"[dim]Started[/]  {format_timestamp(item.get('started_at'))}"
         )
-        self.query_one("#sum-elapsed", Static).update(
-            f"[dim]Elapsed[/]  {format_elapsed(item)}"
-        )
+        self._set_static("#sum-elapsed", f"[dim]Elapsed[/]  {format_elapsed(item)}")
         csv_path = dest.get("csv_path") or ""
         if dest.get("type") in ("Csv", "Table+Csv") and csv_path:
             csv_text = self._truncate_path(csv_path)
         else:
             csv_text = "[dim]n/a (table-only)[/]"
-        self.query_one("#sum-csv", Static).update(f"[dim]CSV[/]      {csv_text}")
+        self._set_static("#sum-csv", f"[dim]CSV[/]      {csv_text}")
 
         cancel_btn = self.query_one("#cancel", Button)
         cancel_btn.display = state in ("Running", "Pending")
@@ -220,31 +247,34 @@ class JobDetailScreen(Screen[None]):
             status_parts.append(f"exit {item.get('exit_code', '?')}")
         if item.get("finished_at"):
             status_parts.append(f"finished {format_timestamp(item['finished_at'])}")
-        self.query_one("#job-status-line", Static).update("  \u00b7  ".join(status_parts))
+        self._set_static("#job-status-line", "  \u00b7  ".join(status_parts))
 
     def _update_streaming_indicator(self) -> None:
         if self.follow_mode:
-            self.query_one("#log-streaming", Static).update(
-                "[green]Streaming logs\u2026 (auto-scroll) \u25cf[/]"
+            self._set_static(
+                "#log-streaming", "[green]Streaming logs\u2026 (auto-scroll) \u25cf[/]"
             )
         else:
-            self.query_one("#log-streaming", Static).update("[yellow][PAUSED][/]")
+            self._set_static("#log-streaming", "[yellow][PAUSED][/]")
 
     def _update_error_banner(self, state: str) -> None:
         banner = self.query_one("#error-banner", Static)
         if state != "Failed":
-            banner.display = False
+            if banner.display:
+                banner.display = False
             return
-        log_path = self.job_dir / "run.log"
         code = self._error_code
-        line = errors.first_matching_line(log_path, code)
         if code:
-            banner.update(
-                f"[bold red]{code}[/]: {line}\n[dim]{errors.suggestion(code)}[/]"
+            self._set_static(
+                "#error-banner",
+                f"[bold red]{code}[/]: {self._error_line}\n[dim]{errors.suggestion(code)}[/]",
             )
         else:
-            banner.update("[red]Job failed.[/] [dim]Check log for details.[/]")
-        banner.display = True
+            self._set_static(
+                "#error-banner", "[red]Job failed.[/] [dim]Check log for details.[/]"
+            )
+        if not banner.display:
+            banner.display = True
 
     def _append_log_lines(self, new_lines: list[str], new_offset: int) -> None:
         if not new_lines and new_offset == self._tail_offset:
@@ -365,9 +395,7 @@ class JobDetailScreen(Screen[None]):
                 return
             process.cancel_process_group(pid)
             self.notify(f"Cancellation requested for Job {item['id']}", severity="warning")
-            self.query_one("#job-status-line", Static).update(
-                "[yellow]Cancellation requested\u2026[/]"
-            )
+            self._set_static("#job-status-line", "[yellow]Cancellation requested\u2026[/]")
 
     async def _confirm_cancel(self, job_id: str, pid: int) -> bool:
         loop_future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()

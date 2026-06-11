@@ -22,15 +22,31 @@ SUGGESTIONS: dict[str, str] = {
 }
 
 
+_TAIL_READ_BYTES = 65536
+
+
+def _tail_lines_of(log_path: Path, tail_lines: int) -> list[str] | None:
+    """Read at most the last ``_TAIL_READ_BYTES`` of the log and return its
+    trailing lines. Avoids loading multi-MB orchestrator logs into memory."""
+    try:
+        size = log_path.stat().st_size
+        with log_path.open("r", encoding="utf-8", errors="replace") as handle:
+            if size > _TAIL_READ_BYTES:
+                handle.seek(size - _TAIL_READ_BYTES)
+                handle.readline()  # drop the partial first line
+            lines = handle.read().splitlines()
+    except OSError:
+        return None
+    return lines[-tail_lines:]
+
+
 def classify(log_path: Path, *, tail_lines: int = 50) -> str | None:
     """Return a short error code if a known pattern matches recent log lines."""
     if not log_path.is_file():
         return None
-    try:
-        text = log_path.read_text(encoding="utf-8", errors="replace")
-    except OSError:
+    lines = _tail_lines_of(log_path, tail_lines)
+    if lines is None:
         return None
-    lines = text.splitlines()[-tail_lines:]
     blob = "\n".join(lines)
     for code, pattern in PATTERNS:
         if re.search(pattern, blob, re.IGNORECASE):
@@ -50,9 +66,8 @@ def first_matching_line(log_path: Path, code: str | None, *, tail_lines: int = 5
     pattern = next((p for c, p in PATTERNS if c == code), None)
     if pattern is None:
         return ""
-    try:
-        lines = log_path.read_text(encoding="utf-8", errors="replace").splitlines()[-tail_lines:]
-    except OSError:
+    lines = _tail_lines_of(log_path, tail_lines)
+    if lines is None:
         return ""
     compiled = re.compile(pattern, re.IGNORECASE)
     for line in reversed(lines):

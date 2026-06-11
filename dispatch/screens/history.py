@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
@@ -38,7 +40,7 @@ class HistoryScreen(Screen[None]):
         self._sort_reverse = True
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=True)
+        yield Header(show_clock=False)
         sidebar = Sidebar()
         sidebar.active_screen = "history"
         yield sidebar
@@ -71,14 +73,14 @@ class HistoryScreen(Screen[None]):
                 yield Button("View Logs [Enter]", id="view-logs", variant="primary")
         yield Footer()
 
-    def on_mount(self) -> None:
+    async def on_mount(self) -> None:
         table = self.query_one("#history-table", DataTable)
         table.add_columns("ID", "Table/Target", "State", "Finished At")
         table.cursor_type = "row"
         self.query_one("#history-empty").display = False
-        self._all_jobs = jobs.history_jobs()
+        self._all_jobs = await asyncio.to_thread(jobs.history_jobs)
         self._filtered = self._all_jobs
-        self.refresh_history()
+        self._render_history()
         if self._filtered:
             table.focus()
         else:
@@ -87,10 +89,16 @@ class HistoryScreen(Screen[None]):
     def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id == "search":
             self._page = 0
-            self.refresh_history()
+            # Search/sort/pagination are pure view changes over the cached
+            # manifest list; no filesystem walk per keystroke.
+            self._render_history()
 
     def refresh_history(self) -> None:
+        """Reload manifests from disk, then re-render the table."""
         self._all_jobs = jobs.history_jobs()
+        self._render_history()
+
+    def _render_history(self) -> None:
         needle = self.query_one("#search", Input).value.lower().strip()
         self._filtered = []
         for item in self._all_jobs:
@@ -169,7 +177,7 @@ class HistoryScreen(Screen[None]):
             self._sort_reverse = not self._sort_reverse
         self._sort_mode = self.SORT_MODES[next_idx]
         self._page = 0
-        self.refresh_history()
+        self._render_history()
 
     def action_cursor_down(self) -> None:
         table = self.query_one("#history-table", DataTable)
@@ -185,12 +193,12 @@ class HistoryScreen(Screen[None]):
         total_pages = max(1, (len(self._filtered) + PAGE_SIZE - 1) // PAGE_SIZE)
         if self._page < total_pages - 1:
             self._page += 1
-            self.refresh_history()
+            self._render_history()
 
     def action_prev_page(self) -> None:
         if self._page > 0:
             self._page -= 1
-            self.refresh_history()
+            self._render_history()
 
     @staticmethod
     def _display_id(job_id: str) -> str:

@@ -51,7 +51,7 @@ class PreviewScreen(Screen[None]):
         self.dest_type = dest_type or "Table"
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=True)
+        yield Header(show_clock=False)
         sidebar = Sidebar()
         sidebar.active_screen = "new_job"
         yield sidebar

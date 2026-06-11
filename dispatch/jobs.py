@@ -39,13 +39,20 @@ def list_manifests(root: Path | None = None) -> list[manifest.JobManifest]:
     base = root or config.jobs_dir()
     if not base.exists():
         return []
+    paths = sorted(base.glob("*/manifest.json"), reverse=True)
     loaded: list[manifest.JobManifest] = []
-    for path in sorted(base.glob("*/manifest.json"), reverse=True):
+    for path in paths:
         try:
             loaded.append(_load_manifest_cached(path))
         except Exception as exc:
             logger.warning("Skipping corrupt manifest %s: %s", path, exc)
             continue
+    # Drop cache entries for deleted job dirs so the cache cannot grow
+    # unbounded across a long supervision session.
+    if len(_manifest_cache) > len(paths):
+        live = set(paths)
+        for stale in [cached for cached in _manifest_cache if cached not in live]:
+            del _manifest_cache[stale]
     return loaded
 
 

@@ -45,9 +45,12 @@ class NewJobScreen(Screen[None]):
         self._matrix_collapsed = bool(config.read_form_defaults())
         self._cwd_sql_files: list[dict] = []
         self._picker_ready = False
+        # (path, exists) memo so keystrokes in unrelated fields do not stat()
+        # the SQL path (potentially a slow network mount) on every change.
+        self._sql_exists_cache: tuple[str, bool] | None = None
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=True)
+        yield Header(show_clock=False)
         sidebar = Sidebar()
         sidebar.active_screen = "new_job"
         yield sidebar
@@ -273,13 +276,22 @@ class NewJobScreen(Screen[None]):
         collapsible = self.query_one("#matrix-collapsible", Collapsible)
         collapsible.collapsed = not collapsible.collapsed
 
+    def _sql_file_exists(self) -> bool:
+        """Memoized stat of the SQL path; one stat per distinct value."""
+        raw = self._input_value("sql-file")
+        cached = self._sql_exists_cache
+        if cached is not None and cached[0] == raw:
+            return cached[1]
+        exists = Path(raw).exists() if raw else False
+        self._sql_exists_cache = (raw, exists)
+        return exists
+
     def _inline_validate(self) -> None:
         """Provide real-time field validation indicators."""
         source = self._selected_source()
         msgs = []
         if source in ("SqlFile", "SqlTemplate"):
-            sql_path = Path(self._input_value("sql-file"))
-            if sql_path.exists():
+            if self._sql_file_exists():
                 msgs.append("[green]\u2713[/] SQL file found")
             elif self._input_value("sql-file"):
                 msgs.append("[red]\u2717[/] SQL file not found")
@@ -304,8 +316,7 @@ class NewJobScreen(Screen[None]):
         if (source, destination) not in manifest.LEGAL_CELLS:
             issues.append(f"Illegal combination: {source} \u2192 {destination}")
         if source in ("SqlFile", "SqlTemplate"):
-            sql_path = Path(self._input_value("sql-file"))
-            if self._input_value("sql-file") and not sql_path.exists():
+            if self._input_value("sql-file") and not self._sql_file_exists():
                 issues.append("SQL file not found")
         email = self._input_value("email")
         if email and ("@" not in email or "." not in email.split("@")[-1]):
@@ -386,7 +397,7 @@ class NewJobScreen(Screen[None]):
         hint = self.query_one("#path-hint", Static)
         if raw:
             name = Path(raw).name
-            exists = Path(raw).exists()
+            exists = self._sql_file_exists()
             icon = "[green]\u2713[/]" if exists else "[red]\u2717[/]"
             hint.update(f"{icon} [dim]{name}[/]")
         else:
@@ -593,6 +604,7 @@ class NewJobScreen(Screen[None]):
         editor = os.environ.get("EDITOR", "vi")
         with self.app.suspend():
             process.run_interactive(editor, self._input_value("sql-file"))
+        self._sql_exists_cache = None  # the editor may have created the file
         self._detect_sql()
 
     async def action_kinit(self) -> None:

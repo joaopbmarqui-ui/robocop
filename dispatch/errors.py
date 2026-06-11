@@ -6,11 +6,11 @@ import re
 from pathlib import Path
 
 PATTERNS: list[tuple[str, str]] = [
-    ("SYNTAX", r"AnalysisException.*Syntax error"),
-    ("TABLE_NOT_FOUND", r"Table.*does not exist|TableNotFoundException"),
+    ("SYNTAX", r"AnalysisException.*Syntax error|Erro mapeado: SYNTAX_ERROR|\bSYNTAX_ERROR\b"),
+    ("TABLE_NOT_FOUND", r"Table.*does not exist|TableNotFoundException|\bTABLE_NOT_FOUND\b"),
     ("MEMORY", r"Memory limit exceeded|MEMORY_LIMIT_EXCEEDED"),
-    ("AUTH", r"AuthorizationException|Kerberos.*expired"),
-    ("QUEUE", r"Rejected.*pool|All pools busy|queue timeout"),
+    ("AUTH", r"AuthorizationException|AuthenticationException|Kerberos.*expired|\bAUTH_ERROR\b"),
+    ("QUEUE", r"Rejected.*pool|All pools busy|queue timeout|exceeded timeout: queue is full"),
 ]
 
 SUGGESTIONS: dict[str, str] = {

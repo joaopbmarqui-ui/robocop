@@ -50,7 +50,8 @@ def month_range(start: date, end: date) -> list[date]:
 def monthly_preview(sql_template: str, schema: str, table_name: str, start_iso: str, end_iso: str) -> str:
     start = datetime.strptime(start_iso, "%Y-%m-%d").date()
     end = datetime.strptime(end_iso, "%Y-%m-%d").date()
-    lines = [f"Monthly partitions for {schema}.{table_name}:"]
+    # Metadata lines are SQL comments so the preview tokenizes cleanly.
+    lines = [f"-- Monthly partitions for {schema}.{table_name}:"]
     for month in month_range(start, end):
         last_day = calendar.monthrange(month.year, month.month)[1]
         month_end = month.replace(day=last_day)
@@ -59,9 +60,8 @@ def monthly_preview(sql_template: str, schema: str, table_name: str, start_iso: 
         lines.extend(
             [
                 "",
-                f"{schema}.{table_name}_temp_{dt_ano_mes}",
-                f"date_inicio={month}",
-                f"date_fim={month_end}",
+                f"-- {schema}.{table_name}_temp_{dt_ano_mes}",
+                f"-- date_inicio={month}  date_fim={month_end}",
                 resolved,
             ]
         )

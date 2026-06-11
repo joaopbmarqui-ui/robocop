@@ -43,3 +43,42 @@ def format_job_id(job_id: str, style: str = "short") -> str:
     if len(job_id) > 20:
         return job_id[9:]
     return job_id
+
+
+def format_timestamp(value: str | None) -> str:
+    """Render a manifest UTC timestamp as compact local time."""
+    parsed = parse_utc_timestamp(value)
+    if parsed is None:
+        return "--"
+    return parsed.astimezone().strftime("%Y-%m-%d %H:%M")
+
+
+# State rendering: every state pairs a distinct symbol with its label so
+# meaning survives terminals without color (NO_COLOR, low-color SSH).
+_STATE_STYLES: dict[str, tuple[str, str]] = {
+    "Running": ("\u25cf", "green"),
+    "Succeeded": ("\u2713", "green"),
+    "Failed": ("\u2717", "red"),
+    "Cancelled": ("\u25cb", "dim"),
+    "Pending": ("\u25cc", "dim"),
+}
+
+
+def format_state(state: str, error_code: str | None = None) -> str:
+    """Markup for a Job state cell, consistent across all tables."""
+    symbol, color = _STATE_STYLES.get(state, ("\u25cf", "dim"))
+    label = state.upper()
+    if state == "Failed" and error_code:
+        label = f"{label} \u00b7 {error_code}"
+    return f"[{color}]{symbol} {label}[/]"
+
+
+def format_kerberos_ttl(ttl_seconds: int | None) -> str:
+    """Compact Kerberos TTL text shared by the sidebar chip and stat card."""
+    if ttl_seconds is None:
+        return "missing"
+    hours, remainder = divmod(ttl_seconds, 3600)
+    minutes = remainder // 60
+    if hours:
+        return f"{hours}h {minutes:02d}m"
+    return f"{minutes}m"

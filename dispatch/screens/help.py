@@ -8,61 +8,57 @@ from textual.screen import ModalScreen
 from textual.widgets import Static
 
 QUICK_HELP = """\
-[bold cyan]Quick Reference[/]  [dim]N[/] New Job  [dim]V[/] View Logs  [dim]H[/] History  [dim]B[/] Browser  [dim]?[/] Help  [dim]Q[/] Quit\
+[bold]Quick Reference[/]   [b]N[/] New Job   [b]V[/] View Logs   [b]H[/] History   [b]B[/] Browse   [b]Q[/] Quit\
 """
 
 HELP_TEXT = """\
-[bold $accent]Dispatch Keyboard Shortcuts[/]
+[bold]Global[/]
+  [b]Q[/]         Quit Dispatch
+  [b]?[/]         Toggle this help screen
+  [b]Ctrl+B[/]    Collapse / expand the sidebar
+  [b]Tab[/]       Move focus between panels
 
-[bold $accent]Global[/]
-  [cyan]Q[/]       Quit Dispatch
-  [cyan]?[/]       Toggle this help screen
+[bold]Dashboard[/]
+  [b]N[/]         New Job wizard
+  [b]V[/]         View logs for selected job
+  [b]C[/]         Cancel selected job
+  [b]H[/]         Open History
+  [b]B[/]         Open Impala Browser
+  [b]\u2191\u2193 / J K[/]  Move selection in tables
+  [b]Enter[/]     Open detail for selected row
 
-───────────────
+[bold]New Job[/]
+  [b]L[/]         Launch job (requires Kerberos)
+  [b]P[/]         Preview generated SQL
+  [b]E[/]         Edit SQL file in $EDITOR
+  [b]K[/]         Refresh Kerberos (kinit)
+  [b]M[/]         Toggle the legal-cells matrix
+  [b]B / Esc[/]   Back to Dashboard
 
-[bold $accent]Dashboard[/]
-  [cyan]N[/]       New Job wizard
-  [cyan]V[/]       View logs for selected job
-  [cyan]J/K[/]     Move selection in tables
-  [cyan]C[/]       Cancel selected job
-  [cyan]H[/]       Open History
-  [cyan]B[/]       Open Impala Browser
-  [cyan]\u2191 \u2193[/]     Navigate job rows
-  [cyan]Enter[/]   Open detail for selected row
+[bold]SQL Preview[/]
+  [b]Y[/]           Copy SQL to clipboard
+  [b]Enter / Esc[/] Back to form
 
-───────────────
+[bold]Job Detail[/]
+  [b]Space / F[/] Pause or resume log follow
+  [b]g / G[/]     Jump to top / bottom of log
+  [b]/[/]         Search log
+  [b]Y[/]         Copy job ID
+  [b]R[/]         Clone job into New Job (finished jobs)
+  [b]C[/]         Cancel job (running jobs, with confirmation)
+  [b]B / Esc[/]   Back
 
-[bold $accent]New Job[/]
-  [cyan]L[/]       Launch job (requires Kerberos)
-  [cyan]P[/]       Preview generated SQL
-  [cyan]E[/]       Edit SQL file in $EDITOR
-  [cyan]K[/]       Refresh Kerberos (kinit)
-  [cyan]B / Esc[/] Back to Dashboard
+[bold]History[/]
+  [b]S[/]         Cycle sort: date \u2192 state \u2192 table
+  [b][ / ][/]     Previous / next page
+  [b]Enter[/]     View logs for selected row
+  [b]B / Esc[/]   Back
 
-[bold $accent]SQL Preview[/]
-  [cyan]Enter[/]   Back to form
-  [cyan]Y[/]       Copy SQL
-  [cyan]B / Esc[/] Back
-
-[bold $accent]Job Detail[/]
-  [cyan]Space/F[/] Toggle log follow mode
-  [cyan]G/g[/]     Jump to bottom / top of log
-  [cyan]/[/]       Search log
-  [cyan]Y[/]       Copy job ID
-  [cyan]R[/]       Clone job to New Job
-  [cyan]C[/]       Cancel job (with confirmation)
-  [cyan]B / Esc[/] Back
-
-[bold $accent]History[/]
-  [cyan]S[/]       Cycle sort order
-  [cyan]Enter[/]   View logs for selected row
-  [cyan][ / ][/]   Previous / Next page
-  [cyan]B / Esc[/] Back
-
-[bold $accent]Browser[/]
-  [cyan]Enter[/]   Describe selected table
-  [cyan]D[/]       Drop selected table (with typed confirmation)
-  [cyan]B / Esc[/] Back
+[bold]Browser[/]
+  [b]S[/]         Load tables for schema + filter
+  [b]Enter[/]     Describe selected table
+  [b]D[/]         Drop selected table (typed confirmation)
+  [b]B / Esc[/]   Back
 
 [dim]Press Esc or ? to close.[/]\
 """

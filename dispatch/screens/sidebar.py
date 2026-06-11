@@ -9,6 +9,9 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Static
 
+from ..formatting import format_kerberos_ttl
+from ..version import __version__
+
 
 class NavItem(Static):
     """A single clickable navigation item."""
@@ -42,6 +45,26 @@ class NavItem(Static):
         self.set_class(value, "nav-active")
 
 
+class KerberosChip(Static):
+    """Compact Kerberos TTL indicator shown in the sidebar footer."""
+
+    ttl_seconds: reactive[int | None] = reactive(None)
+    collapsed = reactive(False)
+
+    def render(self) -> str:
+        ttl = format_kerberos_ttl(self.ttl_seconds)
+        if self.collapsed:
+            return "\u26a0" if self.ttl_seconds is None else "\u2713"
+        return f"KRB {ttl}"
+
+    def watch_ttl_seconds(self, value: int | None) -> None:
+        self.remove_class("krb-missing", "krb-low")
+        if value is None:
+            self.add_class("krb-missing")
+        elif value < 3600:
+            self.add_class("krb-low")
+
+
 # BMP Unicode symbols (SSH-safe, no multi-byte emoji)
 NAV_ITEMS = [
     ("Overview", "overview", "\u2302"),
@@ -60,18 +83,29 @@ class Sidebar(Widget):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="sidebar-inner"):
-            yield Static("robocop / [bold cyan]Dispatch[/]", id="sidebar-brand")
+            yield Static("[bold]Dispatch[/]", id="sidebar-brand")
             with Vertical(id="sidebar-nav"):
                 for label, item_id, icon in NAV_ITEMS:
                     yield NavItem(label, item_id, icon)
             with Vertical(id="sidebar-footer"):
-                yield Static("[dim]? Help[/]", id="sidebar-help")
+                yield KerberosChip(id="sidebar-krb")
+                yield Static(f"v{__version__}", id="sidebar-version")
+                yield Static("[dim]? help[/]", id="sidebar-help")
 
     def on_mount(self) -> None:
         self._sync_collapse_from_app()
         self.watch(self.app, "size", self._on_app_resize, init=False)
+        # The app owns the single Kerberos TTL snapshot; mirror it reactively.
+        if hasattr(type(self.app), "kerberos_ttl"):
+            self.watch(self.app, "kerberos_ttl", self._on_kerberos_change, init=True)
+
+    def _on_kerberos_change(self, value: int | None) -> None:
+        self.query_one(KerberosChip).ttl_seconds = value
 
     def _on_app_resize(self) -> None:
+        self._sync_collapse_from_app()
+
+    def on_resize(self) -> None:
         self._sync_collapse_from_app()
 
     def _sync_collapse_from_app(self) -> None:
@@ -87,12 +121,11 @@ class Sidebar(Widget):
     def watch_collapsed(self, value: bool) -> None:
         self.set_class(value, "sidebar-collapsed")
         brand = self.query_one("#sidebar-brand", Static)
-        if value:
-            brand.update("[bold cyan]D[/]")
-        else:
-            brand.update("robocop / [bold cyan]Dispatch[/]")
+        brand.update("[bold]D[/]" if value else "[bold]Dispatch[/]")
+        self.query_one("#sidebar-version", Static).display = not value
         help_line = self.query_one("#sidebar-help", Static)
-        help_line.update("[dim]?[/]" if value else "[dim]? Help[/]")
+        help_line.update("[dim]?[/]" if value else "[dim]? help[/]")
+        self.query_one(KerberosChip).collapsed = value
         for child in self.query(NavItem):
             child.set_collapsed(value)
 

@@ -11,17 +11,21 @@ from typing import TYPE_CHECKING, cast
 
 logger = logging.getLogger("dispatch.dashboard")
 
+from rich.text import Text
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, DataTable, Footer, Header, Static
 
 from .. import config, errors, jobs, kerberos
-from ..formatting import format_elapsed, format_job_id
+from ..formatting import format_elapsed, format_job_id, format_kerberos_ttl, format_state
 from .sidebar import Sidebar
 
 if TYPE_CHECKING:
     from ..app import DispatchApp
+
+RECENT_ROW_LIMIT = 50
 
 
 class DashboardScreen(Screen[None]):
@@ -31,19 +35,20 @@ class DashboardScreen(Screen[None]):
         ("c", "cancel", "Cancel"),
         ("h", "history", "History"),
         ("b", "browser", "Browse"),
-        ("j", "cursor_down", "Down"),
-        ("k", "cursor_up", "Up"),
-        ("q", "app.quit", "Quit"),
+        Binding("j", "cursor_down", "Down", show=False),
+        Binding("k", "cursor_up", "Up", show=False),
+        Binding("q", "app.quit", "Quit", show=False),
     ]
 
     def __init__(self) -> None:
         super().__init__()
         self.kerberos_ttl: int | None = None
-        self._events: deque[str] = deque(maxlen=5)
+        self._events: deque[str] = deque(maxlen=3)
         self._selected_job_id_cache: str | None = None
         self._error_cache: dict[str, str | None] = {}
         self._last_states: dict[str, str] = {}
         self._compact_stats = False
+        self._table_signatures: dict[str, tuple] = {}
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -55,42 +60,43 @@ class DashboardScreen(Screen[None]):
                 with Horizontal(id="stats-row"):
                     with Vertical(classes="stat-card"):
                         yield Static("RUNNING", classes="stat-label")
-                        yield Static("0 / 2", id="stat-running", classes="stat-value stat-green")
-                        yield Static("running / cap", classes="stat-sub")
+                        yield Static("0 / 2", id="stat-running", classes="stat-value")
+                        yield Static("slots in use", classes="stat-sub")
                     with Vertical(classes="stat-card"):
-                        yield Static("FINISHED (7D)", classes="stat-label")
-                        yield Static("0", id="stat-finished", classes="stat-value stat-green")
+                        yield Static("FINISHED", classes="stat-label")
+                        yield Static("0", id="stat-finished", classes="stat-value")
                         yield Static("last 7 days", classes="stat-sub")
                     with Vertical(classes="stat-card"):
-                        yield Static("FAILED (7D)", classes="stat-label")
-                        yield Static("0", id="stat-failed", classes="stat-value stat-red")
+                        yield Static("FAILED", classes="stat-label")
+                        yield Static("0", id="stat-failed", classes="stat-value")
                         yield Static("last 7 days", classes="stat-sub")
                     with Vertical(classes="stat-card"):
                         yield Static("KERBEROS", classes="stat-label")
-                        yield Static("--", id="stat-kerberos", classes="stat-value stat-yellow")
-                        yield Static("remaining", classes="stat-sub")
+                        yield Static("--", id="stat-kerberos", classes="stat-value")
+                        yield Static("ticket remaining", classes="stat-sub")
                 yield Static("", id="stats-compact", classes="stats-compact-line")
-                yield Static("Active Jobs [dim]newest first[/]", classes="section-title", id="active-title")
+                yield Static(
+                    "[bold]Active Jobs[/] [dim]\u00b7 newest first[/]",
+                    classes="section-title",
+                    id="active-title",
+                )
                 yield DataTable(id="active-table")
                 with Vertical(id="active-empty", classes="empty-state"):
-                    yield Static("\u25a1", classes="empty-icon")
-                    yield Static("No active jobs", classes="summary-label")
-                    yield Static("[dim]Press [bold]N[/bold] to create one[/]", classes="empty-hint")
-                yield Static(
-                    "Recently Finished (last 7 days) [dim]newest first[/]",
-                    classes="section-title",
-                    id="recent-title",
-                )
-                yield DataTable(id="recent-table")
-                with Vertical(id="recent-empty", classes="empty-state"):
-                    yield Static("\u25a1", classes="empty-icon")
-                    yield Static("No recently finished jobs", classes="summary-label")
-                    yield Static("[dim]Completed jobs appear here for 7 days[/]", classes="empty-hint")
-                yield Static("", id="event-trail")
-                with Horizontal(classes="button-row"):
-                    yield Button("New Job [N]", id="new-job", variant="primary")
-                    yield Button("View Logs [V]", id="view-logs", variant="default")
-                    yield Button("Cancel [C]", id="cancel", variant="error")
+                    yield Static("[dim]No active jobs \u2014 press [/][bold]N[/][dim] to launch one[/]")
+                with Vertical(id="recent-section"):
+                    yield Static(
+                        "[bold]Recently Finished[/] [dim]\u00b7 last 7 days \u00b7 newest first[/]",
+                        classes="section-title",
+                        id="recent-title",
+                    )
+                    yield DataTable(id="recent-table")
+                    with Vertical(id="recent-empty", classes="empty-state"):
+                        yield Static("[dim]No recently finished jobs \u2014 completed jobs appear here for 7 days[/]")
+            with Horizontal(classes="action-bar", id="dashboard-action-bar"):
+                yield Static("", id="event-trail", classes="action-status")
+                yield Button("New Job [N]", id="new-job", variant="primary")
+                yield Button("View Logs [V]", id="view-logs", variant="default")
+                yield Button("Cancel [C]", id="cancel", variant="error")
         yield Footer()
 
     async def on_mount(self) -> None:
@@ -128,19 +134,16 @@ class DashboardScreen(Screen[None]):
         color = color_map.get(severity, "dim")
         self._events.append(f"[{color}][{now_str}] {text}[/]")
         trail = self.query_one("#event-trail", Static)
-        trail.update("\n".join(self._events))
+        trail.update(self._events[-1])
 
     def _refresh_kerberos(self) -> None:
         label = self.query_one("#stat-kerberos", Static)
         if self.kerberos_ttl is None:
-            label.update("N/A")
+            label.update("[red]MISSING[/]")
+        elif self.kerberos_ttl < 3600:
+            label.update(f"[yellow]{format_kerberos_ttl(self.kerberos_ttl)}[/]")
         else:
-            hours, remainder = divmod(self.kerberos_ttl, 3600)
-            minutes = remainder // 60
-            if hours:
-                label.update(f"{hours}h {minutes}m")
-            else:
-                label.update(f"{minutes}m")
+            label.update(f"[green]{format_kerberos_ttl(self.kerberos_ttl)}[/]")
 
     async def _refresh_jobs_async(self) -> None:
         try:
@@ -176,105 +179,101 @@ class DashboardScreen(Screen[None]):
         self._refresh_kerberos()
 
         if self._compact_stats:
-            if self.kerberos_ttl is None:
-                krb_text = "N/A"
-            else:
-                hours, remainder = divmod(self.kerberos_ttl, 3600)
-                minutes = remainder // 60
-                krb_text = f"{hours}h {minutes}m" if hours else f"{minutes}m"
+            krb_text = format_kerberos_ttl(self.kerberos_ttl)
             compact = self.query_one("#stats-compact", Static)
             compact.update(
-                f"● Running: {len(running)}/2  "
-                f"✓ Finished: {finished_count}  "
-                f"✗ Failed: {failed_count}  "
-                f"🔑 Kerberos: {krb_text}"
+                f"\u25cf Running {len(running)}/2  "
+                f"\u2713 Finished {finished_count}  "
+                f"\u2717 Failed {failed_count}  "
+                f"KRB {krb_text}"
             )
 
         self.query_one("#stat-running", Static).update(f"{len(running)} / 2")
-        self.query_one("#stat-finished", Static).update(str(finished_count))
-        self.query_one("#stat-failed", Static).update(str(failed_count))
+        self.query_one("#stat-finished", Static).update(
+            f"[green]{finished_count}[/]" if finished_count else "[dim]0[/]"
+        )
+        self.query_one("#stat-failed", Static).update(
+            f"[red]{failed_count}[/]" if failed_count else "[dim]0[/]"
+        )
+
+        self._populate_table("#active-table", "#active-empty", running)
+        self._populate_table("#recent-table", "#recent-empty", recent[:RECENT_ROW_LIMIT])
 
         active_table = self.query_one("#active-table", DataTable)
-        active_table.clear()
-        if running:
-            for item in running:
-                active_table.add_row(
-                    format_job_id(item["id"]),
-                    self._source_label(item),
-                    self._dest_label(item),
-                    "[green]\u25cf RUNNING[/]",
-                    format_elapsed(item),
-                    key=item["id"],
-                )
-            active_table.display = True
-            self.query_one("#active-empty").display = False
-        else:
-            active_table.display = False
-            self.query_one("#active-empty").display = True
-
         recent_table = self.query_one("#recent-table", DataTable)
-        recent_table.clear()
-        if recent:
-            for item in recent[:8]:
-                recent_table.add_row(
-                    format_job_id(item["id"]),
-                    self._source_label(item),
-                    self._dest_label(item),
-                    self._state_display(item),
-                    format_elapsed(item),
-                    key=item["id"],
-                )
-            recent_table.display = True
-            self.query_one("#recent-empty").display = False
-        else:
-            recent_table.display = False
-            self.query_one("#recent-empty").display = True
-
         focused = self.focused
         if not active_table.display and recent_table.display and focused is active_table:
             recent_table.focus()
         elif active_table.display and not recent_table.display and focused is recent_table:
             active_table.focus()
 
+    def _populate_table(self, table_id: str, empty_id: str, items: list[dict]) -> None:
+        """Rebuild a job table only when its content changed, preserving the cursor."""
+        table = self.query_one(table_id, DataTable)
+        signature = tuple(
+            (item["id"], item["state"], format_elapsed(item)) for item in items
+        )
+        if self._table_signatures.get(table_id) == signature:
+            return
+        self._table_signatures[table_id] = signature
+
+        cursor_key = self._cursor_row_key(table)
+        table.clear()
+        for item in items:
+            table.add_row(
+                format_job_id(item["id"]),
+                self._source_label(item),
+                self._dest_label(item),
+                format_state(item["state"], self._error_cache.get(item["id"])),
+                Text(format_elapsed(item), justify="right"),
+                key=item["id"],
+            )
+        if cursor_key is not None:
+            try:
+                table.move_cursor(row=table.get_row_index(cursor_key))
+            except Exception:
+                pass
+
+        has_rows = bool(items)
+        table.display = has_rows
+        self.query_one(empty_id).display = not has_rows
+
+    @staticmethod
+    def _cursor_row_key(table: DataTable) -> str | None:
+        try:
+            cell_key = table.coordinate_to_cell_key(table.cursor_coordinate)
+            return str(cell_key.row_key.value)
+        except Exception:
+            return None
+
     def _detect_state_transitions(self, active: list[dict]) -> None:
         current: dict[str, str] = {item["id"]: item["state"] for item in active}
         for job_id, state in current.items():
             prev = self._last_states.get(job_id)
             if prev == "Running" and state in ("Succeeded", "Failed", "Cancelled"):
+                severity = {"Succeeded": "success", "Failed": "error"}.get(state, "warning")
+                self._add_event(f"Job {format_job_id(job_id)} {state.lower()}", severity)
                 self.app.notify(
                     f"Job {format_job_id(job_id)} {state.lower()}",
                     severity="information" if state == "Succeeded" else "warning",
                 )
         self._last_states = current
 
-    def _state_display(self, item: dict) -> str:
-        state = item["state"]
-        if state == "Succeeded":
-            return "[green]\u25cf SUCCEEDED[/]"
-        if state == "Failed":
-            code = self._error_cache.get(item["id"])
-            if code:
-                return f"[red]\u25cf FAILED ({code})[/]"
-            return "[red]\u25cf FAILED[/]"
-        if state == "Cancelled":
-            return "[dim]\u25cf CANCELLED[/]"
-        return f"\u25cf {state}"
-
     def _source_label(self, item: dict) -> str:
         src = item.get("source", {})
         if src.get("table_name"):
-            return src["table_name"][:25]
+            return src["table_name"][:22]
         if src.get("sql_path_at_launch"):
-            return Path(src["sql_path_at_launch"]).name[:25]
-        return src.get("type", "")[:25]
+            return Path(src["sql_path_at_launch"]).name[:22]
+        return src.get("type", "")[:22]
 
     def _dest_label(self, item: dict) -> str:
         dest = item.get("destination", {})
         schema = dest.get("schema", "")
         table = dest.get("table_name", "")
         if schema and table:
-            return f"{schema}.{table}"[:30]
-        return dest.get("type", "")[:30]
+            return f"{schema}.{table}"[:26]
+        return dest.get("type", "")[:26]
 
     def _focused_table(self) -> DataTable | None:
         for table_id in ("#active-table", "#recent-table"):

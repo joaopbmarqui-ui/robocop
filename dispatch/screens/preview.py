@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from rich.syntax import Syntax
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
@@ -9,51 +10,25 @@ from textual.widgets import Button, Footer, Header, RichLog, Static
 
 from .sidebar import Sidebar
 
-_SQL_KEYWORDS = {
-    "SELECT", "FROM", "WHERE", "INSERT", "INTO", "UPDATE", "DELETE",
-    "CREATE", "DROP", "ALTER", "TABLE", "IF", "EXISTS", "NOT",
-    "AS", "AND", "OR", "IN", "IS", "NULL", "ON", "JOIN", "LEFT",
-    "RIGHT", "INNER", "OUTER", "GROUP", "BY", "ORDER", "HAVING",
-    "LIMIT", "OFFSET", "UNION", "ALL", "DISTINCT", "SET",
-    "STORED", "PARQUET", "LOCATION", "LIKE", "BETWEEN",
-    "CASE", "WHEN", "THEN", "ELSE", "END", "CAST", "WITH",
-    "VALUES", "COUNT", "SUM", "AVG", "MIN", "MAX",
-}
 
-
-def _highlight_sql(line: str) -> str:
-    """Apply basic keyword highlighting via Rich markup."""
-    stripped = line.lstrip()
-    if stripped.startswith("--"):
-        return f"[dim]{line}[/]"
-    tokens = []
-    for word in line.split(" "):
-        if word.upper() in _SQL_KEYWORDS:
-            tokens.append(f"[bold cyan]{word}[/]")
-        elif word.startswith("'") or word.startswith('"'):
-            tokens.append(f"[green]{word}[/]")
-        else:
-            tokens.append(word)
-    return " ".join(tokens)
-
-
-def _numbered_sql(body: str) -> list[str]:
-    """Add line numbers and keyword highlighting via Rich markup."""
-    lines = body.splitlines()
-    width = len(str(len(lines)))
-    result = []
-    for i, line in enumerate(lines, 1):
-        num = f"[dim]{i:>{width}}[/]"
-        highlighted = _highlight_sql(line)
-        result.append(f"{num} \u2502 {highlighted}")
-    return result
+def sql_syntax(body: str) -> Syntax:
+    """Build the shared SQL renderable: real lexer, line numbers, no background."""
+    return Syntax(
+        body,
+        "sql",
+        line_numbers=True,
+        word_wrap=True,
+        indent_guides=False,
+        background_color="default",
+        theme="ansi_dark",
+    )
 
 
 class PreviewScreen(Screen[None]):
     BINDINGS = [
         ("b", "app.pop_screen", "Back"),
         ("escape", "app.pop_screen", "Back"),
-        ("enter", "accept", "Accept"),
+        ("enter", "accept", "Back"),
         ("y", "copy_sql", "Copy SQL"),
     ]
 
@@ -83,37 +58,34 @@ class PreviewScreen(Screen[None]):
         with Vertical(id="main-content"):
             with Vertical(id="preview-content"):
                 yield Static(
-                    "[dim]\u2039[/] New Job / [bold cyan]" + self._title + "[/]",
+                    "[dim]\u2039 New Job /[/] [bold]" + self._title + "[/]",
                     classes="section-title",
                 )
 
                 with Horizontal(id="preview-header"):
                     target = self.schema + "." + self.table if self.schema and self.table else ""
-                    yield Static("[bold]Target: " + target + "[/]" if target else "")
-                    meta = ""
-                    if self.schema:
-                        meta = "[cyan]Schema:[/] " + self.schema + "  [cyan]Table:[/] " + self.table
-                    yield Static(meta, id="preview-meta")
+                    yield Static("[bold]Target:[/] " + target if target else "")
+                    yield Static(
+                        f"{self.source_type} \u2192 {self.dest_type}",
+                        id="preview-meta",
+                    )
 
                 with Vertical(id="sql-display"):
-                    yield RichLog(id="preview-body", highlight=True, markup=True)
+                    yield RichLog(id="preview-body", highlight=False, markup=False)
 
-                with Horizontal(id="preview-footer-info"):
-                    yield Static(f"[dim]Source: {self.source_type}[/]")
-                    dest_label = f"[dim]Destination: {self.dest_type}[/]"
-                    if self.schema and self.table:
-                        dest_label = f"[dim]Destination: {self.dest_type} \u2192 {self.schema}.{self.table}[/]"
-                    yield Static(dest_label)
-
-                with Horizontal(classes="button-row"):
-                    yield Button("Back to Form [Enter]", id="accept", variant="primary")
-                    yield Button("Back [B/Esc]", id="back", variant="default")
+            with Horizontal(classes="action-bar"):
+                yield Static("", id="preview-status", classes="action-status")
+                yield Button("Copy SQL [Y]", id="copy", variant="default")
+                yield Button("Back [Esc]", id="back", variant="primary")
         yield Footer()
 
     def on_mount(self) -> None:
         log = self.query_one("#preview-body", RichLog)
-        for line in _numbered_sql(self.body):
-            log.write(line)
+        log.write(sql_syntax(self.body))
+        line_count = len(self.body.splitlines())
+        self.query_one("#preview-status", Static).update(
+            f"{line_count} lines \u00b7 review before launching"
+        )
 
     def action_accept(self) -> None:
         self.app.pop_screen()
@@ -128,5 +100,5 @@ class PreviewScreen(Screen[None]):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "back":
             self.app.pop_screen()
-        elif event.button.id == "accept":
-            self.action_accept()
+        elif event.button.id == "copy":
+            self.action_copy_sql()

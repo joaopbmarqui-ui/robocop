@@ -49,9 +49,8 @@ class NewJobScreen(Screen[None]):
         sidebar.active_screen = "new_job"
         yield sidebar
         with Vertical(id="main-content"):
-            yield Static("", id="kerberos-status")
             with Vertical(id="new-job-content"):
-                yield Static("New Job", classes="section-title")
+                yield Static("[bold]New Job[/]", classes="section-title")
 
                 with Collapsible(
                     title="Source \u00d7 Destination legal cells",
@@ -60,16 +59,10 @@ class NewJobScreen(Screen[None]):
                 ):
                     yield DataTable(id="matrix-table")
 
-                with Vertical(id="info-panel"):
-                    yield Static(
-                        "[bold cyan]\u24d8[/] Auto-detected source type: [cyan]SqlFile \u2192 Table[/]",
-                        id="info-detected",
-                    )
-                    yield Static(
-                        "[yellow]\u26a0[/] Ensure the combination above matches your "
-                        "source and destination selection.",
-                        classes="warn-text",
-                    )
+                yield Static(
+                    "Detected source: SqlFile \u00b7 illegal destinations are disabled automatically",
+                    id="info-detected",
+                )
 
                 with Vertical(id="radio-panel"):
                     with Horizontal(id="radio-row"):
@@ -106,14 +99,12 @@ class NewJobScreen(Screen[None]):
                         yield Input(value="dispatch_result", placeholder="Table name", id="table-name")
 
                     with Horizontal(classes="form-row", id="row-start-date"):
-                        yield Static("Start Date (YYYY-MM-DD)", classes="field-label", id="lbl-start-date")
+                        yield Static("Start Date", classes="field-label", id="lbl-start-date")
                         yield Input(value=self._default_start_date(), placeholder="YYYY-MM-DD", id="start-date")
-                    yield Static("[dim]Format: YYYY-MM-DD[/]", id="start-date-hint", classes="date-hint")
 
                     with Horizontal(classes="form-row", id="row-end-date"):
-                        yield Static("End Date (YYYY-MM-DD)", classes="field-label", id="lbl-end-date")
+                        yield Static("End Date", classes="field-label", id="lbl-end-date")
                         yield Input(value=self._default_end_date(), placeholder="YYYY-MM-DD", id="end-date")
-                    yield Static("[dim]Format: YYYY-MM-DD[/]", id="end-date-hint", classes="date-hint")
 
                     with Horizontal(classes="form-row", id="row-email"):
                         yield Static("Email (notifications)", classes="field-label", id="lbl-email")
@@ -129,16 +120,10 @@ class NewJobScreen(Screen[None]):
 
                 yield Static("", id="warning-text")
 
-                yield Static(
-                    "[dim]\u24d8 Use Preview SQL to validate the generated statement before launching.\n"
-                    "  Job will be submitted to Impala over SSH.[/]",
-                    id="launch-info",
-                )
-
-            with Horizontal(id="new-job-action-bar"):
-                yield Static("", id="validation-summary")
-                yield Button("Preview SQL [P]", id="preview", variant="primary")
-                yield Button("Launch [L]", id="launch", variant="success")
+            with Horizontal(id="new-job-action-bar", classes="action-bar"):
+                yield Static("", id="validation-summary", classes="action-status")
+                yield Button("Preview SQL [P]", id="preview", variant="default")
+                yield Button("Launch [L]", id="launch", variant="primary")
         yield Footer()
 
     async def on_mount(self) -> None:
@@ -157,6 +142,9 @@ class NewJobScreen(Screen[None]):
         self._update_field_visibility()
         self._inline_validate()
         self._update_validation_summary()
+        # Focus the Source radio set: first interactive control, and unlike an
+        # Input it does not swallow the single-key mnemonics (P/L/E/K/M).
+        self.query_one("#source", RadioSet).focus()
 
     @staticmethod
     def _default_start_date() -> str:
@@ -238,9 +226,9 @@ class NewJobScreen(Screen[None]):
         if email and ("@" not in email or "." not in email.split("@")[-1]):
             issues.append("Invalid email format")
         if self.kerberos_ttl is None:
-            issues.append("Kerberos missing")
+            issues.append("Kerberos missing \u2014 press K to kinit")
         elif self.kerberos_ttl < 300:
-            issues.append("Kerberos TTL low")
+            issues.append("Kerberos TTL under 5 min \u2014 press K to renew")
         return issues
 
     def _update_validation_summary(self) -> None:
@@ -279,9 +267,6 @@ class NewJobScreen(Screen[None]):
         if is_sql:
             self._refresh_path_hint()
 
-        self.query_one("#start-date-hint", Static).display = is_template
-        self.query_one("#end-date-hint", Static).display = is_template
-
         dest_hint = self.query_one("#dest-hint", Static)
         if source == "SqlTemplate":
             dest_hint.update("[dim]SqlTemplate supports Table only[/]")
@@ -305,20 +290,9 @@ class NewJobScreen(Screen[None]):
             hint.update("")
 
     def _refresh_kerberos(self) -> None:
-
-        label = self.query_one("#kerberos-status", Static)
         launch_btn = self.query_one("#launch", Button)
-        if self.kerberos_ttl is None:
-            label.update("[yellow]Kerberos ticket missing \u2014 press K to kinit[/]")
-            launch_btn.disabled = True
-        elif self.kerberos_ttl < 300:
-            minutes = self.kerberos_ttl // 60
-            label.update(f"[yellow]Kerberos: {minutes}m remaining (< 5 min \u2014 press K to renew)[/]")
-            launch_btn.disabled = True
-        else:
-            minutes = self.kerberos_ttl // 60
-            label.update(f"[dim]Kerberos: {minutes}m remaining[/]")
-            launch_btn.disabled = False
+        launch_btn.disabled = self.kerberos_ttl is None or self.kerberos_ttl < 300
+        self._update_validation_summary()
 
     def _read_sql(self) -> str | None:
         sql_path = Path(self._input_value("sql-file"))
@@ -345,7 +319,9 @@ class NewJobScreen(Screen[None]):
             return
         detected = sql.detect_source(content)
         info = self.query_one("#info-detected", Static)
-        info.update(f"[bold cyan]\u24d8[/] Auto-detected source type: [cyan]{detected}[/]")
+        info.update(
+            f"Detected source: [b]{detected}[/] \u00b7 illegal destinations are disabled automatically"
+        )
         if detected == "SqlTemplate":
             self.query_one("#src-sqltemplate", RadioButton).value = True
         elif detected == "ExistingTable":
@@ -513,7 +489,7 @@ class NewJobScreen(Screen[None]):
             process.run_interactive("kinit")
         self.kerberos_ttl = await kerberos.ticket_ttl_seconds()
         self._refresh_kerberos()
-        await self.app._refresh_kerberos_indicator()
+        await self.app.refresh_kerberos()
         if self.kerberos_ttl is not None:
             self.notify(f"Kerberos refreshed: {self.kerberos_ttl // 60}m", severity="information")
         else:

@@ -17,7 +17,7 @@ from dispatch.screens.help import HelpScreen
 from dispatch.screens.history import HistoryScreen
 from dispatch.screens.job_detail import JobDetailScreen
 from dispatch.screens.new_job import NewJobScreen
-from dispatch.screens.preview import PreviewScreen, _highlight_sql, _numbered_sql
+from dispatch.screens.preview import PreviewScreen, sql_syntax
 
 
 # =============================================================================
@@ -25,24 +25,21 @@ from dispatch.screens.preview import PreviewScreen, _highlight_sql, _numbered_sq
 # =============================================================================
 
 class TestPreviewHighlighting:
-    def test_sql_keywords_get_markup(self) -> None:
-        line = "SELECT id FROM users WHERE active = 1"
-        result = _highlight_sql(line)
-        assert "[bold cyan]SELECT[/]" in result
-        assert "[bold cyan]FROM[/]" in result
-        assert "[bold cyan]WHERE[/]" in result
+    def test_sql_syntax_uses_sql_lexer_with_line_numbers(self) -> None:
+        syntax = sql_syntax("SELECT id FROM users WHERE active = 1")
+        assert syntax.lexer is not None
+        assert syntax.lexer.name.lower().startswith("sql")
+        assert syntax.line_numbers is True
 
-    def test_non_keywords_unchanged(self) -> None:
-        line = "id name email"
-        result = _highlight_sql(line)
-        assert result == "id name email"
+    def test_sql_syntax_renders_keywords_with_style(self) -> None:
+        from rich.console import Console
 
-    def test_numbered_sql_adds_line_numbers(self) -> None:
-        body = "SELECT 1\nFROM dual"
-        lines = _numbered_sql(body)
-        assert len(lines) == 2
-        assert "1" in lines[0]
-        assert "2" in lines[1]
+        console = Console(force_terminal=True, color_system="truecolor", width=100)
+        with console.capture() as capture:
+            console.print(sql_syntax("SELECT 1\nFROM dual"))
+        output = capture.get()
+        assert "SELECT" in output
+        assert "\x1b[" in output, "Expected ANSI styling from the SQL lexer"
 
 
 # =============================================================================

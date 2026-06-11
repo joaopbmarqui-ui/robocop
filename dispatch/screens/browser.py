@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, DataTable, Footer, Header, Input, Static
@@ -20,8 +21,9 @@ class BrowserScreen(Screen[None]):
         ("escape", "app.pop_screen", "Back"),
         ("enter", "describe", "Describe"),
         ("d", "drop", "Drop"),
-        ("j", "cursor_down", "Down"),
-        ("k", "cursor_up", "Up"),
+        ("s", "show_tables", "Load Tables"),
+        Binding("j", "cursor_down", "Down", show=False),
+        Binding("k", "cursor_up", "Up", show=False),
     ]
 
     def __init__(self, *, auto_load: bool = True) -> None:
@@ -37,14 +39,15 @@ class BrowserScreen(Screen[None]):
         yield sidebar
         with Vertical(id="main-content"):
             with Vertical(id="browser-content"):
-                yield Static("Browse Impala Metadata", classes="section-title")
+                yield Static("[bold]Browse Impala Metadata[/]", classes="section-title")
 
                 with Horizontal(id="browser-split"):
                     with Vertical(id="browser-left"):
-                        with Horizontal(id="search-row"):
+                        yield Static("[dim]Schema \u00b7 table filter[/]", classes="input-caption")
+                        with Horizontal(id="browser-query-row"):
                             yield Input(value="dw_settle", placeholder="Schema", id="schema")
                             yield Input(value="*", placeholder="Filter (e.g. dispatch_*)", id="filter")
-                        yield Button("SHOW TABLES", id="show", variant="default")
+                            yield Button("Load Tables [S]", id="show", variant="default")
                         yield DataTable(id="browser-table")
                         with Horizontal(id="browser-status"):
                             yield Static("", id="browser-selected")
@@ -59,15 +62,11 @@ class BrowserScreen(Screen[None]):
                             yield DataTable(id="describe-table")
                             yield Static("", id="describe-body")
 
-                with Horizontal(classes="button-row"):
-                    yield Button("DESCRIBE [Enter]", id="describe", variant="primary")
-                    yield Button("DROP [D]", id="drop", variant="error")
-                    yield Button("Back [B]", id="back", variant="default")
-
-                yield Static(
-                    "[dim]Use arrow keys to navigate, Enter to describe, D to drop[/]",
-                    id="browser-help",
-                )
+            with Horizontal(classes="action-bar"):
+                yield Static("", id="browser-action-status", classes="action-status")
+                yield Button("Back [B]", id="back", variant="default")
+                yield Button("Describe [Enter]", id="describe", variant="primary")
+                yield Button("Drop [D]", id="drop", variant="error")
         yield Footer()
 
     async def on_mount(self) -> None:
@@ -222,6 +221,8 @@ class BrowserScreen(Screen[None]):
             if not line.strip() or line.startswith("#"):
                 continue
             parts = [p.strip() for p in line.split("|")]
+            if parts[:3] == ["name", "type", "comment"]:
+                continue  # impala-shell header row, not a real column
             if len(parts) >= 2:
                 columns.append({
                     "name": parts[0],

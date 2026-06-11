@@ -7,13 +7,14 @@ from collections import deque
 from typing import Any
 
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, RichLog, Static
 
 from .. import config, errors, manifest, process
-from ..formatting import format_elapsed, format_job_id
+from ..formatting import format_elapsed, format_job_id, format_state, format_timestamp
 from .confirm import ConfirmScreen
 from .sidebar import Sidebar
 
@@ -24,9 +25,9 @@ class JobDetailScreen(Screen[None]):
         ("c", "cancel", "Cancel Job"),
         ("escape", "app.pop_screen", "Back"),
         ("space", "toggle_follow", "Follow"),
-        ("f", "toggle_follow", "Follow"),
-        ("g", "log_top", "Log Top"),
-        ("G", "log_bottom", "Log Bottom"),
+        Binding("f", "toggle_follow", "Follow", show=False),
+        Binding("g", "log_top", "Log Top", show=False),
+        Binding("G", "log_bottom", "Log Bottom", show=False),
         ("/", "log_search", "Search"),
         ("y", "copy_job_id", "Copy ID"),
         ("r", "clone_job", "Clone"),
@@ -43,6 +44,15 @@ class JobDetailScreen(Screen[None]):
         self._evicted_line_count = 0
         self._search_query = ""
         self._error_code: str | None = None
+        self._job_state: str | None = None
+
+    def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
+        """Hide actions that do not apply to the Job's current state."""
+        if action == "cancel":
+            return self._job_state in (None, "Running", "Pending")
+        if action == "clone_job":
+            return self._job_state in (None, "Succeeded", "Failed", "Cancelled")
+        return True
 
     @property
     def job_dir(self):
@@ -56,49 +66,38 @@ class JobDetailScreen(Screen[None]):
         with Vertical(id="main-content"):
             with Vertical(id="job-detail-content"):
                 yield Static(
-                    f"[dim]\u2039[/] Job [bold cyan]{format_job_id(self.job_id, 'full')}[/]",
+                    f"[dim]\u2039 Overview /[/] [bold]Job {format_job_id(self.job_id, 'full')}[/]",
                     classes="section-title",
                 )
 
                 with Vertical(id="job-summary-panel"):
-                    yield Static("Job Summary", classes="section-title")
                     with Horizontal(id="summary-grid"):
                         with Vertical():
-                            yield Static("[dim]Source:[/]", classes="summary-label")
-                            yield Static("--", id="sum-source", classes="summary-value")
-                            yield Static("[dim]Destination:[/]", classes="summary-label")
-                            yield Static("--", id="sum-dest", classes="summary-value")
-                            yield Static("[dim]State:[/]", classes="summary-label")
-                            yield Static("--", id="sum-state", classes="summary-value")
+                            yield Static("--", id="sum-state")
+                            yield Static("--", id="sum-source")
+                            yield Static("--", id="sum-dest")
                         with Vertical():
-                            yield Static("[dim]Started:[/]", classes="summary-label")
-                            yield Static("--", id="sum-started", classes="summary-value")
-                            yield Static("[dim]Elapsed:[/]", classes="summary-label")
-                            yield Static("--", id="sum-elapsed", classes="summary-value")
-                            yield Static("[dim]Target Table:[/]", classes="summary-label")
-                            yield Static("--", id="sum-table", classes="summary-value")
-                            yield Static("[dim]CSV Path:[/]", classes="summary-label")
-                            yield Static("--", id="sum-csv", classes="summary-value")
+                            yield Static("--", id="sum-started")
+                            yield Static("--", id="sum-elapsed")
+                            yield Static("--", id="sum-csv")
 
                 yield Static("", id="error-banner")
 
                 with Horizontal(id="log-header"):
-                    yield Static("[bold cyan]Live Logs[/]", classes="section-title")
+                    yield Static("[bold]Logs[/]", classes="section-title")
                     yield Static("", id="log-streaming")
 
                 yield Static("", id="truncation-hint")
 
                 with Vertical(id="log-panel"):
                     yield RichLog(id="log-display", highlight=True, markup=True)
-                    yield Input(placeholder="Search log…", id="log-search-input")
+                    yield Input(placeholder="Search log\u2026", id="log-search-input")
 
-                yield Static("", id="job-status-line")
-
-                with Horizontal(classes="button-row"):
-                    yield Button("Back [B]", id="back", variant="default")
-                    yield Static("    ", classes="button-spacer")
-                    yield Button("Clone [R]", id="clone", variant="default")
-                    yield Button("Cancel Job [C]", id="cancel", variant="error")
+            with Horizontal(classes="action-bar"):
+                yield Static("", id="job-status-line", classes="action-status")
+                yield Button("Back [B]", id="back", variant="default")
+                yield Button("Clone [R]", id="clone", variant="default")
+                yield Button("Cancel Job [C]", id="cancel", variant="error")
         yield Footer()
 
     async def on_mount(self) -> None:
@@ -160,61 +159,61 @@ class JobDetailScreen(Screen[None]):
         source = item["source"]
         state = item["state"]
 
-        self.query_one("#sum-source", Static).update(
-            self._truncate_path(
-                source.get("table_name") or source.get("sql_path_at_launch") or source.get("type", "--")
-            )
+        if state != self._job_state:
+            self._job_state = state
+            self.refresh_bindings()
+
+        source_text = self._truncate_path(
+            source.get("table_name") or source.get("sql_path_at_launch") or source.get("type", "--")
         )
+        self.query_one("#sum-source", Static).update(f"[dim]Source[/]       {source_text}")
         schema = dest.get("schema", "")
         table = dest.get("table_name", "")
         full_table = f"{schema}.{table}" if schema and table else dest.get("type", "--")
-        self.query_one("#sum-dest", Static).update(full_table)
+        self.query_one("#sum-dest", Static).update(
+            f"[dim]Destination[/]  {dest.get('type', '--')} \u2192 {full_table}"
+        )
 
+        self.query_one("#sum-state", Static).update(
+            f"[dim]State[/]        {format_state(state, self._error_code)}"
+        )
         if state == "Running":
-            self.query_one("#sum-state", Static).update("[green]\u25cf RUNNING[/]")
             self._update_streaming_indicator()
-        elif state == "Succeeded":
-            self.query_one("#sum-state", Static).update("[green]\u25cf SUCCEEDED[/]")
-            self.query_one("#log-streaming", Static).update("[dim]Complete[/]")
-        elif state == "Failed":
-            self.query_one("#sum-state", Static).update("[red]\u25cf FAILED[/]")
-            self.query_one("#log-streaming", Static).update("[red]Failed[/]")
-        elif state == "Cancelled":
-            self.query_one("#sum-state", Static).update("[dim]\u25cf CANCELLED[/]")
-            self.query_one("#log-streaming", Static).update("[dim]Cancelled[/]")
         else:
-            self.query_one("#sum-state", Static).update(state)
-            self.query_one("#log-streaming", Static).update("")
+            streaming = {
+                "Succeeded": "[dim]Complete[/]",
+                "Failed": "[red]Failed[/]",
+                "Cancelled": "[dim]Cancelled[/]",
+            }.get(state, "")
+            self.query_one("#log-streaming", Static).update(streaming)
 
-        self.query_one("#sum-started", Static).update(item.get("started_at") or "--")
-        self.query_one("#sum-elapsed", Static).update(format_elapsed(item))
-        self.query_one("#sum-table", Static).update(full_table)
+        self.query_one("#sum-started", Static).update(
+            f"[dim]Started[/]  {format_timestamp(item.get('started_at'))}"
+        )
+        self.query_one("#sum-elapsed", Static).update(
+            f"[dim]Elapsed[/]  {format_elapsed(item)}"
+        )
         csv_path = dest.get("csv_path") or ""
         if dest.get("type") in ("Csv", "Table+Csv") and csv_path:
-            self.query_one("#sum-csv", Static).update(self._truncate_path(csv_path))
+            csv_text = self._truncate_path(csv_path)
         else:
-            self.query_one("#sum-csv", Static).update("[dim]N/A (table-only)[/]")
+            csv_text = "[dim]n/a (table-only)[/]"
+        self.query_one("#sum-csv", Static).update(f"[dim]CSV[/]      {csv_text}")
 
         cancel_btn = self.query_one("#cancel", Button)
-        cancel_btn.disabled = state != "Running"
+        cancel_btn.display = state in ("Running", "Pending")
         clone_btn = self.query_one("#clone", Button)
         clone_btn.display = state in ("Succeeded", "Failed", "Cancelled")
 
         self._update_error_banner(state)
         self._append_log_lines(snapshot["new_lines"], snapshot["new_offset"])
 
-        status_parts = []
-        if state == "Running":
-            status_parts.append("[green]Job is RUNNING[/]")
-        elif state == "Succeeded":
-            status_parts.append("[green]Job SUCCEEDED[/]")
-        elif state == "Failed":
-            status_parts.append(f"[red]Job FAILED (exit {item.get('exit_code', '?')})[/]")
-        elif state == "Cancelled":
-            status_parts.append("[dim]Job CANCELLED[/]")
+        status_parts = [format_state(state, self._error_code)]
+        if state == "Failed":
+            status_parts.append(f"exit {item.get('exit_code', '?')}")
         if item.get("finished_at"):
-            status_parts.append(f"Finished: {item['finished_at']}")
-        self.query_one("#job-status-line", Static).update("  ".join(status_parts))
+            status_parts.append(f"finished {format_timestamp(item['finished_at'])}")
+        self.query_one("#job-status-line", Static).update("  \u00b7  ".join(status_parts))
 
     def _update_streaming_indicator(self) -> None:
         if self.follow_mode:

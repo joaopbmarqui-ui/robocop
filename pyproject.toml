@@ -17,3 +17,6 @@ dispatch = "dispatch.__main__:main"
 
 [tool.setuptools.packages.find]
 include = ["dispatch*"]
+
+[tool.setuptools.package-data]
+dispatch = ["*.tcss"]

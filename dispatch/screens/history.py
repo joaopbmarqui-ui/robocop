@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, DataTable, Footer, Header, Input, Static
 
 from .. import jobs
-from ..formatting import format_job_id
+from ..formatting import format_job_id, format_state, format_timestamp
 from .job_detail import JobDetailScreen
 from .sidebar import Sidebar
 
@@ -23,8 +24,8 @@ class HistoryScreen(Screen[None]):
         ("[", "prev_page", "Prev Page"),
         ("]", "next_page", "Next Page"),
         ("s", "cycle_sort", "Sort"),
-        ("j", "cursor_down", "Down"),
-        ("k", "cursor_up", "Up"),
+        Binding("j", "cursor_down", "Down", show=False),
+        Binding("k", "cursor_up", "Up", show=False),
     ]
 
     SORT_MODES = ("date", "state", "table")
@@ -43,7 +44,10 @@ class HistoryScreen(Screen[None]):
         yield sidebar
         with Vertical(id="main-content"):
             with Vertical(id="history-content"):
-                yield Static("Recently Finished (all time)", classes="section-title")
+                yield Static(
+                    "[bold]Job History[/] [dim]\u00b7 finished more than 7 days ago[/]",
+                    classes="section-title",
+                )
                 yield Static("[dim]Sorted by: date \u2193[/]", id="sort-indicator")
 
                 with Horizontal(id="search-row"):
@@ -55,17 +59,16 @@ class HistoryScreen(Screen[None]):
 
                 yield DataTable(id="history-table")
                 with Vertical(id="history-empty", classes="empty-state"):
-                    yield Static("\u25a1", classes="empty-icon")
-                    yield Static("No history found", classes="summary-label")
-                    yield Static("[dim]Adjust your search or run some jobs[/]", classes="empty-hint")
+                    yield Static("[dim]No history found \u2014 adjust your search, or check Overview for recent jobs[/]")
 
                 with Horizontal(id="pagination"):
                     yield Static("", id="page-info")
                     yield Static("", id="page-controls")
 
-                with Horizontal(classes="button-row"):
-                    yield Button("View Logs [Enter]", id="view-logs", variant="primary")
-                    yield Button("Back [B]", id="back", variant="default")
+            with Horizontal(classes="action-bar"):
+                yield Static("", id="history-status", classes="action-status")
+                yield Button("Back [B]", id="back", variant="default")
+                yield Button("View Logs [Enter]", id="view-logs", variant="primary")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -110,16 +113,6 @@ class HistoryScreen(Screen[None]):
         table = self.query_one("#history-table", DataTable)
         table.clear()
         for item in page_items:
-            state = item["state"]
-            if state == "Succeeded":
-                state_display = "[green]\u25cf SUCCEEDED[/]"
-            elif state == "Failed":
-                state_display = "[red]\u25cf FAILED[/]"
-            elif state == "Cancelled":
-                state_display = "[dim]\u25cf CANCELLED[/]"
-            else:
-                state_display = f"\u25cf {state}"
-
             dest = item["destination"]
             table_name = dest.get("table_name") or dest.get("csv_path", "")
             if "/" in table_name:
@@ -128,8 +121,8 @@ class HistoryScreen(Screen[None]):
             table.add_row(
                 self._display_id(item["id"]),
                 table_name[:25],
-                state_display,
-                item["finished_at"] or "",
+                format_state(item["state"]),
+                format_timestamp(item["finished_at"]),
                 key=item["id"],
             )
 
@@ -148,6 +141,10 @@ class HistoryScreen(Screen[None]):
             f"[dim]Showing {start + 1}-{min(end, total)} of {total}[/]"
             if total > 0
             else "[dim]No results[/]"
+        )
+        self.query_one("#history-status", Static).update(
+            f"{total} finished job{'s' if total != 1 else ''}"
+            + (f" matching \u201c{needle}\u201d" if needle else "")
         )
         self.query_one("#page-controls", Static).update(
             f"[dim]\u276e Prev    Page {self._page + 1} of {total_pages}    Next \u276f[/]"

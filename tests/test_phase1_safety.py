@@ -35,18 +35,18 @@ def test_browser_drop_requires_confirmation(mock_env_with_config, monkeypatch) -
             table.add_row("danger_table", "table")
             table.cursor_coordinate = (0, 0)
 
-            task = asyncio.create_task(screen.action_drop())
+            worker = screen.action_drop()
             await pilot.pause()
             await pilot.press("escape")
-            await task
+            await worker.wait()
             assert calls == []
 
-            task = asyncio.create_task(screen.action_drop())
+            worker = screen.action_drop()
             await pilot.pause()
             confirm_input = app.screen.query_one("#confirm-input", Input)
             confirm_input.value = "dw_settle.danger_table"
             await pilot.press("enter")
-            await task
+            await worker.wait()
             assert calls == ["dw_settle.danger_table"]
 
     asyncio.run(run())
@@ -90,16 +90,16 @@ def test_job_cancel_requires_confirmation(mock_env_with_config, monkeypatch) -> 
             app.push_screen(screen)
             await pilot.pause()
 
-            task = asyncio.create_task(screen.action_cancel())
+            worker = screen.action_cancel()
             await pilot.pause()
             await pilot.press("n")
-            await task
+            await worker.wait()
             assert cancelled == []
 
-            task = asyncio.create_task(screen.action_cancel())
+            worker = screen.action_cancel()
             await pilot.pause()
             await pilot.press("y")
-            await task
+            await worker.wait()
             assert cancelled == [4242]
 
     asyncio.run(run())
@@ -130,16 +130,16 @@ def test_new_job_launch_requires_confirmation(
             app.push_screen(screen)
             await pilot.pause()
 
-            task = asyncio.create_task(screen.action_launch())
+            worker = screen.action_launch()
             await pilot.pause()
             await pilot.press("n")
-            await task
+            await worker.wait()
             assert launched == []
 
-            task = asyncio.create_task(screen.action_launch())
+            worker = screen.action_launch()
             await pilot.pause()
             await pilot.press("y")
-            await task
+            await worker.wait()
             assert len(launched) == 1
 
     asyncio.run(run())

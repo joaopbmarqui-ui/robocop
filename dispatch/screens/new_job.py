@@ -15,6 +15,7 @@ from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Collapsible, DataTable, Footer, Header, Input, RadioButton, RadioSet, Static
+from textual.worker import Worker
 
 from .. import config, jobs, kerberos, manifest, process, sql
 from .confirm import ConfirmScreen
@@ -397,9 +398,9 @@ class NewJobScreen(Screen[None]):
             params["end_date"] = sql.to_orchestrator_date(self._input_value("end-date"))
         return params
 
-    async def on_button_pressed(self, event: Button.Pressed) -> None:
+    def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "launch":
-            await self.action_launch()
+            self.action_launch()
         elif event.button.id == "preview":
             self.action_preview()
 
@@ -430,7 +431,15 @@ class NewJobScreen(Screen[None]):
             )
         )
 
-    async def action_launch(self) -> None:
+    def action_launch(self) -> "Worker[None]":
+        """Run the confirm-and-launch flow in a worker.
+
+        Awaiting the confirmation future inline would block the message pump
+        that dispatched the key binding and deadlock all input.
+        """
+        return self.run_worker(self._launch_flow(), name="launch-flow", exclusive=True)
+
+    async def _launch_flow(self) -> None:
         error = self._validate()
         if error:
             self._show_message(error, "error")

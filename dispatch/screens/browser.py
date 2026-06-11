@@ -9,6 +9,7 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, DataTable, Footer, Header, Input, Static
+from textual.worker import Worker
 
 from .. import impala
 from .confirm import ConfirmScreen
@@ -142,7 +143,7 @@ class BrowserScreen(Screen[None]):
         elif event.button.id == "describe":
             await self.action_describe()
         elif event.button.id == "drop":
-            await self.action_drop()
+            self.action_drop()
         elif event.button.id == "back":
             self.app.pop_screen()
 
@@ -243,7 +244,11 @@ class BrowserScreen(Screen[None]):
         if self.query_one("#browser-table", DataTable).has_focus:
             self.query_one("#browser-table", DataTable).action_cursor_up()
 
-    async def action_drop(self) -> None:
+    def action_drop(self) -> "Worker[None]":
+        """Run the confirm-and-drop flow in a worker (see NewJobScreen.action_launch)."""
+        return self.run_worker(self._drop_flow(), name="drop-flow", exclusive=True)
+
+    async def _drop_flow(self) -> None:
         full = self._full_table()
         if not full:
             return

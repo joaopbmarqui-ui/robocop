@@ -52,11 +52,11 @@ class ConfirmScreen(ModalScreen[bool]):
                     id="confirm-input",
                 )
             help_text = (
-                "Type the exact name, then [bold][Y][/] or [bold]Enter[/] to confirm; "
-                "[bold][N][/] or [bold]Esc[/] cancels."
+                "Type the exact name, then [bold]Y[/] or [bold]Enter[/] to confirm; "
+                "[bold]N[/] or [bold]Esc[/] cancels."
                 if self.required_confirmation_text
-                else "[bold][Y][/] or [bold]Enter[/] to confirm; "
-                "[bold][N][/] or [bold]Esc[/] to cancel."
+                else "[bold]Y[/] or [bold]Enter[/] to confirm; "
+                "[bold]N[/] or [bold]Esc[/] to cancel."
             )
             yield Static(help_text, id="confirm-help")
             with Horizontal(id="confirm-buttons"):

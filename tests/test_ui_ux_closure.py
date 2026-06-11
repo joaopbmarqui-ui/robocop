@@ -456,17 +456,17 @@ def test_browser_drop_requires_typing_full_table_name(
             table.add_row("danger_table", "table")
             table.cursor_coordinate = (0, 0)
 
-            task = asyncio.create_task(screen.action_drop())
+            worker = screen.action_drop()
             await pilot.pause()
             await pilot.press("enter")
             await pilot.pause()
             assert calls == []
-            assert not task.done()
+            assert worker.is_running
 
             confirm_input = app.screen.query_one("#confirm-input", Input)
             confirm_input.value = "dw_settle.danger_table"
             await pilot.press("enter")
-            await task
+            await worker.wait()
             assert calls == ["dw_settle.danger_table"]
 
     asyncio.run(run())
@@ -494,16 +494,16 @@ def test_typed_drop_confirmation_button_does_not_bypass_input(
             table.add_row("danger_table", "table")
             table.cursor_coordinate = (0, 0)
 
-            task = asyncio.create_task(screen.action_drop())
+            worker = screen.action_drop()
             await pilot.pause()
             app.screen.query_one("#confirm-yes").press()
             await pilot.pause()
             assert calls == []
-            assert not task.done()
+            assert worker.is_running
 
             app.screen.query_one("#confirm-input", Input).value = "dw_settle.danger_table"
             app.screen.query_one("#confirm-yes").press()
-            await task
+            await worker.wait()
             assert calls == ["dw_settle.danger_table"]
 
     asyncio.run(run())
@@ -574,12 +574,12 @@ def test_browser_drop_replaces_schema_table_with_persistent_result_message(
             await pilot.pause()
             assert screen.query_one("#describe-table", DataTable).display is True
 
-            task = asyncio.create_task(screen.action_drop())
+            worker = screen.action_drop()
             await pilot.pause()
             confirm_input = app.screen.query_one("#confirm-input", Input)
             confirm_input.value = "dw_settle.danger_table"
             await pilot.press("enter")
-            await task
+            await worker.wait()
             await pilot.pause()
 
             describe_table = screen.query_one("#describe-table", DataTable)

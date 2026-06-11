@@ -12,6 +12,7 @@ from textual.containers import Horizontal, Vertical
 from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, RichLog, Static
+from textual.worker import Worker
 
 from .. import config, errors, manifest, process
 from ..formatting import format_elapsed, format_job_id, format_state, format_timestamp
@@ -106,7 +107,7 @@ class JobDetailScreen(Screen[None]):
         self.query_one("#error-banner").display = False
         self.query_one("#clone", Button).display = False
         if self.cancel_on_mount:
-            await self.action_cancel()
+            self.action_cancel()
         await self._refresh_detail_async()
         self.set_interval(1.0, self._refresh_detail_async)
 
@@ -347,7 +348,11 @@ class JobDetailScreen(Screen[None]):
             return f"[dim]{line[:idx]}[/]{line[idx:]}"
         return line
 
-    async def action_cancel(self) -> None:
+    def action_cancel(self) -> "Worker[None]":
+        """Run the confirm-and-cancel flow in a worker (see NewJobScreen.action_launch)."""
+        return self.run_worker(self._cancel_flow(), name="cancel-flow", exclusive=True)
+
+    async def _cancel_flow(self) -> None:
         try:
             item = manifest.load(self.job_dir / "manifest.json")
         except Exception:
@@ -385,9 +390,9 @@ class JobDetailScreen(Screen[None]):
         )
         return await loop_future
 
-    async def on_button_pressed(self, event: Button.Pressed) -> None:
+    def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "cancel":
-            await self.action_cancel()
+            self.action_cancel()
         elif event.button.id == "back":
             self.app.pop_screen()
         elif event.button.id == "clone":

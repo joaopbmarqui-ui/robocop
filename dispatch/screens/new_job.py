@@ -218,6 +218,9 @@ class NewJobScreen(Screen[None]):
     def _validation_issues(self) -> list[str]:
         issues: list[str] = []
         source = self._selected_source()
+        destination = self._selected_destination()
+        if (source, destination) not in manifest.LEGAL_CELLS:
+            issues.append(f"Illegal combination: {source} \u2192 {destination}")
         if source in ("SqlFile", "SqlTemplate"):
             sql_path = Path(self._input_value("sql-file"))
             if self._input_value("sql-file") and not sql_path.exists():
@@ -249,6 +252,7 @@ class NewJobScreen(Screen[None]):
         for btn in dest_radio_set.query(RadioButton):
             dest_type = _DEST_IDS.get(btn.id or "", "")
             btn.disabled = (source, dest_type) not in manifest.LEGAL_CELLS
+        self._ensure_legal_destination(source, dest_radio_set)
 
         is_sql = source in ("SqlFile", "SqlTemplate")
         is_existing = source == "ExistingTable"
@@ -276,6 +280,20 @@ class NewJobScreen(Screen[None]):
             dest_hint.display = True
         else:
             dest_hint.display = False
+
+    def _ensure_legal_destination(self, source: str, dest_radio_set: RadioSet) -> None:
+        """Auto-select the first legal destination when the current one is illegal."""
+        if (source, self._selected_destination()) in manifest.LEGAL_CELLS:
+            return
+        for btn in dest_radio_set.query(RadioButton):
+            dest_type = _DEST_IDS.get(btn.id or "", "")
+            if (source, dest_type) in manifest.LEGAL_CELLS:
+                # Deferred via timer: handlers of RadioSet.Changed run with
+                # RadioButton.Changed prevented (Textual attaches the prevent
+                # set to the message), which would silently skip the dest
+                # set's exclusion logic. A timer callback runs prevention-free.
+                self.set_timer(0.01, lambda b=btn: setattr(b, "value", True))
+                return
 
     def _refresh_path_hint(self) -> None:
         """Update the path hint to show just the filename of the SQL file."""

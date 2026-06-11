@@ -112,7 +112,7 @@ Reactive-state rules:
 
 ## Styling and visual system
 
-The current app keeps CSS in `APP_CSS`. For small changes, preserve that pattern. For larger styling work, prefer moving CSS into a dedicated `.tcss` file in a separate PR rather than growing `app.py` indefinitely.
+The app keeps its stylesheet in `dispatch/app.tcss` (loaded via `CSS_PATH`). Keep styling changes there; do not reintroduce an inline `APP_CSS` block in `app.py`. The stylesheet doubles as the design system: quiet base colors, accent reserved for focus/selection/primary actions, semantic state colors only, and a shared `.action-bar` pattern for the docked bottom bar on every screen.
 
 Style for a production SSH terminal:
 

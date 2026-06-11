@@ -277,10 +277,10 @@ def test_dashboard_top_level_actions_open_expected_screens(
     asyncio.run(run())
 
 
-def test_dashboard_recent_table_takes_focus_when_active_jobs_are_empty(
+def test_dashboard_jobs_table_takes_focus_and_arrow_selection_works(
     mock_env_with_config,
 ) -> None:
-    """Arrow navigation and view logs should target the visible recent table."""
+    """Arrow navigation and view logs should target the unified jobs table."""
     data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
     jobs_dir = data_root / ".dispatch" / "jobs"
     jobs_dir.mkdir(parents=True, exist_ok=True)
@@ -292,9 +292,9 @@ def test_dashboard_recent_table_takes_focus_when_active_jobs_are_empty(
         async with app.run_test(size=(120, 40)) as pilot:
             await pilot.pause()
             screen = app.screen
-            recent_table = screen.query_one("#recent-table", DataTable)
+            jobs_table = screen.query_one("#jobs-table", DataTable)
 
-            assert recent_table.has_focus is True
+            assert jobs_table.has_focus is True
 
             await pilot.press("down")
             await pilot.pause()

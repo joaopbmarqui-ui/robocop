@@ -4,11 +4,15 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING, Iterable
 
-from textual.app import App
+from textual.app import App, SystemCommand
 from textual.reactive import reactive
 
-from . import config, kerberos, setup_logging
+from . import config, kerberos, process, setup_logging
+
+if TYPE_CHECKING:
+    from textual.screen import Screen
 from .screens.browser import BrowserScreen
 from .version import __version__
 from .screens.dashboard import DashboardScreen
@@ -100,6 +104,40 @@ class DispatchApp(App[None]):
     async def refresh_kerberos(self) -> None:
         """Refresh the app-wide Kerberos TTL snapshot (mirrored by sidebars)."""
         self.kerberos_ttl = await kerberos.ticket_ttl_seconds()
+
+    def get_system_commands(self, screen: "Screen") -> Iterable[SystemCommand]:
+        """Power layer: every destination and key maintenance action is one
+        fuzzy search away in the command palette."""
+        yield from super().get_system_commands(screen)
+        yield SystemCommand(
+            "Overview", "Jobs cockpit: running and recent jobs with live logs",
+            lambda: self.open_top_level("overview"),
+        )
+        yield SystemCommand(
+            "New Job", "Launch a SQL file as an Impala job",
+            lambda: self.open_top_level("new_job"),
+        )
+        yield SystemCommand(
+            "History", "Finished jobs older than 7 days",
+            lambda: self.open_top_level("history"),
+        )
+        yield SystemCommand(
+            "Browse metadata", "SHOW TABLES, DESCRIBE, and DROP in Impala",
+            lambda: self.open_top_level("browse"),
+        )
+        yield SystemCommand(
+            "Refresh Kerberos (kinit)", "Suspend the UI and run kinit",
+            self._kinit_from_palette,
+        )
+
+    async def _kinit_from_palette(self) -> None:
+        with self.suspend():
+            process.run_interactive("kinit")
+        await self.refresh_kerberos()
+        if self.kerberos_ttl is not None:
+            self.notify(f"Kerberos refreshed: {self.kerberos_ttl // 60}m", severity="information")
+        else:
+            self.notify("Kerberos ticket still missing", severity="warning")
 
     def _build_version_warning(self) -> str:
         try:

@@ -148,7 +148,7 @@ def test_dashboard_preserves_cursor_across_refresh(mock_env_with_config) -> None
         async with app.run_test(size=(120, 40)) as pilot:
             await pilot.pause(1.0)
             screen = app.screen
-            table = screen.query_one("#recent-table", DataTable)
+            table = screen.query_one("#jobs-table", DataTable)
             assert table.row_count == 3
 
             await pilot.press("down")

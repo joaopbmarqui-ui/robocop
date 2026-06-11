@@ -1,4 +1,12 @@
-"""Dashboard screen for active and recently finished Jobs."""
+"""Overview screen: a supervision cockpit for Dispatch Jobs.
+
+Wireframe rationale: Dispatch's dominant loop is launch -> watch -> diagnose.
+Instead of a page-stack dashboard (stat cards + two tables + navigation to see
+logs), the Overview is a persistent workspace: a dense status strip, one
+unified Jobs table (running jobs pinned first), and a live detail pane that
+tails the highlighted job's log. Full Job Detail remains one keypress away for
+deep inspection.
+"""
 
 from __future__ import annotations
 
@@ -16,16 +24,26 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
-from textual.widgets import Button, DataTable, Footer, Header, Static
+from textual.widgets import Button, DataTable, Footer, Header, Input, Static
 
 from .. import config, errors, jobs, kerberos
-from ..formatting import format_elapsed, format_job_id, format_kerberos_ttl, format_state
+from ..formatting import (
+    format_elapsed,
+    format_job_id,
+    format_kerberos_ttl,
+    format_state,
+    style_log_line,
+)
 from .sidebar import Sidebar
 
 if TYPE_CHECKING:
     from ..app import DispatchApp
 
-RECENT_ROW_LIMIT = 50
+JOBS_ROW_LIMIT = 100
+DETAIL_TAIL_BYTES = 4096
+DETAIL_TAIL_LINES = 8
+# Below this height the detail pane is hidden so the jobs table stays usable.
+DETAIL_MIN_HEIGHT = 30
 
 
 class DashboardScreen(Screen[None]):
@@ -35,6 +53,8 @@ class DashboardScreen(Screen[None]):
         ("c", "cancel", "Cancel"),
         ("h", "history", "History"),
         ("b", "browser", "Browse"),
+        ("slash", "filter_jobs", "Filter"),
+        Binding("escape", "clear_filter", "Clear Filter", show=False),
         Binding("j", "cursor_down", "Down", show=False),
         Binding("k", "cursor_up", "Up", show=False),
         Binding("q", "app.quit", "Quit", show=False),
@@ -47,8 +67,10 @@ class DashboardScreen(Screen[None]):
         self._selected_job_id_cache: str | None = None
         self._error_cache: dict[str, str | None] = {}
         self._last_states: dict[str, str] = {}
-        self._compact_stats = False
-        self._table_signatures: dict[str, tuple] = {}
+        self._table_signature: tuple | None = None
+        self._filter_needle = ""
+        self._detail_job_id: str | None = None
+        self._detail_visible = True
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -57,41 +79,19 @@ class DashboardScreen(Screen[None]):
         yield sidebar
         with Vertical(id="main-content"):
             with Vertical(id="dashboard-content"):
-                with Horizontal(id="stats-row"):
-                    with Vertical(classes="stat-card"):
-                        yield Static("RUNNING", classes="stat-label")
-                        yield Static("0 / 2", id="stat-running", classes="stat-value")
-                        yield Static("slots in use", classes="stat-sub")
-                    with Vertical(classes="stat-card"):
-                        yield Static("FINISHED", classes="stat-label")
-                        yield Static("0", id="stat-finished", classes="stat-value")
-                        yield Static("last 7 days", classes="stat-sub")
-                    with Vertical(classes="stat-card"):
-                        yield Static("FAILED", classes="stat-label")
-                        yield Static("0", id="stat-failed", classes="stat-value")
-                        yield Static("last 7 days", classes="stat-sub")
-                    with Vertical(classes="stat-card"):
-                        yield Static("KERBEROS", classes="stat-label")
-                        yield Static("--", id="stat-kerberos", classes="stat-value")
-                        yield Static("ticket remaining", classes="stat-sub")
-                yield Static("", id="stats-compact", classes="stats-compact-line")
+                yield Static("", id="status-strip")
                 yield Static(
-                    "[bold]Active Jobs[/] [dim]\u00b7 newest first[/]",
+                    "[bold]Jobs[/] [dim]\u00b7 running first \u00b7 last 7 days[/]",
                     classes="section-title",
-                    id="active-title",
+                    id="jobs-title",
                 )
-                yield DataTable(id="active-table")
-                with Vertical(id="active-empty", classes="empty-state"):
-                    yield Static("[dim]No active jobs \u2014 press [/][bold]N[/][dim] to launch one[/]")
-                with Vertical(id="recent-section"):
-                    yield Static(
-                        "[bold]Recently Finished[/] [dim]\u00b7 last 7 days \u00b7 newest first[/]",
-                        classes="section-title",
-                        id="recent-title",
-                    )
-                    yield DataTable(id="recent-table")
-                    with Vertical(id="recent-empty", classes="empty-state"):
-                        yield Static("[dim]No recently finished jobs \u2014 completed jobs appear here for 7 days[/]")
+                yield Input(placeholder="Filter: id, file, table, or state\u2026", id="jobs-filter")
+                yield DataTable(id="jobs-table")
+                with Vertical(id="jobs-empty", classes="empty-state"):
+                    yield Static("[dim]No jobs in the last 7 days \u2014 press [/][bold]N[/][dim] to launch one[/]")
+                with Vertical(id="detail-pane"):
+                    yield Static("[dim]Select a job to preview its log[/]", id="detail-title")
+                    yield Static("", id="detail-log")
             with Horizontal(classes="action-bar", id="dashboard-action-bar"):
                 yield Static("", id="event-trail", classes="action-status")
                 yield Button("New Job [N]", id="new-job", variant="primary")
@@ -100,33 +100,27 @@ class DashboardScreen(Screen[None]):
         yield Footer()
 
     async def on_mount(self) -> None:
-        active_table = self.query_one("#active-table", DataTable)
-        active_table.add_columns("ID", "Source", "Destination", "State", "Elapsed")
-        active_table.cursor_type = "row"
-        recent_table = self.query_one("#recent-table", DataTable)
-        recent_table.add_columns("ID", "Source", "Destination", "State", "Elapsed")
-        recent_table.cursor_type = "row"
-        self.query_one("#active-empty").display = False
-        self.query_one("#recent-empty").display = False
-        self.query_one("#stats-compact").display = False
+        table = self.query_one("#jobs-table", DataTable)
+        table.add_columns("ID", "Source", "Destination", "State", "Elapsed")
+        table.cursor_type = "row"
+        self.query_one("#jobs-empty").display = False
+        self.query_one("#jobs-filter").display = False
         self._add_event("dispatch started")
         self._update_layout_mode()
         await self._refresh_jobs_async()
         self.set_interval(2.0, self._refresh_jobs_async)
         self.kerberos_ttl = await kerberos.ticket_ttl_seconds()
-        self._refresh_kerberos()
+        table.focus()
 
     def on_resize(self) -> None:
         self._update_layout_mode()
 
     def _update_layout_mode(self) -> None:
-        compact = self.app.size.width < 100
-        if compact == self._compact_stats:
+        visible = self.app.size.height >= DETAIL_MIN_HEIGHT
+        if visible == self._detail_visible:
             return
-        self._compact_stats = compact
-        self.set_class(compact, "dashboard-compact")
-        self.query_one("#stats-row").display = not compact
-        self.query_one("#stats-compact").display = compact
+        self._detail_visible = visible
+        self.query_one("#detail-pane").display = visible
 
     def _add_event(self, text: str, severity: str = "info") -> None:
         now_str = datetime.now().strftime("%H:%M")
@@ -136,17 +130,11 @@ class DashboardScreen(Screen[None]):
         trail = self.query_one("#event-trail", Static)
         trail.update(self._events[-1])
 
-    def _refresh_kerberos(self) -> None:
-        label = self.query_one("#stat-kerberos", Static)
-        if self.kerberos_ttl is None:
-            label.update("[red]MISSING[/]")
-        elif self.kerberos_ttl < 3600:
-            label.update(f"[yellow]{format_kerberos_ttl(self.kerberos_ttl)}[/]")
-        else:
-            label.update(f"[green]{format_kerberos_ttl(self.kerberos_ttl)}[/]")
+    # ── Data refresh ────────────────────────────────────────────────────
 
     async def _refresh_jobs_async(self) -> None:
         try:
+            detail_target = self._detail_job_id
             active = await asyncio.to_thread(jobs.active_jobs)
             kerberos_ttl = await kerberos.ticket_ttl_seconds()
             error_cache: dict[str, str | None] = {}
@@ -159,11 +147,42 @@ class DashboardScreen(Screen[None]):
                 else:
                     log_path = config.jobs_dir() / job_id / "run.log"
                     error_cache[job_id] = await asyncio.to_thread(errors.classify, log_path)
+            if detail_target is None and active:
+                running_item = next(
+                    (item for item in active if item["state"] == "Running"), None
+                )
+                detail_target = (running_item or active[0])["id"]
+                self._detail_job_id = detail_target
+            tail = (
+                await asyncio.to_thread(self._read_log_tail, detail_target)
+                if detail_target and self._detail_visible
+                else None
+            )
             self._apply_jobs_snapshot(
-                {"active": active, "kerberos_ttl": kerberos_ttl, "error_cache": error_cache}
+                {
+                    "active": active,
+                    "kerberos_ttl": kerberos_ttl,
+                    "error_cache": error_cache,
+                    "detail_target": detail_target,
+                    "detail_tail": tail,
+                }
             )
         except Exception as exc:
             self.notify(f"Job refresh failed: {exc}", severity="error")
+
+    @staticmethod
+    def _read_log_tail(job_id: str) -> list[str]:
+        log_path = config.jobs_dir() / job_id / "run.log"
+        try:
+            size = log_path.stat().st_size
+            with log_path.open("r", encoding="utf-8", errors="replace") as handle:
+                if size > DETAIL_TAIL_BYTES:
+                    handle.seek(size - DETAIL_TAIL_BYTES)
+                    handle.readline()  # drop the partial first line
+                lines = [line.rstrip() for line in handle if line.strip()]
+        except OSError:
+            return []
+        return lines[-DETAIL_TAIL_LINES:]
 
     def _apply_jobs_snapshot(self, snapshot: dict) -> None:
         active = snapshot["active"]
@@ -171,51 +190,63 @@ class DashboardScreen(Screen[None]):
         self._error_cache.update(snapshot["error_cache"])
 
         running = [j for j in active if j["state"] == "Running"]
-        recent = [j for j in active if j["state"] != "Running"]
         finished_count = sum(1 for j in active if j["state"] == "Succeeded")
         failed_count = sum(1 for j in active if j["state"] == "Failed")
 
         self._detect_state_transitions(active)
-        self._refresh_kerberos()
+        self._update_status_strip(len(running), finished_count, failed_count)
 
-        if self._compact_stats:
-            krb_text = format_kerberos_ttl(self.kerberos_ttl)
-            compact = self.query_one("#stats-compact", Static)
-            compact.update(
-                f"\u25cf Running {len(running)}/2  "
-                f"\u2713 Finished {finished_count}  "
-                f"\u2717 Failed {failed_count}  "
-                f"KRB {krb_text}"
-            )
-
-        self.query_one("#stat-running", Static).update(f"{len(running)} / 2")
-        self.query_one("#stat-finished", Static).update(
-            f"[green]{finished_count}[/]" if finished_count else "[dim]0[/]"
-        )
-        self.query_one("#stat-failed", Static).update(
-            f"[red]{failed_count}[/]" if failed_count else "[dim]0[/]"
+        merged = running + [j for j in active if j["state"] != "Running"]
+        merged = self._apply_filter(merged)[:JOBS_ROW_LIMIT]
+        self._populate_table(merged)
+        self._update_detail_pane(
+            snapshot["detail_target"], snapshot["detail_tail"], active
         )
 
-        self._populate_table("#active-table", "#active-empty", running)
-        self._populate_table("#recent-table", "#recent-empty", recent[:RECENT_ROW_LIMIT])
+    def _update_status_strip(self, running: int, finished: int, failed: int) -> None:
+        krb_ttl = self.kerberos_ttl
+        if krb_ttl is None:
+            krb_text = "[red]MISSING[/]"
+        elif krb_ttl < 3600:
+            krb_text = f"[yellow]{format_kerberos_ttl(krb_ttl)}[/]"
+        else:
+            krb_text = f"[green]{format_kerberos_ttl(krb_ttl)}[/]"
+        finished_text = f"[green]{finished}[/]" if finished else "[dim]0[/]"
+        failed_text = f"[red]{failed}[/]" if failed else "[dim]0[/]"
+        self.query_one("#status-strip", Static).update(
+            f"[dim]RUNNING[/] {running} / {jobs.RUNNING_CAP}    "
+            f"[dim]FINISHED 7D[/] {finished_text}    "
+            f"[dim]FAILED 7D[/] {failed_text}    "
+            f"[dim]KERBEROS[/] {krb_text}"
+        )
 
-        active_table = self.query_one("#active-table", DataTable)
-        recent_table = self.query_one("#recent-table", DataTable)
-        focused = self.focused
-        if not active_table.display and recent_table.display and focused is active_table:
-            recent_table.focus()
-        elif active_table.display and not recent_table.display and focused is recent_table:
-            active_table.focus()
+    def _apply_filter(self, items: list[dict]) -> list[dict]:
+        needle = self._filter_needle.lower().strip()
+        if not needle:
+            return items
+        matched = []
+        for item in items:
+            haystack = " ".join(
+                (
+                    item["id"],
+                    self._source_label(item),
+                    self._dest_label(item),
+                    item["state"],
+                )
+            ).lower()
+            if needle in haystack:
+                matched.append(item)
+        return matched
 
-    def _populate_table(self, table_id: str, empty_id: str, items: list[dict]) -> None:
-        """Rebuild a job table only when its content changed, preserving the cursor."""
-        table = self.query_one(table_id, DataTable)
+    def _populate_table(self, items: list[dict]) -> None:
+        """Rebuild the jobs table only when content changed, preserving the cursor."""
+        table = self.query_one("#jobs-table", DataTable)
         signature = tuple(
             (item["id"], item["state"], format_elapsed(item)) for item in items
         )
-        if self._table_signatures.get(table_id) == signature:
+        if self._table_signature == signature:
             return
-        self._table_signatures[table_id] = signature
+        self._table_signature = signature
 
         cursor_key = self._cursor_row_key(table)
         table.clear()
@@ -236,15 +267,37 @@ class DashboardScreen(Screen[None]):
 
         has_rows = bool(items)
         table.display = has_rows
-        self.query_one(empty_id).display = not has_rows
+        self.query_one("#jobs-empty").display = not has_rows
 
-    @staticmethod
-    def _cursor_row_key(table: DataTable) -> str | None:
-        try:
-            cell_key = table.coordinate_to_cell_key(table.cursor_coordinate)
-            return str(cell_key.row_key.value)
-        except Exception:
-            return None
+    def _update_detail_pane(
+        self,
+        job_id: str | None,
+        tail: list[str] | None,
+        active: list[dict],
+    ) -> None:
+        if not self._detail_visible:
+            return
+        title = self.query_one("#detail-title", Static)
+        log_widget = self.query_one("#detail-log", Static)
+        if job_id is None:
+            title.update("[dim]Select a job to preview its log[/]")
+            log_widget.update("")
+            return
+        item = next((j for j in active if j["id"] == job_id), None)
+        if item is None:
+            title.update("[dim]Select a job to preview its log[/]")
+            log_widget.update("")
+            return
+        state_markup = format_state(item["state"], self._error_cache.get(job_id))
+        suffix = "[dim] \u00b7 V for full logs[/]"
+        title.update(
+            f"[bold]{format_job_id(job_id)}[/]  {state_markup}  "
+            f"[dim]{format_elapsed(item)}[/]{suffix}"
+        )
+        if tail:
+            log_widget.update("\n".join(style_log_line(line) for line in tail))
+        else:
+            log_widget.update("[dim]No log output yet.[/]")
 
     def _detect_state_transitions(self, active: list[dict]) -> None:
         current: dict[str, str] = {item["id"]: item["state"] for item in active}
@@ -275,28 +328,59 @@ class DashboardScreen(Screen[None]):
             return f"{schema}.{table}"[:26]
         return dest.get("type", "")[:26]
 
-    def _focused_table(self) -> DataTable | None:
-        for table_id in ("#active-table", "#recent-table"):
-            table = self.query_one(table_id, DataTable)
-            if table.has_focus and table.display:
-                return table
-        return None
+    @staticmethod
+    def _cursor_row_key(table: DataTable) -> str | None:
+        try:
+            cell_key = table.coordinate_to_cell_key(table.cursor_coordinate)
+            return str(cell_key.row_key.value)
+        except Exception:
+            return None
+
+    # ── Filter ──────────────────────────────────────────────────────────
+
+    def action_filter_jobs(self) -> None:
+        filter_input = self.query_one("#jobs-filter", Input)
+        filter_input.display = True
+        filter_input.focus()
+
+    def action_clear_filter(self) -> None:
+        filter_input = self.query_one("#jobs-filter", Input)
+        if not filter_input.display:
+            return
+        filter_input.value = ""
+        filter_input.display = False
+        self._filter_needle = ""
+        self._table_signature = None
+        self.query_one("#jobs-table", DataTable).focus()
+        self.call_after_refresh(self._refresh_jobs_async)
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if event.input.id == "jobs-filter":
+            self._filter_needle = event.value
+            self._table_signature = None
+            self.call_after_refresh(self._refresh_jobs_async)
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.input.id == "jobs-filter":
+            self.query_one("#jobs-table", DataTable).focus()
+
+    # ── Selection / actions ─────────────────────────────────────────────
 
     def action_cursor_down(self) -> None:
-        table = self._focused_table()
-        if table is not None:
+        table = self.query_one("#jobs-table", DataTable)
+        if table.has_focus:
             table.action_cursor_down()
 
     def action_cursor_up(self) -> None:
-        table = self._focused_table()
-        if table is not None:
+        table = self.query_one("#jobs-table", DataTable)
+        if table.has_focus:
             table.action_cursor_up()
 
     def _selected_job_id(self) -> str | None:
-        for table_id in ("#active-table", "#recent-table"):
-            table_widget = self.query_one(table_id, DataTable)
-            candidate = self._job_id_from_table(table_widget)
-            if candidate and table_widget.has_focus:
+        table = self.query_one("#jobs-table", DataTable)
+        if table.display:
+            candidate = self._cursor_row_key(table)
+            if candidate:
                 self._selected_job_id_cache = candidate
                 return candidate
 
@@ -306,19 +390,6 @@ class DashboardScreen(Screen[None]):
                 return self._selected_job_id_cache
             self._selected_job_id_cache = None
 
-        return None
-
-    def _job_id_from_table(self, table_widget: DataTable) -> str | None:
-        try:
-            row_key = table_widget.get_row_at(table_widget.cursor_row)
-        except Exception:
-            return None
-        candidate = str(row_key[0])
-        if not candidate or candidate.startswith("No "):
-            return None
-        for job in jobs.active_jobs():
-            if job["id"].startswith(candidate) or format_job_id(job["id"]) == candidate:
-                return job["id"]
         return None
 
     def _dispatch_app(self) -> "DispatchApp":
@@ -359,4 +430,24 @@ class DashboardScreen(Screen[None]):
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         row_key = str(event.row_key.value) if event.row_key else ""
-        self._selected_job_id_cache = row_key if row_key and row_key != "__empty__" else None
+        if row_key and row_key != "__empty__":
+            self._selected_job_id_cache = row_key
+            if row_key != self._detail_job_id:
+                self._detail_job_id = row_key
+                self.run_worker(
+                    self._refresh_detail_only(row_key),
+                    name="detail-tail",
+                    group="detail",
+                    exclusive=True,
+                )
+        else:
+            self._selected_job_id_cache = None
+
+    async def _refresh_detail_only(self, job_id: str) -> None:
+        """Fast path: update only the detail pane when the highlight moves."""
+        if not self._detail_visible:
+            return
+        tail = await asyncio.to_thread(self._read_log_tail, job_id)
+        active = await asyncio.to_thread(jobs.active_jobs)
+        if self._detail_job_id == job_id:
+            self._update_detail_pane(job_id, tail, active)

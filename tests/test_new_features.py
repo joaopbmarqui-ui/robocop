@@ -189,7 +189,7 @@ class TestHelpScreen:
                 await pilot.pause()
                 body = app.screen.query_one("#help-body")
                 text = str(body.render())
-                assert "Dashboard" in text
+                assert "Overview" in text
                 assert "New Job" in text
                 assert "Browser" in text
 

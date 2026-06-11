@@ -15,7 +15,13 @@ from textual.widgets import Button, Footer, Header, Input, RichLog, Static
 from textual.worker import Worker
 
 from .. import config, errors, manifest, process
-from ..formatting import format_elapsed, format_job_id, format_state, format_timestamp
+from ..formatting import (
+    format_elapsed,
+    format_job_id,
+    format_state,
+    format_timestamp,
+    style_log_line,
+)
 from .confirm import ConfirmScreen
 from .sidebar import Sidebar
 
@@ -341,12 +347,7 @@ class JobDetailScreen(Screen[None]):
 
     @staticmethod
     def _style_log_line(line: str) -> str:
-        if line.lstrip().startswith("--"):
-            return f"[dim]{line}[/]"
-        if line.startswith("[") and "]" in line:
-            idx = line.index("]") + 1
-            return f"[dim]{line[:idx]}[/]{line[idx:]}"
-        return line
+        return style_log_line(line)
 
     def action_cancel(self) -> "Worker[None]":
         """Run the confirm-and-cancel flow in a worker (see NewJobScreen.action_launch)."""

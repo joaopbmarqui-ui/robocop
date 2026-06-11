@@ -15,25 +15,28 @@ HELP_TEXT = """\
 [bold]Global[/]
   [b]Q[/]         Quit Dispatch
   [b]?[/]         Toggle this help screen
+  [b]Ctrl+P[/]    Command palette (all destinations + kinit)
   [b]Ctrl+B[/]    Collapse / expand the sidebar
   [b]Tab[/]       Move focus between panels
 
-[bold]Dashboard[/]
+[bold]Overview (jobs cockpit)[/]
   [b]N[/]         New Job wizard
-  [b]V[/]         View logs for selected job
+  [b]V[/]         View full logs for selected job
   [b]C[/]         Cancel selected job
+  [b]/[/]         Filter jobs (Esc clears)
   [b]H[/]         Open History
   [b]B[/]         Open Impala Browser
-  [b]\u2191\u2193 / J K[/]  Move selection in tables
+  [b]\u2191\u2193 / J K[/]  Move selection; the preview pane follows
   [b]Enter[/]     Open detail for selected row
 
 [bold]New Job[/]
+  [b]\u2191\u2193[/]        Pick a SQL file from the launch directory
   [b]L[/]         Launch job (requires Kerberos)
   [b]P[/]         Preview generated SQL
   [b]E[/]         Edit SQL file in $EDITOR
   [b]K[/]         Refresh Kerberos (kinit)
   [b]M[/]         Toggle the legal-cells matrix
-  [b]B / Esc[/]   Back to Dashboard
+  [b]B / Esc[/]   Back to Overview
 
 [bold]SQL Preview[/]
   [b]Y[/]           Copy SQL to clipboard

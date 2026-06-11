@@ -6,7 +6,7 @@ import calendar
 import asyncio
 import logging
 import os
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 logger = logging.getLogger("dispatch.new_job")
@@ -43,6 +43,8 @@ class NewJobScreen(Screen[None]):
         self.prefill = prefill or {}
         self.kerberos_ttl: int | None = None
         self._matrix_collapsed = bool(config.read_form_defaults())
+        self._cwd_sql_files: list[dict] = []
+        self._picker_ready = False
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -80,6 +82,9 @@ class NewJobScreen(Screen[None]):
                                 yield RadioButton("Csv", value=True, id="dst-csv")
                                 yield RadioButton("Table+Csv", id="dst-table-csv")
                     yield Static("", id="dest-hint")
+
+                yield Static("", id="picker-caption", classes="input-caption")
+                yield DataTable(id="sql-file-picker")
 
                 with Vertical(id="form-grid"):
                     with Horizontal(classes="form-row", id="row-sql-file"):
@@ -135,6 +140,12 @@ class NewJobScreen(Screen[None]):
         matrix.add_row("ExistingTable", "[dim]\u2014[/]", "[green]\u2713[/]", "[dim]\u2014[/]")
         matrix.show_cursor = False
 
+        picker = self.query_one("#sql-file-picker", DataTable)
+        picker.add_columns("File", "Detected", "Modified")
+        picker.cursor_type = "row"
+        picker.display = False
+        self.query_one("#picker-caption").display = False
+
         self._apply_saved_defaults()
         self._apply_prefill()
         self.kerberos_ttl = await kerberos.ticket_ttl_seconds()
@@ -146,6 +157,76 @@ class NewJobScreen(Screen[None]):
         # Focus the Source radio set: first interactive control, and unlike an
         # Input it does not swallow the single-key mnemonics (P/L/E/K/M).
         self.query_one("#source", RadioSet).focus()
+        self.run_worker(self._populate_sql_picker(), name="sql-picker", exclusive=True)
+
+    def _scan_cwd_sql_files(self) -> list[dict]:
+        results = []
+        for path in sorted(self.launch_cwd.glob("*.sql")):
+            try:
+                text = path.read_text(encoding="utf-8", errors="replace")[:8192]
+                mtime = datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+            except OSError:
+                continue
+            results.append(
+                {
+                    "path": str(path),
+                    "name": path.name,
+                    "detected": sql.detect_source(text),
+                    "mtime": mtime,
+                }
+            )
+        return results
+
+    async def _populate_sql_picker(self) -> None:
+        """File-first launch: list cwd SQL files so no path typing is needed."""
+        self._cwd_sql_files = await asyncio.to_thread(self._scan_cwd_sql_files)
+        picker = self.query_one("#sql-file-picker", DataTable)
+        picker.clear()
+        for entry in self._cwd_sql_files:
+            detected = entry["detected"]
+            detected_markup = (
+                f"[cyan]{detected}[/]" if detected == "SqlTemplate" else detected
+            )
+            picker.add_row(
+                entry["name"],
+                detected_markup,
+                f"[dim]{entry['mtime']}[/]",
+                key=entry["path"],
+            )
+        self.query_one("#picker-caption", Static).update(
+            f"[dim]SQL files in {self.launch_cwd} \u00b7 pick one to fill the form[/]"
+        )
+        current = self._input_value("sql-file")
+        for index, entry in enumerate(self._cwd_sql_files):
+            if entry["path"] == current:
+                picker.move_cursor(row=index)
+                break
+        self._picker_ready = True
+        self._update_field_visibility()
+
+    def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        # Only user-driven movement (focused picker) updates the form, so a
+        # prefilled custom path is never clobbered by the initial populate.
+        if (
+            event.data_table.id != "sql-file-picker"
+            or not self._picker_ready
+            or not event.data_table.has_focus
+        ):
+            return
+        self._apply_picker_path(str(event.row_key.value) if event.row_key else "")
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        if event.data_table.id != "sql-file-picker" or not self._picker_ready:
+            return
+        self._apply_picker_path(str(event.row_key.value) if event.row_key else "")
+
+    def _apply_picker_path(self, path: str) -> None:
+        if not path:
+            return
+        sql_input = self.query_one("#sql-file", Input)
+        if sql_input.value != path:
+            sql_input.value = path
+            self._detect_sql()
 
     @staticmethod
     def _default_start_date() -> str:
@@ -261,6 +342,9 @@ class NewJobScreen(Screen[None]):
         needs_table = destination in ("Table", "Table+Csv") or is_template
 
         self.query_one("#row-sql-file").display = is_sql
+        show_picker = is_sql and bool(self._cwd_sql_files)
+        self.query_one("#sql-file-picker").display = show_picker
+        self.query_one("#picker-caption").display = show_picker
         self.query_one("#row-existing-table").display = is_existing
         self.query_one("#row-schema").display = needs_table
         self.query_one("#row-table-name").display = needs_table

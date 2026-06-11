@@ -73,6 +73,16 @@ def format_state(state: str, error_code: str | None = None) -> str:
     return f"[{color}]{symbol} {label}[/]"
 
 
+def style_log_line(line: str) -> str:
+    """Shared markup styling for orchestrator log lines (dim timestamps/comments)."""
+    if line.lstrip().startswith("--"):
+        return f"[dim]{line}[/]"
+    if line.startswith("[") and "]" in line:
+        idx = line.index("]") + 1
+        return f"[dim]{line[:idx]}[/]{line[idx:]}"
+    return line
+
+
 def format_kerberos_ttl(ttl_seconds: int | None) -> str:
     """Compact Kerberos TTL text shared by the sidebar chip and stat card."""
     if ttl_seconds is None:

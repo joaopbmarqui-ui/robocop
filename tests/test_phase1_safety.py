@@ -44,10 +44,10 @@ def test_browser_drop_requires_confirmation(mock_env_with_config, monkeypatch) -
             worker = screen.action_drop()
             await pilot.pause()
             confirm_input = app.screen.query_one("#confirm-input", Input)
-            confirm_input.value = "dw_settle.danger_table"
+            confirm_input.value = "aa_enc.danger_table"
             await pilot.press("enter")
             await worker.wait()
-            assert calls == ["dw_settle.danger_table"]
+            assert calls == ["aa_enc.danger_table"]
 
     asyncio.run(run())
 
@@ -61,7 +61,7 @@ def test_job_cancel_requires_confirmation(mock_env_with_config, monkeypatch) -> 
     (job_dir / "manifest.json").write_text(
         """
 {
-  "destination": {"csv_path": "", "schema": "dw_settle", "table_name": "target", "type": "Csv"},
+  "destination": {"csv_path": "", "schema": "aa_enc", "table_name": "target", "type": "Csv"},
   "exit_code": null,
   "finished_at": null,
   "id": "20260516T100000Z_cancel",

@@ -1,155 +1,119 @@
-Correct. For **real production-server validation**, the best setup is:
+# Production Testing Process
+
+This is the canonical process for validating the real Dispatch Textual TUI on a
+Hadoop Edge Node.
 
 ```text
-agent → SSH → remote tmux session → real dispatch TUI → real Edge Node tools
+local machine
+  └─ tmux session
+       └─ pane: ssh -p 2222 <user>@<edge-node>   ← RSA PASSCODE (2FA)
+            └─ remote shell
+                 ├─ kinit                          ← Kerberos password
+                 └─ dispatch / impala-shell / tests
 ```
 
-Mocks should only be for local dev. The repo itself says Dispatch runs on the Hadoop Edge Node, users SSH there, run `dispatch`, and jobs must survive disconnects.  It also explicitly says production merge may require smoke-testing over the corporate SSH chain, real `/ads_storage`, Kerberos, real `impala-shell`, and deployment to `/ads_storage/dispatch/`. 
+The agent does **not** drive Dispatch with plain `subprocess`, because Dispatch
+is a real Textual TUI, not a stdin/stdout CLI. tmux gives persistence, screen
+capture, and the ability for a human to attach to the same session.
 
-### Recommended production setup
+> **Session model.** tmux runs **locally**; the SSH connection lives *inside*
+> the tmux pane. All `send-keys` / `capture-pane` / `attach` calls operate on
+> the local session — there is no second SSH hop per command. One-off
+> non-interactive remote commands (file writes, `impala-shell`, `klist`) may use
+> a separate direct `ssh`.
 
-Create a **remote tmux harness** with four operations:
+## Authentication
 
-```text
-start_session
-send_keys
-capture_screen
-stop_session
-```
+Two interactive secrets are required and must be entered by a human; never
+hard-code or echo them:
 
-The agent should not use plain `subprocess` alone, because Dispatch is a real Textual TUI, not a normal stdin/stdout CLI. tmux gives you persistence, screen capture, and the ability for you to attach manually.
+1. **RSA SecurID PASSCODE** — prompted by SSH (`Enter PASSCODE:`) right after the
+   login banner.
+2. **Kerberos password** — prompted by `kinit` (`Password for
+   <user>@CORP.MASTERCARD.ORG:`).
 
-### Minimal commands
+Confirm the ticket with `klist` before running Level 2 or Level 3 checks.
 
-From your local/headless controller:
+## Manual session (what the harness automates)
 
 ```bash
-export HOST="your-user@edge-node"
-export REPO="/ads_storage/dispatch"   # or deployed robocop path
-export SESSION="robocop-prod-test"
+tmux new-session -d -s robocop-prod-test -x 120 -y 40
+tmux send-keys  -t robocop-prod-test "ssh -p 2222 <user>@<edge-node>" Enter
+# enter the RSA PASSCODE at the prompt (attach if typing it yourself):
+tmux attach -t robocop-prod-test     # Ctrl-b d to detach without killing
 
-ssh "$HOST" "tmux kill-session -t $SESSION 2>/dev/null || true"
-
-ssh "$HOST" "tmux new-session -d -s $SESSION -x 120 -y 40 'cd $REPO && bash'"
-
-ssh "$HOST" "tmux send-keys -t $SESSION 'python -m compileall dispatch scr' Enter"
-ssh "$HOST" "tmux capture-pane -t $SESSION -p -S -200"
+# on the remote shell:
+tmux send-keys -t robocop-prod-test "kinit" Enter   # enter Kerberos password
+tmux send-keys -t robocop-prod-test "klist" Enter
+tmux capture-pane -t robocop-prod-test -p
 ```
 
-Launch real TUI:
+To launch the real TUI from a directory of SQL files:
 
 ```bash
-ssh "$HOST" "tmux send-keys -t $SESSION 'cd /path/to/sql/files && dispatch' Enter"
-ssh "$HOST" "tmux capture-pane -t $SESSION -p -S -200"
+tmux send-keys -t robocop-prod-test "cd /path/to/sql/files && dispatch" Enter
+tmux capture-pane -t robocop-prod-test -p
 ```
 
-Attach yourself:
+## Harness (preferred)
+
+`tools/prod_tui/` codifies the model above. See
+[tools/prod_tui/README.md](../tools/prod_tui/README.md) for full usage. The host,
+port, and SSH options live in `tools/prod_tui/config.yaml`.
 
 ```bash
-ssh -t "$HOST" "tmux attach -t $SESSION"
+# start the local tmux session + SSH (sends the PASSCODE for you if provided)
+py -m tools.prod_tui tmux start --passcode <RSA_PASSCODE>
+
+py -m tools.prod_tui tmux send "dispatch"
+py -m tools.prod_tui tmux keys tab enter
+py -m tools.prod_tui tmux capture
+py -m tools.prod_tui tmux attach
+py -m tools.prod_tui tmux stop
+
+# scripted test levels
+py -m tools.prod_tui smoke --level all --save-screens
+py -m tools.prod_tui job --dry-run
 ```
 
-### What the agent should test in prod
+The agent loop is: capture screen → reason about the visible UI → send a
+key/action → capture again → assert the expected state.
 
-Use three test levels.
+## Test levels
 
-**Level 1 — safe production smoke**
+The detailed, checkable steps live in
+[docs/edge-node-smoke-test.md](./edge-node-smoke-test.md). In short:
 
-No job launch:
+- **Level 1 — safe production smoke (no job launch):** SSH + tmux work,
+  `compileall` is clean, the dashboard renders, Kerberos status shows, navigation
+  works, SQL browser / history / preview open, quit is clean.
+- **Level 2 — real environment checks (no destructive actions):** `install.sh`
+  works against the real `/ads_storage/<user>/` path, `klist` is detected,
+  `impala-shell` is on PATH, the launch CWD is captured, Textual renders over the
+  corporate SSH chain.
+- **Level 3 — controlled real job:** only a trivial scratch query
+  (`SELECT 1 AS smoke_test_value`) into a writable scratch schema, with a
+  destination table named `dispatch_smoke_<user>_<date>`.
+
+## Safety classification
 
 ```text
-- SSH works
-- tmux starts at 120x40
-- dispatch opens
-- dashboard renders
-- Kerberos status appears
-- navigation works
-- SQL browser opens
-- history opens
-- preview screen opens
-- quit works cleanly
+SAFE:       navigate, preview, capture, inspect logs/history, --help, compileall
+CONTROLLED: launch the smoke query with a dispatch_smoke_ prefixed table only
+BLOCKED:    drop tables, run arbitrary SQL, modify scr/, delete files,
+            launch unknown user SQL
 ```
 
-**Level 2 — real environment checks**
+A `CONTROLLED` launch is allowed only when:
 
-Still no destructive launch:
+- the target schema is explicitly scratch/writable,
+- the SQL file is known and tiny,
+- the destination table/output name starts with `dispatch_smoke_`,
+- the Kerberos TTL is healthy (≥ 5 minutes), and
+- no more than the allowed running-job cap (2) is active.
 
-```text
-- install.sh works against real /ads_storage user path
-- dispatch shortcut resolves correctly
-- klist is detected
-- impala-shell is on PATH
-- current working directory is captured correctly
-- Textual layout works over corporate SSH
-```
+These mirror the app's own invariants (refuse missing/low Kerberos tickets and
+more than two simultaneously Running jobs).
 
-The repo requires `klist`, `impala-shell`, Python 3.10, writable `/ads_storage/<user>`, and an idempotent install path. 
-
-**Level 3 — controlled real job**
-
-Only with a dedicated scratch query/table:
-
-```sql
-SELECT 1 AS smoke_test_value
-```
-
-Use a table/output prefix like:
-
-```text
-dispatch_smoke_${USER}_YYYYMMDD_HHMMSS
-```
-
-The agent should be allowed to press **Launch** only when:
-
-```text
-- target schema is explicitly scratch/writable
-- SQL file is known and tiny
-- destination table/output name starts with dispatch_smoke_
-- Kerberos TTL is healthy
-- no more than the allowed running-job cap is active
-```
-
-The app’s invariants include refusing missing/low Kerberos tickets and more than two simultaneous running jobs. 
-
-### Best agent tool design
-
-I’d add a project-local tool/script like:
-
-```text
-tools/prod_tui/
-  robocop_tmux.py
-  README.md
-```
-
-With commands:
-
-```bash
-python tools/prod_tui/robocop_tmux.py start
-python tools/prod_tui/robocop_tmux.py send "dispatch"
-python tools/prod_tui/robocop_tmux.py keys tab enter
-python tools/prod_tui/robocop_tmux.py capture
-python tools/prod_tui/robocop_tmux.py attach
-python tools/prod_tui/robocop_tmux.py stop
-```
-
-The agent loop becomes:
-
-```text
-capture screen
-reason about current UI
-send key/action
-capture again
-assert expected visible state
-```
-
-### Safety rule I’d enforce
-
-For production, split actions into:
-
-```text
-SAFE: navigate, preview, capture, inspect logs/history, run --help, compileall
-CONTROLLED: launch smoke query with dispatch_smoke_ prefix
-BLOCKED: drop tables, run arbitrary SQL, modify scr/, delete files, launch unknown user SQL
-```
-
-This is the right tradeoff: **tmux is the production TUI driver**, while `pytest/Textual pilot` remains useful only for deterministic non-prod regression tests. For your requirement, the real acceptance harness should be SSH + tmux + real Edge Node.
+`pytest` / Textual `Pilot` remain the tool for deterministic, non-prod
+regression tests; SSH + tmux + a real Edge Node is the acceptance harness.

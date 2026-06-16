@@ -46,7 +46,7 @@ class BrowserScreen(Screen[None]):
                     with Vertical(id="browser-left"):
                         yield Static("[dim]Schema \u00b7 table filter[/]", classes="input-caption")
                         with Horizontal(id="browser-query-row"):
-                            yield Input(value="dw_settle", placeholder="Schema", id="schema")
+                            yield Input(value="aa_enc", placeholder="Schema", id="schema")
                             yield Input(value="*", placeholder="Filter (e.g. dispatch_*)", id="filter")
                             yield Button("Load Tables [S]", id="show", variant="default")
                         yield DataTable(id="browser-table")

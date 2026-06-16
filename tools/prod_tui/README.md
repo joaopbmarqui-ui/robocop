@@ -32,7 +32,7 @@ terminal_width: 120
 terminal_height: 40
 ssh_options: "-o StrictHostKeyChecking=no"
 smoke_query_sql: "SELECT 1 AS smoke_test_value"
-scratch_schema: "dw_settle"
+scratch_schema: "aa_enc"
 table_prefix: "dispatch_smoke"
 max_smoke_job_wait_seconds: 120
 operator_email: "you@example.com"
@@ -97,7 +97,7 @@ The controlled runner creates one tiny SQL file on the Edge Node, fills the Disp
 
 - Kerberos TTL is at least five minutes.
 - Fewer than two jobs are currently Running.
-- Schema is the configured scratch schema.
+- Schema is one of the approved schemas (`aa_enc` or `coe_enc`).
 - Table name starts with `dispatch_smoke_`.
 - SQL is exactly the configured smoke query or an equivalent `SELECT ... AS smoke_test_value`.
 

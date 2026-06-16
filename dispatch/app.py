@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 from pathlib import Path
@@ -92,6 +93,27 @@ class DispatchApp(App[None]):
         self.push_screen(DashboardScreen())
         await self.refresh_kerberos()
         self.set_interval(60.0, self.refresh_kerberos)
+        self._maybe_open_test_prefill()
+
+    def _maybe_open_test_prefill(self) -> None:
+        """Opt-in test seam: when ``DISPATCH_TEST_PREFILL`` names a JSON file,
+        open the New Job screen pre-filled from it.
+
+        This has no effect in normal use (the variable is unset) and only reuses
+        the existing prefill path. It lets the production smoke harness drive a
+        deterministic launch without relying on fragile keystroke navigation of
+        the radio sets over a high-latency SSH PTY.
+        """
+        path = os.environ.get("DISPATCH_TEST_PREFILL")
+        if not path:
+            return
+        try:
+            prefill = json.loads(Path(path).read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            logger.warning("Ignoring DISPATCH_TEST_PREFILL (%s): %s", path, exc)
+            return
+        if isinstance(prefill, dict):
+            self.call_after_refresh(self.open_new_job_prefill, prefill)
 
     def on_resize(self) -> None:
         self._check_terminal_size()

@@ -31,11 +31,11 @@ def test_parse_screen_extracts_dashboard_state() -> None:
 
 def test_parse_screen_extracts_form_fields() -> None:
     state = parse_screen(
-        "New Job\nSQL File: /tmp/dispatch_smoke_test.sql\nSchema: dw_settle\nTable: dispatch_smoke_user\nEmail: test@example.com"
+        "New Job\nSQL File: /tmp/dispatch_smoke_test.sql\nSchema: aa_enc\nTable: dispatch_smoke_user\nEmail: test@example.com"
     )
     assert state.screen_name == "NewJob"
     assert state.form_fields["sql_file"] == "/tmp/dispatch_smoke_test.sql"
-    assert state.form_fields["schema"] == "dw_settle"
+    assert state.form_fields["schema"] == "aa_enc"
     assert state.form_fields["table"] == "dispatch_smoke_user"
     assert state.form_fields["email"] == "test@example.com"
 

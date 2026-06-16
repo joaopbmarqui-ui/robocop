@@ -96,7 +96,7 @@ class CaptureContext:
                 "source": {"type": "SqlFile", "sql_path_at_launch": str(sql_path)},
                 "destination": {
                     "type": dest_type,
-                    "schema": "dw_settle",
+                    "schema": "aa_enc",
                     "table_name": table,
                     "csv_path": str(self.launch_dir / f"{table}.csv"),
                 },
@@ -188,7 +188,7 @@ async def capture_new_job(ctx: CaptureContext) -> None:
 async def capture_preview() -> None:
     app = DispatchApp()
     body = (
-        "CREATE TABLE dw_settle.dispatch_result AS\n"
+        "CREATE TABLE aa_enc.dispatch_result AS\n"
         "SELECT id, amount\n"
         "FROM payments\n"
         "WHERE ds BETWEEN '2026-05-01' AND '2026-05-31';"
@@ -198,7 +198,7 @@ async def capture_preview() -> None:
             PreviewScreen(
                 "SQL Preview",
                 body,
-                schema="dw_settle",
+                schema="aa_enc",
                 table="dispatch_result",
                 source_type="SqlFile",
                 dest_type="Table",

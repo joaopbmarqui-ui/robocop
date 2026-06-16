@@ -237,6 +237,44 @@ class TestBuildOrchestratorCalls:
         assert "--query-file" not in calls[0]["argv"]
 
 
+class TestEffectiveJobSql:
+    """job.sql must carry the auto-generated CREATE TABLE wrapper for SqlFile
+    table destinations, since Query_Impala_Parametrized.py runs it verbatim and
+    would otherwise just run a bare SELECT and create nothing."""
+
+    SELECT = "SELECT 1 AS smoke_test_value"
+
+    def _sql(self, source_type: str, dest_type: str) -> str:
+        source: manifest.Source = {"type": source_type}  # type: ignore[assignment]
+        dest: manifest.Destination = {  # type: ignore[assignment]
+            "type": dest_type, "schema": "aa_enc", "table_name": "dispatch_smoke_x"
+        }
+        return manifest._effective_job_sql(source, dest, self.SELECT, "user1")
+
+    def test_sqlfile_table_is_wrapped_as_create_table(self) -> None:
+        out = self._sql("SqlFile", "Table")
+        assert "CREATE TABLE aa_enc.dispatch_smoke_x" in out
+        assert "STORED AS PARQUET" in out
+        assert "/das/aa/enc/user1/dispatch_smoke_x" in out
+        assert out.rstrip().endswith(self.SELECT)
+
+    def test_sqlfile_table_plus_csv_is_wrapped(self) -> None:
+        out = self._sql("SqlFile", "Table+Csv")
+        assert "CREATE TABLE aa_enc.dispatch_smoke_x" in out
+        assert self.SELECT in out
+
+    def test_sqlfile_csv_is_left_raw(self) -> None:
+        # download_to_csv.py exports query results; it must receive the raw SELECT.
+        assert self._sql("SqlFile", "Csv") == self.SELECT
+
+    def test_sqltemplate_table_is_left_raw(self) -> None:
+        # monthly_query_processor.py builds its own CREATE TABLE statements.
+        assert self._sql("SqlTemplate", "Table") == self.SELECT
+
+    def test_existingtable_csv_is_left_raw(self) -> None:
+        assert self._sql("ExistingTable", "Csv") == self.SELECT
+
+
 # =============================================================================
 # jobs.active_jobs, history_jobs, can_launch
 # =============================================================================

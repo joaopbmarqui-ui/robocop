@@ -356,7 +356,7 @@ confirmation.
    - Before executing, push a small confirmation screen or use
      `self.app.push_screen` with a yes/no dialog:
      ```
-     Drop dw_settle.my_table? This cannot be undone. [Y/N]
+     Drop aa_enc.my_table? This cannot be undone. [Y/N]
      ```
    - Only proceed on explicit `Y`.
 
@@ -583,7 +583,7 @@ Create the following test files:
 - `test_is_malformed_template_one_placeholder`: only `{date_inicio}` → `True`.
 - `test_is_malformed_template_both`: both placeholders → `False`.
 - `test_is_malformed_template_neither`: neither → `False`.
-- `test_table_wrapper_generates_correct_ddl`: verify `DROP/CREATE/STORED AS PARQUET/LOCATION/AS` structure, including HDFS prefix extraction (`dw_settle` → `dw`).
+- `test_table_wrapper_generates_correct_ddl`: verify `DROP/CREATE/STORED AS PARQUET/LOCATION/AS` structure, including HDFS prefix extraction (`aa_enc` → `aa`).
 - `test_month_range_single_month`: `2026-01-01` to `2026-01-31` → 1 month.
 - `test_month_range_full_year`: `2026-01-01` to `2026-12-31` → 12 months.
 - `test_month_range_cross_year`: `2025-11-01` to `2026-02-28` → 4 months.

@@ -43,6 +43,7 @@ class NewJobScreen(Screen[None]):
         self.prefill = prefill or {}
         self.kerberos_ttl: int | None = None
         self._matrix_collapsed = bool(config.read_form_defaults())
+        self._prefilled = bool(self.prefill)
         self._cwd_sql_files: list[dict] = []
         self._picker_ready = False
         # (path, exists) memo so keystrokes in unrelated fields do not stat()
@@ -101,7 +102,7 @@ class NewJobScreen(Screen[None]):
 
                     with Horizontal(classes="form-row", id="row-schema"):
                         yield Static("Schema", classes="field-label", id="lbl-schema")
-                        yield Input(value="dw_settle", placeholder="Schema", id="schema")
+                        yield Input(value="aa_enc", placeholder="Schema", id="schema")
 
                     with Horizontal(classes="form-row", id="row-table-name"):
                         yield Static("Table Name", classes="field-label", id="lbl-table-name")
@@ -353,7 +354,11 @@ class NewJobScreen(Screen[None]):
         needs_table = destination in ("Table", "Table+Csv") or is_template
 
         self.query_one("#row-sql-file").display = is_sql
-        show_picker = is_sql and bool(self._cwd_sql_files)
+        # A prefilled (re-run / test) form already has its SQL path chosen, so the
+        # cwd file picker is redundant. Suppressing it also keeps the taller
+        # table-producing forms within a single SSH-pane height so the Schema /
+        # Table Name rows stay on screen without manual scrolling.
+        show_picker = is_sql and bool(self._cwd_sql_files) and not self._prefilled
         self.query_one("#sql-file-picker").display = show_picker
         self.query_one("#picker-caption").display = show_picker
         self.query_one("#row-existing-table").display = is_existing
@@ -621,6 +626,13 @@ class NewJobScreen(Screen[None]):
     def _apply_prefill(self) -> None:
         if not self.prefill:
             return
+        # A prefilled (re-run / test) form already has its source and
+        # destination chosen, so collapse the legal-cells reference matrix to
+        # keep the whole form within a single screen height.
+        try:
+            self.query_one("#matrix-collapsible", Collapsible).collapsed = True
+        except Exception:  # noqa: BLE001
+            pass
         mapping = {
             "sql_file": "sql-file",
             "existing_table": "existing-table",
@@ -641,16 +653,56 @@ class NewJobScreen(Screen[None]):
             "SqlTemplate": "src-sqltemplate",
             "ExistingTable": "src-existingtable",
         }.get(source_type or "")
-        if source_btn:
-            self.query_one(f"#{source_btn}", RadioButton).value = True
         dest_type = self.prefill.get("dest_type")
         dest_btn = {
             "Table": "dst-table",
             "Csv": "dst-csv",
             "Table+Csv": "dst-table-csv",
         }.get(dest_type or "")
+        # Select the radios after mount settles. Setting ``button.value = True``
+        # relies on an async RadioButton.Changed message that races with
+        # RadioSet._on_mount pinning the default-pressed button; on Textual
+        # 8.2.5 this intermittently leaves the default selected. We instead
+        # force the set's selection state deterministically, after refresh so
+        # the set has finished its own mount.
+        if source_btn:
+            self.call_after_refresh(self._force_radio, "#source", source_btn)
         if dest_btn:
-            self.query_one(f"#{dest_btn}", RadioButton).value = True
+            self.call_after_refresh(self._force_radio, "#destination", dest_btn)
+        # After the radios settle, scroll the destination-specific fields into
+        # view so a prefilled (re-run) form lands on its key inputs.
+        self.call_after_refresh(self._scroll_prefill_fields)
+
+    def _force_radio(self, radio_set_id: str, button_id: str) -> None:
+        radio_set = self.query_one(radio_set_id, RadioSet)
+        target = self.query_one(f"#{button_id}", RadioButton)
+        with self.prevent(RadioButton.Changed):
+            for btn in radio_set.query(RadioButton):
+                btn.value = btn is target
+        radio_set._pressed_button = target
+        nodes = list(radio_set._nodes)
+        if target in nodes:
+            radio_set._selected = nodes.index(target)
+        logger.info(
+            "prefill applied %s -> %s (pressed=%s)",
+            radio_set_id, button_id,
+            radio_set.pressed_button.id if radio_set.pressed_button else None,
+        )
+        self._update_field_visibility()
+        self._inline_validate()
+        self._update_validation_summary()
+
+    def _scroll_prefill_fields(self) -> None:
+        """Bring the destination-dependent rows into the viewport for a
+        prefilled form so they are visible without manual scrolling."""
+        for wid in ("#row-table-name", "#row-schema", "#row-sql-file"):
+            try:
+                row = self.query_one(wid)
+            except Exception:  # noqa: BLE001
+                continue
+            if row.display:
+                row.scroll_visible(animate=False)
+                return
 
     def _apply_saved_defaults(self) -> None:
         defaults = config.read_form_defaults()

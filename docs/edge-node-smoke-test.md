@@ -7,12 +7,14 @@
 
 ## Pre-flight
 
-- [ ] SSH to the Edge Node: `ssh <user>@<edge-node>`
-- [ ] Verify Python version: `python3.10 --version` → 3.10.x
+- [ ] SSH to the Edge Node (inside a local tmux session, see [docs/production_testing.md](./production_testing.md)): `ssh -p 2222 <user>@<edge-node>`
+- [ ] Enter the **RSA SecurID PASSCODE** at the `Enter PASSCODE:` prompt
+- [ ] Initialize Kerberos: `kinit`, then enter the Kerberos password at `Password for <user>@CORP.MASTERCARD.ORG:`
+- [ ] Verify Python version: `python3.11 --version || python3.10 --version`
 - [ ] Verify `impala-shell` is on PATH: `which impala-shell`
 - [ ] Verify Kerberos ticket: `klist` shows a valid, non-expired ticket
 - [ ] Verify `/ads_storage/<user>/` is writable: `touch /ads_storage/$USER/.dispatch/.smoke_test`
-- [ ] Run `install.sh`: `DISPATCH_EMAIL=you@example.com DISPATCH_PYTHON_BIN=$(command -v python3.10) ./install.sh`
+- [ ] Run `install.sh`: `DISPATCH_EMAIL=you@example.com DISPATCH_PYTHON_BIN=$(command -v python3.11 || command -v python3.10) ./install.sh`
 - [ ] Verify install completed: `which dispatch` → `~/.local/bin/dispatch`
 - [ ] Verify version file matches: `cat /ads_storage/$USER/.dispatch/installed_version` matches `cat VERSION`
 
@@ -67,7 +69,7 @@ SELECT 1 AS smoke_test_value
 - [ ] Source: SqlFile (default)
 - [ ] Destination: Table
 - [ ] SQL File: `/tmp/dispatch_smoke.sql`
-- [ ] Schema: `dw_settle` (or scratch schema)
+- [ ] Schema: `aa_enc` (or `coe_enc`)
 - [ ] Table Name: `dispatch_smoke_<user>_<date>`
 - [ ] Email: your email
 - [ ] Press `P` → Preview shows correct DDL wrapping the SELECT

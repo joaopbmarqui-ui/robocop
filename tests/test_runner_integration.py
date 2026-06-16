@@ -236,3 +236,40 @@ class TestRunnerCancellation:
 
         final = manifest.load(job_dir / "manifest.json")
         assert final["state"] == "Cancelled", _read_log(job_dir)
+
+
+class TestScriptArgv:
+    """``script_argv`` must not exec a shebang-less script directly.
+
+    On the edge node the scr/ orchestrators are marked executable but start
+    with ``# flake8: noqa`` rather than a shebang, so exec'ing them directly
+    fails with ENOEXEC. ``script_argv`` must fall back to invoking them with a
+    Python interpreter in that case.
+    """
+
+    def test_executable_without_shebang_falls_back_to_python(self, tmp_path, monkeypatch):
+        script = tmp_path / "Query_Impala_Parametrized.py"
+        script.write_text("# flake8: noqa\nimport sys\n", encoding="utf-8")
+        script.chmod(0o755)
+        monkeypatch.setenv("DISPATCH_SCR_DIR", str(tmp_path))
+
+        argv = manifest.script_argv("Query_Impala_Parametrized.py")
+
+        assert len(argv) == 2, argv
+        assert argv[0] != str(script)
+        assert argv[1] == str(script)
+
+    def test_executable_with_shebang_runs_directly(self, tmp_path, monkeypatch):
+        script = tmp_path / "with_shebang.py"
+        script.write_text("#!/usr/bin/env python3\nimport sys\n", encoding="utf-8")
+        script.chmod(0o755)
+        monkeypatch.setenv("DISPATCH_SCR_DIR", str(tmp_path))
+
+        argv = manifest.script_argv("with_shebang.py")
+
+        # When a real shebang is present the executable bit is trusted; on
+        # platforms without an executable bit (Windows) it still falls back to
+        # a two-element python invocation, which is also correct.
+        assert argv[-1] == str(script)
+        if len(argv) == 1:
+            assert argv[0] == str(script)

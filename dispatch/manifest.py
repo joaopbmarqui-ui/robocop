@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal, TypedDict
 
-from . import config
+from . import config, sql
 
 SourceType = Literal["SqlFile", "SqlTemplate", "ExistingTable"]
 DestinationType = Literal["Table", "Csv", "Table+Csv"]
@@ -131,6 +131,34 @@ def validate(data: Any) -> None:
         raise ValueError("manifest requires at least one orchestrator call")
 
 
+def _effective_job_sql(
+    source: Source,
+    destination: Destination,
+    sql_text: str,
+    user: str,
+) -> str:
+    """The SQL actually written to ``job.sql`` and run verbatim by the orchestrator.
+
+    ``Query_Impala_Parametrized.py`` executes ``job.sql`` as-is and treats
+    ``--table-name`` as informational only, so a bare ``SELECT`` would run and
+    create nothing. For a ``SqlFile`` job whose destination is a table, wrap the
+    SELECT in the auto-generated ``DROP/CREATE TABLE ... STORED AS PARQUET
+    LOCATION ... AS`` DDL (the same wrapper the Preview screen shows) so the
+    launched job genuinely materializes the table. Other cells run their source
+    unchanged: ``Csv`` exports query results via ``download_to_csv.py``,
+    ``SqlTemplate`` is wrapped by ``monthly_query_processor.py`` itself, and
+    ``ExistingTable`` carries no SQL.
+    """
+    if source.get("type") == "SqlFile" and destination.get("type") in ("Table", "Table+Csv"):
+        return sql.table_wrapper(
+            sql_text,
+            destination.get("schema", ""),
+            destination.get("table_name", ""),
+            user,
+        )
+    return sql_text
+
+
 def create_job(
     source: Source,
     destination: Destination,
@@ -143,7 +171,9 @@ def create_job(
     job_id = new_job_id()
     job_dir = config.jobs_dir(job_user) / job_id
     job_dir.mkdir(parents=True)
-    (job_dir / "job.sql").write_text(sql_text, encoding="utf-8")
+    (job_dir / "job.sql").write_text(
+        _effective_job_sql(source, destination, sql_text, job_user), encoding="utf-8"
+    )
     manifest: JobManifest = {
         "schema_version": 1,
         "id": job_id,
@@ -163,12 +193,37 @@ def create_job(
     return job_dir, manifest
 
 
+def _has_shebang(path: Path) -> bool:
+    """True when the file begins with a ``#!`` interpreter line.
+
+    The scr/ orchestrators are marked executable on the edge node but start
+    with ``# flake8: noqa`` rather than a shebang, so exec'ing them directly
+    fails with ENOEXEC ("Exec format error"). Only trust the executable bit
+    when a real shebang is present.
+    """
+    try:
+        with open(path, "rb") as handle:
+            return handle.read(2) == b"#!"
+    except OSError:
+        return False
+
+
 def script_argv(script: str) -> list[str]:
     scr_dir = Path(os.environ.get("DISPATCH_SCR_DIR", "/ads_storage/dispatch/scr"))
     script_path = scr_dir / script
-    if script_path.exists() and os.access(script_path, os.X_OK):
+    if script_path.exists() and os.access(script_path, os.X_OK) and _has_shebang(script_path):
         return [str(script_path)]
-    python = shutil.which("python3.10") or shutil.which("python3") or sys.executable
+    # The orchestrators use 3.10+ syntax (PEP 604 ``X | None``). A bare
+    # ``python3`` on the edge node can be 3.9, which fails at import time, so
+    # prefer an explicit 3.10+ launcher and then this process's own interpreter
+    # (the Dispatch venv, known to satisfy the floor) before a bare python3.
+    python = (
+        shutil.which("python3.10")
+        or shutil.which("python3.11")
+        or shutil.which("python3.12")
+        or sys.executable
+        or shutil.which("python3")
+    )
     return [python, str(script_path)]
 
 

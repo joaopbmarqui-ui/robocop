@@ -30,7 +30,7 @@ def _seed_history_job(jobs_dir: Path, index: int) -> str:
         "source": {"type": "SqlFile", "sql_path_at_launch": f"/tmp/query_{index}.sql"},
         "destination": {
             "type": "Csv",
-            "schema": "dw_settle",
+            "schema": "aa_enc",
             "table_name": f"history_{index}",
             "csv_path": f"/tmp/history_{index}.csv",
         },
@@ -65,7 +65,7 @@ def _seed_recent_job(jobs_dir: Path, suffix: str) -> str:
             "source": {"type": "SqlFile", "sql_path_at_launch": f"/tmp/recent_{suffix}.sql"},
             "destination": {
                 "type": "Csv",
-                "schema": "dw_settle",
+                "schema": "aa_enc",
                 "table_name": f"recent_{suffix}",
                 "csv_path": f"/tmp/recent_{suffix}.csv",
             },
@@ -97,7 +97,7 @@ def _seed_old_history_job(jobs_dir: Path, suffix: str) -> str:
             "source": {"type": "SqlFile", "sql_path_at_launch": f"/tmp/old_{suffix}.sql"},
             "destination": {
                 "type": "Csv",
-                "schema": "dw_settle",
+                "schema": "aa_enc",
                 "table_name": f"old_{suffix}",
                 "csv_path": f"/tmp/old_{suffix}.csv",
             },
@@ -382,7 +382,7 @@ def test_browser_placeholder_and_auto_describe_after_show_tables(
             app.push_screen(screen)
             await pilot.pause(0.5)
 
-            assert "dw_settle.dispatch_result" in str(
+            assert "aa_enc.dispatch_result" in str(
                 screen.query_one("#file-preview-title").render()
             )
             # The data is now in the DataTable, not the Static body
@@ -464,10 +464,10 @@ def test_browser_drop_requires_typing_full_table_name(
             assert worker.is_running
 
             confirm_input = app.screen.query_one("#confirm-input", Input)
-            confirm_input.value = "dw_settle.danger_table"
+            confirm_input.value = "aa_enc.danger_table"
             await pilot.press("enter")
             await worker.wait()
-            assert calls == ["dw_settle.danger_table"]
+            assert calls == ["aa_enc.danger_table"]
 
     asyncio.run(run())
 
@@ -501,10 +501,10 @@ def test_typed_drop_confirmation_button_does_not_bypass_input(
             assert calls == []
             assert worker.is_running
 
-            app.screen.query_one("#confirm-input", Input).value = "dw_settle.danger_table"
+            app.screen.query_one("#confirm-input", Input).value = "aa_enc.danger_table"
             app.screen.query_one("#confirm-yes").press()
             await worker.wait()
-            assert calls == ["dw_settle.danger_table"]
+            assert calls == ["aa_enc.danger_table"]
 
     asyncio.run(run())
 
@@ -577,7 +577,7 @@ def test_browser_drop_replaces_schema_table_with_persistent_result_message(
             worker = screen.action_drop()
             await pilot.pause()
             confirm_input = app.screen.query_one("#confirm-input", Input)
-            confirm_input.value = "dw_settle.danger_table"
+            confirm_input.value = "aa_enc.danger_table"
             await pilot.press("enter")
             await worker.wait()
             await pilot.pause()
@@ -586,7 +586,7 @@ def test_browser_drop_replaces_schema_table_with_persistent_result_message(
             describe_body = screen.query_one("#describe-body")
             assert describe_table.display is False
             assert describe_body.display is True
-            assert "Dropped dw_settle.danger_table" in str(describe_body.render())
-            assert calls == ["dw_settle.danger_table"]
+            assert "Dropped aa_enc.danger_table" in str(describe_body.render())
+            assert calls == ["aa_enc.danger_table"]
 
     asyncio.run(run())

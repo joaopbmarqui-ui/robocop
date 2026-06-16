@@ -111,7 +111,7 @@
 | NJ-4 | Medium | **The info panel warning text ("Ensure the combination above matches...") is vague.** It doesn't specify what action to take or what the consequence of a mismatch is. |
 | NJ-5 | Low | **Email field is empty with no validation hint.** No indication of required format, whether it's optional, or what happens if left blank. |
 | NJ-6 | Medium | **Matrix panel takes ~8 lines of vertical space** to show a 3×4 table that is static reference information. It competes for screen real estate with the form itself. |
-| NJ-7 | Low | **The "Schema" default (`dw_settle`) is hardcoded** and may not apply to all users. Should be read from config or last-used value. |
+| NJ-7 | Low | **The "Schema" default (`aa_enc`) is hardcoded** and may not apply to all users. Should be read from config or last-used value. |
 
 **Proposals:**
 1. **Replace Source/Destination with `Select` widgets** (Textual dropdowns). Constrain choices to `SqlFile | SqlTemplate | ExistingTable` and `Table | Csv | Table+Csv`. Disable illegal combinations dynamically when one is selected.
@@ -211,7 +211,7 @@
 
 **What works well:**
 - Split-panel layout (table list + detail pane) follows a familiar master-detail pattern.
-- Schema and filter inputs with sensible defaults (`dw_settle`, `*`).
+- Schema and filter inputs with sensible defaults (`aa_enc`, `*`).
 - Help text at the bottom explains keyboard navigation.
 
 **Issues found:**
@@ -264,7 +264,7 @@
 | BD-3 | Low | **The detail pane title duplicates information** — both `#file-preview-title` and `#file-preview-path` show essentially the same `schema.table` string. |
 
 **Proposals:**
-1. **Add a confirmation modal for DROP:** This is the single most important safety improvement in the entire TUI. Show: "DROP TABLE `dw_settle.dispatch_result`? This action is IRREVERSIBLE. Type the table name to confirm: ___"
+1. **Add a confirmation modal for DROP:** This is the single most important safety improvement in the entire TUI. Show: "DROP TABLE `aa_enc.dispatch_result`? This action is IRREVERSIBLE. Type the table name to confirm: ___"
 2. **Format describe output as a DataTable:** Parse the pipe-delimited output and render it as a proper Textual DataTable with Name, Type, and Comment columns.
 3. **Deduplicate detail header:** Show the full qualified name once in the title, and use the subtitle for additional metadata (e.g., "Impala Table · 3 columns").
 

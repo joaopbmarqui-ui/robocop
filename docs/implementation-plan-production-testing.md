@@ -89,7 +89,7 @@ terminal_width: 120
 terminal_height: 40
 ssh_options: "-o StrictHostKeyChecking=no"
 smoke_query_sql: "SELECT 1 AS smoke_test_value"
-scratch_schema: "dw_settle"
+scratch_schema: "aa_enc"
 table_prefix: "dispatch_smoke"
 max_smoke_job_wait_seconds: 120
 ```

@@ -47,7 +47,15 @@ rm dispatch_deploy.zip
 
 ## 3. Verify Edge Node prerequisites
 
-SSH to the Edge Node and verify:
+SSH to the Edge Node (port `2222`; enter the RSA SecurID PASSCODE at the
+`Enter PASSCODE:` prompt, then run `kinit` to obtain a Kerberos ticket):
+
+```bash
+ssh -p 2222 <user>@<edge-node>
+kinit            # enter Kerberos password, then confirm with: klist
+```
+
+Then verify the prerequisites:
 
 ```bash
 # Check Python versions (3.10 or 3.11 are supported)

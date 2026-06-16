@@ -35,7 +35,7 @@ def _seed_job(jobs_dir: Path, job_id: str, state: str, *, pid: int | None = None
             "source": {"type": "SqlFile", "sql_path_at_launch": "/tmp/q.sql"},
             "destination": {
                 "type": "Csv",
-                "schema": "dw_settle",
+                "schema": "aa_enc",
                 "table_name": "t",
                 "csv_path": "/tmp/t.csv",
             },

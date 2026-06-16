@@ -15,6 +15,7 @@ def main() -> int:
         print("  tmux       Manage the local tmux session (start, stop, send, capture)")
         print("  smoke      Run Level 1 and 2 smoke tests")
         print("  job        Run the Level 3 controlled job")
+        print("  level      Run Level 4-6 controlled scenarios (--level 4|5|6)")
         return 1
 
     command = sys.argv[1]
@@ -29,9 +30,12 @@ def main() -> int:
     elif command == "job":
         from tools.prod_tui.controlled_job import main as job_main
         return job_main(argv)
+    elif command == "level":
+        from tools.prod_tui.levels import main as level_main
+        return level_main(argv)
     else:
         print(f"Unknown command: {command}")
-        print("Available commands: tmux, smoke, job")
+        print("Available commands: tmux, smoke, job, level")
         return 1
 
 

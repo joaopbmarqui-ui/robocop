@@ -39,7 +39,7 @@ def _seed_job(
             "source": {"type": "SqlFile", "sql_path_at_launch": f"/tmp/{job_id}.sql"},
             "destination": {
                 "type": "Csv",
-                "schema": "dw_settle",
+                "schema": "aa_enc",
                 "table_name": f"t_{job_id[-6:]}",
                 "csv_path": "/tmp/t.csv",
             },

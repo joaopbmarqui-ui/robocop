@@ -161,7 +161,7 @@ v1.0.
   },
   "destination": {
     "type": "Table+Csv",
-    "schema": "dw_settle",
+    "schema": "aa_enc",
     "table_name": "q3_load",
     "csv_path": "/home/e123456/projects/q3/q3_load.csv"
   },
@@ -318,7 +318,7 @@ installed version" warning when they differ.
 │  Source:       (•) SqlFile  ( ) SqlTemplate  ( ) ExistingTable  │
 │  Destination:  ( ) Table    (•) Csv          ( ) Table + Csv    │
 │                                                                 │
-│  Schema:       [dw_settle                                     ] │
+│  Schema:       [aa_enc                                     ] │
 │  Table name:   [q3_settle_load                                ] │
 │  Email:        [team@mastercard.com                           ] │
 │  Subject:      [Q3 settlement load                            ] │
@@ -350,7 +350,7 @@ Behaviour:
 ┌─ Job 20260509T164500Z_a1b2c3 ──────────────── Kerberos: 7h 28m ─┐
 │  Source: SqlFile (foo.sql)     Destination: Table + Csv         │
 │  State:  Running               Started: 16:45:02 (3m 14s ago)   │
-│  Table:  dw_settle.q3_settle_load                               │
+│  Table:  aa_enc.q3_settle_load                               │
 │  CSV:    /home/e123456/projects/q3/q3_settle_load.csv           │
 │  ┌─ run.log (live) ───────────────────────────────────────────┐ │
 │  │ 16:45:02 INFO  Executing query on adhoc_fast               │ │
@@ -369,7 +369,7 @@ Implementation: `RichLog` widget bound to a tailing `open(run.log,
 
 ```
 ┌─ Browse Impala Metadata ────────────────────── Kerberos: 7h 28m ┐
-│  Schema: [dw_settle             ▼]   Filter: [your_*          ] │
+│  Schema: [aa_enc             ▼]   Filter: [your_*          ] │
 │  ┌────────────────────────────────────────────────────────────┐ │
 │  │ Table                          Updated      Size  Rows     │ │
 │  │ your_test_table                2026-05-08   ?     ?        │ │
@@ -595,7 +595,7 @@ populating `argv`.
   (~5 minutes wall-clock per step minimum); the other two retry
   forever.
 - Sender email: `AutoQueryExecution_Analytics@mastercard.com`.
-- HDFS table location pattern (auto-generated wrapper): `/das/<schema-prefix>/enc/<user>/<table>` where `<schema-prefix>` is the part of `<schema>` before the first underscore (e.g. `dw_settle` → `dw`).
+- HDFS table location pattern (auto-generated wrapper): `/das/<schema-prefix>/enc/<user>/<table>` where `<schema-prefix>` is the part of `<schema>` before the first underscore (e.g. `aa_enc` → `aa`).
 
 ---
 

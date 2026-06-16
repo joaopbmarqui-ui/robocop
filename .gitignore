@@ -2,6 +2,8 @@ mocks/sent_emails/
 tools/prod_tui/screens/
 tools/prod_tui/reports/
 tools/prod_tui/logs/
+tools/prod_tui/*.log
+.understand-anything/
 *.pyc
 __pycache__/
 .pytest_cache/

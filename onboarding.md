@@ -1,56 +1,58 @@
-# Enabling the Dispatch Command
+# Dispatch Onboarding
 
-Welcome to Dispatch! After completing the installation, you need to ensure the `dispatch` command is available in your terminal so you can launch jobs from any directory containing your SQL files.
+Welcome to Dispatch. After the administrator deploys the shared
+`/ads_storage/dispatch` tree, each user only needs to run the installer once.
 
-The `install.sh` script automatically attempts to set this up for you by creating a shortcut (an alias) or placing the executable in a standard location (`~/.local/bin`).
+## Install
 
-> [!WARNING]
-> When running the installer, make sure to execute it directly (e.g. `/ads_storage/dispatch/install.sh`) rather than using `source`. Sourcing the script can cause issues with directory resolution.
+Run the installer directly from the deployed tree:
 
-## Step 1: Refresh your terminal
+```bash
+cd /ads_storage/dispatch
+./install.sh
+```
 
-The easiest way to enable the command is to start a new terminal session.
+Do not run it with `source`. The installer creates your personal Dispatch
+runtime under `/ads_storage/$USER/.dispatch`, writes the `dispatch` launcher to
+`~/.local/bin/dispatch`, and updates your shell profile so new sessions can find
+the command.
 
-- **Option A:** Disconnect and SSH back into the Edge Node.
-- **Option B:** Reload your current shell's configuration by running:
-  ```bash
-  source ~/.bashrc
-  ```
-  *(If you use zsh, run `source ~/.zshrc` instead).*
+If the installer says:
 
-## Step 2: Verify the installation
+```bash
+To use dispatch in this shell now:
+  export PATH="$HOME/.local/bin:$PATH"
+```
 
-Navigate to a folder with your SQL files and try running the command:
+copy and run that one command. Otherwise, open a new SSH session.
+
+## Launch Your First Job
+
+Go to the directory that contains your SQL files and start Dispatch:
 
 ```bash
 cd /path/to/your/sql/files
 dispatch
 ```
 
-If the Dispatch UI opens, you are fully set up!
+If the TUI opens, setup is complete.
 
----
+## Quick Checks
 
-## Troubleshooting
-
-If you see `dispatch: command not found`, the installer might not have been able to update your shell configuration automatically.
-
-### Option 1: Add the alias manually
-
-You can manually add the alias to your profile by running these commands:
+If `dispatch` is not found:
 
 ```bash
-echo "alias dispatch='$HOME/.local/bin/dispatch'" >> ~/.bashrc
-source ~/.bashrc
+export PATH="$HOME/.local/bin:$PATH"
+which dispatch
 ```
 
-### Option 2: Add ~/.local/bin to your PATH
-
-Alternatively, you can ensure that your user's local binary folder is part of your system's `PATH`:
+If `which dispatch` still prints nothing, rerun the installer and keep the full
+output for support:
 
 ```bash
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
+cd /ads_storage/dispatch
+./install.sh
 ```
 
-*Note: If you use a shell other than bash (like zsh), replace `.bashrc` with your shell's profile file (e.g., `.zshrc`).*
+If Dispatch opens but reports Kerberos problems, run `kinit`, confirm the ticket
+with `klist`, then launch `dispatch` again.

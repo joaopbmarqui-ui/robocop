@@ -131,6 +131,10 @@ Audit logs are written as JSONL under `tools/prod_tui/logs/`.
 
 ## Deploying / keeping nodes in sync (`_seam_deploy.py`)
 
+For the complete contributor workflow, including GitHub + Bitbucket remote
+policy and when to use each deploy path, see
+[`docs/development-workflow.md`](../../docs/development-workflow.md).
+
 The edge nodes are **independent filesystems** (e.g. `hde2stl020003` and
 `hde2stl020004` do not share `/ads_storage/dispatch`), so each must be deployed
 and verified separately, over its own authenticated session. One config file
@@ -169,6 +173,17 @@ those nodes are byte-identical to each other.
 orchestrators, ADR-0005); `deploy-all` includes them on purpose for parity and
 prints a `[scr/]` tag per file. Deploying `scr/` to a node does not waive the
 ADR-0005 human review for merging that change.
+
+### Which deploy path to use
+
+- Use a Bitbucket pull on the Edge Node for committed deployments that should be
+  reproducible and reviewable.
+- Use `_seam_deploy sync` for fast local-to-node iteration after the node's
+  tmux/SSH/Kerberos session is already healthy.
+- Use `_seam_deploy deploy-all` only for an intentional parity operation that
+  may include `scr/`.
+- Use the zip deploy flow for first-time setup, vendor refreshes, offline
+  installs, or recovery.
 
 ## Generated Artifacts
 

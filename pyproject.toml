@@ -12,6 +12,12 @@ dependencies = [
   "textual==8.2.5",
 ]
 
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pytest-asyncio",
+]
+
 [project.scripts]
 dispatch = "dispatch.__main__:main"
 

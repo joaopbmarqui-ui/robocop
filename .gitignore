@@ -1,8 +1,10 @@
 mocks/sent_emails/
+dispatch_deploy.zip
 tools/prod_tui/screens/
 tools/prod_tui/reports/
 tools/prod_tui/logs/
 tools/prod_tui/*.log
+tools/prod_tui/_remote_*.py
 .understand-anything/
 *.pyc
 __pycache__/

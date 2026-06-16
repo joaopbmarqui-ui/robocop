@@ -82,7 +82,8 @@ def _handle_sigterm(_signum: int, _frame: FrameType | None) -> None:
 
 def _install_signal_handlers() -> None:
     signal.signal(signal.SIGTERM, _handle_sigterm)
-    signal.signal(signal.SIGHUP, signal.SIG_IGN)
+    if hasattr(signal, "SIGHUP"):
+        signal.signal(signal.SIGHUP, signal.SIG_IGN)
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 

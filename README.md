@@ -22,6 +22,9 @@ The installer is idempotent. Re-running it preserves `config.json` and `jobs/`, 
 
 For the full first-time remote setup flow, including what to upload to the server and how `vendor/` is used, see [docs/edge-node-first-time-setup.md](docs/edge-node-first-time-setup.md).
 
+For the short end-user setup flow after the shared tree is deployed, see
+[onboarding.md](onboarding.md).
+
 For local development on a non-Hadoop machine:
 
 ```bash
@@ -29,6 +32,10 @@ source mocks/dev-env.sh
 DISPATCH_EMAIL=you@example.com DISPATCH_PYTHON_BIN=$(command -v python3) ./install.sh
 dispatch
 ```
+
+For the full contributor workflow, including local validation, GitHub +
+Bitbucket remotes, edge-node updates, and production harness checks, see
+[docs/development-workflow.md](docs/development-workflow.md).
 
 ## Run
 

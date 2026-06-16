@@ -79,6 +79,24 @@ py -m tools.prod_tui job --dry-run
 The agent loop is: capture screen → reason about the visible UI → send a
 key/action → capture again → assert the expected state.
 
+## Deployment Path Before Testing
+
+Use [docs/development-workflow.md](./development-workflow.md) as the canonical
+workflow. Choose the deployment path before running production checks:
+
+- **Bitbucket pull:** preferred for committed, reviewable deployments. Pull the
+  branch or exact commit on each Edge Node, run `install.sh`, then validate.
+- **`_seam_deploy sync`:** fast iteration for authenticated sessions. It syncs
+  drifted `dispatch/` Python files and reports `scr/` drift without deploying
+  it.
+- **`_seam_deploy deploy-all`:** explicit node parity operation that may include
+  `scr/`; ADR-0005 still governs whether that change is safe to merge.
+- **Zip deploy:** first-time setup, vendor refresh, offline install, or recovery
+  when the server working tree is not usable.
+
+Node 03 and node 04 use independent filesystems. Update and validate both nodes
+separately when the goal is production parity.
+
 ## Test levels
 
 The detailed, checkable steps live in

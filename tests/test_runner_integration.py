@@ -22,6 +22,7 @@ The ``mock_env`` fixture from ``conftest.py`` ensures:
 
 from __future__ import annotations
 
+import os
 import signal
 import subprocess
 import sys
@@ -183,6 +184,7 @@ class TestRunnerStateTransitions:
 
 class TestRunnerCancellation:
 
+    @pytest.mark.skipif(os.name == "nt", reason="Windows SIGTERM does not exercise the POSIX runner handler")
     def test_sigterm_sets_state_to_cancelled(self, mock_env, tmp_path):
         """SIGTERM during an in-flight Job sets manifest.state to Cancelled.
 

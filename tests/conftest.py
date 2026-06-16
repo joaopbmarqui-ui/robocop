@@ -33,7 +33,11 @@ def mock_env(tmp_path, monkeypatch):
     state_dir.mkdir()
     data_root.mkdir()
 
-    monkeypatch.setenv("PATH", f"{MOCKS_BIN}:{os.environ.get('PATH', '/usr/bin:/bin')}")
+    default_path = os.pathsep.join(("/usr/bin", "/bin"))
+    monkeypatch.setenv(
+        "PATH",
+        f"{MOCKS_BIN}{os.pathsep}{os.environ.get('PATH', default_path)}",
+    )
     monkeypatch.setenv("DISPATCH_MOCK_STATE_DIR", str(state_dir))
     monkeypatch.setenv("DISPATCH_DATA_ROOT", str(data_root))
     monkeypatch.setenv("DISPATCH_SCR_DIR", str(SCR_DIR))

@@ -54,13 +54,14 @@ exec "$DISPATCH_HOME/venv/bin/python" -m dispatch "\$@"
 EOF
 chmod +x "$LOCAL_BIN/dispatch"
 
+SHELL_RC="$HOME/.bashrc"
+[ "${SHELL:-}" ] && [ "$(basename "$SHELL")" = "zsh" ] && [ -f "$HOME/.zshrc" ] && SHELL_RC="$HOME/.zshrc"
+PATH_LINE='export PATH="$HOME/.local/bin:$PATH"'
 case ":$PATH:" in
   *":$LOCAL_BIN:"*) ;;
   *)
-    SHELL_RC="$HOME/.bashrc"
-    [ "${SHELL:-}" ] && [ "$(basename "$SHELL")" = "zsh" ] && [ -f "$HOME/.zshrc" ] && SHELL_RC="$HOME/.zshrc"
-    if ! grep -F "alias dispatch=" "$SHELL_RC" >/dev/null 2>&1; then
-      printf "\nalias dispatch='%s/dispatch'\n" "$LOCAL_BIN" >>"$SHELL_RC"
+    if ! grep -F "$PATH_LINE" "$SHELL_RC" >/dev/null 2>&1; then
+      printf '\n# Dispatch command\n%s\n' "$PATH_LINE" >>"$SHELL_RC"
     fi
     ;;
 esac
@@ -76,4 +77,16 @@ if [ ! -f "$CONFIG" ]; then
 fi
 
 cp "$ROOT_DIR/VERSION" "$DISPATCH_HOME/installed_version"
-echo "Dispatch installed. Open a new shell and run dispatch."
+echo
+echo "Dispatch installed."
+case ":$PATH:" in
+  *":$LOCAL_BIN:"*)
+    echo "The dispatch command is available in this shell."
+    ;;
+  *)
+    echo "To use dispatch in this shell now:"
+    echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
+    echo "New shells will pick this up automatically from $SHELL_RC."
+    ;;
+esac
+echo "Then cd to your SQL files and run: dispatch"

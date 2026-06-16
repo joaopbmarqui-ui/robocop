@@ -64,6 +64,10 @@ Useful mock scenarios:
 
 Captured emails are written to `mocks/sent_emails/` and should not be committed.
 
+For the full development workflow, including local checks, Bitbucket sync,
+edge-node update paths, and production harness validation, see
+`docs/development-workflow.md`.
+
 ## Validation
 
 Run the strongest available subset for the files touched.
@@ -91,6 +95,11 @@ Before production merge, human reviewers may still need to smoke-test Textual ov
 Work is tracked in GitHub Issues for `pedrochagasmaster/robocop` using the `gh` CLI. See `docs/agents/issue-tracker.md` when present.
 
 Canonical triage labels use the default label strings: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. See `docs/agents/triage-labels.md` when present.
+
+Keep both code remotes in mind: `origin` is GitHub for issues and occasional
+VPN-bypass pushes, while `bitbucket` is the writable corporate remote and the
+remote Edge Nodes can pull from. Do not push to either remote unless the user
+explicitly asks.
 
 ## Domain docs
 

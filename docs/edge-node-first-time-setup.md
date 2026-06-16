@@ -45,6 +45,41 @@ unzip dispatch_deploy.zip
 rm dispatch_deploy.zip
 ```
 
+### Alternative: Bitbucket-backed working tree
+
+When the Edge Node can reach the corporate Bitbucket server, prefer a Git
+working tree for ongoing updates. It keeps the deployed code tied to a commit
+and makes rollback straightforward.
+
+One-time setup:
+
+```bash
+cd /ads_storage
+git clone -o bitbucket https://scm.mastercard.int/stash/scm/~e176097/autobench.git dispatch
+cd /ads_storage/dispatch
+git remote -v
+```
+
+Normal update:
+
+```bash
+cd /ads_storage/dispatch
+git fetch bitbucket
+git checkout main
+git pull --ff-only bitbucket main
+```
+
+Exact-commit deploy:
+
+```bash
+cd /ads_storage/dispatch
+git fetch bitbucket
+git checkout <commit-sha>
+```
+
+Rollback uses the same shape: checkout the previous known-good commit, then run
+`install.sh` again.
+
 ## 3. Verify Edge Node prerequisites
 
 SSH to the Edge Node (port `2222`; enter the RSA SecurID PASSCODE at the
@@ -79,6 +114,9 @@ chmod +x install.sh
 DISPATCH_EMAIL=you@example.com DISPATCH_PYTHON_BIN=$(command -v python3.11) ./install.sh
 ```
 
+For repeatable update, validation, and rollback workflows, see
+[docs/development-workflow.md](./development-workflow.md).
+
 
 
 ## 5. Post-install validation
@@ -92,6 +130,9 @@ Confirm:
 - Dashboard renders correctly.
 - Kerberos indicator is visible.
 - Navigation (`N`, `H`, `B`) works.
+
+After the shared tree is deployed, give end users the short setup flow in
+[onboarding.md](../onboarding.md). They should not need this operator runbook.
 
 ## Gotchas & Troubleshooting
 

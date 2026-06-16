@@ -129,6 +129,47 @@ By default Level 3 first runs Level 1 and 2. Use `--skip-level12` only when an o
 
 Audit logs are written as JSONL under `tools/prod_tui/logs/`.
 
+## Deploying / keeping nodes in sync (`_seam_deploy.py`)
+
+The edge nodes are **independent filesystems** (e.g. `hde2stl020003` and
+`hde2stl020004` do not share `/ads_storage/dispatch`), so each must be deployed
+and verified separately, over its own authenticated session. One config file
+per node selects the target:
+
+- `config.yaml` → node 03 (`robocop-prod-test`, the default target)
+- `config-node04.yaml` → node 04 (`robocop-prod-test-04`)
+
+Start that node's session first (each needs its own SSH passcode), then act on
+it with `--config`:
+
+```bash
+# bring up an authenticated pane for the node you want to touch
+python tools/prod_tui/robocop_tmux.py --config tools/prod_tui/config-node04.yaml start --passcode <RSA_CODE>
+
+# compare every deployed *.py on that node against the local repo
+python -m tools.prod_tui._seam_deploy --config tools/prod_tui/config-node04.yaml verify
+
+# push only drifted dispatch/ files (scr/ is reported but NOT auto-deployed)
+python -m tools.prod_tui._seam_deploy --config tools/prod_tui/config-node04.yaml sync
+
+# push every drifted file INCLUDING scr/ (use to bring a fresh node to parity)
+python -m tools.prod_tui._seam_deploy --config tools/prod_tui/config-node04.yaml deploy-all
+
+# push a single explicit file
+python -m tools.prod_tui._seam_deploy --config tools/prod_tui/config-node04.yaml deploy-path dispatch/sql.py /ads_storage/dispatch/dispatch/sql.py
+```
+
+`--config` defaults to node 03, so omitting it acts on node 03. Each transfer
+backs up the remote file to `*.seam_bak`, base64-streams the new content, and
+syntax-validates it with the node's own venv Python. `verify` reporting
+`MATCH=N DRIFT=0 IN_SYNC` against the same local tree on two nodes guarantees
+those nodes are byte-identical to each other.
+
+`sync` deliberately refuses to auto-deploy `scr/` (the production-sensitive
+orchestrators, ADR-0005); `deploy-all` includes them on purpose for parity and
+prints a `[scr/]` tag per file. Deploying `scr/` to a node does not waive the
+ADR-0005 human review for merging that change.
+
 ## Generated Artifacts
 
 The following directories are intentionally ignored by git:

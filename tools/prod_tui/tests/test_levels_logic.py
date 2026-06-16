@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
+from types import SimpleNamespace
 
 import pytest
 
@@ -81,6 +82,62 @@ def test_state_poll_command_falls_back_to_table_glob() -> None:
     cmd = cj._state_poll_command(run, None)
     assert "/*/manifest.json" in cmd
     assert run.table_name in cmd
+
+
+# --- wait_for_job_completion: ignore stale state above fresh output ----------
+
+
+class _FakeDriver:
+    def __init__(self, screen: str) -> None:
+        self._screen = screen
+
+    def run_remote(self, _cmd: str, timeout: float = 40):  # noqa: ARG002
+        return self._screen, 0
+
+
+def _run_with_screen(screen: str) -> cj.ControlledRun:
+    return cj.ControlledRun(
+        config=SimpleNamespace(max_smoke_job_wait_seconds=30),  # type: ignore[arg-type]
+        driver=_FakeDriver(screen),  # type: ignore[arg-type]
+        table_name="dispatch_smoke_x",
+        spec=job_specs.level3_spec(),
+    )
+
+
+def test_wait_for_completion_is_scoped_to_this_jobs_id() -> None:
+    # THIS job is "Succeeded"; a *different* job's "Failed" line appears LOWER on
+    # the pane. A naive last-match scan would wrongly return "Failed"; the
+    # id-scoped match must return this job's own "Succeeded".
+    this_id = "20260616T000000Z_aaaaaa"
+    other_id = "20260616T000000Z_bbbbbb"
+    screen = (
+        f'DISPATCH_STATE {this_id} "state": "Succeeded"\n'
+        f'DISPATCH_STATE {other_id} "state": "Failed"\n'
+        f'__RC_abc123_0__\n'
+    )
+    run = _run_with_screen(screen)
+    assert cj.wait_for_job_completion(run, job_id=this_id) == "Succeeded"
+
+
+def test_wait_for_completion_ignores_other_job_while_running(monkeypatch) -> None:
+    # THIS job is only "Running" while another job's "Failed" is on the pane:
+    # must not return; it should time out rather than report the other's state.
+    monkeypatch.setattr(cj.time, "sleep", lambda _s: None)
+    this_id = "20260616T000000Z_aaaaaa"
+    other_id = "20260616T000000Z_bbbbbb"
+    screen = (
+        f'DISPATCH_STATE {other_id} "state": "Failed"\n'
+        f'DISPATCH_STATE {this_id} "state": "Running"\n'
+        f'__RC_abc123_0__\n'
+    )
+    run = cj.ControlledRun(
+        config=SimpleNamespace(max_smoke_job_wait_seconds=0.05),  # type: ignore[arg-type]
+        driver=_FakeDriver(screen),  # type: ignore[arg-type]
+        table_name="dispatch_smoke_x",
+        spec=job_specs.level3_spec(),
+    )
+    with pytest.raises(TimeoutError):
+        cj.wait_for_job_completion(run, job_id=this_id)
 
 
 # --- CSV probe evaluation (uncompressed invariant) --------------------------

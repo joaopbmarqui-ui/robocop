@@ -324,17 +324,25 @@ def extract_job_id(screen: str) -> str | None:
 
 
 def _state_poll_command(run: ControlledRun, job_id: str | None) -> str:
+    # Emit a single self-identifying line, ``DISPATCH_STATE <id> "state": "..."``,
+    # so the poll's result can be tied to *this* job. ``run_remote`` returns the
+    # whole pane, which can still show a previous job's state line; matching on
+    # the unique id (job-id, or table name for the L3 fallback) makes a stale
+    # line from another job impossible to mistake for this one.
     base = "${DISPATCH_DATA_ROOT:-/ads_storage/$USER}/.dispatch/jobs"
     if job_id:
         manifest_path = f"{base}/{job_id}/manifest.json"
         return (
-            f"[ -f {manifest_path} ] && grep -o '\"state\": *\"[^\"]*\"' {manifest_path} "
-            f"|| echo NO_JOB"
+            f"printf 'DISPATCH_STATE {job_id} '; "
+            f"( [ -f {manifest_path} ] && grep -o '\"state\": *\"[^\"]*\"' {manifest_path} "
+            f"|| echo NO_JOB ) | tr -d '\\n'; echo"
         )
     # Fallback: locate by table name (used by Level 3's single-job run).
     return (
         f"d=$(grep -l '{run.table_name}' {base}/*/manifest.json 2>/dev/null | head -n1); "
-        f"[ -n \"$d\" ] && grep -o '\"state\": *\"[^\"]*\"' \"$d\" || echo NO_JOB"
+        f"printf 'DISPATCH_STATE {run.table_name} '; "
+        f"( [ -n \"$d\" ] && grep -o '\"state\": *\"[^\"]*\"' \"$d\" || echo NO_JOB ) "
+        f"| tr -d '\\n'; echo"
     )
 
 
@@ -344,13 +352,19 @@ def wait_for_job_completion(run: ControlledRun, job_id: str | None = None) -> st
     # name never appears) and the detached runner keeps going after the TUI is
     # closed, so reading the authoritative manifest state is reliable.
     cmd = _state_poll_command(run, job_id)
+    marker = re.escape(job_id if job_id else run.table_name)
+    # Match only the state tied to THIS job's id (or table name). ``run_remote``
+    # returns the whole pane and the completion regex ignores the "Running"
+    # intermediate, so a previous job's stale "Failed"/"Succeeded" line would
+    # otherwise be the only match. Take the last id-scoped match for safety.
+    pattern = rf'DISPATCH_STATE {marker} "state":\s*"(Succeeded|Failed|Cancelled)"'
     deadline = time.monotonic() + run.config.max_smoke_job_wait_seconds
     last_output = ""
     while time.monotonic() < deadline:
         last_output, _ = run.driver.run_remote(cmd, timeout=40)
-        match = re.search(r'"state":\s*"(Succeeded|Failed|Cancelled)"', last_output)
-        if match:
-            return match.group(1)
+        matches = re.findall(pattern, last_output)
+        if matches:
+            return matches[-1]
         time.sleep(5)
     raise TimeoutError(f"Timed out waiting for smoke job completion. Last output:\n{last_output}")
 
@@ -384,20 +398,29 @@ def verify_table_exists(run: ControlledRun) -> str:
     # and cannot reach the cluster from the edge node.
     #
     # A table just created by the orchestrator's impala-shell session may not yet
-    # be in the coordinator we reach through the load balancer (Impala catalog
-    # propagation), so force a targeted INVALIDATE METADATA first and confirm an
-    # actual SHOW TABLES *result row* names our table -- not merely the echoed
-    # query line, which also contains the name. Retry to ride out propagation.
+    # be visible on the coordinator we reach through the load balancer (Impala
+    # catalog propagation). We confirm an actual SHOW TABLES *result row* names
+    # our table -- not merely the echoed query line, which also contains the
+    # name -- and retry to ride out propagation.
+    #
+    # We do NOT use the table-scoped ``INVALIDATE METADATA <table>``: under this
+    # cluster's local-catalog mode (Impala 4.0) it raises TableNotFoundException
+    # for a table the coordinator has never seen, which aborts the batch before
+    # SHOW TABLES runs. Instead we retry plain SHOW TABLES and, once a couple of
+    # attempts have not yet seen the table, escalate to a *global* INVALIDATE
+    # METADATA (which never throws) to force the coordinator to reload its list.
     db = run.config.scratch_schema
     table = expected_table_name(run)
     fqtn = f"{db}.{table}"
-    stmt = f"INVALIDATE METADATA {fqtn}; SHOW TABLES IN {db} LIKE '{table}';"
-    command = (
-        f"impala-shell -k --ssl -i {shlex.quote(run.config.impala_coordinator)} "
-        f"--delimited -q {shlex.quote(stmt)}"
-    )
+    show_stmt = f"SHOW TABLES IN {db} LIKE '{table}';"
+    forcing_stmt = f"INVALIDATE METADATA; {show_stmt}"
     last = ""
-    for _ in range(4):
+    for attempt in range(6):
+        stmt = forcing_stmt if attempt >= 2 else show_stmt
+        command = (
+            f"impala-shell -k --ssl -i {shlex.quote(run.config.impala_coordinator)} "
+            f"--delimited -q {shlex.quote(stmt)}"
+        )
         screen, _code = run.driver.run_remote(command, timeout=60)
         last = screen
         if _result_row_equals(screen, table):

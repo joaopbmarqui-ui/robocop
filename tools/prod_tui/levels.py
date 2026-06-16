@@ -309,17 +309,23 @@ def check_data_correctness(config: ProdTuiConfig, driver: TmuxDriver, run_timest
     execute_spec(run)
     started = time.monotonic()
     fqtn = f"{config.scratch_schema}.{run.table_name}"
-    # Force a targeted catalog refresh before reading: a table created by the
-    # orchestrator's session is not always immediately resolvable from the
-    # coordinator the load balancer hands us (Impala catalog propagation).
-    stmt = f"INVALIDATE METADATA {fqtn}; SELECT smoke_test_value FROM {fqtn};"
-    command = (
-        f"impala-shell -k --ssl -i {shlex.quote(config.impala_coordinator)} "
-        f"--delimited -q {shlex.quote(stmt)}"
-    )
+    # A table created by the orchestrator's session is not always immediately
+    # resolvable from the coordinator the load balancer hands us (Impala catalog
+    # propagation). We retry the plain SELECT and, once a couple of attempts have
+    # not resolved it, escalate to a *global* INVALIDATE METADATA to force a
+    # catalog reload. The table-scoped ``INVALIDATE METADATA <table>`` is avoided
+    # because under local-catalog mode (Impala 4.0) it raises a fatal
+    # TableNotFoundException for a table the coordinator has never seen.
+    select_stmt = f"SELECT smoke_test_value FROM {fqtn};"
+    forcing_stmt = f"INVALIDATE METADATA; {select_stmt}"
     rows: list[str] = []
     screen = ""
-    for _ in range(4):
+    for attempt in range(6):
+        stmt = forcing_stmt if attempt >= 2 else select_stmt
+        command = (
+            f"impala-shell -k --ssl -i {shlex.quote(config.impala_coordinator)} "
+            f"--delimited -q {shlex.quote(stmt)}"
+        )
         screen, code = driver.run_remote(command, timeout=60)
         # Expect exactly one data row whose only column equals 1.
         rows = [ln.strip() for ln in cj._strip_ansi(screen).splitlines() if ln.strip() == "1"]

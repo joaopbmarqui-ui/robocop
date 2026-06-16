@@ -68,3 +68,41 @@ clean up. This ADR defines what is and isn't allowed.
   policy. No `scr/` changes merge before the mock layer lands.
 - The `_common.py` module's public API becomes a frozen contract once it
   exists, with the same care as `scr/`'s scripts themselves.
+
+## Investigated and rejected
+
+### Monthly join — cross-coordinator catalog visibility (`TABLE_NOT_FOUND`)
+
+**Symptom.** `monthly_query_processor` (SqlTemplate → Table) creates per-month
+temp tables, then joins them into `<table>_fulljoin`. Each step runs in its own
+`impala-shell` process and `dw.prod.impala…:21000` is a load-balanced
+coordinator pool. The join can land on a coordinator that cannot resolve the
+just-created temp table, raising `TABLE_NOT_FOUND` — a `FATAL`, non-retried
+error — failing the whole job. Reproduced on edge node `…0004`; node `…0003`
+passed the same cell only by coordinator-assignment luck.
+
+**Fixes attempted and rejected during production-edge testing (Impala 4.0,
+local-catalog mode), all confirmed live against the cluster:**
+
+- **Global `INVALIDATE METADATA;`** — rejected. The job user lacks the
+  privilege: `AuthorizationException: User '…' does not have privileges to
+  execute 'INVALIDATE METADATA/REFRESH'`. `classificar_erro_impala` maps this to
+  `GENERIC_ERROR`, so it converts the *intermittent* `TABLE_NOT_FOUND` into a
+  *guaranteed* failure. Strictly worse.
+- **Table-scoped `INVALIDATE METADATA <temp>`** — rejected. Under local-catalog
+  mode it raises `TableNotFoundException` on a coordinator that has never seen
+  the table (the very situation we are trying to repair).
+- **Relying on propagation + retry** — rejected. The temp table remained
+  unresolvable from multiple coordinators >9 minutes after creation, and
+  `hdfs dfs -ls /das/<schema_prefix>/enc/<user>/` showed *no* data directory for
+  any of the run's smoke tables — so this is not mere statestore lag and a retry
+  loop would not help.
+
+**Conclusion.** There is no privilege-safe, narrow (`scr/`-policy-compliant)
+orchestrator-side statement that reliably makes the temp tables visible to a
+*different* coordinator. A correct fix likely requires pinning all steps of a
+monthly job to a single coordinator (one `impala-shell` session for create +
+join) or another structural change — beyond an "obvious bug fix" and requiring
+the full review process plus cluster-admin input. **Tracked as a GitHub issue;
+no `scr/` change is shipped for this.** The previously-shipped `schema_prefix`
+HDFS-path fix is unrelated and stands.

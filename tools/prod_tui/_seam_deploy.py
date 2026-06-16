@@ -1,7 +1,11 @@
-"""One-shot helper to fetch / compare / deploy dispatch/app.py over the
-authenticated tmux pane. Temporary tooling for the production smoke harness."""
+"""Compare / deploy the deployed Dispatch tree over an authenticated tmux pane.
+
+Multi-node aware: ``--config`` selects which edge node to act on (each node has
+its own ``config-*.yaml`` and its own SSH/Kerberos session, since the nodes are
+independent filesystems). Default target is the node-03 ``config.yaml``."""
 from __future__ import annotations
 
+import argparse
 import base64
 import hashlib
 import re
@@ -13,6 +17,10 @@ from tools.prod_tui.robocop_tmux import driver_from_config_path, DEFAULT_CONFIG_
 REMOTE = "/ads_storage/dispatch/dispatch/app.py"
 LOCAL = Path("dispatch/app.py")
 REMOTE_COPY = Path("tools/prod_tui/_remote_app.py")
+
+# Which node config the next _driver() call targets. Overridden by --config so a
+# single invocation acts on exactly one node.
+_CONFIG_PATH = str(DEFAULT_CONFIG_PATH)
 
 # Local source root -> remote deployed root. The repo is deployed at
 # /ads_storage/dispatch, so the package lives at /ads_storage/dispatch/dispatch.
@@ -108,8 +116,37 @@ def sync() -> None:
     verify()
 
 
+def deploy_all() -> None:
+    """Deploy every drifting file, *including* scr/, then re-verify.
+
+    Use this to bring a fresh / independent node to parity (e.g. node 04).
+    Unlike ``sync``, this intentionally pushes the production-sensitive scr/
+    orchestrators too - the ADR-0005 review still governs whether those changes
+    are blessed, but a node already running them must not silently drift.
+    """
+    rows = _scan()
+    drift = [r for r in rows if r[0] not in ("MATCH", "MISSING_LOCAL")]
+    if not drift:
+        print("Nothing to deploy.")
+        verify()
+        return
+    for status, root, rel, _lmd5, _rmd5 in rows:
+        if status == "MATCH":
+            continue
+        if status == "MISSING_LOCAL":
+            print(f"[SKIP {status}] {root}/{rel} (exists only on remote)")
+            continue
+        local_rel = f"{root}/{rel}"
+        remote_path = f"{dict(SYNC_ROOTS)[root]}/{rel}"
+        tag = " [scr/]" if root == "scr" else ""
+        print(f"--- deploying{tag} {local_rel} -> {remote_path} ({status}) ---")
+        deploy_file(local_rel, remote_path)
+    print("\n--- re-verifying ---")
+    verify()
+
+
 def _driver():
-    _cfg, d = driver_from_config_path(DEFAULT_CONFIG_PATH)
+    _cfg, d = driver_from_config_path(_CONFIG_PATH)
     return d
 
 
@@ -215,30 +252,55 @@ def deploy_file(local_rel: str, remote_path: str) -> None:
     print("validate exit", c, "->", out.strip().splitlines()[-2] if out.strip().splitlines() else "")
 
 
-if __name__ == "__main__":
-    mode = sys.argv[1] if len(sys.argv) > 1 else "fetch"
-    if mode == "fetch":
-        fetch()
-    elif mode == "deploy":
-        deploy(LOCAL)
-    elif mode == "diag":
-        diag()
-    elif mode == "diag2":
-        diag2()
-    elif mode == "whichmod":
-        whichmod()
-    elif mode == "deploy-newjob":
-        deploy_file("dispatch/screens/new_job.py", "/ads_storage/dispatch/dispatch/screens/new_job.py")
-    elif mode == "deploy-manifest":
-        deploy_file("dispatch/manifest.py", "/ads_storage/dispatch/dispatch/manifest.py")
-    elif mode == "deploy-path":
-        deploy_file(sys.argv[2], sys.argv[3])
-    elif mode == "verify":
+MODES = (
+    "verify", "sync", "deploy-all", "fetch", "deploy",
+    "deploy-newjob", "deploy-manifest", "deploy-path", "diag", "diag2", "whichmod",
+)
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Compare/deploy the Dispatch tree to an edge node over its tmux pane.",
+    )
+    parser.add_argument(
+        "--config",
+        default=str(DEFAULT_CONFIG_PATH),
+        help="Node config to target (default: node-03 config.yaml). "
+             "Use config-node04.yaml for node 04.",
+    )
+    parser.add_argument("mode", nargs="?", default="verify", choices=MODES)
+    parser.add_argument("args", nargs="*", help="extra args (deploy-path LOCAL REMOTE)")
+    ns = parser.parse_args(argv)
+
+    global _CONFIG_PATH
+    _CONFIG_PATH = ns.config
+
+    if ns.mode == "verify":
         verify()
-    elif mode == "sync":
+    elif ns.mode == "sync":
         sync()
-    else:
-        print(
-            "usage: _seam_deploy.py "
-            "[fetch|deploy|diag|deploy-newjob|deploy-manifest|deploy-path LOCAL REMOTE|verify|sync]"
-        )
+    elif ns.mode == "deploy-all":
+        deploy_all()
+    elif ns.mode == "fetch":
+        fetch()
+    elif ns.mode == "deploy":
+        deploy(LOCAL)
+    elif ns.mode == "deploy-newjob":
+        deploy_file("dispatch/screens/new_job.py", "/ads_storage/dispatch/dispatch/screens/new_job.py")
+    elif ns.mode == "deploy-manifest":
+        deploy_file("dispatch/manifest.py", "/ads_storage/dispatch/dispatch/manifest.py")
+    elif ns.mode == "deploy-path":
+        if len(ns.args) != 2:
+            parser.error("deploy-path requires LOCAL and REMOTE arguments")
+        deploy_file(ns.args[0], ns.args[1])
+    elif ns.mode == "diag":
+        diag()
+    elif ns.mode == "diag2":
+        diag2()
+    elif ns.mode == "whichmod":
+        whichmod()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -479,6 +479,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--json-report", help="Write JSON report to this path")
     parser.add_argument("--fail-fast", action="store_true", help="Stop after the first failed check")
     parser.add_argument("--passcode", help="Passcode for SSH authentication")
+    parser.add_argument(
+        "--reuse-session",
+        action="store_true",
+        help="Reuse an already-authenticated tmux session instead of starting a new one. "
+             "Start one first with: py tools/prod_tui/robocop_tmux.py start --passcode <CODE>",
+    )
     return parser
 
 
@@ -501,6 +507,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             verbose=args.verbose,
         )
         ctx.passcode = args.passcode
+        ctx.reuse_session = args.reuse_session
         levels = selected_levels(args.level)
         for level in levels:
             for check in checks_for_level(level):

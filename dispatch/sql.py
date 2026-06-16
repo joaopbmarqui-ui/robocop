@@ -23,6 +23,33 @@ def is_malformed_template(sql_text: str) -> bool:
     return has_start != has_end
 
 
+_DDL_LEADERS = ("create", "drop", "insert", "alter", "truncate", "merge")
+
+
+def is_self_contained_ddl(sql_text: str) -> bool:
+    """True when ``sql_text`` already begins with its own DDL/DML statement.
+
+    A ``SqlFile -> Table`` job normally holds a bare ``SELECT`` that we wrap in
+    ``DROP/CREATE TABLE ... AS``. If the file instead already opens with
+    ``CREATE``/``INSERT``/etc., wrapping it again produces invalid nested DDL,
+    so callers should write/preview it verbatim. Leading ``--`` line comments
+    and ``/* ... */`` block comments are skipped before inspecting the first
+    keyword; a leading ``WITH`` CTE is treated as a SELECT (wrappable).
+    """
+    remaining = sql_text.lstrip()
+    while remaining:
+        if remaining.startswith("--"):
+            _, _, remaining = remaining.partition("\n")
+            remaining = remaining.lstrip()
+        elif remaining.startswith("/*"):
+            _, _, remaining = remaining.partition("*/")
+            remaining = remaining.lstrip()
+        else:
+            break
+    first = remaining[:16].lower()
+    return any(first.startswith(leader) for leader in _DDL_LEADERS)
+
+
 def table_wrapper(sql_text: str, schema: str, table_name: str, user: str) -> str:
     prefix = schema.split("_", 1)[0]
     full_table = f"{schema}.{table_name}"

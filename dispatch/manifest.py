@@ -147,9 +147,14 @@ def _effective_job_sql(
     launched job genuinely materializes the table. Other cells run their source
     unchanged: ``Csv`` exports query results via ``download_to_csv.py``,
     ``SqlTemplate`` is wrapped by ``monthly_query_processor.py`` itself, and
-    ``ExistingTable`` carries no SQL.
+    ``ExistingTable`` carries no SQL. A SqlFile that already opens with its own
+    ``CREATE``/``INSERT`` DDL is written verbatim to avoid invalid nested DDL.
     """
-    if source.get("type") == "SqlFile" and destination.get("type") in ("Table", "Table+Csv"):
+    if (
+        source.get("type") == "SqlFile"
+        and destination.get("type") in ("Table", "Table+Csv")
+        and not sql.is_self_contained_ddl(sql_text)
+    ):
         return sql.table_wrapper(
             sql_text,
             destination.get("schema", ""),

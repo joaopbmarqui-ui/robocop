@@ -520,6 +520,10 @@ class NewJobScreen(Screen[None]):
                 self._input_value("start-date"),
                 self._input_value("end-date"),
             )
+        elif sql.is_self_contained_ddl(sql_text):
+            # The file already carries its own DDL; show it as-is so the preview
+            # matches what the launched job will run (no double-wrapping).
+            preview = sql_text
         else:
             preview = sql.table_wrapper(sql_text, schema, table, config.current_user())
         self.app.push_screen(

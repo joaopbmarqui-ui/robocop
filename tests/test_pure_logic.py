@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from dispatch import kerberos, manifest, jobs
+from dispatch import kerberos, manifest, jobs, sql
 
 
 # =============================================================================
@@ -273,6 +273,36 @@ class TestEffectiveJobSql:
 
     def test_existingtable_csv_is_left_raw(self) -> None:
         assert self._sql("ExistingTable", "Csv") == self.SELECT
+
+    def test_sqlfile_table_with_own_ddl_is_not_double_wrapped(self) -> None:
+        ddl = "CREATE TABLE aa_enc.mine STORED AS PARQUET AS SELECT 1"
+        source: manifest.Source = {"type": "SqlFile"}  # type: ignore[assignment]
+        dest: manifest.Destination = {  # type: ignore[assignment]
+            "type": "Table", "schema": "aa_enc", "table_name": "mine"
+        }
+        out = manifest._effective_job_sql(source, dest, ddl, "user1")
+        assert out == ddl
+
+
+class TestIsSelfContainedDdl:
+    def test_bare_select_is_not_ddl(self) -> None:
+        assert sql.is_self_contained_ddl("SELECT 1 AS x") is False
+
+    def test_leading_with_cte_is_not_ddl(self) -> None:
+        assert sql.is_self_contained_ddl("WITH t AS (SELECT 1) SELECT * FROM t") is False
+
+    def test_create_table_is_ddl(self) -> None:
+        assert sql.is_self_contained_ddl("CREATE TABLE foo AS SELECT 1") is True
+
+    def test_insert_is_ddl(self) -> None:
+        assert sql.is_self_contained_ddl("INSERT INTO foo SELECT 1") is True
+
+    def test_comments_skipped_before_keyword(self) -> None:
+        text = "-- header comment\n/* block */\n  create table foo as select 1"
+        assert sql.is_self_contained_ddl(text) is True
+
+    def test_comments_before_select_still_not_ddl(self) -> None:
+        assert sql.is_self_contained_ddl("-- note\nSELECT 1") is False
 
 
 # =============================================================================

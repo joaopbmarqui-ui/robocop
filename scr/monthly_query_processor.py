@@ -65,7 +65,13 @@ def process_monthly_job(args):
     # 1. Planning and Initial Notification
     start_date = datetime.strptime(args.start_date, "%m/%d/%Y")
     end_date = datetime.strptime(args.end_date, "%m/%d/%Y")
-    
+
+    # HDFS storage prefix is the schema's leading segment (e.g. aa_enc -> aa,
+    # coe_enc -> coe), matching the table_wrapper used by Query_Impala. This
+    # previously hardcoded "coe", silently writing aa_enc tables under
+    # /das/coe/enc/. coe_enc jobs are unaffected (coe_enc still -> coe).
+    schema_prefix = args.schema.split("_", 1)[0]
+
     planned_temp_tables = []
     for date in monthly_range(start_date, end_date):
         dt_ano_mes = date.strftime('%Y%m')
@@ -98,7 +104,7 @@ def process_monthly_job(args):
         create_temp_table_query = f"""
             DROP TABLE IF EXISTS {temp_table_name};
             CREATE TABLE {temp_table_name}
-            STORED AS parquet LOCATION '/das/coe/enc/{args.user}/{args.table_name}_temp_{dt_ano_mes}'
+            STORED AS parquet LOCATION '/das/{schema_prefix}/enc/{args.user}/{args.table_name}_temp_{dt_ano_mes}'
             AS
             {monthly_sql}
         """
@@ -111,7 +117,7 @@ def process_monthly_job(args):
     create_final_table_query = f"""
         DROP TABLE IF EXISTS {final_table_name};
         CREATE TABLE {final_table_name}
-        STORED AS parquet LOCATION '/das/coe/enc/{args.user}/{args.table_name}_fulljoin' AS
+        STORED AS parquet LOCATION '/das/{schema_prefix}/enc/{args.user}/{args.table_name}_fulljoin' AS
         {union_query}
     """
     execute_step_with_retry(create_final_table_query, f"Create final table {final_table_name}", args)

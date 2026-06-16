@@ -79,3 +79,4 @@ if ($LASTEXITCODE -eq 0) {
 Write-Host ""
 Write-Host "When ready to publish this branch to Bitbucket, run:"
 Write-Host "  git push -u $Remote HEAD"
+exit 0

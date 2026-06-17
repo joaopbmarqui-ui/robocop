@@ -43,6 +43,16 @@ For any work touching `dispatch/app.py`, `dispatch/screens/`, `dispatch/widgets/
 
 The skill contains the project-specific rules for Textual architecture, performance, SSH-terminal UX, mocks, and validation.
 
+## Improve skill
+
+For codebase audits, improvement opportunities, roadmap suggestions, or self-contained implementation plans for other agents to execute, use:
+
+```text
+.agents/skills/improve/SKILL.md
+```
+
+The skill is a read-only senior advisor: it surveys the codebase, produces prioritized findings, and writes handoff plans under `plans/` without modifying source code itself.
+
 ## Local development
 
 Install and run locally with mocks:

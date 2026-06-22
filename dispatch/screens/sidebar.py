@@ -83,6 +83,9 @@ class Sidebar(Widget):
 
     def __init__(self) -> None:
         super().__init__()
+        # User's explicit F2 preference, honored at widths >= 100. ``None`` means
+        # no manual choice yet, so width drives the state. Narrow widths always
+        # force-collapse regardless of this preference.
         self._manual_collapsed: bool | None = None
 
     def compose(self) -> ComposeResult:
@@ -115,15 +118,18 @@ class Sidebar(Widget):
     def _sync_collapse_from_app(self) -> None:
         if self.app is None:
             return
-        target = self._manual_collapsed
-        if target is None:
-            target = self.app.size.width < 100
+        if self.app.size.width < 100:
+            target = True  # too narrow to fit labels; always collapse
+        elif self._manual_collapsed is not None:
+            target = self._manual_collapsed  # respect the user's F2 choice
+        else:
+            target = False
         if target != self.collapsed:
             self.collapsed = target
 
     def toggle_collapsed(self) -> None:
         self._manual_collapsed = not self.collapsed
-        self.collapsed = self._manual_collapsed
+        self._sync_collapse_from_app()
 
     def watch_collapsed(self, value: bool) -> None:
         self.set_class(value, "sidebar-collapsed")

@@ -267,6 +267,18 @@ def test_sidebar_collapses_automatically_and_with_global_binding(
 
             await pilot.press("f2")
             await pilot.pause()
+            assert sidebar.collapsed is True
+
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            await pilot.pause(1.0)
+            sidebar = app.screen.query_one(Sidebar)
+            assert sidebar.collapsed is False
+            await pilot.press("f2")
+            await pilot.pause()
+            assert sidebar.collapsed is True
+            await pilot.press("f2")
+            await pilot.pause()
             assert sidebar.collapsed is False
             assert "Dispatch" in str(sidebar.query_one("#sidebar-brand").render())
             assert sidebar.query_one("#sidebar-version").display is True

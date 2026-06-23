@@ -8,21 +8,28 @@ that can be traced back to a Git commit.
 
 Keep both remotes configured:
 
-- `origin`: GitHub, used for GitHub Issues and occasional VPN-bypass pushes.
-- `bitbucket`: corporate Bitbucket, used as the writable remote from this
-  machine and as the remote the Edge Nodes can pull from.
+- `origin`: GitHub (`pedrochagasmaster/robocop`), used for GitHub Issues and
+  occasional VPN-bypass pushes.
+- `bitbucket`: corporate Bitbucket deployment remote — the `dispatch` repo,
+  reachable from this machine and from the Edge Nodes.
 
 Set up Bitbucket once:
 
 ```powershell
-git remote add bitbucket https://scm.mastercard.int/stash/scm/~e176097/autobench.git
+git remote add bitbucket https://scm.mastercard.int/stash/scm/~e176097/dispatch.git
 git remote -v
 ```
+
+The deployment remote is `~e176097/dispatch.git`. The GitHub repo is named
+`robocop`, and the separate `autobench` tool uses its own
+`~e176097/autobench.git` — do **not** point this remote at `autobench.git`. An
+earlier configuration did, which cross-wired robocop's deployment transport with
+autobench's; the correct repo for Dispatch is `dispatch.git`.
 
 If the remote already exists with the wrong URL:
 
 ```powershell
-git remote set-url bitbucket https://scm.mastercard.int/stash/scm/~e176097/autobench.git
+git remote set-url bitbucket https://scm.mastercard.int/stash/scm/~e176097/dispatch.git
 git remote -v
 ```
 
@@ -185,7 +192,7 @@ py -m tools.prod_tui level --config tools/prod_tui/config-node04.yaml --level 6 
 ```
 
 Never inject `Ctrl-C` into psmux sessions. Use the harness return/quit paths and
-`robocop_tmux.py send` or `keys` commands.
+`tools.prod_tui tmux send` or `tools.prod_tui tmux keys` commands.
 
 ## Change Hygiene
 

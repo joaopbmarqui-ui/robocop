@@ -55,7 +55,7 @@ One-time setup:
 
 ```bash
 cd /ads_storage
-git clone -o bitbucket https://scm.mastercard.int/stash/scm/~e176097/autobench.git dispatch
+git clone -o bitbucket https://scm.mastercard.int/stash/scm/~e176097/dispatch.git dispatch
 cd /ads_storage/dispatch
 git remote -v
 ```

@@ -3,15 +3,17 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-from textual.widgets import DataTable, Input, Static
+from textual.widgets import Collapsible, DataTable, Input, Static
 
 from dispatch import manifest
 from dispatch.app import DispatchApp
 from dispatch.screens.new_job import NewJobScreen
+from dispatch.version import __version__
 
 
 def _seed_job(
@@ -93,6 +95,62 @@ def test_cockpit_status_strip_replaces_stat_cards(mock_env_with_config) -> None:
             assert "FINISHED" in strip
             assert "KERBEROS" in strip
             assert list(app.screen.query(".stat-card")) == []
+
+    asyncio.run(run())
+
+
+def test_cockpit_empty_state_and_startup_event_are_visible(mock_env_with_config) -> None:
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            await pilot.pause(1.0)
+            empty_state = app.screen.query_one("#jobs-empty")
+            empty_text = empty_state.query_one(Static)
+            event_trail = str(app.screen.query_one("#event-trail", Static).render())
+
+            assert empty_state.display is True
+            assert "No jobs in the last 7 days" in str(empty_text.render())
+            assert "press N to launch one" in str(empty_text.render())
+            assert "dispatch started" in event_trail
+
+    asyncio.run(run())
+
+
+def test_app_startup_logs_and_reports_version_mismatch(mock_env_with_config) -> None:
+    data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
+    dispatch_home = data_root / ".dispatch"
+    (dispatch_home / "installed_version").write_text("0.9.0", encoding="utf-8")
+
+    app = DispatchApp()
+    warning = app._build_version_warning()
+    for handler in logging.getLogger("dispatch").handlers:
+        handler.flush()
+
+    log_text = (dispatch_home / "dispatch.log").read_text(encoding="utf-8")
+    assert f"Version mismatch: installed 0.9.0, running {__version__}. Run install.sh." == warning
+    assert f"Dispatch {__version__} starting" in log_text
+
+
+def test_cockpit_status_strip_renders_kerberos_state_matrix(mock_env_with_config) -> None:
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            await pilot.pause(1.0)
+            app.screen.kerberos_ttl = None  # type: ignore[attr-defined]
+            app.screen._update_status_strip(0, 0, 0)  # type: ignore[attr-defined]
+            missing = str(app.screen.query_one("#status-strip", Static).render())
+            assert "KERBEROS" in missing
+            assert "MISSING" in missing
+
+            app.screen.kerberos_ttl = 299  # type: ignore[attr-defined]
+            app.screen._update_status_strip(0, 0, 0)  # type: ignore[attr-defined]
+            low = str(app.screen.query_one("#status-strip", Static).render())
+            assert "4m" in low or "299s" in low
+
+            app.screen.kerberos_ttl = 7200  # type: ignore[attr-defined]
+            app.screen._update_status_strip(0, 0, 0)  # type: ignore[attr-defined]
+            healthy = str(app.screen.query_one("#status-strip", Static).render())
+            assert "2h" in healthy
 
     asyncio.run(run())
 
@@ -183,6 +241,36 @@ def test_new_job_picker_lists_cwd_files_and_fills_form(
             )
             # Picking the template flips source detection to SqlTemplate.
             assert screen._selected_source() == "SqlTemplate"
+
+    asyncio.run(run())
+
+
+def test_new_job_matrix_shows_legal_cells_and_toggles(mock_env_with_config, tmp_path) -> None:
+    """The Source x Destination matrix is visible, accurate, and keyboard-toggleable."""
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(140, 50)) as pilot:
+            screen = NewJobScreen(tmp_path)
+            app.push_screen(screen)
+            await pilot.pause(1.0)
+
+            matrix = screen.query_one("#matrix-table", DataTable)
+            assert matrix.row_count == 3
+            assert matrix.get_row_at(0) == ["SqlFile", "[green]\u2713[/]", "[green]\u2713[/]", "[green]\u2713[/]"]
+            assert matrix.get_row_at(1) == ["SqlTemplate", "[green]\u2713[/]", "[dim]\u2014[/]", "[dim]\u2014[/]"]
+            assert matrix.get_row_at(2) == ["ExistingTable", "[dim]\u2014[/]", "[green]\u2713[/]", "[dim]\u2014[/]"]
+
+            collapsible = screen.query_one("#matrix-collapsible", Collapsible)
+            assert collapsible.collapsed is False
+
+            await pilot.press("m")
+            await pilot.pause()
+            assert collapsible.collapsed is True
+
+            await pilot.press("m")
+            await pilot.pause()
+            assert collapsible.collapsed is False
 
     asyncio.run(run())
 

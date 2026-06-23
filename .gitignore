@@ -10,6 +10,8 @@ tools/prod_tui/_remote_*.py
 *.pyc
 __pycache__/
 .pytest_cache/
+.local-check-tmp/
+.local-check-pytest/
 .pylint.d/
 build/
 *.egg-info/

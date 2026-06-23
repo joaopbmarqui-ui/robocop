@@ -13,7 +13,7 @@ the Edge Node, landing in ``repo_path``.  All subsequent ``send_keys``,
 without additional SSH round-trips.
 
 One-off remote operations (file writes, ``impala-shell`` queries, ``klist``)
-still use direct SSH via ``_ssh()``.
+reuse the already-authenticated tmux pane through ``run_remote()``.
 """
 
 from __future__ import annotations
@@ -248,6 +248,8 @@ class TmuxDriver:
         # Remote shell: cd to repo, then start a login bash.
         remote_cmd = f"cd {shlex.quote(self.repo_path)} && exec bash -l"
         ssh_parts.append(remote_cmd)
+        if os.name == "nt":
+            return subprocess.list2cmdline(ssh_parts)
         return " ".join(shlex.quote(p) for p in ssh_parts)
 
     def session_exists(self) -> bool:
@@ -281,16 +283,16 @@ class TmuxDriver:
         # Kill any stale local session with the same name.
         self._tmux(["kill-session", "-t", self.session], check=False)
 
-        pane_cmd = self._build_pane_command()
         self._tmux(
             [
                 "new-session", "-d",
                 "-s", self.session,
                 "-x", str(int(self.width)),
                 "-y", str(int(self.height)),
-                pane_cmd,
             ]
         )
+        time.sleep(0.2)
+        self.send_keys(self._build_pane_command())
 
         _AUTH_RE = r"PASSCODE:|[Pp]assword:|PIN:"
         _PROMPT_RE = r"[\$#]\s*$"
@@ -700,7 +702,12 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command == "start":
         passcode = getattr(args, "passcode", None)
-        ready = driver.start_session(passcode=passcode)
+        try:
+            ready = driver.start_session(passcode=passcode)
+        except (TimeoutError, AuthenticationError, SessionGoneError) as exc:
+            driver.stop_session()
+            print(f"Failed to start tmux/SSH session: {exc}", file=sys.stderr)
+            return 2
         if ready:
             print(
                 f"Started local tmux session {config.session_name!r} "
@@ -711,7 +718,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(
                 f"Session {config.session_name!r} started — waiting for authentication.\n"
                 f"Send your PASSCODE with:\n"
-                f"  py tools/prod_tui/robocop_tmux.py --config {args.config} send <YOUR_PASSCODE>"
+                f"  py -m tools.prod_tui tmux send --config {args.config} <YOUR_PASSCODE>"
             )
         return 0
     if args.command == "send":

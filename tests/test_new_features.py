@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import os
 from pathlib import Path
@@ -236,6 +237,63 @@ class TestNewJobKerberosGating:
                 await pilot.pause()
                 launch_btn = screen.query_one("#launch")
                 assert launch_btn.disabled is False
+
+        asyncio.run(run())
+
+    def test_low_kerberos_ttl_disables_launch_and_explains_issue(
+        self, mock_env_with_config, monkeypatch, tmp_path: Path
+    ) -> None:
+        (tmp_path / "query.sql").write_text("SELECT 1", encoding="utf-8")
+
+        async def fake_ttl() -> int:
+            return 299
+
+        monkeypatch.setattr("dispatch.kerberos.ticket_ttl_seconds", fake_ttl)
+
+        async def run() -> None:
+            app = DispatchApp()
+            async with app.run_test(size=(140, 50)) as pilot:
+                screen = NewJobScreen(tmp_path)
+                app.push_screen(screen)
+                await pilot.pause()
+                launch_btn = screen.query_one("#launch")
+                warning = str(screen.query_one("#warning-text").render())
+                summary = str(screen.query_one("#validation-summary").render())
+                assert launch_btn.disabled is True
+                assert "Kerberos TTL low" in warning
+                assert "Kerberos TTL under 5 min" in summary
+
+        asyncio.run(run())
+
+    def test_kinit_action_runs_interactive_kinit_and_refreshes_ttl(
+        self, mock_env_with_config, monkeypatch
+    ) -> None:
+        calls: list[tuple[str, ...]] = []
+
+        def fake_run_interactive(*argv: str) -> int:
+            calls.append(argv)
+            return 0
+
+        async def fake_ttl() -> int:
+            return 7200
+
+        monkeypatch.setattr("dispatch.process.run_interactive", fake_run_interactive)
+        monkeypatch.setattr("dispatch.kerberos.ticket_ttl_seconds", fake_ttl)
+
+        async def run() -> None:
+            app = DispatchApp()
+            app.suspend = contextlib.nullcontext  # type: ignore[method-assign]
+            async with app.run_test(size=(140, 50)) as pilot:
+                screen = NewJobScreen(Path.cwd())
+                app.push_screen(screen)
+                await pilot.pause()
+                await screen.action_kinit()
+                await pilot.pause()
+
+                assert calls == [("kinit",)]
+                assert screen.kerberos_ttl == 7200
+                assert app.kerberos_ttl == 7200
+                assert screen.query_one("#launch").disabled is False
 
         asyncio.run(run())
 

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import subprocess
-from unittest.mock import patch
+import os
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 import pytest
 
+from tools.prod_tui import robocop_tmux
 from tools.prod_tui.robocop_tmux import (
     AuthenticationError,
     ProdTuiConfig,
@@ -18,6 +21,13 @@ def _completed(stdout: str = "", returncode: int = 0) -> subprocess.CompletedPro
     return subprocess.CompletedProcess([], returncode, stdout, "")
 
 
+def test_module_docstring_matches_authenticated_pane_model() -> None:
+    assert robocop_tmux.__doc__ is not None
+    assert "already-authenticated tmux pane" in robocop_tmux.__doc__
+    assert "run_remote()" in robocop_tmux.__doc__
+    assert "direct SSH via ``_ssh()``" not in robocop_tmux.__doc__
+
+
 def test_build_pane_command_ssh_into_repo_with_tty() -> None:
     driver = TmuxDriver(
         "user@edge",
@@ -28,21 +38,25 @@ def test_build_pane_command_ssh_into_repo_with_tty() -> None:
     pane_cmd = driver._build_pane_command()
     assert pane_cmd.startswith("ssh -t -p 2222 -o StrictHostKeyChecking=no user@edge")
     assert "cd /ads_storage/dispatch && exec bash -l" in pane_cmd
+    if os.name == "nt":
+        assert '"cd /ads_storage/dispatch && exec bash -l"' in pane_cmd
+        assert "'cd /ads_storage/dispatch" not in pane_cmd
 
 
 def test_start_session_runs_local_tmux_new_session() -> None:
     driver = TmuxDriver("user@edge", "session", "/repo", width=120, height=40)
-    # Pane shows a shell prompt immediately, so no auth handling is needed.
+    # Shell-first startup works with psmux on Windows, then sends SSH into it.
     with patch.object(driver, "_tmux", return_value=_completed()) as tmux, \
             patch.object(driver, "capture_screen", return_value="user@edge:/repo$ "):
         ready = driver.start_session()
     assert ready is True
     commands = [call.args[0] for call in tmux.call_args_list]
-    # Local tmux is invoked (no leading "ssh"); a new-session is created.
     assert ["kill-session", "-t", "session"] in commands
     new_session = next(c for c in commands if c[0] == "new-session")
     assert new_session[:6] == ["new-session", "-d", "-s", "session", "-x", "120"]
-    assert any("exec bash -l" in part for part in new_session)
+    assert not any("exec bash -l" in part for part in new_session)
+    send_ssh = next(c for c in commands if c[0] == "send-keys" and any("exec bash -l" in part for part in c))
+    assert send_ssh[-1] == "Enter"
 
 
 def test_send_keys_appends_enter_for_shell_commands() -> None:
@@ -81,6 +95,47 @@ def test_attach_uses_local_tmux_attach() -> None:
     with patch("subprocess.run", return_value=_completed()) as run:
         driver.attach()
     assert run.call_args.args[0] == ["tmux", "attach", "-t", "session"]
+
+
+@pytest.mark.parametrize(
+    "exc",
+    [
+        TimeoutError("SSH did not produce a prompt"),
+        AuthenticationError("Edge Node rejected the credential"),
+        SessionGoneError("tmux session disappeared"),
+    ],
+)
+def test_start_command_reports_start_failures_without_traceback(capsys, exc: Exception) -> None:
+    driver = SimpleNamespace(start_session=Mock(side_effect=exc), stop_session=Mock())
+    config = SimpleNamespace(session_name="robocop-prod-test")
+
+    with patch.object(robocop_tmux, "driver_from_config_path", return_value=(config, driver)):
+        assert robocop_tmux.main(["start", "--config", "config.yaml"]) == 2
+
+    captured = capsys.readouterr()
+    assert "Failed to start tmux/SSH session" in captured.err
+    assert str(exc) in captured.err
+    assert "Traceback" not in captured.err
+    driver.stop_session.assert_called_once_with()
+
+
+def test_start_command_auth_prompt_prints_current_send_command(capsys) -> None:
+    driver = SimpleNamespace(start_session=Mock(return_value=False))
+    config = SimpleNamespace(
+        session_name="robocop-prod-test",
+        terminal_width=120,
+        terminal_height=40,
+        host="user@edge",
+        repo_path="/repo",
+    )
+
+    with patch.object(robocop_tmux, "driver_from_config_path", return_value=(config, driver)):
+        assert robocop_tmux.main(["start", "--config", "config.yaml"]) == 0
+
+    captured = capsys.readouterr()
+    assert "Send your PASSCODE with:" in captured.out
+    assert "py -m tools.prod_tui tmux send --config config.yaml <YOUR_PASSCODE>" in captured.out
+    assert "py tools/prod_tui/robocop_tmux.py" not in captured.out
 
 
 def test_at_shell_prompt_true_for_bash_prompt() -> None:

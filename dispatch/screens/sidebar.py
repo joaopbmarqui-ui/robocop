@@ -81,6 +81,10 @@ class Sidebar(Widget):
     active_screen = reactive("overview")
     collapsed = reactive(False)
 
+    def __init__(self) -> None:
+        super().__init__()
+        self._manual_collapsed: bool | None = None
+
     def compose(self) -> ComposeResult:
         with Vertical(id="sidebar-inner"):
             yield Static("[bold]Dispatch[/]", id="sidebar-brand")
@@ -111,12 +115,15 @@ class Sidebar(Widget):
     def _sync_collapse_from_app(self) -> None:
         if self.app is None:
             return
-        auto_collapsed = self.app.size.width < 100
-        if auto_collapsed != self.collapsed:
-            self.collapsed = auto_collapsed
+        target = self._manual_collapsed
+        if target is None:
+            target = self.app.size.width < 100
+        if target != self.collapsed:
+            self.collapsed = target
 
     def toggle_collapsed(self) -> None:
-        self.collapsed = not self.collapsed
+        self._manual_collapsed = not self.collapsed
+        self.collapsed = self._manual_collapsed
 
     def watch_collapsed(self, value: bool) -> None:
         self.set_class(value, "sidebar-collapsed")

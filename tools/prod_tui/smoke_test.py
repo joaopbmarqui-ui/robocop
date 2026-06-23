@@ -94,7 +94,7 @@ def check_ssh_connectivity(ctx: RunContext) -> SmokeResult:
             raise RuntimeError(
                 f"--reuse-session was set but no live tmux session {ctx.config.session_name!r} exists. "
                 "Authenticate one first, e.g.: "
-                "py tools/prod_tui/robocop_tmux.py start --passcode <CODE>"
+                "py -m tools.prod_tui tmux start --config <CONFIG> --passcode <CODE>"
             )
         screen = ctx.capture("ssh_connectivity")
         return _ok("ssh_connectivity", "Reusing existing authenticated tmux session", screen)
@@ -252,7 +252,11 @@ def check_quit_cleanly(ctx: RunContext) -> SmokeResult:
 
 def check_install_runs(ctx: RunContext) -> SmokeResult:
     email = ctx.config.operator_email or "dispatch-smoke@example.com"
-    _, code = ctx.driver.run_remote(f"DISPATCH_EMAIL={email} ./install.sh", timeout=180)
+    py = "$(command -v python3.11 || command -v python3.10)"
+    _, code = ctx.driver.run_remote(
+        f"DISPATCH_EMAIL={email} DISPATCH_PYTHON_BIN={py} ./install.sh",
+        timeout=180,
+    )
     screen = ctx.capture("install_runs")
     if code != 0:
         return _fail("install_runs", f"install.sh exited {code}", screen)
@@ -483,7 +487,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--reuse-session",
         action="store_true",
         help="Reuse an already-authenticated tmux session instead of starting a new one. "
-             "Start one first with: py tools/prod_tui/robocop_tmux.py start --passcode <CODE>",
+             "Start one first with: py -m tools.prod_tui tmux start --config <CONFIG> --passcode <CODE>",
     )
     return parser
 

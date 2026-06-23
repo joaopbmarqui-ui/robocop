@@ -1,5 +1,10 @@
 # Centralized Sidebar Navigation and Flat Screen Stack Plan
 
+> **Status: Historical.** This implementation plan is retained for context only.
+> The current canonical feature/status tracker is
+> `docs/dispatch_user_story_tracker.csv`, and the current completion evidence
+> is `docs/dispatch_user_story_completion_audit.md`.
+
 ## Goal
 
 Switching pages using the mouse in the sidebar was unreliable:

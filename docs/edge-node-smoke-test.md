@@ -7,6 +7,16 @@
 
 ## Pre-flight
 
+- [ ] From the local machine, verify TCP 2222 reaches the Edge Node before
+      requesting an RSA code with the config-driven harness preflight:
+      `python -m tools.prod_tui preflight --config tools/prod_tui/config.yaml --timeout 5 --json-report tools/prod_tui/reports/preflight-node03.json`
+      or, for node 04:
+      `python -m tools.prod_tui preflight --config tools/prod_tui/config-node04.yaml --timeout 5 --json-report tools/prod_tui/reports/preflight-node04.json`
+      should print `TCP preflight: PASS`. Or run the direct PowerShell check:
+      `Test-NetConnection <edge-node> -Port 2222 -InformationLevel Detailed`
+      should report `TcpTestSucceeded : True`
+- [ ] Stop here if the preflight report has `connected: false`; do not consume
+      an RSA code until the required VPN/network path is restored.
 - [ ] SSH to the Edge Node (inside a local tmux session, see [docs/production_testing.md](./production_testing.md)): `ssh -p 2222 <user>@<edge-node>`
 - [ ] Enter the **RSA SecurID PASSCODE** at the `Enter PASSCODE:` prompt
 - [ ] Initialize Kerberos: `kinit`, then enter the Kerberos password at `Password for <user>@CORP.MASTERCARD.ORG:`
@@ -20,10 +30,11 @@
 
 ## Level 1 — Safe Smoke (no job launch)
 
-- [ ] `python3.10 -m compileall dispatch scr` → exit 0, no errors
-- [ ] `python3.10 -m dispatch --help` → prints usage
+- [ ] Set `PYTHON_BIN=$(command -v python3.11 || command -v python3.10)`
+- [ ] `$PYTHON_BIN -m compileall dispatch scr` → exit 0, no errors
+- [ ] `$PYTHON_BIN -m dispatch --help` → prints usage
 - [ ] Launch Dispatch: `cd /path/to/sql/files && dispatch`
-- [ ] **Dashboard renders:** stat cards (Running/Finished/Failed/Kerberos) visible
+- [ ] **Dashboard renders:** status strip shows Running/Finished/Failed/Kerberos summary
 - [ ] **Kerberos indicator:** header shows TTL (e.g. "Kerberos: 7h 23m"), not "MISSING"
 - [ ] **Version banner:** no mismatch warning if install is current
 - [ ] **Navigate to New Job:** press `N` → form with RadioSet source/dest appears
@@ -51,7 +62,7 @@
 - [ ] **Preview screen:** press `P` in New Job → SQL rendered with line numbers and keyword highlighting, scrollable
 - [ ] **Browser DESCRIBE:** select a table, press Enter → columns shown as structured Name/Type/Comment table
 - [ ] **Kerberos refresh:** press `K` in New Job → kinit prompt appears, TTL updates after
-- [ ] **Empty dashboard:** with no jobs, empty-state text says "No active Jobs — press N to create one"
+- [ ] **Empty dashboard:** with no jobs, empty-state text says "No jobs in the last 7 days — press N to launch one"
 - [ ] **Event trail:** dashboard bottom shows startup event with timestamp
 - [ ] **dispatch.log exists:** `cat ~/.dispatch/dispatch.log` shows startup entry
 
@@ -80,8 +91,31 @@ SELECT 1 AS smoke_test_value
 - [ ] Wait for job to reach SUCCEEDED or FAILED
 - [ ] If SUCCEEDED: press `V` → job detail shows logs, CSV path shows N/A (table-only)
 - [ ] Navigate to Browser → SHOW TABLES → filter `dispatch_smoke_*` → smoke table visible
-- [ ] Press `D` on smoke table → typed confirmation required → type full name → table dropped
+- [ ] Press `D` on the `dispatch_smoke_*` table only → typed confirmation required → type full name → table dropped
 - [ ] Clean up: `rm /tmp/dispatch_smoke.sql`
+
+## Level 3a — Controlled CSV Launch
+
+**Use the same trivial smoke query. This validates the launch-time CWD CSV contract without creating a table.**
+
+This is the manual CSV checklist. The executable harness equivalent is Level 4:
+`py -m tools.prod_tui level --config tools/prod_tui/config.yaml --level 4`,
+which also covers Table+Csv
+decomposition and ExistingTable->Csv exports.
+
+- [ ] Create smoke SQL: `echo "SELECT 1 AS smoke_test_value" > /tmp/dispatch_smoke_csv.sql`
+- [ ] `cd /tmp && dispatch`
+- [ ] Press `N` → New Job
+- [ ] Source: SqlFile
+- [ ] Destination: Csv
+- [ ] SQL File: `/tmp/dispatch_smoke_csv.sql`
+- [ ] Table Name: `dispatch_smoke_csv_<user>_<date>`
+- [ ] Email: your email
+- [ ] Press `L` → confirmation modal shows CSV path under `/tmp`
+- [ ] Confirm launch → wait for SUCCEEDED or FAILED
+- [ ] If SUCCEEDED: `/tmp/dispatch_smoke_csv_<user>_<date>.csv` exists
+- [ ] Confirm no `.csv.gz` file was produced and no CSV was written under `/ads_storage/$USER/.dispatch/jobs/<job-id>/`
+- [ ] Clean up: `rm /tmp/dispatch_smoke_csv.sql /tmp/dispatch_smoke_csv_<user>_<date>.csv`
 
 ## Level 3b — Error Path Validation
 

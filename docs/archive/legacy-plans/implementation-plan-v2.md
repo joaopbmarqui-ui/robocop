@@ -1,8 +1,13 @@
 # Dispatch — Implementation Plan v2
 
+> **Status: Historical.** This implementation plan is retained for context only.
+> The current canonical feature/status tracker is
+> `docs/dispatch_user_story_tracker.csv`, and the current completion evidence
+> is `docs/dispatch_user_story_completion_audit.md`.
+
 **Date:** 2026-05-15
 **Supersedes:** `docs/plan.md` (v1, design-phase specification)
-**Status:** Active
+**Status:** Historical
 
 This document is a ground-truth implementation plan derived from auditing
 every file in the repository. It catalogues what has been built, what is

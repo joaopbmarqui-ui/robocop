@@ -670,12 +670,16 @@ class NewJobScreen(Screen[None]):
         # force the set's selection state deterministically, after refresh so
         # the set has finished its own mount.
         if source_btn:
-            self.call_after_refresh(self._force_radio, "#source", source_btn)
+            self._schedule_force_radio("#source", source_btn)
         if dest_btn:
-            self.call_after_refresh(self._force_radio, "#destination", dest_btn)
+            self._schedule_force_radio("#destination", dest_btn)
         # After the radios settle, scroll the destination-specific fields into
         # view so a prefilled (re-run) form lands on its key inputs.
         self.call_after_refresh(self._scroll_prefill_fields)
+
+    def _schedule_force_radio(self, radio_set_id: str, button_id: str) -> None:
+        self.call_after_refresh(self._force_radio, radio_set_id, button_id)
+        self.set_timer(0.05, lambda: self._force_radio(radio_set_id, button_id))
 
     def _force_radio(self, radio_set_id: str, button_id: str) -> None:
         radio_set = self.query_one(radio_set_id, RadioSet)

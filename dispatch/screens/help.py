@@ -16,7 +16,7 @@ HELP_TEXT = """\
   [b]Q[/]         Quit Dispatch
   [b]?[/]         Toggle this help screen
   [b]Ctrl+P[/]    Command palette (all destinations + kinit)
-  [b]Ctrl+B[/]    Collapse / expand the sidebar
+  [b]F2[/]        Collapse / expand the sidebar
   [b]Tab[/]       Move focus between panels
 
 [bold]Overview (jobs cockpit)[/]

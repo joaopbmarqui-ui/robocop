@@ -2,7 +2,7 @@
 
 This directory contains the **local tmux/psmux + SSH** harness for validating the real Dispatch Textual TUI on a Hadoop Edge Node.
 
-Instead of SSHing into the Edge Node and spinning up tmux there, the harness creates a **local** tmux session whose pane is the SSH connection itself.  All pane control (key injection, screen capture, attach) happens locally.  One-off remote commands (file writes, `impala-shell` queries) still use a separate SSH connection.
+Instead of SSHing into the Edge Node and spinning up tmux there, the harness creates a **local** tmux session whose pane is the SSH connection itself. All pane control (key injection, screen capture, attach) happens locally. One-off remote commands (file writes, `impala-shell` queries) run through the already-authenticated tmux pane so the harness does not burn a second RSA prompt.
 
 ## Prerequisites
 
@@ -14,7 +14,8 @@ Instead of SSHing into the Edge Node and spinning up tmux there, the harness cre
 
 **Edge Node:**
 
-- `python3.10`, `klist`, and `impala-shell` are available.
+- `python3.11` or `python3.10`, `klist`, and `impala-shell` are available
+  (the harness accepts python3.11 or python3.10).
 - The Dispatch repo is deployed at `repo_path`.
 - Kerberos has been initialized before Level 2 or Level 3 checks.
 
@@ -30,7 +31,7 @@ repo_path: "/ads_storage/dispatch"
 session_name: "robocop-prod-test"
 terminal_width: 120
 terminal_height: 40
-ssh_options: "-o StrictHostKeyChecking=no"
+ssh_options: "-p 2222 -o StrictHostKeyChecking=no"
 smoke_query_sql: "SELECT 1 AS smoke_test_value"
 scratch_schema: "aa_enc"
 table_prefix: "dispatch_smoke"
@@ -39,6 +40,32 @@ operator_email: "you@example.com"
 ```
 
 `ssh_options` accepts normal OpenSSH options such as `-J jump-host`, `-i ~/.ssh/key`, or `-o StrictHostKeyChecking=no`.
+
+## Network Preflight
+
+Before requesting an RSA code or starting the harness, verify TCP 2222 reaches
+the target Edge Node selected by the harness config:
+
+```powershell
+python -m tools.prod_tui preflight --config tools/prod_tui/config.yaml --timeout 5 --json-report tools/prod_tui/reports/preflight-node03.json
+python -m tools.prod_tui preflight --config tools/prod_tui/config-node04.yaml --timeout 5 --json-report tools/prod_tui/reports/preflight-node04.json
+```
+
+For a direct PowerShell check against both known Edge nodes:
+
+```powershell
+Test-NetConnection hde2stl020003.mastercard.int -Port 2222 -InformationLevel Detailed
+Test-NetConnection hde2stl020004.mastercard.int -Port 2222 -InformationLevel Detailed
+```
+
+The harness command should print `TCP preflight: PASS`, or the direct
+PowerShell command should report `TcpTestSucceeded : True`. If TCP 2222 times
+out, the harness cannot reach the RSA prompt; reconnect to the required
+VPN/network path before running Edge validation.
+
+Do not run `tmux start`, `smoke`, `job`, or `level` until the selected node's
+preflight JSON report shows `connected: true`. When it shows
+`connected: false`, keep that report as the current network-blocker evidence.
 
 ## How sessions work
 
@@ -63,12 +90,12 @@ operator_email: "you@example.com"
 ## Manual tmux CLI
 
 ```bash
-python tools/prod_tui/robocop_tmux.py --config tools/prod_tui/config.yaml start
-python tools/prod_tui/robocop_tmux.py --config tools/prod_tui/config.yaml send "dispatch"
-python tools/prod_tui/robocop_tmux.py --config tools/prod_tui/config.yaml keys tab enter
-python tools/prod_tui/robocop_tmux.py --config tools/prod_tui/config.yaml capture
-python tools/prod_tui/robocop_tmux.py --config tools/prod_tui/config.yaml attach
-python tools/prod_tui/robocop_tmux.py --config tools/prod_tui/config.yaml stop
+python -m tools.prod_tui tmux start --config tools/prod_tui/config.yaml
+python -m tools.prod_tui tmux send --config tools/prod_tui/config.yaml "dispatch"
+python -m tools.prod_tui tmux keys --config tools/prod_tui/config.yaml tab enter
+python -m tools.prod_tui tmux capture --config tools/prod_tui/config.yaml
+python -m tools.prod_tui tmux attach --config tools/prod_tui/config.yaml
+python -m tools.prod_tui tmux stop --config tools/prod_tui/config.yaml
 ```
 
 `capture` prints the current tmux pane. `attach` hands your terminal to the local tmux session; detach with the normal tmux prefix sequence (`Ctrl-b d`).
@@ -78,9 +105,9 @@ python tools/prod_tui/robocop_tmux.py --config tools/prod_tui/config.yaml stop
 Level 1 validates SSH/tmux, compileall, dashboard rendering, navigation, preview, and clean quit. Level 2 validates the real Edge Node environment without launching a job.
 
 ```bash
-python tools/prod_tui/smoke_test.py --config tools/prod_tui/config.yaml --level 1 --save-screens
-python tools/prod_tui/smoke_test.py --config tools/prod_tui/config.yaml --level 2 --save-screens
-python tools/prod_tui/smoke_test.py --config tools/prod_tui/config.yaml --level all --save-screens
+python -m tools.prod_tui smoke --config tools/prod_tui/config.yaml --level 1 --save-screens
+python -m tools.prod_tui smoke --config tools/prod_tui/config.yaml --level 2 --save-screens
+python -m tools.prod_tui smoke --config tools/prod_tui/config.yaml --level all --save-screens
 ```
 
 Each run prints a pass/fail summary and writes a JSON report under `tools/prod_tui/reports/`. Failed checks include the last captured screen. Use `--json-report path/to/report.json` to choose the report path and `--fail-fast` to stop after the first failure.
@@ -104,13 +131,13 @@ The controlled runner creates one tiny SQL file on the Edge Node, fills the Disp
 Dry run fills the form and previews without launching:
 
 ```bash
-python tools/prod_tui/controlled_job.py --config tools/prod_tui/config.yaml --dry-run
+python -m tools.prod_tui job --config tools/prod_tui/config.yaml --dry-run
 ```
 
 Full run executes the smoke query, waits for completion, verifies the table exists through `impala-shell`, then attempts cleanup in all cases:
 
 ```bash
-python tools/prod_tui/controlled_job.py --config tools/prod_tui/config.yaml
+python -m tools.prod_tui job --config tools/prod_tui/config.yaml
 ```
 
 By default Level 3 first runs Level 1 and 2. Use `--skip-level12` only when an operator has just completed those checks manually and wants to repeat the controlled launch path.
@@ -148,7 +175,7 @@ it with `--config`:
 
 ```bash
 # bring up an authenticated pane for the node you want to touch
-python tools/prod_tui/robocop_tmux.py --config tools/prod_tui/config-node04.yaml start --passcode <RSA_CODE>
+python -m tools.prod_tui tmux start --config tools/prod_tui/config-node04.yaml --passcode <RSA_CODE>
 
 # compare every deployed *.py on that node against the local repo
 python -m tools.prod_tui._seam_deploy --config tools/prod_tui/config-node04.yaml verify

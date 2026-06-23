@@ -397,7 +397,8 @@ def _ensure_session(config: ProdTuiConfig, driver: TmuxDriver, *, reuse_session:
     if reuse_session:
         raise RuntimeError(
             f"--reuse-session was set but no live tmux session {config.session_name!r} exists. "
-            "Authenticate one first, e.g.: py tools/prod_tui/robocop_tmux.py start --passcode <CODE>"
+            "Authenticate one first, e.g.: "
+            "py -m tools.prod_tui tmux start --config <CONFIG> --passcode <CODE>"
         )
     driver.start_session(passcode=passcode)
 

@@ -55,6 +55,25 @@ class TestNarrowTerminalLayout:
             assert isinstance(app.screen, DashboardScreen)
             assert list(app.screen.query("#new-job-action-bar")) == []
 
+    async def test_below_min_terminal_notifies_minimum_size(self, tmp_path, monkeypatch) -> None:
+        monkeypatch.setenv("DISPATCH_DATA_ROOT", str(tmp_path))
+        dispatch_home = tmp_path / ".dispatch"
+        dispatch_home.mkdir(parents=True)
+        (dispatch_home / "config.json").write_text("{}", encoding="utf-8")
+        (dispatch_home / "installed_version").write_text("1.0.0", encoding="utf-8")
+        notifications: list[str] = []
+
+        app = DispatchApp()
+
+        def fake_notify(message: str, *args, **kwargs) -> None:
+            notifications.append(message)
+
+        app.notify = fake_notify  # type: ignore[method-assign]
+        async with app.run_test(size=(79, 23)) as pilot:
+            await pilot.pause(0.5)
+
+        assert any("Terminal too small (79×23). Minimum: 80×24" in item for item in notifications)
+
     async def test_new_job_launch_visible_in_action_bar(self, tmp_path, monkeypatch) -> None:
         monkeypatch.setenv("DISPATCH_DATA_ROOT", str(tmp_path))
         dispatch_home = tmp_path / ".dispatch"

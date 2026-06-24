@@ -8,6 +8,7 @@ import json
 import os
 import shutil
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal, TypedDict
@@ -86,6 +87,18 @@ def write(path: Path, manifest: JobManifest) -> None:
     with tmp.open("w", encoding="utf-8") as handle:
         json.dump(manifest, handle, indent=2, sort_keys=True)
         handle.write("\n")
+    _replace_manifest(tmp, path)
+
+
+def _replace_manifest(tmp: Path, path: Path) -> None:
+    """Replace manifest atomically, tolerating transient Windows file locks."""
+    delays = (0.02, 0.05, 0.1)
+    for delay in delays:
+        try:
+            tmp.replace(path)
+            return
+        except PermissionError:
+            time.sleep(delay)
     tmp.replace(path)
 
 

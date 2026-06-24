@@ -624,7 +624,7 @@ def controlled_lifecycle(run: ControlledRun, *, dry_run: bool) -> None:
         raise RuntimeError(
             f"--reuse-session was set but no live tmux session {run.config.session_name!r} exists. "
             "Authenticate one first, e.g.: "
-            "py tools/prod_tui/robocop_tmux.py start --passcode <CODE>"
+            "py -m tools.prod_tui tmux start --config <CONFIG> --passcode <CODE>"
         )
     else:
         run.driver.start_session(passcode=run.passcode)
@@ -688,7 +688,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help=(
             "Reuse an already-authenticated tmux session instead of logging in. "
-            "Start one first with: py tools/prod_tui/robocop_tmux.py start --passcode <CODE>"
+            "Start one first with: py -m tools.prod_tui tmux start --config <CONFIG> --passcode <CODE>"
         ),
     )
     return parser

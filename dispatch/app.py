@@ -38,7 +38,7 @@ class DispatchApp(App[None]):
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("question_mark", "help", "Help"),
-        ("ctrl+b", "toggle_sidebar", "Sidebar"),
+        ("f2", "toggle_sidebar", "Sidebar"),
     ]
 
     kerberos_ttl: reactive[int | None] = reactive(None)
@@ -49,7 +49,7 @@ class DispatchApp(App[None]):
     def action_toggle_sidebar(self) -> None:
         from .screens.sidebar import Sidebar
 
-        for sidebar in self.query(Sidebar):
+        for sidebar in self.screen.query(Sidebar):
             sidebar.toggle_collapsed()
 
     def __init__(self) -> None:

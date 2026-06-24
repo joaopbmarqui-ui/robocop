@@ -73,12 +73,29 @@ class TestRunnerLifecycle:
         """happy_path scenario: runner sets manifest state to Succeeded."""
         job_dir, _ = _create_csv_job(tmp_path)
         result = _spawn_runner(job_dir)
+        assert result.returncode == 0, result.stderr or result.stdout or _read_log(job_dir)
 
         final = manifest.load(job_dir / "manifest.json")
         assert final["state"] == "Succeeded", _read_log(job_dir)
         assert final["exit_code"] == 0
         assert final["finished_at"] is not None
         assert result.returncode == 0
+
+    def test_csv_job_writes_plain_csv_to_launch_cwd(self, mock_env, tmp_path):
+        """Csv jobs write an uncompressed CSV beside the launch-time SQL files."""
+        job_dir, _ = _create_csv_job(tmp_path)
+        result = _spawn_runner(job_dir)
+        assert result.returncode == 0, result.stderr or result.stdout or _read_log(job_dir)
+
+        final = manifest.load(job_dir / "manifest.json")
+        csv_path = Path(final["destination"]["csv_path"])
+
+        assert final["state"] == "Succeeded", _read_log(job_dir)
+        assert csv_path == tmp_path / "test_export.csv"
+        assert csv_path.exists()
+        assert csv_path.suffix == ".csv"
+        assert not (tmp_path / "test_export.csv.gz").exists()
+        assert not any(job_dir.glob("*.csv*"))
 
     def test_syntax_error_reaches_failed(self, mock_env, monkeypatch, tmp_path):
         """syntax_error is a FATAL_ERRORS member → orchestrator exits 1 → Failed."""
@@ -113,7 +130,8 @@ class TestRunnerLifecycle:
         """memory_exceeded fails twice then succeeds on 3rd pool → Succeeded."""
         monkeypatch.setenv("DISPATCH_MOCK_SCENARIO", "memory_exceeded")
         job_dir, _ = _create_csv_job(tmp_path)
-        _spawn_runner(job_dir)
+        result = _spawn_runner(job_dir)
+        assert result.returncode == 0, result.stderr or result.stdout or _read_log(job_dir)
 
         final = manifest.load(job_dir / "manifest.json")
         assert final["state"] == "Succeeded", _read_log(job_dir)
@@ -157,21 +175,24 @@ class TestRunnerStateTransitions:
 
     def test_started_at_populated_after_run(self, mock_env, tmp_path):
         job_dir, _ = _create_csv_job(tmp_path)
-        _spawn_runner(job_dir)
+        result = _spawn_runner(job_dir)
+        assert result.returncode == 0, result.stderr or result.stdout or _read_log(job_dir)
 
         final = manifest.load(job_dir / "manifest.json")
         assert final["started_at"] is not None
 
     def test_pid_populated_during_run_then_present_in_final(self, mock_env, tmp_path):
         job_dir, _ = _create_csv_job(tmp_path)
-        _spawn_runner(job_dir)
+        result = _spawn_runner(job_dir)
+        assert result.returncode == 0, result.stderr or result.stdout or _read_log(job_dir)
 
         final = manifest.load(job_dir / "manifest.json")
         assert final["pid"] is not None
 
     def test_run_log_created_and_non_empty(self, mock_env, tmp_path):
         job_dir, _ = _create_csv_job(tmp_path)
-        _spawn_runner(job_dir)
+        result = _spawn_runner(job_dir)
+        assert result.returncode == 0, result.stderr or result.stdout or _read_log(job_dir)
 
         log = job_dir / "run.log"
         assert log.exists()

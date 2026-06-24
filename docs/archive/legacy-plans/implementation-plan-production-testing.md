@@ -1,5 +1,10 @@
 # Production Testing Implementation Plan
 
+> **Status: Historical.** This implementation plan is retained for context only.
+> The current canonical feature/status tracker is
+> `docs/dispatch_user_story_tracker.csv`, and the current completion evidence
+> is `docs/dispatch_user_story_completion_audit.md`.
+
 **Date:** 2026-05-19
 **Scope:** End-to-end production validation harness for Dispatch TUI on the Hadoop Edge Node
 **Source:** `docs/production_testing.md`

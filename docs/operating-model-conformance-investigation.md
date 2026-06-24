@@ -1,6 +1,10 @@
 # Operating-Model Conformance Investigation Plan
 
-> **Status:** Draft investigation plan (read-only audit). Created 2026-06-23.
+> **Status:** Local remediation applied on branch
+> `codex/consolidated-user-story-pr23`; live node conformance probed from
+> existing tmux sessions on 2026-06-23. This started as a read-only
+> investigation plan and now records the repo-side fixes plus remaining
+> live-environment gates.
 > **Subject:** Does this repository (`robocop` / the Dispatch TUI) actually follow
 > the Edge Node TUI operating model it documents in
 > `docs/edge-node-tui-operating-model.md`?
@@ -116,26 +120,61 @@ trusted as conclusions:
   (Historical records in `docs/dispatch_user_story_completion_audit.md` /
   `dispatch_user_story_tracker.csv` DOC-008 still describe the old "naming
   artifact" decision; they are point-in-time logs, left as-is but superseded.)
-- **F2 (MED) — No `update.sh` / pre-refinement flow.** Repo appears to contain
-  `install.sh` only (no `update.sh`/`setup_remote_env.sh`/`run_tool.sh`). Docs
-  describe `git checkout`/`git pull --ff-only` and `git push -u bitbucket HEAD`,
-  i.e. none of R1–R4. Robocop may be exposed to the exact exec-bit/CRLF/perms
-  drift autobench just fixed.
+- **F2 (MED) — RESOLVED LOCALLY: `update.sh` / pre-refinement flow added.**
+  Branch `codex/consolidated-user-story-pr23` adds tracked executable
+  `update.sh`, which fetches the deployment remote, `git reset --hard`s the
+  shared tree to the target ref, and reasserts shared read/execute permissions
+  without `git clean` so untracked runtime/vendor artifacts survive. Active
+  operator docs now prefer `update.sh` over `git pull --ff-only`, and
+  `docs/development-workflow.md` documents operator-authored snapshot publish
+  instead of casual `git push -u bitbucket HEAD`. **Live nodes do not have this
+  updater until this branch is published and deployed.**
 - **F3 (LOW/INFO) — Robocop is *ahead* in other areas.** It has a richer harness
   (`preflight.py`, levels 4–6, `controlled_job.py`, `robocop_tmux.py`) and an
   incremental-sync path (`tools/dev/edge_sync.ps1` → `_seam_deploy` with
   `verify`/`sync`/`deploy-all` modes) that autobench lacks. Conformance is
   bidirectional; capture what robocop does *better* too.
-- **F4 (verify) — `.gitattributes` present** but contents not yet confirmed
-  against the recommended `*.py`/`*.sh eol=lf`.
+- **F4 — RESOLVED: `.gitattributes` confirmed.** The repo contains
+  `*.py text eol=lf` and `*.sh text eol=lf`; `.gitignore` now includes
+  `*.zip`, bytecode, and `tools/prod_tui/{screens,reports,logs}/`.
+
+## 4a. Current remediation and live evidence (2026-06-23)
+
+Local repo-side changes on this branch:
+
+- Added `update.sh` as a tracked executable script.
+- Updated `docs/development-workflow.md`,
+  `docs/edge-node-first-time-setup.md`,
+  `docs/edge-node-tui-operating-model.md`,
+  `docs/production_testing.md`, and `tools/prod_tui/README.md` to prefer the
+  reset-based update path.
+- Updated zip deployment helpers to include and chmod `update.sh`.
+- Added regression coverage in `tests/test_operating_model_conformance.py`.
+
+Live node probes, using existing authenticated tmux sessions:
+
+| Node | Session | Host | `/ads_storage/dispatch` state |
+|---|---|---|---|
+| node03 | `0` | `hde2stl020003.mastercard.int` | `HEAD == bitbucket/main == 51cc5f0f1e41a9050b02a3db94da53f6e47a7dcd`; `git status --porcelain` empty; `GIT_TERMINAL_PROMPT=0 git fetch bitbucket main` returned `0`; `/ads_storage/dispatch` is `drwxr-xr-x`; `install.sh` is `-rwxr-xr-x`; `file install.sh` reports ASCII shell script; `/ads_storage/e176097/.dispatch/installed_version` is `1.1.0`. |
+| node04 | `autobench_node04` | `hde2stl020004.mastercard.int` | `HEAD == bitbucket/main == 51cc5f0f1e41a9050b02a3db94da53f6e47a7dcd`; `git status --porcelain` empty; `GIT_TERMINAL_PROMPT=0 git fetch bitbucket main` returned `0`; `/ads_storage/dispatch` is `drwxr-xr-x`; `install.sh` is `-rwxr-xr-x`; `file install.sh` reports ASCII shell script; `/ads_storage/e176097/.dispatch/installed_version` is `1.1.0`. |
+
+Interpretation:
+
+- F1 contamination is resolved for the observed live state: both nodes and
+  `bitbucket/main` point at the Dispatch snapshot `51cc5f0`, not an autobench
+  tree.
+- The nodes are in sync with the currently deployed remote snapshot, but not
+  with this local branch until the branch is published as a new deployment
+  snapshot and each node runs `update.sh` followed by `install.sh`.
+- Node credential state currently satisfies the model's non-interactive fetch
+  check through stored HTTPS credentials. SSH deploy keys remain a possible
+  future hardening, not a blocker for this branch.
 
 ## 5. Investigation objectives (questions to answer)
 
-- Q1. Now that the remote is corrected to `dispatch.git`: what does
-  `dispatch.git` `main` currently contain (robocop vs leftover autobench
-  snapshots), and what do node 03/04 `/ads_storage/dispatch` trees currently
-  hold? Reconcile any autobench contamination before publish/resync. (F1 root
-  cause resolved; contamination cleanup is the open work.)
+- Q1. RESOLVED for the 2026-06-23 live probe. `dispatch.git` `main` and both
+  node 03/04 `/ads_storage/dispatch` trees hold Dispatch snapshot `51cc5f0`,
+  not an autobench tree.
 - Q2. Do the Edge Node deployed trees match committed Git state (zero drift),
   with correct LF endings and executable entrypoints?
 - Q3. Can each node `git fetch` the deployment remote **non-interactively**
@@ -145,8 +184,10 @@ trusted as conclusions:
 - Q5. Are the repo hygiene tenets met (`.gitattributes` LF, `.gitignore`
   artifacts, full doc set, short onboarding)?
 - Q6. Is per-node independence respected (one config per node, separate verify)?
-- Q7. Does robocop need R1–R4 (update.sh, reset-hard, world-execute, snapshot
-  publish), and would adopting them break its existing `_seam_deploy` path?
+- Q7. RESOLVED LOCALLY. Robocop should adopt R1-R4 for committed deployments.
+  The branch adds `update.sh`, reset-hard sync, permission reassertion, and
+  snapshot-publish documentation. `_seam_deploy` remains the fast authenticated
+  session path and is documented as separate from committed deployments.
 
 ## 6. Methodology — phased, read-only
 
@@ -225,23 +266,23 @@ operator-authenticated session, at `/ads_storage/dispatch`:
 
 | # | Tenet | Expected | How to verify | Node 03 | Node 04 | Local | Verdict |
 |---|-------|----------|---------------|---------|---------|-------|---------|
-| 1 | Git = source of truth | deployed tree == commit | drift hash | | | n/a | |
-| 2 | Four surfaces separated | venv in `/ads_storage/$USER/.dispatch` | `ls`, install.sh | | | read | |
-| 3 | Remote roles explicit | origin=GitHub, bitbucket=corp | `remote -v` | | | ✓/✗ | |
-| 4 | Identity/hook strategy | documented; snapshot if transport | docs + push test | | | | |
-| 5 | Non-interactive fetch | no prompt | `GIT_TERMINAL_PROMPT=0 fetch` | | | n/a | |
-| 6 | Installer contract | per-user, idempotent, ABI-correct | contract review | | | read | |
-| 7 | LF normalization | `*.py`/`*.sh eol=lf` | `.gitattributes`, `file` | | | ✓/✗ | |
-| 8 | Artifacts gitignored | zips/pyc/screens/reports/logs | `.gitignore` | n/a | n/a | ✓/✗ | |
-| 9 | Per-node independence | 1 config/node, separate verify | configs + process | | | read | |
-| 10 | Drift detection | local vs node, node vs node | drift tool | | | | |
-| 11 | Harness + levels | progressive, classified | run L1 | | | read | |
-| 12 | Rollback via Git | checkout/reset + reinstall | docs review | n/a | n/a | ✓/✗ | |
-| 13 | Doc set + onboarding | all present, onboarding short | file check | n/a | n/a | ✓/✗ | |
-| R1 | `update.sh` | tracked updater | file check | | | ✓/✗ | |
-| R2 | reset --hard sync | endings/exec match | sync method | | | | |
-| R3 | World-execute perms | scripts `-rwxr-xr-x`, dir `755` | `ls -l` | | | | |
-| R4 | Snapshot publish | operator-authored snapshot | push flow | | | | |
+| 1 | Git = source of truth | deployed tree == commit | drift hash | in sync with `51cc5f0` | in sync with `51cc5f0` | branch ahead of deployed snapshot | PASS for deployed state; pending publish for this branch |
+| 2 | Four surfaces separated | venv in `/ads_storage/$USER/.dispatch` | `ls`, install.sh | runtime home present, `1.1.0` | runtime home present, `1.1.0` | installer preserves per-user home | PASS |
+| 3 | Remote roles explicit | origin=GitHub, bitbucket=corp | `remote -v` | `dispatch.git` | `dispatch.git` | origin GitHub, bitbucket Dispatch | PASS |
+| 4 | Identity/hook strategy | documented; snapshot if transport | docs + push test | n/a | n/a | snapshot publish documented | PASS locally; push remains explicit human action |
+| 5 | Non-interactive fetch | no prompt | `GIT_TERMINAL_PROMPT=0 fetch` | rc 0 | rc 0 | n/a | PASS |
+| 6 | Installer contract | per-user, idempotent, ABI-correct | contract review | installed version present | installed version present | mocked install smoke covered | PASS locally; real reinstall still manual gate |
+| 7 | LF normalization | `*.py`/`*.sh eol=lf` | `.gitattributes`, `file` | `install.sh` ASCII shell script | `install.sh` ASCII shell script | rules present | PASS |
+| 8 | Artifacts gitignored | zips/pyc/screens/reports/logs | `.gitignore` | n/a | n/a | covered by `.gitignore` | PASS |
+| 9 | Per-node independence | 1 config/node, separate verify | configs + process | probed separately | probed separately | config per node | PASS |
+| 10 | Drift detection | local vs node, node vs node | drift tool | clean porcelain | clean porcelain | `_seam_deploy verify` exists | PASS for deployed snapshot |
+| 11 | Harness + levels | progressive, classified | run L1 | not rerun in this pass | not rerun in this pass | harness exists | PENDING real smoke |
+| 12 | Rollback via Git | checkout/reset + reinstall | docs review | n/a | n/a | `update.sh <commit>` documented | PASS locally |
+| 13 | Doc set + onboarding | all present, onboarding short | file check | n/a | n/a | present | PASS |
+| R1 | `update.sh` | tracked updater | file check | pending deploy | pending deploy | added on branch | PASS locally |
+| R2 | reset --hard sync | endings/exec match | sync method | pending deploy | pending deploy | `update.sh` uses reset-hard | PASS locally |
+| R3 | World-execute perms | scripts `-rwxr-xr-x`, dir `755` | `ls -l` | PASS | PASS | `update.sh` reasserts | PASS |
+| R4 | Snapshot publish | operator-authored snapshot | push flow | n/a | n/a | documented | PASS locally |
 
 ## 8. Evidence collection (commands — read-only)
 
@@ -300,11 +341,10 @@ A short conformance report containing:
 ## 11. Open questions for the repo owner
 
 1. RESOLVED: the deployment remote is `~e176097/dispatch.git` (corrected
-   2026-06-23). Remaining: confirm `dispatch.git` `main` holds robocop's tree
-   (not a leftover autobench snapshot), and decide how to clean up any autobench
-   snapshots previously pushed there.
-2. Should robocop adopt the autobench refinements (`update.sh`, `reset --hard`,
-   world-execute perms, snapshot publish), or keep the `_seam_deploy`/
-   `pull --ff-only` model?
+   2026-06-23), and the live probe found `dispatch.git` `main` plus both nodes
+   on Dispatch snapshot `51cc5f0`.
+2. RESOLVED LOCALLY: robocop should adopt `update.sh`, `reset --hard`,
+   world-execute permission reassertion, and snapshot publish for committed
+   deployments. `_seam_deploy` remains the fast authenticated-session path.
 3. Are SSH deploy keys available for the nodes (the model's preferred
    non-interactive credential), or is HTTPS-with-cache the accepted reality?

@@ -7,21 +7,33 @@ from __future__ import annotations
 import sys
 
 
+def _print_usage() -> None:
+    print("Usage: python -m tools.prod_tui <command> [args...]")
+    print("")
+    print("Commands:")
+    print("  preflight  Check DNS and TCP reachability before SSH/auth")
+    print("  tmux       Manage the local tmux session (start, stop, send, capture)")
+    print("  smoke      Run Level 1 and 2 smoke tests")
+    print("  job        Run the Level 3 controlled job")
+    print("  level      Run Level 4-6 controlled scenarios (--level 4|5|6)")
+
+
 def main() -> int:
     if len(sys.argv) < 2:
-        print("Usage: python -m tools.prod_tui <command> [args...]")
-        print("")
-        print("Commands:")
-        print("  tmux       Manage the local tmux session (start, stop, send, capture)")
-        print("  smoke      Run Level 1 and 2 smoke tests")
-        print("  job        Run the Level 3 controlled job")
-        print("  level      Run Level 4-6 controlled scenarios (--level 4|5|6)")
+        _print_usage()
         return 1
 
     command = sys.argv[1]
     argv = sys.argv[2:]
 
-    if command == "tmux":
+    if command in {"-h", "--help"}:
+        _print_usage()
+        return 0
+
+    if command == "preflight":
+        from tools.prod_tui.preflight import main as preflight_main
+        return preflight_main(argv)
+    elif command == "tmux":
         from tools.prod_tui.robocop_tmux import main as tmux_main
         return tmux_main(argv)
     elif command == "smoke":
@@ -35,7 +47,7 @@ def main() -> int:
         return level_main(argv)
     else:
         print(f"Unknown command: {command}")
-        print("Available commands: tmux, smoke, job, level")
+        print("Available commands: preflight, tmux, smoke, job, level")
         return 1
 
 

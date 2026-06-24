@@ -81,6 +81,13 @@ class Sidebar(Widget):
     active_screen = reactive("overview")
     collapsed = reactive(False)
 
+    def __init__(self) -> None:
+        super().__init__()
+        # User's explicit F2 preference, honored at widths >= 100. ``None`` means
+        # no manual choice yet, so width drives the state. Narrow widths always
+        # force-collapse regardless of this preference.
+        self._manual_collapsed: bool | None = None
+
     def compose(self) -> ComposeResult:
         with Vertical(id="sidebar-inner"):
             yield Static("[bold]Dispatch[/]", id="sidebar-brand")
@@ -111,12 +118,18 @@ class Sidebar(Widget):
     def _sync_collapse_from_app(self) -> None:
         if self.app is None:
             return
-        auto_collapsed = self.app.size.width < 100
-        if auto_collapsed != self.collapsed:
-            self.collapsed = auto_collapsed
+        if self.app.size.width < 100:
+            target = True  # too narrow to fit labels; always collapse
+        elif self._manual_collapsed is not None:
+            target = self._manual_collapsed  # respect the user's F2 choice
+        else:
+            target = False
+        if target != self.collapsed:
+            self.collapsed = target
 
     def toggle_collapsed(self) -> None:
-        self.collapsed = not self.collapsed
+        self._manual_collapsed = not self.collapsed
+        self._sync_collapse_from_app()
 
     def watch_collapsed(self, value: bool) -> None:
         self.set_class(value, "sidebar-collapsed")

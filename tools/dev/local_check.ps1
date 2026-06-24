@@ -28,8 +28,27 @@ if ($LASTEXITCODE -ne 0) {
 
 Set-Location (($repoRoot -join "`n").Trim())
 
+$localTemp = Join-Path $PWD ".local-check-tmp"
+$pytestTemp = Join-Path $PWD ".local-check-pytest"
+
 Invoke-Step "Compile Python sources" @("py", "-m", "compileall", "dispatch", "scr")
-Invoke-Step "Run unit tests" @("py", "-m", "pytest", "tests", "tools/prod_tui/tests", "-q")
+New-Item -ItemType Directory -Force $localTemp | Out-Null
+$oldTemp = $env:TEMP
+$oldTmp = $env:TMP
+try {
+    $env:TEMP = $localTemp
+    $env:TMP = $localTemp
+    Invoke-Step "Run unit tests" @(
+        "py", "-m", "pytest", "tests", "tools/prod_tui/tests", "-q",
+        "--basetemp", $pytestTemp
+    )
+}
+finally {
+    $env:TEMP = $oldTemp
+    $env:TMP = $oldTmp
+    Remove-Item -LiteralPath $localTemp -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $pytestTemp -Recurse -Force -ErrorAction SilentlyContinue
+}
 Invoke-Step "Dispatch help smoke" @("py", "-m", "dispatch", "--help")
 
 Write-Host ""

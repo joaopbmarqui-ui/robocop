@@ -4,7 +4,7 @@
 **Tested version:** 1.1.0  
 **Terminal sizes tested:** 80×24, 120×40, 200×50  
 **Mock scenarios exercised:** `happy_path`, `slow`, `syntax_error`, `auth_error` (no Kerberos)  
-**Test suite:** 120/120 passing, 1 skipped
+**Test suite at audit time:** 120/120 passing, 1 skipped
 
 ---
 
@@ -32,7 +32,7 @@ visibility, responsive narrowing, and progressive-disclosure refinement.
 | Message-based nav | Sidebar uses proper Textual message → `NavItem.Selected` pattern |
 | Reactive state | Used correctly for Kerberos TTL, sidebar highlight |
 | Confirmation modals | Safety hierarchy is well-designed (simple Y/N vs typed confirmation for DROP) |
-| Test coverage | 120 tests including pilot-style UI tests, mock contract, runner integration |
+| Test coverage at audit time | 120 tests including pilot-style UI tests, mock contract, runner integration |
 
 ---
 
@@ -416,7 +416,7 @@ Proposed:
 | Check | Result |
 |-------|--------|
 | `python -m compileall dispatch scr` | ✓ Clean |
-| `pytest tests/ -q` | ✓ 120 passed, 1 skipped |
+| `pytest tests/ -q` | Historical audit run: 120 passed, 1 skipped |
 | 80×24 rendering (via Textual pilot) | ✓ Renders, sidebar compresses content |
 | 120×40 rendering | ✓ Comfortable layout |
 | 200×50 rendering | ✓ Uses space well, no stretched elements |

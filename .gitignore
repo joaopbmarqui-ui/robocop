@@ -1,4 +1,5 @@
 mocks/sent_emails/
+*.zip
 dispatch_deploy.zip
 tools/prod_tui/screens/
 tools/prod_tui/reports/
@@ -6,9 +7,12 @@ tools/prod_tui/logs/
 tools/prod_tui/*.log
 tools/prod_tui/_remote_*.py
 .understand-anything/
+.venv/
 *.pyc
 __pycache__/
 .pytest_cache/
+.local-check-tmp/
+.local-check-pytest/
 .pylint.d/
 build/
 *.egg-info/

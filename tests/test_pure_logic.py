@@ -97,6 +97,26 @@ class TestParseTtlSeconds:
         assert result == 28800
 
 
+@pytest.mark.asyncio
+async def test_has_ticket_returns_false_when_klist_times_out(monkeypatch) -> None:
+    async def fake_run_exec(*_argv: str, timeout: float | None = None):
+        raise TimeoutError("klist timed out")
+
+    monkeypatch.setattr(kerberos.process, "run_exec", fake_run_exec)
+
+    assert await kerberos.has_ticket() is False
+
+
+@pytest.mark.asyncio
+async def test_ticket_ttl_returns_none_when_klist_times_out(monkeypatch) -> None:
+    async def fake_run_exec(*_argv: str, timeout: float | None = None):
+        raise TimeoutError("klist timed out")
+
+    monkeypatch.setattr(kerberos.process, "run_exec", fake_run_exec)
+
+    assert await kerberos.ticket_ttl_seconds() is None
+
+
 # =============================================================================
 # manifest.validate and LEGAL_CELLS
 # =============================================================================
@@ -181,6 +201,24 @@ class TestManifestValidate:
         )
         with pytest.raises(ValueError, match="illegal"):
             manifest.validate(data)
+
+    def test_write_retries_transient_replace_permission_error(self, tmp_path, monkeypatch) -> None:
+        original_replace = Path.replace
+        calls = {"permission_errors": 0}
+
+        def flaky_replace(self: Path, target: Path) -> Path:
+            if self.name == "manifest.tmp" and calls["permission_errors"] == 0:
+                calls["permission_errors"] += 1
+                raise PermissionError("manifest temporarily locked")
+            return original_replace(self, target)
+
+        monkeypatch.setattr(Path, "replace", flaky_replace)
+        path = tmp_path / "manifest.json"
+
+        manifest.write(path, _minimal_manifest())
+
+        assert calls["permission_errors"] == 1
+        assert manifest.load(path)["state"] == "Pending"
 
 
 # =============================================================================

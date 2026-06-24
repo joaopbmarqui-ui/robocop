@@ -7,6 +7,7 @@ import pytest
 
 from tools.prod_tui import controlled_job as cj
 from tools.prod_tui import job_specs, levels
+from tools.prod_tui.robocop_tmux import ProdTuiConfig
 
 
 # --- impala result-row detection (false-positive guard) ---------------------
@@ -181,6 +182,35 @@ def test_controlled_run_csv_path_in_launch_cwd() -> None:
     run = _dummy_run()
     run.launch_cwd = "/tmp"
     assert run.csv_path == f"/tmp/{run.table_name}.csv"
+
+
+def test_controlled_job_reuse_session_messages_use_current_tmux_module_cli() -> None:
+    help_text = cj.build_parser().format_help()
+    normalized_help = " ".join(help_text.split())
+    assert "py -m tools.prod_tui tmux start --config" in normalized_help
+    assert "py tools/prod_tui/robocop_tmux.py" not in help_text
+
+    run = cj.ControlledRun(
+        config=ProdTuiConfig(host="user@edge", repo_path="/repo", session_name="session"),
+        driver=SimpleNamespace(session_exists=lambda: False),  # type: ignore[arg-type]
+        table_name="dispatch_smoke_tester_20260616_010101",
+        reuse_session=True,
+    )
+    with pytest.raises(RuntimeError) as exc_info:
+        cj.controlled_lifecycle(run, dry_run=True)
+    assert "py -m tools.prod_tui tmux start --config" in str(exc_info.value)
+    assert "py tools/prod_tui/robocop_tmux.py" not in str(exc_info.value)
+
+
+def test_levels_reuse_session_message_uses_current_tmux_module_cli() -> None:
+    config = ProdTuiConfig(host="user@edge", repo_path="/repo", session_name="session")
+    driver = SimpleNamespace(session_exists=lambda: False)
+
+    with pytest.raises(RuntimeError) as exc_info:
+        levels._ensure_session(config, driver, reuse_session=True, passcode=None)  # type: ignore[arg-type]
+
+    assert "py -m tools.prod_tui tmux start --config" in str(exc_info.value)
+    assert "py tools/prod_tui/robocop_tmux.py" not in str(exc_info.value)
 
 
 def _dummy_run() -> cj.ControlledRun:

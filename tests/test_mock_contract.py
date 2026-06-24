@@ -2,7 +2,7 @@
 
 ADR-0004 states: "Drift between the orchestrators' real invocation and the
 fake is an integration bug."  These tests verify that the mock accepts every
-argv shape documented in docs/plan.md §13.1 and produces the expected
+argv shape documented in docs/archive/legacy-plans/plan.md §13.1 and produces the expected
 stdout/stderr/exit-code for each combination.
 
 Each test invokes the mock as a real subprocess so the contract is checked at
@@ -29,7 +29,7 @@ IMPALA_SHELL_CMD = (
 
 
 # Base flags as used by Query_Impala_Parametrized.run_on_impala and
-# download_to_csv.run_export_on_impala (docs/plan.md §13.1)
+# download_to_csv.run_export_on_impala (docs/archive/legacy-plans/plan.md §13.1)
 BASE_ARGV = [
     *IMPALA_SHELL_CMD,
     "-k",

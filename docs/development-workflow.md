@@ -89,11 +89,22 @@ git commit -m "Describe the change"
 .\tools\dev\git_sync_status.ps1
 ```
 
-6. Push to Bitbucket when the branch is ready to move to the server:
+6. Publish to Bitbucket only when the branch is ready to move to the server.
+   The corporate deployment remote is a transport surface, not the review
+   archive, so publish an operator-authored snapshot commit on top of the
+   current deployment `main` instead of pushing arbitrary local branch history:
 
 ```powershell
-git push -u bitbucket HEAD
+git fetch bitbucket main
+git switch -c deploy/dispatch-snapshot bitbucket/main
+git reset --soft <reviewed-robocop-commit>
+git commit -m "Deploy snapshot: Dispatch from robocop <sha> (<date>)"
+git push bitbucket HEAD:main
 ```
+
+Do not run a casual `git push -u bitbucket HEAD` for Dispatch deployments.
+That can reintroduce unrelated history or author-hook failures on a transport
+remote.
 
 7. If a temporary VPN bypass is available and the GitHub mirror should be
    updated, push explicitly:
@@ -111,9 +122,7 @@ Preferred path for committed, reviewable deployments:
 
 ```bash
 cd /ads_storage/dispatch
-git fetch bitbucket
-git checkout main
-git pull --ff-only bitbucket main
+GIT_REMOTE=bitbucket GIT_BRANCH=main ./update.sh
 DISPATCH_PYTHON_BIN=$(command -v python3.11 || command -v python3.10) ./install.sh
 ```
 
@@ -121,12 +130,11 @@ For an exact commit:
 
 ```bash
 cd /ads_storage/dispatch
-git fetch bitbucket
-git checkout <commit-sha>
+GIT_REMOTE=bitbucket GIT_BRANCH=main ./update.sh <commit-sha>
 DISPATCH_PYTHON_BIN=$(command -v python3.11 || command -v python3.10) ./install.sh
 ```
 
-Rollback is the same shape: checkout the previous known-good commit and rerun
+Rollback is the same shape: update to the previous known-good commit and rerun
 `install.sh`.
 
 Node 03 and node 04 have independent filesystems. Update and validate each node
@@ -201,7 +209,8 @@ Never inject `Ctrl-C` into psmux sessions. Use the harness return/quit paths and
 - Do not commit passcodes, Kerberos passwords, personal config, or downloaded
   ad hoc server files.
 - Keep `scr/` changes narrow and follow ADR-0005.
-- Prefer Bitbucket pull or exact-commit checkout for deployments that should be
-  reproducible later.
+- Prefer Bitbucket-backed reset or exact-commit update for deployments that
+  should be reproducible later, using `update.sh` on the Edge Node so the shared tree is
+  reset to the committed state and permissions are reasserted.
 - Use `_seam_deploy verify` after any manual server edit to detect drift before
   running production checks.

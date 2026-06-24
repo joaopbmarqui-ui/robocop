@@ -16,6 +16,7 @@ $RemotePort = 2222
 $RemotePath = "/ads_storage/dispatch"
 $ZipName = "dispatch_deploy.zip"
 $SetupScript = "install.sh"
+$UpdateScript = "update.sh"
 $VendorDir = "vendor"
 $PythonRemote = "python3" # Uses whatever python3 is on the PATH (3.10 or 3.11)
 
@@ -59,7 +60,7 @@ $PyScript = @"
 import zipfile, os
 
 zip_name = '$ZipName'
-items = ['dispatch', 'scr', 'vendor', 'install.sh', 'pyproject.toml', 'requirements.txt', 'VERSION', 'README.md', 'docs']
+items = ['dispatch', 'scr', 'vendor', 'install.sh', 'update.sh', 'pyproject.toml', 'requirements.txt', 'VERSION', 'README.md', 'docs']
 
 print(f'Creating {zip_name}...')
 with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zf:
@@ -122,7 +123,7 @@ $RemoteCommand = "cd $RemotePath && " +
                  "echo '--- Verifying extraction ---' && " +
                  "ls -F && " +
                  "echo '--- Running Setup ---' && " +
-                 "chmod +x $SetupScript && " +
+                 "chmod +x $SetupScript $UpdateScript && " +
                  "DISPATCH_PYTHON_BIN=`$(command -v python3.11 || command -v python3.10) ./$SetupScript"
 
 Write-Host "Executing setup on remote server..."

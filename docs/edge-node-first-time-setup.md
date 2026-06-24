@@ -27,7 +27,7 @@ python -m pip download -r requirements.txt -d vendor
 For Windows-to-Linux transfers or unstable connections, upload a single ZIP archive to avoid `scp`/`rsync` overhead and potential file corruption.
 
 ```powershell
-Compress-Archive -Path dispatch, scr, vendor, install.sh, pyproject.toml, requirements.txt, VERSION, README.md, docs -DestinationPath dispatch_deploy.zip
+Compress-Archive -Path dispatch, scr, vendor, install.sh, update.sh, pyproject.toml, requirements.txt, VERSION, README.md, docs -DestinationPath dispatch_deploy.zip
 ```
 
 ## 2. Upload the repo to the Edge Node
@@ -64,17 +64,14 @@ Normal update:
 
 ```bash
 cd /ads_storage/dispatch
-git fetch bitbucket
-git checkout main
-git pull --ff-only bitbucket main
+GIT_REMOTE=bitbucket GIT_BRANCH=main ./update.sh
 ```
 
 Exact-commit deploy:
 
 ```bash
 cd /ads_storage/dispatch
-git fetch bitbucket
-git checkout <commit-sha>
+GIT_REMOTE=bitbucket GIT_BRANCH=main ./update.sh <commit-sha>
 ```
 
 Rollback uses the same shape: checkout the previous known-good commit, then run
@@ -110,7 +107,7 @@ From the deployed tree:
 
 ```bash
 cd /ads_storage/dispatch
-chmod +x install.sh
+chmod +x update.sh install.sh
 DISPATCH_EMAIL=you@example.com DISPATCH_PYTHON_BIN=$(command -v python3.11) ./install.sh
 ```
 

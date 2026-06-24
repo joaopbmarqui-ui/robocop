@@ -77,6 +77,6 @@ if ($LASTEXITCODE -eq 0) {
 }
 
 Write-Host ""
-Write-Host "When ready to publish this branch to Bitbucket, run:"
-Write-Host "  git push -u $Remote HEAD"
+Write-Host "When ready to publish to Bitbucket, use the snapshot flow in docs/development-workflow.md."
+Write-Host "Do not push the current branch directly to the deployment remote."
 exit 0

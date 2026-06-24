@@ -117,8 +117,9 @@ key/action → capture again → assert the expected state.
 Use [docs/development-workflow.md](./development-workflow.md) as the canonical
 workflow. Choose the deployment path before running production checks:
 
-- **Bitbucket pull:** preferred for committed, reviewable deployments. Pull the
-  branch or exact commit on each Edge Node, run `install.sh`, then validate.
+- **Bitbucket reset via `update.sh`:** preferred for committed, reviewable
+  deployments. Reset the shared tree to the branch or exact commit on each Edge
+  Node, run `install.sh`, then validate.
 - **`_seam_deploy sync`:** fast iteration for authenticated sessions. It syncs
   drifted `dispatch/` Python files and reports `scr/` drift without deploying
   it.

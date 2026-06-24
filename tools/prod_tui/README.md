@@ -203,8 +203,8 @@ ADR-0005 human review for merging that change.
 
 ### Which deploy path to use
 
-- Use a Bitbucket pull on the Edge Node for committed deployments that should be
-  reproducible and reviewable.
+- Use Bitbucket-backed `update.sh` on the Edge Node for committed deployments
+  that should be reproducible and reviewable.
 - Use `_seam_deploy sync` for fast local-to-node iteration after the node's
   tmux/SSH/Kerberos session is already healthy.
 - Use `_seam_deploy deploy-all` only for an intentional parity operation that

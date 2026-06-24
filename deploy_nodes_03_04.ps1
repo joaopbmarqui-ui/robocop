@@ -10,6 +10,7 @@ $RemotePort = 2222
 $RemotePath = "/ads_storage/dispatch"
 $ZipName = "dispatch_deploy.zip"
 $SetupScript = "install.sh"
+$UpdateScript = "update.sh"
 
 if (-not (Test-Path $ZipName)) {
     Write-Error "Missing $ZipName. Run deploy_and_install.ps1 steps 1-2 first."
@@ -54,7 +55,7 @@ function Deploy-ToNode {
         "echo '--- Verifying extraction ---' && " +
         "ls -F && " +
         "echo '--- Running Setup ---' && " +
-        "chmod +x $SetupScript && " +
+        "chmod +x $SetupScript $UpdateScript && " +
         "DISPATCH_PYTHON_BIN=`$(command -v python3.11 || command -v python3.10) ./$SetupScript && " +
         "echo '--- Verifying dispatch ---' && " +
         "~/.local/bin/dispatch --help | head -5 && " +

@@ -559,15 +559,13 @@ py -m pip install -e ".[dev]"
 
 Use three deployment paths, each with a clear purpose.
 
-### 1. Git Pull on the Edge Node
+### 1. Git Reset on the Edge Node
 
 Preferred for committed, reviewable deployments:
 
 ```bash
 cd /ads_storage/<tool>
-git fetch <deployment-remote>
-git checkout main
-git pull --ff-only <deployment-remote> main
+GIT_REMOTE=<deployment-remote> GIT_BRANCH=main ./update.sh
 TOOL_PYTHON_BIN=$(command -v python3.11 || command -v python3.10) ./install.sh
 ```
 
@@ -578,13 +576,17 @@ Use a tool-specific variable name in real projects, for example
 Use exact commit checkout for release validation or rollback:
 
 ```bash
-git fetch <deployment-remote>
-git checkout <commit-sha>
+GIT_REMOTE=<deployment-remote> GIT_BRANCH=main ./update.sh <commit-sha>
 ./install.sh
 ```
 
 For production promotion, exact commits are better than branch names. Branch
 names are convenient; commit IDs are auditable.
+
+`update.sh` should fetch the deployment remote, `git reset --hard` the shared
+tree to the target ref, and reassert shared read/execute permissions. It must
+not `git clean`, because per-node untracked runtime/vendor artifacts can be
+intentionally present.
 
 Recommended update record:
 

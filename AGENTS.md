@@ -43,6 +43,18 @@ For any work touching `dispatch/app.py`, `dispatch/screens/`, `dispatch/widgets/
 
 The skill contains the project-specific rules for Textual architecture, performance, SSH-terminal UX, mocks, and validation.
 
+## Edge deployment skill
+
+For Bitbucket snapshot publishing, Edge Node updates, tmux/SSH deployment,
+remote smoke checks, or shared `/ads_storage/dispatch` permission fixes, use:
+
+```text
+.agents/skills/dispatch-edge-deploy/SKILL.md
+```
+
+The skill captures the repeatable procedure for deploying Dispatch through the
+corporate `bitbucket` remote and validating node03/node04.
+
 ## Improve skill
 
 For codebase audits, improvement opportunities, roadmap suggestions, or self-contained implementation plans for other agents to execute, use:

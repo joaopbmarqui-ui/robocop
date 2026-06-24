@@ -246,7 +246,7 @@ operator-authenticated session, at `/ads_storage/dispatch`:
 ### Phase 4 — Credentials (Q3)
 - Determine the credential mechanism actually in use on each node (SSH deploy
   key vs stored HTTPS cred vs cache). Confirm against the model's preferred
-  order. Flag any embedded-token URLs (`https://user:token@…`) as a finding.
+  order. Flag any Git remote URL with embedded credentials as a finding.
 
 ### Phase 5 — Production harness conformance
 - Run the **read-only** harness levels that do not mutate state, reusing an

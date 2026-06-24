@@ -904,13 +904,9 @@ This reduces repeated prompts during one operator session, but it is not a full
 automation solution. Prefer an approved secure store or service identity if the
 tool must update without a human present.
 
-Do not use:
+Do not store credentials in Git remote URLs.
 
-```bash
-https://user:token@host/path/repo.git
-```
-
-URLs with embedded credentials leak through shell history, process lists,
+Embedded credentials leak through shell history, process lists,
 terminal captures, Git config, and support screenshots.
 
 ## Rollback

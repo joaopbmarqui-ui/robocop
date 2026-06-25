@@ -161,8 +161,8 @@ def test_pending_rows_match_completion_audit_matrix() -> None:
     audit = AUDIT.read_text(encoding="utf-8")
 
     pending = [row for row in rows if re.search(r"pending", row["retest_status"], re.IGNORECASE)]
-    count_match = re.search(r"Remaining real-environment retest gates: (\d+) rows", audit)
-    guard_match = re.search(r"until the (\d+) pending tracker rows", audit)
+    count_match = re.search(r"Remaining real-environment retest gates: (\d+) rows?", audit)
+    guard_match = re.search(r"until the (\d+) pending tracker rows?", audit)
 
     assert count_match is not None
     assert guard_match is not None
@@ -214,7 +214,7 @@ def test_completion_audit_states_not_complete_while_pending_gates_remain() -> No
     rows = _tracker_rows()
     audit = AUDIT.read_text(encoding="utf-8")
     pending = [row for row in rows if re.search(r"pending", row["retest_status"], re.IGNORECASE)]
-    verdict_match = re.search(r"Not complete\..*?(\d+) real-environment user-story gates pending", audit, re.DOTALL)
+    verdict_match = re.search(r"Not complete\..*?(\d+) real-environment user-story gates? pending", audit, re.DOTALL)
 
     assert pending
     assert "## Prompt-To-Artifact Checklist" in audit

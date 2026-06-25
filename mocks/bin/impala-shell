@@ -122,6 +122,10 @@ def handle_schema_query(tag: str) -> int:
     real Impala metadata commands.  Returns exit code 0 for all known tags.
     """
     if tag == "SHOW_TABLES":
+        # Real impala-shell runs with --print_header, so SHOW TABLES emits the
+        # single "name" column header before the data rows. Reproduce it so the
+        # show_tables parser is exercised against faithful output.
+        print("name")
         print("dispatch_result")
         print("dispatch_monthly_fulljoin")
         return 0

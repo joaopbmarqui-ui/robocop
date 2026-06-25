@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
 
+from tools.prod_tui.reporting import OperationReport, ReportCheck, node_name_from_host, write_report
 from tools.prod_tui.robocop_tmux import DEFAULT_CONFIG_PATH, ProdTuiConfig, load_config
 
 
@@ -100,18 +101,35 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def _write_json_report(path: str | Path, *, config_path: str, result: TcpPreflightResult) -> None:
-    report_path = Path(path)
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    report = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "config": config_path,
-        "host": result.endpoint.user_host,
-        "endpoint": f"{result.endpoint.hostname}:{result.endpoint.port}",
-        "resolved_addresses": list(result.resolved_addresses),
-        "connected": result.connected,
-        "error": result.error,
-    }
-    report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    report = OperationReport(
+        operation="preflight",
+        status="passed" if result.connected else "blocked",
+        node=node_name_from_host(result.endpoint.user_host),
+        host=result.endpoint.user_host,
+        repo_path=load_config(config_path).repo_path,
+        deployment_commit="not_applicable",
+        install_decision="not_applicable",
+        checks=[
+            ReportCheck(
+                name="tcp_connectivity",
+                passed=result.connected,
+                message=result.error or "TCP 2222 reachable",
+                evidence={
+                    "endpoint": f"{result.endpoint.hostname}:{result.endpoint.port}",
+                    "resolved_addresses": list(result.resolved_addresses),
+                },
+            )
+        ],
+        extra={
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "config": config_path,
+            "endpoint": f"{result.endpoint.hostname}:{result.endpoint.port}",
+            "resolved_addresses": list(result.resolved_addresses),
+            "connected": result.connected,
+            "error": result.error,
+        },
+    )
+    write_report(path, report)
 
 
 def main(argv: list[str] | None = None) -> int:

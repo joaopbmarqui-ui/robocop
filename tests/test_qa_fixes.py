@@ -84,6 +84,26 @@ def test_impala_query_timeout_has_message(monkeypatch) -> None:
     asyncio.run(run())
 
 
+def test_show_tables_strips_impala_shell_name_header(monkeypatch) -> None:
+    """impala-shell --print_header emits a "name" column header for SHOW TABLES.
+
+    It must not be returned as a phantom table (found on real Edge: the header
+    inflated the count and made the auto-describe of row 0 fail with
+    "Could not resolve path: 'schema.name'").
+    """
+    async def fake_query(sql: str) -> str:
+        return "name\ndispatch_smoke_a\ndispatch_smoke_b\n"
+
+    monkeypatch.setattr(impala, "query", fake_query)
+
+    async def run() -> None:
+        tables = await impala.show_tables("aa_enc", "dispatch_smoke_*")
+        assert tables == ["dispatch_smoke_a", "dispatch_smoke_b"]
+        assert "name" not in tables
+
+    asyncio.run(run())
+
+
 # ── New Job validation (F1-F5) ───────────────────────────────────────────
 
 def _new_job_screen(app: DispatchApp, cwd: Path) -> NewJobScreen:

@@ -14,7 +14,20 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   exit 1
 fi
 
-git fetch --prune "$REMOTE_NAME" "$BRANCH_NAME:$REMOTE_REF"
+FETCH_OUTPUT=$(git fetch --prune "$REMOTE_NAME" "$BRANCH_NAME:$REMOTE_REF" 2>&1) || {
+  FETCH_STATUS=$?
+  case "$FETCH_OUTPUT" in
+    *"cannot lock ref '$REMOTE_REF'"*)
+      echo "Detected stale remote-tracking ref at $REMOTE_REF; repairing and retrying..." >&2
+      git update-ref -d "$REMOTE_REF"
+      git fetch --prune "$REMOTE_NAME" "$BRANCH_NAME:$REMOTE_REF"
+      ;;
+    *)
+      printf '%s\n' "$FETCH_OUTPUT" >&2
+      exit "$FETCH_STATUS"
+      ;;
+  esac
+}
 git reset --hard "$TARGET_REF"
 
 # Keep the shared tree readable/traversable for analysts. Git restores tracked

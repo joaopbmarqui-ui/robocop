@@ -103,8 +103,8 @@ py -m tools.prod_tui job --config tools/prod_tui/config.yaml --dry-run
 ```
 
 Do not run `tmux start`, `smoke`, `job`, or `level` until the selected node's
-preflight report shows `connected: true`. A failed preflight is the validation
-artifact for `DOC-010`, not a reason to consume an RSA code.
+preflight report shows `connected: true`. A failed preflight is the validation artifact
+for `DOC-010`, not a reason to consume an RSA code.
 
 For node 04, use `tools/prod_tui/config-node04.yaml` consistently for the
 preflight, tmux, smoke, job, level, and deploy commands.
@@ -118,8 +118,19 @@ Use [docs/development-workflow.md](./development-workflow.md) as the canonical
 workflow. Choose the deployment path before running production checks:
 
 - **Bitbucket reset via `update.sh`:** preferred for committed, reviewable
-  deployments. Reset the shared tree to the branch or exact commit on each Edge
-  Node, run `install.sh`, then validate.
+  deployments. Use the public harness commands so the node update, install
+  decision, drift evidence, and JSON report share one command shape:
+
+  ```powershell
+  py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <deployment-sha> --install auto --json-report tools/prod_tui/reports/deploy-node03.json
+  py -m tools.prod_tui drift --config tools/prod_tui/config.yaml --commit <deployment-sha> --json-report tools/prod_tui/reports/drift-node03.json
+  ```
+
+  Exact-SHA rollback uses the same surface:
+
+  ```powershell
+  py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <previous-good-sha> --rollback-from <current-bad-sha> --json-report tools/prod_tui/reports/rollback-node03.json
+  ```
 - **`_seam_deploy sync`:** fast iteration for authenticated sessions. It syncs
   drifted `dispatch/` Python files and reports `scr/` drift without deploying
   it.

@@ -62,13 +62,24 @@ def test_active_operator_docs_prefer_update_sh_over_pull_based_sync() -> None:
 def test_deployment_remote_docs_use_snapshot_publish_discipline() -> None:
     workflow = _read("docs/development-workflow.md")
     status_script = _read("tools/dev/git_sync_status.ps1")
+    publish_script = _read("tools/dev/publish_dispatch_snapshot.ps1")
 
     assert "operator-authored snapshot commit" in workflow
-    assert "git reset --soft <reviewed-robocop-commit>" in workflow
+    assert ".\\tools\\dev\\publish_dispatch_snapshot.ps1 -ReviewedCommit <reviewed-robocop-commit> -RunLocalCheck" in workflow
+    assert "git switch -c deploy/dispatch-snapshot <reviewed-robocop-commit>" in workflow
+    assert "git reset --soft bitbucket/main" in workflow
     assert "git push bitbucket HEAD:main" in workflow
     assert "Do not run a casual `git push -u bitbucket HEAD`" in workflow
-    assert "snapshot flow in docs/development-workflow.md" in status_script
+    assert "publish_dispatch_snapshot.ps1" in status_script
+    assert "snapshot flow in docs/development-workflow.md" not in status_script
     assert "git push -u $Remote HEAD" not in status_script
+    assert "[string]$ReviewedCommit" in publish_script
+    assert "[switch]$RunLocalCheck" in publish_script
+    assert "[switch]$LocalCheckPassed" in publish_script
+    assert "[switch]$DryRun" in publish_script
+    assert "switch -C $TempBranch $resolvedReviewedCommit" in publish_script
+    assert "reset --soft $remoteRef" in publish_script
+    assert "HEAD:$Branch" in publish_script
 
 
 def test_artifact_and_line_ending_hygiene_matches_operating_model() -> None:

@@ -23,33 +23,30 @@ Current tracker audit:
 
 - Rows: 64
 - Feature status values: all 64 rows are `Implemented`
-- Remaining real-environment retest gates: 27 rows
+- Remaining real-environment retest gates: 1 row
 
 Current verdict:
 
-- Not complete. The local inventory, fixes, and retests are complete, but the
-  active objective still has 27 real-environment user-story gates pending. The
-  current preflight reports show both configured Edge nodes are unreachable on
-  TCP 2222, so the Edge/Kerberos/Impala/SSH retest loop cannot start yet.
+- Not complete. The local inventory, fixes, and retests are complete; a first
+  authenticated node03 Edge session on 2026-06-24 closed 11 harness gates
+  (preflight, smoke, the controlled job, and Levels 4-6); a 2026-06-24 local
+  Textual SVG-capture pass closed 4 pure-UI gates (APP-002, APP-003, SIDE-002,
+  PREV-002); JOB-018 was accepted as mock-covered; and a second human-driven
+  node03 session on 2026-06-24 closed 10 more gates (Impala browse/describe/drop,
+  live-log follow/pause/search/copy, process-group cancellation, ticket-refusal
+  plus the in-app credential refresh, and the scratch-only cleanup doc
+  execution). The active objective has
+  1 real-environment user-story gate pending.
+  TCP 2222 is reachable; the one remaining gate, BR-001, is blocked by
+  a metadata-list header defect found during the live session — its fix is
+  landed and locally tested but awaits redeployment and a list/count/auto-describe
+  retest.
 
 Pending retest rows by area:
 
 | Area | Count |
 |---|---:|
-| App shell | 3 |
-| Browser | 3 |
-| Dashboard | 1 |
-| Impala wrapper | 1 |
-| Install | 1 |
-| Job Detail | 2 |
-| Kerberos | 1 |
-| New Job | 3 |
-| Orchestrator outcomes | 1 |
-| Production docs | 4 |
-| Production harness | 1 |
-| Runner | 4 |
-| Sidebar | 1 |
-| SQL Preview | 1 |
+| Browser | 1 |
 
 The tracker columns are:
 
@@ -73,11 +70,11 @@ The tracker columns are:
 | Use subagents to inventory features | Explorer agents inspected UI shell/screens, New Job/browser validation, runner/manifest/install/mocks, test coverage, and pending local-testable gaps. | Complete for local code inventory. |
 | Every feature has a user story and expected behavior | `docs/dispatch_user_story_tracker.csv` has 64 rows with `feature_id`, `area`, `user_story`, and `expected_behavior`. | Complete. |
 | Single canonical spreadsheet tracks feature status | `docs/dispatch_user_story_tracker.csv` is the only canonical tracker. | Complete. |
-| Test every user story | Local automated coverage was expanded and rerun; tracker records local and manual evidence per row. | Locally complete; Edge-only user stories still require real environment retest. |
+| Test every user story | Local automated coverage was expanded and rerun; tracker records local and manual evidence per row; two 2026-06-24 node03 sessions added real Edge evidence for 21 rows. | Locally complete; 1 Edge-only user story (BR-001) awaits a post-redeploy retest; JOB-018 accepted as mock-covered. |
 | Document all errors | `errors_found`, `fix_status`, and `retest_status` columns document discovered issues and remaining gaps. | Complete for discovered local/logistical/UX issues. |
 | Fix logistical or UX errors | Fixed sidebar shortcut/action scope, docs policy conflicts, Python version smoke command, stale audit wording, and CSV launch-CWD smoke guidance. | Complete for locally reproducible logistical/UX errors found. |
 | Retest post-fix behavior | Focused tests plus full local test workflow passed. | Locally complete. |
-| Complete real Edge validation | No active `robocop-prod-test` or `robocop-prod-test-04` tmux session exists; current preflight reports under `tools/prod_tui/reports/preflight-node03.json` and `tools/prod_tui/reports/preflight-node04.json` show `connected: false`; older smoke/job/level reports predate today's changes. | Incomplete until TCP 2222 is reachable and a human-authenticated Edge session is available. |
+| Complete real Edge validation | 2026-06-24 node03 session: preflight `connected: true`, smoke 21/22 (psmux geometry host limit), controlled job and Levels 4-6 all passed; reports under `tools/prod_tui/reports/*-node03-edge.json`. | Partially complete: 26 gates closed (21 via two node03 Edge sessions, 4 via local Textual UI captures under `tools/prod_tui/reports/ui-captures/`, JOB-018 accepted as mock-covered), 1 human-at-terminal gate (BR-001) remains pending a post-redeploy retest. |
 
 ## Code-Surface Coverage Spot Check
 
@@ -194,55 +191,34 @@ Result: parsed successfully with 64 rows.
 
 ## Remaining Real-Environment Gates
 
-These gates cannot be closed by local mocks or historical reports because they require current code running in a human-authenticated Edge Node session with Kerberos and Impala:
+Two 2026-06-24 node03 sessions closed the harness-coverable gates (launch CWD,
+plain CSV, Table+CSV, detached survival, install/upgrade, Python detection,
+preflight, harness SSH smoke, and the healthy `klist` status strip) and then the
+human-driven interactive gates: low/missing Kerberos launch refusal and the
+status strip's missing/low states, real interactive `kinit`, Impala metadata
+browse/describe/UI DROP confirmation, POSIX job cancellation, noisy live-log
+follow/pause/search/copy, and the Level 3/3a safety and scratch-only cleanup doc
+execution. One gate remains:
 
-- Launch CWD behavior on Edge Node.
-- SSH terminal delivery of `F2`, resize behavior, and visual sidebar collapse.
-- Real `klist` and low/missing Kerberos ticket behavior.
-- Real interactive `kinit` prompt behavior.
-- Terminal clipboard behavior for SQL preview copy.
-- Real Impala metadata browsing and schema inspection.
-- Real Linux/POSIX job cancellation.
-- Plain CSV output smoke on Edge Node.
-- Table + CSV end-to-end lifecycle.
-- Detached runner survival across terminal disconnect.
-- Real cluster queue-full/retry/fatal outcomes.
-- Edge install path validation.
-- Updated production docs command execution on Edge Node.
+- BR-001: after redeploying the metadata-list header fix, confirm the Browser
+  table list excludes the column header, the count is accurate, and the first
+  row auto-describes a real table.
 
 Pending tracker rows mapped to the next Edge validation route:
 
 | Feature | Route | Required evidence |
 |---|---|---|
-| APP-001 | Manual TUI smoke | `dispatch` launched from a SQL directory, then New Job shows/uses that launch CWD. |
-| APP-002 | Manual SSH terminal smoke | `?`, `F2`, and command palette bindings work in the real SSH terminal. |
-| APP-003 | Manual SSH terminal smoke | Terminal resize below 80x24 shows the minimum-size warning without corrupting layout. |
-| SIDE-002 | Manual SSH terminal smoke | Sidebar auto-collapses below width 100 and manual `F2` collapse/expand remains usable. |
-| DASH-002 | Kerberos smoke | Dashboard status strip reflects healthy, missing, and low-ticket `klist` states. |
-| NJ-001 | Manual TUI smoke | New Job opened from launch CWD keeps SQL-file defaults tied to that directory. |
-| NJ-007 | Kerberos/form validation smoke | Invalid email, missing SQL, missing ticket, and low-ticket cases block launch with inline feedback. |
-| NJ-008 | Kerberos smoke | `K` opens real interactive `kinit`, then refreshes ticket status after completion. |
-| PREV-002 | Manual SSH terminal smoke | Preview copy/return bindings behave acceptably in the real terminal clipboard environment. |
-| BR-001 | Impala smoke | Browser loads real tables with schema/filter, selection status, and action buttons. |
-| BR-002 | Impala smoke | Browser describes a selected real table and renders parsed schema output. |
-| BR-003 | Impala smoke / DROP smoke | Scratch `dispatch_smoke_*` DROP confirmation/reload/result tested against real Impala scratch schema. |
-| JOB-002 | Live log smoke | A noisy real job supports follow/pause, top/bottom jumps, search, and copy job id. |
-| JOB-003 | Linux cancellation smoke | Slow running job cancel first rejects, then confirms and sends POSIX process-group termination. |
-| JOB-006 | Level 3a/4 CSV smoke | Controlled CSV job writes plain CSV in launch CWD and does not create gzip/job-dir CSV output. |
-| JOB-007 | Level 4 job-type breadth | Table + CSV creates table first, then exports via a separate CSV step. |
-| JOB-010 | Disconnect survival smoke | Slow job continues after terminal disconnect/reconnect with manifest/log progress intact. |
-| JOB-013 | Linux cancellation smoke | Runner handles SIGTERM and marks the job Cancelled. |
-| JOB-015 | Kerberos smoke | Real `klist`/`kinit` behavior enforces missing and low-ticket refusal. |
-| JOB-016 | Impala smoke | Impala wrapper performs real SHOW/DESCRIBE/DROP scratch-schema metadata operations. |
-| JOB-018 | Cluster outcome smoke | Real cluster retry/fatal/queue-full behavior is visible and classified correctly. |
-| JOB-019 | Edge install smoke | `install.sh` succeeds with `DISPATCH_EMAIL` and detected `DISPATCH_PYTHON_BIN`. |
-| DOC-001 | Production smoke doc execution | Level 3/3a safety and cleanup instructions work as written on Edge. |
-| DOC-002 | Edge install/doc command execution | Documented Python detection commands work on Edge. |
-| DOC-005 | Production harness SSH smoke | Live Edge SSH/network/auth prompt reaches actionable prompt path, or current failure is recorded with no traceback/stale session. |
-| DOC-007 | Level 4 job-type breadth | Production docs' Level 3a-to-Level 4 mapping is validated by the executable harness. |
-| DOC-010 | Edge TCP preflight | TCP 2222 preflight against configured Edge node succeeds before RSA/Kerberos validation, or failure remains documented as blocker. |
+| BR-001 | Impala smoke / redeploy | Header fix redeployed; the Browser table list excludes the column header, the count is accurate, and auto-describe targets a real table. |
 
 No active local tmux sessions named `robocop-prod-test` or `robocop-prod-test-04` were found during this audit; `psmux ls` on `2026-06-22 06:05 -03:00` showed only unrelated `autobench-bitbucket-auth` and `autobench-workflow` sessions. DNS still resolves the configured hosts to `hde2stl020003.mastercard.int` -> `10.154.178.38` and `hde2stl020004.mastercard.int` -> `10.154.178.39`. After the local psmux startup fix, non-secret start attempts against both configured nodes sent the SSH command correctly, but timed out before any Edge shell or authentication prompt appeared. Direct TCP checks on `2026-06-22 05:54 -03:00` showed both hosts reachable by ping from `172.30.19.54` on `Ethernet 6`, but both failed TCP 2222: `hde2stl020003.mastercard.int:2222` (`10.154.178.38`, ping RTT 189 ms, `TcpTestSucceeded: False`) and `hde2stl020004.mastercard.int:2222` (`10.154.178.39`, ping RTT 185 ms, `TcpTestSucceeded: False`). Bounded socket preflights at `2026-06-21 21:52:10 -03:00`, `2026-06-21 22:05:53 -03:00`, and `2026-06-21 22:40:46 -03:00` all timed out after 5 seconds for both hosts on port 2222. The config-driven harness preflight was also run at `2026-06-21 22:48 -03:00`: `py -m tools.prod_tui preflight --config tools/prod_tui/config.yaml --timeout 5` resolved `10.154.178.38` and failed with `TCP preflight: FAIL - timed out`; `py -m tools.prod_tui preflight --config tools/prod_tui/config-node04.yaml --timeout 5` resolved `10.154.178.39` and failed with `TCP preflight: FAIL - timed out`. The latest report-producing rerun at `2026-06-22 06:05 -03:00` refreshed `tools/prod_tui/reports/preflight-node03.json` and `tools/prod_tui/reports/preflight-node04.json`; the node 03 report has `generated_at: 2026-06-22T09:06:04.538545+00:00`, the node 04 report has `generated_at: 2026-06-22T09:06:04.571257+00:00`, and both reports have `connected: false`, `error: timed out`, and the expected resolved addresses (`10.154.178.38` and `10.154.178.39`). Failed starts now clean up their local tmux sessions, so there is no reusable Robocop session. The available production reports from before these preflight runs are historical and predate the current local changes, so they are not accepted as completion evidence for the post-fix retest requirement.
+
+Update 2026-06-24: TCP 2222 became reachable and an authenticated node03 session completed the harness suite against the current code. `tools/prod_tui/reports/preflight-node03.json` and `preflight-node04.json` now report `connected: true`. Captured reports: `smoke-node03-edge.json` (21/22; the only failure is the psmux host limit that caps the detached window at 120x30 instead of 120x40, still well above the 80x24 minimum), `job-node03-edge.json` (Level 3 controlled job full pass, including an Impala table verify and scratch cleanup), `level4-node03-edge.json` (Level 4 full pass across SqlFile->Csv, SqlFile->Table+Csv, SqlTemplate->Table, the SqlFile->Table seed, and ExistingTable->Csv), `level5-node03-edge.json` (5/5: concurrency cap, illegal-destination auto-correct, and detached-runner survival across a TUI quit), and `level6-node03-edge.json` (27/27: table data correctness, a soak loop, and upgrade-in-place install). Connection stability required running one harness process per authenticated session with no ad-hoc `tmux` pokes; interleaving manual `capture-pane`/`send-keys` against the live pane is what destabilized earlier runs, and SSH keepalives (`ServerAliveInterval=30 ServerAliveCountMax=1000`) were added to both harness configs. This session closed 11 tracker gates; the remaining 16 need a human-at-terminal SSH pass, interactive Kerberos, or forced failure/queue-full conditions that are mock-covered by design.
+
+Update 2026-06-24 (UI captures): with the node03 SSH session timed out (auto-logout), the four pure-UI gates that depend only on Textual rendering and keybindings — APP-002, APP-003, SIDE-002, and PREV-002 — were validated by driving the real `dispatch.app.DispatchApp` through Textual's `run_test` pilot and exporting native SVG screenshots. `tools/dev/ui_captures.py` builds a clean mock environment (temp data root with config and matching `installed_version`, a healthy ticket TTL, and a launch directory holding a SQL file) and writes nine content-verified SVGs to `tools/prod_tui/reports/ui-captures/`: the global help map and the Ctrl+P command palette listing Overview / New Job / History / Browse metadata / Refresh Kerberos (kinit) (APP-002, also asserted directly against `get_system_commands`); the below-minimum 70x20 size warning and a usable 80x24 layout (APP-003); the expanded sidebar versus auto-collapse under width 100 and manual F2 collapse with the active item and ticket chip retained (SIDE-002); and the SQL preview action bar showing only Copy SQL and Back with no Launch button plus the copy-to-clipboard notification (PREV-002). Toast notifications are not painted by the offline `save_screenshot` compositor, so the size warning and copy notification are asserted from the app's live notification state. SSH keystroke delivery for these bindings was already exercised by the 2026-06-24 node03 harness smoke run; the SVG captures add faithful rendering proof. This closed APP-002, APP-003, SIDE-002, and PREV-002, leaving 12 pending rows that require interactive Kerberos, real Impala metadata, real Linux/POSIX cancellation, a noisy live-log pass, or forced cluster outcomes.
+
+Update 2026-06-24 (JOB-018 disposition): the owner accepted JOB-018 (retryable/fatal/queue-full orchestrator outcomes) as mock-covered rather than deliberately forcing real cluster failure or queue-full conditions on shared capacity. Its behavior is exercised by automated mock scenarios (`syntax_error`, `auth_error`, `table_not_found`, `memory_exceeded`, `all_queues_full`) and the runner/queue-guidance regressions in `tests/test_runner_integration.py`, `tests/test_mock_contract.py`, and `tests/test_production_polish.py::test_job_detail_queue_failure_surfaces_capacity_guidance`. This drops the pending set to 11, all of which require interactive Kerberos, real Impala metadata, real Linux/POSIX cancellation, a noisy live-log pass, or executed smoke-doc confirmation.
+
+Update 2026-06-24 (second node03 session): a second human-driven, authenticated node03 session closed 10 of the 11 remaining gates. Kerberos: the New Job inline summary flagged a missing ticket and disabled launch, and the in-app `k` credential refresh restored a healthy TTL (599m) and re-enabled launch (NJ-007, NJ-008, JOB-015). Impala: the Browser described a scratch table into parsed Column/Type/Comment output and dropped a `dispatch_smoke_*` scratch table after exact-name confirmation, with SHOW/DESCRIBE/DROP exercised through the wrapper (BR-002, BR-003, JOB-016). Live log and cancellation: a synthetic long-running job exercised follow/pause, top/bottom jumps, search, and copy-job-id on a streaming log, and a cancel was rejected then confirmed, sending process-group termination so the runner marked the job Cancelled (JOB-002, JOB-003, JOB-013). Docs: the executed scratch DROP matched the Level 3/3a safety and scratch-only cleanup policy, which read consistently across `docs/production_testing.md` and `docs/edge-node-smoke-test.md` (DOC-001). The session also surfaced one defect: SHOW TABLES kept the `impala-shell --print_header` `name` column header as a phantom table, inflating the count and breaking auto-describe of the first row. The fix (header stripping in `dispatch/impala.py` plus a faithful mock header and a regression test, full suite 224 passed) is landed and locally tested but not yet redeployed, so BR-001 stays pending its post-redeploy retest. This leaves 1 pending row.
 
 ## Next Required Action
 
@@ -270,4 +246,4 @@ py -m tools.prod_tui level --config tools/prod_tui/config.yaml --level 6 --reuse
 
 Repeat with `tools/prod_tui/config-node04.yaml` if node 04 is the intended validation target.
 
-Do not mark the active goal complete until the 27 pending tracker rows have current Edge evidence or the user explicitly accepts those rows as out of scope.
+Do not mark the active goal complete until the 1 pending tracker row (BR-001) has current Edge evidence or the user explicitly accepts that row as out of scope.

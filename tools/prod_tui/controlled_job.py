@@ -14,6 +14,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Sequence
 
+from tools.prod_tui.reporting import OperationReport, ReportCheck, node_name_from_host, write_report
+
 try:  # pragma: no cover - exercised when run as a script
     from . import job_specs, safety
     from .agent_loop import parse_screen
@@ -593,24 +595,32 @@ def run_level_1_and_2(
 
 def write_json_report(run: ControlledRun, prereq_results: list[SmokeResult], started: float, path: str | None = None) -> Path:
     report_path = Path(path) if path else REPORTS_DIR / f"controlled_{run.run_timestamp}.json"
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    payload = {
-        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-        "host": run.config.host,
-        "levels_run": [1, 2, 3],
-        "duration_seconds": round(time.monotonic() - started, 3),
-        "table_name": run.table_name,
-        "dry_run_supported": True,
-        "results": [asdict(result) for result in prereq_results] + [asdict(step) for step in run.steps],
-        "summary": {
-            "total": len(prereq_results) + len(run.steps),
-            "passed": sum(1 for result in prereq_results if result.passed) + sum(1 for step in run.steps if step.passed),
-            "failed": sum(1 for result in prereq_results if not result.passed) + sum(1 for step in run.steps if not step.passed),
+    checks = [ReportCheck(name=result.name, passed=result.passed, message=result.message) for result in prereq_results]
+    checks.extend(ReportCheck(name=step.name, passed=step.passed, message=step.message) for step in run.steps)
+    report = OperationReport(
+        operation="smoke",
+        status="passed" if all(check.passed for check in checks) else "failed",
+        node=node_name_from_host(run.config.host),
+        host=run.config.host,
+        repo_path=run.config.repo_path,
+        deployment_commit="unknown",
+        install_decision="not_applicable",
+        checks=checks,
+        extra={
+            "levels_run": [1, 2, 3],
+            "duration_seconds": round(time.monotonic() - started, 3),
+            "table_name": run.table_name,
+            "dry_run_supported": True,
+            "results": [asdict(result) for result in prereq_results] + [asdict(step) for step in run.steps],
+            "summary": {
+                "total": len(prereq_results) + len(run.steps),
+                "passed": sum(1 for result in prereq_results if result.passed) + sum(1 for step in run.steps if step.passed),
+                "failed": sum(1 for result in prereq_results if not result.passed) + sum(1 for step in run.steps if not step.passed),
+            },
+            "screen_captures": str(run.screens_dir) if run.screens_dir else None,
         },
-        "screen_captures": str(run.screens_dir) if run.screens_dir else None,
-    }
-    report_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    return report_path
+    )
+    return write_report(report_path, report)
 
 
 def controlled_lifecycle(run: ControlledRun, *, dry_run: bool) -> None:

@@ -286,6 +286,17 @@ def test_sidebar_collapses_automatically_and_with_global_binding(
     asyncio.run(run())
 
 
+def test_sidebar_watch_collapsed_safe_before_children_mounted() -> None:
+    """Regression: on the Edge Node the collapse watcher fired during ``on_mount``
+    before the compose children were mounted, so ``query_one('#sidebar-brand')``
+    raised ``NoMatches`` and crashed startup on narrower terminals. The watcher
+    must no-op until the children are queryable."""
+    sidebar = Sidebar()
+    # No App/compose has run, so #sidebar-brand and friends do not exist yet.
+    sidebar.watch_collapsed(True)
+    sidebar.watch_collapsed(False)
+
+
 def test_sidebar_kerberos_chip_mirrors_app_state(mock_env_with_config, monkeypatch) -> None:
     async def fake_ttl() -> int:
         return 7200

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from textual.app import ComposeResult
 from textual.containers import Vertical
+from textual.css.query import NoMatches
 from textual.message import Message
 from textual.reactive import reactive
 from textual.widget import Widget
@@ -100,14 +101,28 @@ class Sidebar(Widget):
                 yield Static("[dim]? help[/]", id="sidebar-help")
 
     def on_mount(self) -> None:
-        self._sync_collapse_from_app()
         self.watch(self.app, "size", self._on_app_resize, init=False)
+        self._sync_collapse_from_app()
+        # Compose children are not reliably queryable while ``on_mount`` runs on
+        # every Textual/terminal combination (a startup crash was observed on the
+        # Edge Node), and the collapse sync above can fire ``watch_collapsed``
+        # immediately. Apply all child-dependent state after the first refresh,
+        # once the children are guaranteed mounted.
+        self.call_after_refresh(self._init_child_state)
+
+    def _init_child_state(self) -> None:
+        self._apply_collapsed_to_children(self.collapsed)
+        for child in self.query(NavItem):
+            child.active = child.item_id == self.active_screen
         # The app owns the single Kerberos TTL snapshot; mirror it reactively.
         if hasattr(type(self.app), "kerberos_ttl"):
             self.watch(self.app, "kerberos_ttl", self._on_kerberos_change, init=True)
 
     def _on_kerberos_change(self, value: int | None) -> None:
-        self.query_one(KerberosChip).ttl_seconds = value
+        try:
+            self.query_one(KerberosChip).ttl_seconds = value
+        except NoMatches:
+            pass
 
     def _on_app_resize(self) -> None:
         self._sync_collapse_from_app()
@@ -133,12 +148,24 @@ class Sidebar(Widget):
 
     def watch_collapsed(self, value: bool) -> None:
         self.set_class(value, "sidebar-collapsed")
-        brand = self.query_one("#sidebar-brand", Static)
+        self._apply_collapsed_to_children(value)
+
+    def _apply_collapsed_to_children(self, value: bool) -> None:
+        # ``watch_collapsed`` can fire before compose children are mounted (seen
+        # on the Edge Node during startup on narrower terminals); skip until they
+        # are queryable. ``on_mount`` re-applies the state after the first
+        # refresh once they exist.
+        try:
+            brand = self.query_one("#sidebar-brand", Static)
+            version = self.query_one("#sidebar-version", Static)
+            help_line = self.query_one("#sidebar-help", Static)
+            chip = self.query_one(KerberosChip)
+        except NoMatches:
+            return
         brand.update("[bold]D[/]" if value else "[bold]Dispatch[/]")
-        self.query_one("#sidebar-version", Static).display = not value
-        help_line = self.query_one("#sidebar-help", Static)
+        version.display = not value
         help_line.update("[dim]?[/]" if value else "[dim]? help[/]")
-        self.query_one(KerberosChip).collapsed = value
+        chip.collapsed = value
         for child in self.query(NavItem):
             child.set_collapsed(value)
 

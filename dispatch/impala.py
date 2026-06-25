@@ -38,7 +38,19 @@ async def query(sql: str) -> str:
 
 async def show_tables(schema: str, pattern: str = "*") -> list[str]:
     output = await query(f"SHOW TABLES IN {schema} LIKE '{pattern}';")
-    return [line.strip() for line in output.splitlines() if line.strip() and not line.startswith("Mock ")]
+    tables: list[str] = []
+    for raw_line in output.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("Mock "):
+            continue
+        # impala-shell runs with --print_header, so SHOW TABLES emits its single
+        # "name" column header as the first row. It is not a table: keeping it
+        # added a phantom entry, inflated the table count, and made the
+        # auto-describe of row 0 fail with "Could not resolve path".
+        if line == "name":
+            continue
+        tables.append(line)
+    return tables
 
 
 async def describe_table(full_table: str) -> str:

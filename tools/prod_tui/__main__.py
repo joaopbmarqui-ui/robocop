@@ -16,6 +16,8 @@ def _print_usage() -> None:
     print("  smoke      Run Level 1 and 2 smoke tests")
     print("  job        Run the Level 3 controlled job")
     print("  level      Run Level 4-6 controlled scenarios (--level 4|5|6)")
+    print("  deploy     Update one Edge node to an exact deployment commit")
+    print("  drift      Compare runtime-critical files against an expected commit")
 
 
 def main() -> int:
@@ -45,9 +47,15 @@ def main() -> int:
     elif command == "level":
         from tools.prod_tui.levels import main as level_main
         return level_main(argv)
+    elif command == "deploy":
+        from tools.prod_tui.deploy import main as deploy_main
+        return deploy_main(argv)
+    elif command == "drift":
+        from tools.prod_tui.drift import main as drift_main
+        return drift_main(argv)
     else:
         print(f"Unknown command: {command}")
-        print("Available commands: preflight, tmux, smoke, job, level")
+        print("Available commands: preflight, tmux, smoke, job, level, deploy, drift")
         return 1
 
 

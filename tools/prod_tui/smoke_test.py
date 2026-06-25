@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Iterable, Sequence
 
+from tools.prod_tui.reporting import OperationReport, ReportCheck, node_name_from_host, write_report
+
 try:  # pragma: no cover - exercised when run as a script
     from .robocop_tmux import (
         AuthenticationError, DEFAULT_CONFIG_PATH, ProdTuiConfig, SessionGoneError,
@@ -449,22 +451,29 @@ def write_json_report(
     path: str | Path | None = None,
 ) -> Path:
     report_path = Path(path) if path else REPORTS_DIR / f"smoke_{ctx.run_timestamp}.json"
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    payload = {
-        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-        "host": ctx.config.host,
-        "levels_run": levels,
-        "duration_seconds": round(time.monotonic() - started, 3),
-        "results": [asdict(result) for result in ctx.results],
-        "summary": {
-            "total": len(ctx.results),
-            "passed": sum(1 for result in ctx.results if result.passed),
-            "failed": sum(1 for result in ctx.results if not result.passed),
+    checks = [ReportCheck(name=result.name, passed=result.passed, message=result.message) for result in ctx.results]
+    report = OperationReport(
+        operation="smoke",
+        status="passed" if all(result.passed for result in ctx.results) else "failed",
+        node=node_name_from_host(ctx.config.host),
+        host=ctx.config.host,
+        repo_path=ctx.config.repo_path,
+        deployment_commit="unknown",
+        install_decision="not_applicable",
+        checks=checks,
+        extra={
+            "levels_run": levels,
+            "duration_seconds": round(time.monotonic() - started, 3),
+            "results": [asdict(result) for result in ctx.results],
+            "summary": {
+                "total": len(ctx.results),
+                "passed": sum(1 for result in ctx.results if result.passed),
+                "failed": sum(1 for result in ctx.results if not result.passed),
+            },
+            "screen_captures": str(ctx.screens_dir) if ctx.screens_dir else None,
         },
-        "screen_captures": str(ctx.screens_dir) if ctx.screens_dir else None,
-    }
-    report_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    return report_path
+    )
+    return write_report(report_path, report)
 
 
 def print_summary(results: Sequence[SmokeResult], report_path: Path) -> None:

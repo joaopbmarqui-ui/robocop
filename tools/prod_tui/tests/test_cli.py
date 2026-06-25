@@ -19,6 +19,8 @@ def test_top_level_help_prints_usage_and_succeeds(capsys, monkeypatch) -> None:
     assert "smoke" in out
     assert "job" in out
     assert "level" in out
+    assert "deploy" in out
+    assert "drift" in out
 
 
 def test_top_level_preflight_command_dispatches(monkeypatch) -> None:
@@ -39,6 +41,46 @@ def test_top_level_preflight_command_dispatches(monkeypatch) -> None:
 
     assert prod_tui_cli.main() == 2
     assert calls == [["--config", "config.yaml", "--timeout", "5"]]
+
+
+def test_top_level_deploy_command_dispatches(monkeypatch) -> None:
+    calls: list[list[str]] = []
+
+    def fake_deploy_main(argv: list[str]) -> int:
+        calls.append(argv)
+        return 3
+
+    import tools.prod_tui.deploy as deploy
+
+    monkeypatch.setattr(deploy, "main", fake_deploy_main)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["python -m tools.prod_tui", "deploy", "--config", "config.yaml", "--commit", "abc123"],
+    )
+
+    assert prod_tui_cli.main() == 3
+    assert calls == [["--config", "config.yaml", "--commit", "abc123"]]
+
+
+def test_top_level_drift_command_dispatches(monkeypatch) -> None:
+    calls: list[list[str]] = []
+
+    def fake_drift_main(argv: list[str]) -> int:
+        calls.append(argv)
+        return 4
+
+    import tools.prod_tui.drift as drift
+
+    monkeypatch.setattr(drift, "main", fake_drift_main)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["python -m tools.prod_tui", "drift", "--config", "config.yaml", "--commit", "abc123"],
+    )
+
+    assert prod_tui_cli.main() == 4
+    assert calls == [["--config", "config.yaml", "--commit", "abc123"]]
 
 
 def test_readme_matches_current_tmux_cli_and_auth_model() -> None:
@@ -129,6 +171,25 @@ def test_development_workflow_uses_current_tmux_module_cli() -> None:
 
     assert "`tools.prod_tui tmux send` or `tools.prod_tui tmux keys`" in workflow
     assert "robocop_tmux.py send" not in workflow
+
+
+def test_active_operator_docs_cover_publish_deploy_drift_and_exact_sha_rollback() -> None:
+    workflow = Path("docs/development-workflow.md").read_text(encoding="utf-8")
+    production = Path("docs/production_testing.md").read_text(encoding="utf-8")
+    setup = Path("docs/edge-node-first-time-setup.md").read_text(encoding="utf-8")
+    readme = Path("tools/prod_tui/README.md").read_text(encoding="utf-8")
+
+    assert ".\\tools\\dev\\publish_dispatch_snapshot.ps1 -ReviewedCommit <reviewed-robocop-commit> -RunLocalCheck" in workflow
+    assert "py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <deployment-sha> --install auto" in workflow
+    assert "py -m tools.prod_tui drift --config tools/prod_tui/config.yaml --commit <deployment-sha>" in workflow
+    assert "py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <previous-good-sha> --rollback-from <current-bad-sha>" in workflow
+    assert "failed preflight is the validation artifact" in production
+    assert "config-node04.yaml" in production
+    assert "py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <deployment-sha>" in production
+    assert "py -m tools.prod_tui drift --config tools/prod_tui/config.yaml --commit <deployment-sha>" in production
+    assert "exact-SHA rollback" in setup
+    assert "py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <previous-good-sha> --rollback-from <current-bad-sha>" in readme
+    assert "Generated Artifacts" in readme
 
 
 def test_active_harness_surfaces_do_not_reference_old_tmux_script_cli() -> None:

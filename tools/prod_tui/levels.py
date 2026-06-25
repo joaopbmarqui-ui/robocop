@@ -28,6 +28,8 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Callable, Sequence
 
+from tools.prod_tui.reporting import OperationReport, ReportCheck, node_name_from_host, write_report as write_operation_report
+
 try:  # pragma: no cover - exercised when run as a script
     from . import controlled_job as cj
     from . import job_specs
@@ -419,28 +421,36 @@ def _cleanup(runs: list[cj.ControlledRun], driver: TmuxDriver) -> None:
 
 def write_report(level: int, runs: list[cj.ControlledRun], started: float, path: str | None) -> Path:
     report_path = Path(path) if path else REPORTS_DIR / f"level{level}_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}.json"
-    report_path.parent.mkdir(parents=True, exist_ok=True)
     steps = [step for run in runs for step in run.steps]
-    payload = {
-        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-        "level": level,
-        "duration_seconds": round(time.monotonic() - started, 3),
-        "jobs": [
-            {"table_name": run.table_name, "spec": run.spec.name, "cell": list(run.spec.cell)}
-            for run in runs
-        ],
-        "results": [
-            {"name": s.name, "passed": s.passed, "message": s.message, "elapsed_ms": s.elapsed_ms}
-            for s in steps
-        ],
-        "summary": {
-            "total": len(steps),
-            "passed": sum(1 for s in steps if s.passed),
-            "failed": sum(1 for s in steps if not s.passed),
+    config = runs[0].config if runs else ProdTuiConfig(host="unknown", repo_path="/unknown")
+    report = OperationReport(
+        operation="smoke",
+        status="passed" if all(step.passed for step in steps) else "failed",
+        node=node_name_from_host(config.host),
+        host=config.host,
+        repo_path=config.repo_path,
+        deployment_commit="unknown",
+        install_decision="not_applicable",
+        checks=[ReportCheck(name=s.name, passed=s.passed, message=s.message) for s in steps],
+        extra={
+            "level": level,
+            "duration_seconds": round(time.monotonic() - started, 3),
+            "jobs": [
+                {"table_name": run.table_name, "spec": run.spec.name, "cell": list(run.spec.cell)}
+                for run in runs
+            ],
+            "results": [
+                {"name": s.name, "passed": s.passed, "message": s.message, "elapsed_ms": s.elapsed_ms}
+                for s in steps
+            ],
+            "summary": {
+                "total": len(steps),
+                "passed": sum(1 for s in steps if s.passed),
+                "failed": sum(1 for s in steps if not s.passed),
+            },
         },
-    }
-    report_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    return report_path
+    )
+    return write_operation_report(report_path, report)
 
 
 def build_parser() -> argparse.ArgumentParser:

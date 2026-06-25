@@ -95,16 +95,22 @@ git commit -m "Describe the change"
    current deployment `main` instead of pushing arbitrary local branch history:
 
 ```powershell
-git fetch bitbucket main
-git switch -c deploy/dispatch-snapshot bitbucket/main
-git reset --soft <reviewed-robocop-commit>
-git commit -m "Deploy snapshot: Dispatch from robocop <sha> (<date>)"
-git push bitbucket HEAD:main
+.\tools\dev\publish_dispatch_snapshot.ps1 -ReviewedCommit <reviewed-robocop-commit> -RunLocalCheck
 ```
 
 Do not run a casual `git push -u bitbucket HEAD` for Dispatch deployments.
 That can reintroduce unrelated history or author-hook failures on a transport
 remote.
+
+If the helper needs troubleshooting, the fallback manual sequence is:
+
+```powershell
+git fetch bitbucket main
+git switch -c deploy/dispatch-snapshot <reviewed-robocop-commit>
+git reset --soft bitbucket/main
+git commit -m "Deploy snapshot: Dispatch from robocop <sha> (<date>)"
+git push bitbucket HEAD:main
+```
 
 7. If a temporary VPN bypass is available and the GitHub mirror should be
    updated, push explicitly:
@@ -120,22 +126,32 @@ for that push.
 
 Preferred path for committed, reviewable deployments:
 
-```bash
-cd /ads_storage/dispatch
-GIT_REMOTE=bitbucket GIT_BRANCH=main ./update.sh
-DISPATCH_PYTHON_BIN=$(command -v python3.11 || command -v python3.10) ./install.sh
+```powershell
+py -m tools.prod_tui tmux start --config tools/prod_tui/config.yaml --passcode <RSA_CODE>
+py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <deployment-sha> --install auto --json-report tools/prod_tui/reports/deploy-node03.json
+py -m tools.prod_tui drift --config tools/prod_tui/config.yaml --commit <deployment-sha> --json-report tools/prod_tui/reports/drift-node03.json
 ```
 
-For an exact commit:
+Node 04 uses the same commands with `tools/prod_tui/config-node04.yaml`.
+
+If you already have an authenticated session and do not want the command to try
+to start one, add `--reuse-session`.
+
+The deploy command drives the canonical remote update shape through the
+authenticated tmux pane:
 
 ```bash
 cd /ads_storage/dispatch
-GIT_REMOTE=bitbucket GIT_BRANCH=main ./update.sh <commit-sha>
-DISPATCH_PYTHON_BIN=$(command -v python3.11 || command -v python3.10) ./install.sh
+DISPATCH_UPDATE_REMOTE=bitbucket DISPATCH_UPDATE_BRANCH=main ./update.sh <commit-sha>
+DISPATCH_EMAIL=<operator_email> DISPATCH_PYTHON_BIN=$(command -v python3.11 || command -v python3.10) ./install.sh
 ```
 
-Rollback is the same shape: update to the previous known-good commit and rerun
-`install.sh`.
+Exact-SHA rollback is the same public command surface:
+
+```powershell
+py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <previous-good-sha> --rollback-from <current-bad-sha> --json-report tools/prod_tui/reports/rollback-node03.json
+py -m tools.prod_tui smoke --config tools/prod_tui/config.yaml --level all --save-screens --reuse-session --json-report tools/prod_tui/reports/smoke-node03.json
+```
 
 Node 03 and node 04 have independent filesystems. Update and validate each node
 separately; one node being current does not imply the other is current.
@@ -186,6 +202,8 @@ matches the change:
 
 ```powershell
 py -m tools.prod_tui tmux start --config tools/prod_tui/config-node04.yaml --passcode <RSA_CODE>
+py -m tools.prod_tui deploy --config tools/prod_tui/config-node04.yaml --commit <deployment-sha> --install auto --json-report tools/prod_tui/reports/deploy-node04.json --reuse-session
+py -m tools.prod_tui drift --config tools/prod_tui/config-node04.yaml --commit <deployment-sha> --json-report tools/prod_tui/reports/drift-node04.json --reuse-session
 py -m tools.prod_tui smoke --config tools/prod_tui/config-node04.yaml --level all --save-screens
 py -m tools.prod_tui job --config tools/prod_tui/config-node04.yaml --reuse-session
 ```

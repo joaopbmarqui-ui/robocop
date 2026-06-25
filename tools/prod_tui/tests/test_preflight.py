@@ -137,8 +137,14 @@ def test_preflight_cli_writes_json_report_for_archived_evidence(
         ) == 2
 
     report = json.loads(report_path.read_text(encoding="utf-8"))
+    assert report["operation"] == "preflight"
+    assert report["status"] == "blocked"
+    assert report["node"] == "edge"
     assert report["config"] == str(config_path)
     assert report["host"] == "user@edge.example"
+    assert report["repo_path"] == "/repo"
+    assert report["deployment_commit"] == "not_applicable"
+    assert report["install_decision"] == "not_applicable"
     assert report["endpoint"] == "edge.example:2222"
     assert report["resolved_addresses"] == ["10.0.0.5"]
     assert report["connected"] is False

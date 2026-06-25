@@ -77,6 +77,7 @@ if ($LASTEXITCODE -eq 0) {
 }
 
 Write-Host ""
-Write-Host "When ready to publish to Bitbucket, use the snapshot flow in docs/development-workflow.md."
+Write-Host "When ready to publish to Bitbucket, use:"
+Write-Host "  .\\tools\\dev\\publish_dispatch_snapshot.ps1 -ReviewedCommit <sha> -RunLocalCheck"
 Write-Host "Do not push the current branch directly to the deployment remote."
 exit 0

@@ -162,6 +162,20 @@ For the complete contributor workflow, including GitHub + Bitbucket remote
 policy and when to use each deploy path, see
 [`docs/development-workflow.md`](../../docs/development-workflow.md).
 
+For committed, reviewable deployments, use the public deploy/drift commands
+against an already-authenticated session:
+
+```powershell
+py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <deployment-sha> --install auto --json-report tools/prod_tui/reports/deploy-node03.json --reuse-session
+py -m tools.prod_tui drift --config tools/prod_tui/config.yaml --commit <deployment-sha> --json-report tools/prod_tui/reports/drift-node03.json --reuse-session
+py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <previous-good-sha> --rollback-from <current-bad-sha> --json-report tools/prod_tui/reports/rollback-node03.json --reuse-session
+```
+
+Use `tools/prod_tui/config-node04.yaml` for the same node-04 command shapes.
+Under the hood the deploy command drives `DISPATCH_UPDATE_REMOTE=bitbucket
+DISPATCH_UPDATE_BRANCH=main ./update.sh <commit-sha>` on the node and records
+whether `install.sh` ran or was skipped.
+
 The edge nodes are **independent filesystems** (e.g. `hde2stl020003` and
 `hde2stl020004` do not share `/ads_storage/dispatch`), so each must be deployed
 and verified separately, over its own authenticated session. One config file
@@ -203,8 +217,8 @@ ADR-0005 human review for merging that change.
 
 ### Which deploy path to use
 
-- Use Bitbucket-backed `update.sh` on the Edge Node for committed deployments
-  that should be reproducible and reviewable.
+- Use `py -m tools.prod_tui deploy` plus `py -m tools.prod_tui drift` for
+  committed deployments that should be reproducible and reviewable.
 - Use `_seam_deploy sync` for fast local-to-node iteration after the node's
   tmux/SSH/Kerberos session is already healthy.
 - Use `_seam_deploy deploy-all` only for an intentional parity operation that

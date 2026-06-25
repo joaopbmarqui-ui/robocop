@@ -74,8 +74,9 @@ cd /ads_storage/dispatch
 GIT_REMOTE=bitbucket GIT_BRANCH=main ./update.sh <commit-sha>
 ```
 
-Rollback uses the same shape: checkout the previous known-good commit, then run
-`install.sh` again.
+Rollback uses the same exact-SHA shape: move the shared tree to the previous
+known-good commit, then run `install.sh` again. For the public harness command,
+see `py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <previous-good-sha> --rollback-from <current-bad-sha>`.
 
 ## 3. Verify Edge Node prerequisites
 
@@ -111,7 +112,7 @@ chmod +x update.sh install.sh
 DISPATCH_EMAIL=you@example.com DISPATCH_PYTHON_BIN=$(command -v python3.11) ./install.sh
 ```
 
-For repeatable update, validation, and rollback workflows, see
+For repeatable update, validation, and exact-SHA rollback workflows, see
 [docs/development-workflow.md](./development-workflow.md).
 
 

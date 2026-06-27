@@ -16,9 +16,16 @@ onboarding path, and one production validation harness.
 Use this as a template when creating another Edge Node TUI. Copy the section
 structure first, then fill in tool-specific names and checks.
 
+For a shorter executor checklist, use
+[`docs/edge-node-tui-reuse-kit.md`](edge-node-tui-reuse-kit.md) alongside this
+document.
+
 Do not copy product semantics from an existing tool. Copy the operating model:
 how code moves, how users install, how operators verify, and how credentials and
 runtime state are separated.
+
+Doc filenames in examples use kebab-case (for example `production-testing.md`). In
+Dispatch, the canonical production validation doc is `docs/production_testing.md`.
 
 Recommended companion docs for each tool:
 
@@ -26,7 +33,8 @@ Recommended companion docs for each tool:
 - `onboarding.md`: short end-user install and launch flow.
 - `docs/development-workflow.md`: developer loop and deployment workflow.
 - `docs/edge-node-first-time-setup.md`: operator bootstrap guide.
-- `docs/production-testing.md`: harness and safety levels.
+- `docs/production-testing.md`: harness and safety levels (Dispatch:
+  `docs/production_testing.md`).
 - `docs/edge-node-tui-operating-model.md`: reusable operating assumptions.
 
 ## Golden Path
@@ -129,7 +137,7 @@ A reusable Edge Node TUI repository should have this high-level shape:
   docs/
     development-workflow.md   # local -> Git -> Edge Node workflow
     edge-node-first-time-setup.md
-    production-testing.md
+    production-testing.md     # Dispatch: production_testing.md
     edge-node-tui-operating-model.md
   install.sh                  # per-user installer
   onboarding.md               # short end-user setup page
@@ -1028,7 +1036,8 @@ For a new Edge Node TUI, create these before production use:
 - `onboarding.md` with a short end-user path.
 - `docs/development-workflow.md` with local -> Git -> Edge update flow.
 - `docs/edge-node-first-time-setup.md` for operators.
-- `docs/production-testing.md` for harness usage and safety levels.
+- `docs/production-testing.md` for harness usage and safety levels (Dispatch:
+  `docs/production_testing.md`).
 - `tools/dev/local_check.ps1` or equivalent.
 - `tools/dev/git_sync_status.ps1` or equivalent.
 - Production harness config per Edge Node.

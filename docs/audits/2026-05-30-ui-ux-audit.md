@@ -1,5 +1,14 @@
 # Dispatch TUI — UI/UX Audit
 
+> **Historical / non-canonical audit.** This document captures UI/UX findings
+> from the 2026-05-30 audit pass only. Current Dispatch product truth is
+> `docs/dispatch_user_story_tracker.csv` and
+> `docs/dispatch_user_story_completion_audit.md`.
+>
+> Many roadmap items referenced below have since been implemented. Agents and
+> maintainers must verify against the canonical tracker before reopening or
+> scheduling work from this file.
+
 **Date:** 2026-05-30  
 **Tested version:** 1.1.0  
 **Terminal sizes tested:** 80×24, 120×40, 200×50  

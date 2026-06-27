@@ -1,5 +1,15 @@
 # Implementation Plan — UI/UX Audit Remediation
 
+> **Historical / non-canonical implementation plan.** This plan was written
+> against the 2026-05-30 audit state in
+> `docs/audits/2026-05-30-ui-ux-audit.md`. Current Dispatch product truth is
+> `docs/dispatch_user_story_tracker.csv` and
+> `docs/dispatch_user_story_completion_audit.md`.
+>
+> Many slices and roadmap tasks below have since been implemented. Agents and
+> maintainers must verify against the canonical tracker before reopening or
+> scheduling work from this file.
+
 **Source:** `docs/audits/2026-05-30-ui-ux-audit.md`  
 **Approach:** Vertical slices grouped by risk and dependency, not by screen.
 

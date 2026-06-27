@@ -98,11 +98,11 @@ local-catalog mode), all confirmed live against the cluster:**
   any of the run's smoke tables — so this is not mere statestore lag and a retry
   loop would not help.
 
-**Conclusion.** There is no privilege-safe, narrow (`scr/`-policy-compliant)
-orchestrator-side statement that reliably makes the temp tables visible to a
-*different* coordinator. A correct fix likely requires pinning all steps of a
-monthly job to a single coordinator (one `impala-shell` session for create +
-join) or another structural change — beyond an "obvious bug fix" and requiring
-the full review process plus cluster-admin input. **Tracked as a GitHub issue;
-no `scr/` change is shipped for this.** The previously-shipped `schema_prefix`
-HDFS-path fix is unrelated and stands.
+**Resolution.** There is no privilege-safe, narrow (`scr/`-policy-compliant)
+orchestrator-side metadata statement that reliably makes the temp tables visible
+to a *different* coordinator. The shipped fix avoids that cross-coordinator
+visibility dependency by building one monthly Impala script and running temp
+creation, final join, and temp cleanup through one `impala-shell` process. This
+pins the job's dependent statements to the same coordinator while preserving the
+existing CLI shape, queue retry policy, email subjects, and HDFS location rules.
+The previously-shipped `schema_prefix` HDFS-path fix is unrelated and stands.

@@ -1,6 +1,7 @@
 # pylint: disable=logging-fstring-interpolation,too-many-return-statements,too-many-branches
 import logging
 import os
+import re
 import smtplib
 import time
 from email.mime.multipart import MIMEMultipart
@@ -10,6 +11,18 @@ from typing import Callable
 
 
 FATAL_ERRORS = {"TABLE_NOT_FOUND", "SYNTAX_ERROR", "DUPLICATE_COLUMN", "AUTH_ERROR", "GENERIC_ERROR"}
+IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+FULL_TABLE_RE = re.compile(
+    r"[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*"
+)
+
+
+def validate_identifier(value: str) -> bool:
+    return IDENTIFIER_RE.fullmatch(value) is not None
+
+
+def validate_full_table(value: str) -> bool:
+    return FULL_TABLE_RE.fullmatch(value) is not None
 
 
 def send_email(messageBody, subject, to_email):

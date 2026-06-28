@@ -3,7 +3,44 @@
 from __future__ import annotations
 
 import calendar
+import re
 from datetime import date, datetime
+from pathlib import Path
+
+
+IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+FULL_TABLE_RE = re.compile(
+    r"[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*"
+)
+
+
+def validate_identifier(value: str, label: str) -> str | None:
+    """Return a clear error when ``value`` is not a plain Impala identifier."""
+    if not IDENTIFIER_RE.fullmatch(value):
+        return f"{label} must be a plain Impala identifier"
+    return None
+
+
+def validate_full_table(value: str, label: str = "table") -> str | None:
+    """Return a clear error unless ``value`` is exactly ``schema.table``."""
+    if not FULL_TABLE_RE.fullmatch(value):
+        return f"{label} must be schema.table using plain Impala identifiers"
+    return None
+
+
+def safe_csv_path(launch_cwd: Path, table: str) -> Path:
+    """Build a CSV path whose plain filename stem cannot escape ``launch_cwd``."""
+    if not table or "/" in table or "\\" in table or ".." in table:
+        raise ValueError("Table name must be a safe CSV filename stem")
+    identifier_error = validate_identifier(table, "Table name")
+    if identifier_error:
+        raise ValueError(identifier_error)
+
+    resolved_cwd = launch_cwd.resolve()
+    output_path = (resolved_cwd / f"{table}.csv").resolve()
+    if not output_path.is_relative_to(resolved_cwd):
+        raise ValueError("CSV output path must stay within the launch directory")
+    return output_path
 
 
 def detect_source(sql_text: str) -> str:

@@ -5,7 +5,7 @@ import logging
 import argparse
 import sys
 
-from _common import FATAL_ERRORS, classificar_erro_impala, cycle_through_pools
+from _common import FATAL_ERRORS, classificar_erro_impala, cycle_through_pools, validate_full_table
 
 # Set up basic logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -100,6 +100,10 @@ def main():
     # Determine the query to run based on arguments
     query_to_run = ""
     if args.table_name:
+        if not validate_full_table(args.table_name):
+            parser.error(
+                "--table-name must be schema.table using plain Impala identifiers"
+            )
         logging.info(f"Mode: Exporting table '{args.table_name}'")
         query_to_run = f"select * from {args.table_name};"
     elif args.query_file:

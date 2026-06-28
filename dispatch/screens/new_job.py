@@ -316,6 +316,15 @@ class NewJobScreen(Screen[None]):
         destination = self._selected_destination()
         if (source, destination) not in manifest.LEGAL_CELLS:
             issues.append(f"Illegal combination: {source} \u2192 {destination}")
+        if destination in ("Table", "Table+Csv"):
+            schema_error = sql.validate_identifier(self._input_value("schema"), "Schema")
+            if schema_error:
+                issues.append(schema_error)
+            table_error = sql.validate_identifier(
+                self._input_value("table-name"), "Table name"
+            )
+            if table_error:
+                issues.append(table_error)
         if source in ("SqlFile", "SqlTemplate"):
             if not self._input_value("sql-file"):
                 issues.append("SQL file path is required")
@@ -327,8 +336,22 @@ class NewJobScreen(Screen[None]):
             )
             if date_error:
                 issues.append(date_error)
-        if source == "ExistingTable" and not self._input_value("existing-table"):
-            issues.append("Existing table name is required")
+        existing_error: str | None = None
+        existing = self._input_value("existing-table")
+        if source == "ExistingTable":
+            existing_error = sql.validate_full_table(
+                existing, "Existing table"
+            )
+            if existing_error:
+                issues.append(existing_error)
+        if destination in ("Csv", "Table+Csv"):
+            csv_table = self._input_value("table-name")
+            if source == "ExistingTable" and existing_error is None:
+                _schema, csv_table = existing.split(".", 1)
+            try:
+                sql.safe_csv_path(self.launch_cwd, csv_table)
+            except ValueError as exc:
+                issues.append(str(exc))
         email = self._input_value("email")
         if email and ("@" not in email or "." not in email.split("@")[-1]):
             issues.append("Invalid email format")
@@ -463,6 +486,27 @@ class NewJobScreen(Screen[None]):
         destination_type = self._selected_destination()
         if (source_type, destination_type) not in manifest.LEGAL_CELLS:
             return f"Illegal Source/Destination cell: {source_type}/{destination_type}"
+        if destination_type in ("Table", "Table+Csv"):
+            schema_error = sql.validate_identifier(self._input_value("schema"), "Schema")
+            if schema_error:
+                return schema_error
+            table_error = sql.validate_identifier(
+                self._input_value("table-name"), "Table name"
+            )
+            if table_error:
+                return table_error
+        csv_table = self._input_value("table-name")
+        if source_type == "ExistingTable":
+            existing = self._input_value("existing-table")
+            existing_error = sql.validate_full_table(existing, "Existing table")
+            if existing_error:
+                return existing_error
+            _schema, csv_table = existing.split(".", 1)
+        if destination_type in ("Csv", "Table+Csv"):
+            try:
+                sql.safe_csv_path(self.launch_cwd, csv_table)
+            except ValueError as exc:
+                return str(exc)
         email = self._input_value("email")
         if email and ("@" not in email or "." not in email.split("@")[-1]):
             return "Invalid email format"
@@ -473,8 +517,6 @@ class NewJobScreen(Screen[None]):
         if self.kerberos_ttl < 300:
             return "Kerberos ticket TTL is under 5 minutes"
         if source_type == "ExistingTable":
-            if not self._input_value("existing-table"):
-                return "Existing table name is required"
             return None
         sql_text = self._read_sql()
         if sql_text is None:
@@ -503,7 +545,7 @@ class NewJobScreen(Screen[None]):
                 schema, table = existing.split(".", 1)
         else:
             source = {"type": source_type, "sql_path_at_launch": self._input_value("sql-file")}
-        csv_path = str(self.launch_cwd / f"{table}.csv")
+        csv_path = str(sql.safe_csv_path(self.launch_cwd, table))
         destination: manifest.Destination = {
             "type": destination_type,
             "schema": schema,

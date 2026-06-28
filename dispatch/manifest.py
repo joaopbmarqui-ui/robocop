@@ -261,7 +261,23 @@ def build_orchestrator_calls(
     schema = destination.get("schema", "")
     table = destination.get("table_name", "")
     full_table = f"{schema}.{table}" if schema and "." not in table else table
-    csv_path = destination.get("csv_path") or str(launch_cwd / f"{table or 'dispatch_export'}.csv")
+    if destination_type in {"Table", "Table+Csv"}:
+        for value, label in ((schema, "Schema"), (table, "Table name")):
+            identifier_error = sql.validate_identifier(value, label)
+            if identifier_error:
+                raise ValueError(identifier_error)
+        full_table_error = sql.validate_full_table(full_table, "Destination table")
+        if full_table_error:
+            raise ValueError(full_table_error)
+    if source_type == "ExistingTable":
+        full_table = source.get("table_name") or full_table
+        full_table_error = sql.validate_full_table(full_table, "Existing table")
+        if full_table_error:
+            raise ValueError(full_table_error)
+        schema, table = full_table.split(".", 1)
+    csv_path = destination.get("csv_path") or str(
+        sql.safe_csv_path(launch_cwd, table or "dispatch_export")
+    )
     email = str(params.get("to_email", ""))
     subject = str(params.get("subject", "Dispatch Job"))
     calls: list[OrchestratorCall] = []

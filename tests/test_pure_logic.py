@@ -6,12 +6,109 @@ or the mock environment — they exercise deterministic functions directly.
 
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
 
-from dispatch import kerberos, manifest, jobs, sql
+from dispatch import impala, kerberos, manifest, jobs, sql
+
+
+# =============================================================================
+# sql identifier and CSV-path validation
+# =============================================================================
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("dispatch_smoke_1", None),
+        ("", "Table name must be a plain Impala identifier"),
+        ("bad-name", "Table name must be a plain Impala identifier"),
+        ("t;drop", "Table name must be a plain Impala identifier"),
+        ("schema.table", "Table name must be a plain Impala identifier"),
+    ],
+)
+def test_plain_impala_identifier_validation(value: str, expected: str | None) -> None:
+    assert sql.validate_identifier(value, "Table name") == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("aa_enc.dispatch_smoke_1", None),
+        ("schema.table.extra", "Existing table must be schema.table using plain Impala identifiers"),
+        ("schema.bad-name", "Existing table must be schema.table using plain Impala identifiers"),
+        ("schema.t;drop", "Existing table must be schema.table using plain Impala identifiers"),
+        ("", "Existing table must be schema.table using plain Impala identifiers"),
+    ],
+)
+def test_full_impala_table_validation(value: str, expected: str | None) -> None:
+    assert sql.validate_full_table(value, "Existing table") == expected
+
+
+def test_csv_path_is_confined_to_launch_cwd(tmp_path: Path) -> None:
+    assert sql.safe_csv_path(tmp_path, "dispatch_smoke_1") == (
+        tmp_path.resolve() / "dispatch_smoke_1.csv"
+    )
+    for unsafe_stem in ("", "../escape", r"..\escape", "bad/name", r"bad\name", ".."):
+        with pytest.raises(ValueError, match="CSV filename stem|plain Impala identifier"):
+            sql.safe_csv_path(tmp_path, unsafe_stem)
+
+
+def test_show_tables_rejects_unsafe_schema_before_query(monkeypatch) -> None:
+    queries: list[str] = []
+
+    async def fake_query(statement: str) -> str:
+        queries.append(statement)
+        return ""
+
+    monkeypatch.setattr(impala, "query", fake_query)
+
+    async def run() -> None:
+        with pytest.raises(ValueError, match="Schema must be a plain Impala identifier"):
+            await impala.show_tables("bad-schema")
+
+    asyncio.run(run())
+    assert queries == []
+
+
+def test_show_tables_rejects_quoted_pattern_before_query(monkeypatch) -> None:
+    queries: list[str] = []
+
+    async def fake_query(statement: str) -> str:
+        queries.append(statement)
+        return ""
+
+    monkeypatch.setattr(impala, "query", fake_query)
+
+    async def run() -> None:
+        with pytest.raises(ValueError, match="pattern must not contain a single quote"):
+            await impala.show_tables("aa_enc", "x'; DROP TABLE y; --")
+
+    asyncio.run(run())
+    assert queries == []
+
+
+@pytest.mark.parametrize("helper_name", ["describe_table", "drop_table"])
+def test_full_table_helpers_reject_unsafe_name_before_query(
+    monkeypatch, helper_name: str
+) -> None:
+    queries: list[str] = []
+
+    async def fake_query(statement: str) -> str:
+        queries.append(statement)
+        return ""
+
+    monkeypatch.setattr(impala, "query", fake_query)
+
+    async def run() -> None:
+        helper = getattr(impala, helper_name)
+        with pytest.raises(ValueError, match="Table must be schema.table"):
+            await helper("schema.table.extra")
+
+    asyncio.run(run())
+    assert queries == []
 
 
 # =============================================================================
@@ -273,6 +370,104 @@ class TestBuildOrchestratorCalls:
         assert calls[0]["script"] == "download_to_csv.py"
         assert "--table-name" in calls[0]["argv"]
         assert "--query-file" not in calls[0]["argv"]
+
+    def test_existingtable_rejects_unsafe_full_table_before_argv(
+        self, tmp_path: Path
+    ) -> None:
+        job_dir = tmp_path / "job"
+        job_dir.mkdir()
+        source: manifest.Source = {
+            "type": "ExistingTable",
+            "table_name": "schema.bad-name",
+        }
+        destination: manifest.Destination = {
+            "type": "Csv",
+            "schema": "schema",
+            "table_name": "bad-name",
+        }
+
+        with pytest.raises(ValueError, match="Existing table must be schema.table"):
+            manifest.build_orchestrator_calls(
+                job_dir,
+                source,
+                destination,
+                {"to_email": "x@y.com", "subject": "S"},
+                tmp_path,
+                "user1",
+            )
+
+    @pytest.mark.parametrize(
+        ("schema", "table", "message"),
+        [
+            ("bad-schema", "dispatch_smoke", "Schema must be a plain Impala identifier"),
+            ("aa_enc", "bad-name", "Table name must be a plain Impala identifier"),
+        ],
+    )
+    def test_table_destination_rejects_unsafe_identifiers_before_argv(
+        self, tmp_path: Path, schema: str, table: str, message: str
+    ) -> None:
+        job_dir = tmp_path / "job"
+        job_dir.mkdir()
+        source: manifest.Source = {"type": "SqlFile"}
+        destination: manifest.Destination = {
+            "type": "Table",
+            "schema": schema,
+            "table_name": table,
+        }
+
+        with pytest.raises(ValueError, match=message):
+            manifest.build_orchestrator_calls(
+                job_dir,
+                source,
+                destination,
+                {"to_email": "x@y.com", "subject": "S"},
+                tmp_path,
+                "user1",
+            )
+
+    def test_csv_fallback_rejects_unsafe_filename_stem(self, tmp_path: Path) -> None:
+        job_dir = tmp_path / "job"
+        job_dir.mkdir()
+        source: manifest.Source = {"type": "SqlFile"}
+        destination: manifest.Destination = {
+            "type": "Csv",
+            "table_name": "../escape",
+        }
+
+        with pytest.raises(ValueError, match="safe CSV filename stem"):
+            manifest.build_orchestrator_calls(
+                job_dir,
+                source,
+                destination,
+                {"to_email": "x@y.com", "subject": "S"},
+                tmp_path,
+                "user1",
+            )
+
+    def test_csv_fallback_stays_in_resolved_launch_cwd(self, tmp_path: Path) -> None:
+        job_dir = tmp_path / "job"
+        job_dir.mkdir()
+        nested = tmp_path / "nested"
+        nested.mkdir()
+        launch_cwd = nested / ".."
+        destination: manifest.Destination = {
+            "type": "Csv",
+            "table_name": "dispatch_smoke_1",
+        }
+
+        calls = manifest.build_orchestrator_calls(
+            job_dir,
+            {"type": "SqlFile"},
+            destination,
+            {"to_email": "x@y.com", "subject": "S"},
+            launch_cwd,
+            "user1",
+        )
+
+        output_index = calls[0]["argv"].index("--output-file") + 1
+        assert Path(calls[0]["argv"][output_index]) == (
+            tmp_path.resolve() / "dispatch_smoke_1.csv"
+        )
 
 
 class TestEffectiveJobSql:

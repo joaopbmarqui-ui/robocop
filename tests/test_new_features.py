@@ -322,6 +322,129 @@ class TestNewJobInlineValidation:
 
         asyncio.run(run())
 
+    def test_table_destination_rejects_unsafe_table_name(
+        self, mock_env_with_config, monkeypatch, tmp_path: Path
+    ) -> None:
+        sql_path = tmp_path / "query.sql"
+        sql_path.write_text("SELECT 1", encoding="utf-8")
+
+        async def fake_ttl() -> int:
+            return 7200
+
+        monkeypatch.setattr("dispatch.kerberos.ticket_ttl_seconds", fake_ttl)
+
+        async def run() -> None:
+            app = DispatchApp()
+            prefill = {
+                "source_type": "SqlFile",
+                "dest_type": "Table+Csv",
+                "sql_file": str(sql_path),
+                "schema": "aa_enc",
+                "table_name": "../escape",
+            }
+            async with app.run_test(size=(140, 50)) as pilot:
+                screen = NewJobScreen(tmp_path, prefill=prefill)
+                app.push_screen(screen)
+                await pilot.pause(0.5)
+
+                issues = screen._validation_issues()
+                assert "Table name must be a plain Impala identifier" in issues
+                assert screen._validate() == "Table name must be a plain Impala identifier"
+
+        asyncio.run(run())
+
+    def test_existing_table_source_requires_safe_full_table(
+        self, mock_env_with_config, monkeypatch, tmp_path: Path
+    ) -> None:
+        async def fake_ttl() -> int:
+            return 7200
+
+        monkeypatch.setattr("dispatch.kerberos.ticket_ttl_seconds", fake_ttl)
+
+        async def run() -> None:
+            app = DispatchApp()
+            prefill = {
+                "source_type": "ExistingTable",
+                "dest_type": "Csv",
+                "existing_table": "schema.table.extra",
+            }
+            async with app.run_test(size=(140, 50)) as pilot:
+                screen = NewJobScreen(tmp_path, prefill=prefill)
+                app.push_screen(screen)
+                await pilot.pause(0.5)
+
+                expected = (
+                    "Existing table must be schema.table using plain Impala identifiers"
+                )
+                assert expected in screen._validation_issues()
+                assert screen._validate() == expected
+
+        asyncio.run(run())
+
+    def test_csv_destination_uses_resolved_launch_directory(
+        self, mock_env_with_config, monkeypatch, tmp_path: Path
+    ) -> None:
+        sql_path = tmp_path / "query.sql"
+        sql_path.write_text("SELECT 1", encoding="utf-8")
+        (tmp_path / "nested").mkdir()
+        launch_cwd = tmp_path / "nested" / ".."
+
+        async def fake_ttl() -> int:
+            return 7200
+
+        monkeypatch.setattr("dispatch.kerberos.ticket_ttl_seconds", fake_ttl)
+
+        async def run() -> None:
+            app = DispatchApp()
+            prefill = {
+                "source_type": "SqlFile",
+                "dest_type": "Table+Csv",
+                "sql_file": str(sql_path),
+                "schema": "aa_enc",
+                "table_name": "dispatch_smoke_1",
+            }
+            async with app.run_test(size=(140, 50)) as pilot:
+                screen = NewJobScreen(launch_cwd, prefill=prefill)
+                app.push_screen(screen)
+                await pilot.pause(0.5)
+
+                _source, destination = screen._source_destination()
+                assert Path(destination["csv_path"]) == (
+                    tmp_path.resolve() / "dispatch_smoke_1.csv"
+                )
+
+        asyncio.run(run())
+
+    def test_csv_destination_validates_computed_filename_stem(
+        self, mock_env_with_config, monkeypatch, tmp_path: Path
+    ) -> None:
+        sql_path = tmp_path / "query.sql"
+        sql_path.write_text("SELECT 1", encoding="utf-8")
+
+        async def fake_ttl() -> int:
+            return 7200
+
+        monkeypatch.setattr("dispatch.kerberos.ticket_ttl_seconds", fake_ttl)
+
+        async def run() -> None:
+            app = DispatchApp()
+            prefill = {
+                "source_type": "SqlFile",
+                "dest_type": "Csv",
+                "sql_file": str(sql_path),
+                "table_name": r"..\escape",
+            }
+            async with app.run_test(size=(140, 50)) as pilot:
+                screen = NewJobScreen(tmp_path, prefill=prefill)
+                app.push_screen(screen)
+                await pilot.pause(0.5)
+
+                expected = "Table name must be a safe CSV filename stem"
+                assert expected in screen._validation_issues()
+                assert screen._validate() == expected
+
+        asyncio.run(run())
+
 
 # =============================================================================
 # Preview screen

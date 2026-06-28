@@ -13,7 +13,7 @@ the status row when done.
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |---|---|---|---|---|---|
-| 001 | Harden launch identifiers and CSV output paths | P1 | M | - | TODO |
+| 001 | Harden launch identifiers and CSV output paths | P1 | M | - | DONE |
 | 002 | Make launch preflight live and enforce the Job cap at creation | P1 | M | 001 | TODO |
 | 003 | Reconcile stale Running and orphan Pending Jobs | P1 | M | 002 | TODO |
 | 004 | Bound manifest refresh work for SSH-scale supervision | P2 | M | 002, 003 | TODO |

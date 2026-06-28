@@ -10,7 +10,7 @@ import calendar
 # Assumes Query_Impala_Parametrized.py is in the same directory on the remote server.
 try:
     from Query_Impala_Parametrized import run_on_impala
-    from _common import cycle_through_pools, send_email
+    from _common import cycle_through_pools, send_email, validate_identifier
 except ImportError:
     logging.error("Fatal Error: Could not import functions from Query_Impala_Parametrized.py.")
     sys.exit(1)
@@ -152,6 +152,14 @@ def main():
     parser.add_argument('--to-email', required=True, help='Recipient email address.')
     parser.add_argument('--subject', required=True, help='Base subject for emails.')
     args = parser.parse_args()
+
+    for value, flag in (
+        (args.schema, "--schema"),
+        (args.table_name, "--table-name"),
+        (args.user, "--user"),
+    ):
+        if not validate_identifier(value):
+            parser.error(f"{flag} must be a plain Impala identifier")
 
     try:
         process_monthly_job(args)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
@@ -158,9 +159,8 @@ exit 0
     dispatch_home = data_root / ".dispatch"
     assert (dispatch_home / "jobs").is_dir()
     assert (dispatch_home / "venv" / "bin" / "python").is_file()
-    assert (dispatch_home / "config.json").read_text(encoding="utf-8") == (
-        '{\n  "email": "dispatch-smoke@example.com"\n}\n'
-    )
+    data = json.loads((dispatch_home / "config.json").read_text(encoding="utf-8"))
+    assert data["form_defaults"]["email"] == "dispatch-smoke@example.com"
     assert (dispatch_home / "installed_version").read_text(encoding="utf-8") == (
         ROOT / "VERSION"
     ).read_text(encoding="utf-8")

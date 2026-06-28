@@ -80,7 +80,7 @@ if [ ! -f "$CONFIG" ]; then
     printf "Email: "
     read -r EMAIL
   fi
-  printf '{\n  "email": "%s"\n}\n' "$EMAIL" >"$CONFIG"
+  printf '{\n  "form_defaults": {\n    "email": "%s"\n  }\n}\n' "$EMAIL" >"$CONFIG"
 fi
 
 cp "$ROOT_DIR/VERSION" "$DISPATCH_HOME/installed_version"

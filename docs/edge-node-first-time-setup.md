@@ -17,11 +17,17 @@ Confirm the vendored wheels exist:
 ls vendor/*.whl
 ```
 
-If `vendor/` needs to be refreshed, rebuild it locally:
+To rebuild `vendor/` for the Linux edge node from a non-Linux development
+host, use the platform-targeted recipe also used by
+[`deploy_and_install.ps1`](../deploy_and_install.ps1):
 
 ```bash
-python -m pip download -r requirements.txt -d vendor
+pip download -r requirements.txt -d vendor \
+  --platform manylinux2014_x86_64 --python-version 3.10 --abi cp310 --only-binary=:all:
 ```
+
+A bare `pip download -r requirements.txt -d vendor` on a non-Linux host
+downloads wheels for the host platform, which the Linux edge node cannot use.
 
 ### Recommendation: Zip for Upload
 For Windows-to-Linux transfers or unstable connections, upload a single ZIP archive to avoid `scp`/`rsync` overhead and potential file corruption.

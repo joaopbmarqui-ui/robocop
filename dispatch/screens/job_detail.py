@@ -30,6 +30,11 @@ from .sidebar import Sidebar
 # in-memory deque share this window so the truncation hint stays truthful.
 LOG_VIEW_LINES = 200
 
+# Maximum bytes read per 1s refresh tick. A chatty orchestrator can append
+# more than this between ticks; the remainder is picked up on the next tick
+# by carrying the offset forward. Bounds memory and RichLog write bursts.
+LOG_READ_CHUNK_BYTES = 65536
+
 
 class JobDetailScreen(Screen[None]):
     BINDINGS = [
@@ -169,8 +174,9 @@ class JobDetailScreen(Screen[None]):
             if size > offset:
                 with log_path.open("r", encoding="utf-8", errors="replace") as handle:
                     handle.seek(offset)
-                    new_lines = [line.rstrip() for line in handle]
+                    chunk = handle.read(LOG_READ_CHUNK_BYTES)
                     new_offset = handle.tell()
+                new_lines = [line.rstrip() for line in chunk.splitlines()]
             else:
                 new_offset = offset
             error_code = self._error_code

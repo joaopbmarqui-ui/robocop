@@ -304,6 +304,58 @@ def test_log_view_bounded_and_truncation_hint_truthful(mock_env_with_config) -> 
     asyncio.run(run())
 
 
+def test_log_tail_read_is_capped_per_tick(
+    mock_env_with_config, monkeypatch
+) -> None:
+    data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
+    jobs_dir = data_root / ".dispatch" / "jobs"
+    chunk_bytes = 65536
+    remainder = ["remainder one", "remainder two"]
+    one_kib_line = "x" * 1023
+    log_lines = [one_kib_line] * (chunk_bytes // 1024) + remainder
+    job_id = _seed_job(
+        jobs_dir,
+        "20260520T120000Z_chunked",
+        "Succeeded",
+        log_lines=log_lines,
+    )
+    log_path = jobs_dir / job_id / "run.log"
+    log_path.write_bytes(("\n".join(log_lines) + "\n").encode("utf-8"))
+    log_size = log_path.stat().st_size
+    assert log_size > chunk_bytes
+
+    original_set_interval = JobDetailScreen.set_interval
+
+    def set_interval_without_log_refresh(screen, interval, callback, *args, **kwargs):
+        if getattr(callback, "__name__", "") == "_refresh_detail_async":
+            return None
+        return original_set_interval(screen, interval, callback, *args, **kwargs)
+
+    # Keep Textual's internal screen timers, but suppress this screen's
+    # recurring log refresh so the initial and manual ticks are deterministic.
+    monkeypatch.setattr(JobDetailScreen, "set_interval", set_interval_without_log_refresh)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = JobDetailScreen(job_id)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            assert screen._tail_offset == chunk_bytes
+            assert screen._tail_offset < log_size
+            assert not any(line in screen._tail_lines for line in remainder)
+
+            await screen._refresh_detail_async()
+
+            assert screen._tail_offset == log_size
+            assert list(screen._tail_lines)[-2:] == remainder
+            assert list(screen._tail_lines).count(remainder[0]) == 1
+            assert list(screen._tail_lines).count(remainder[1]) == 1
+
+    asyncio.run(run())
+
+
 def test_log_styled_line_highlights_search_query(mock_env_with_config) -> None:
     data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
     jobs_dir = data_root / ".dispatch" / "jobs"

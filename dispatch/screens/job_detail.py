@@ -58,6 +58,7 @@ class JobDetailScreen(Screen[None]):
         self.cancel_on_mount = cancel_on_mount
         self._tail_offset = 0
         self._tail_lines: deque[str] = deque(maxlen=LOG_VIEW_LINES)
+        self._tail_pending_bytes = b""
         self._evicted_line_count = 0
         self._search_query = ""
         self._error_code: str | None = None
@@ -171,14 +172,31 @@ class JobDetailScreen(Screen[None]):
             reset = size < offset
             if reset:
                 offset = 0
+            pending_bytes = b"" if reset else self._tail_pending_bytes
+            chunk = b""
             if size > offset:
-                with log_path.open("r", encoding="utf-8", errors="replace") as handle:
+                with log_path.open("rb") as handle:
                     handle.seek(offset)
                     chunk = handle.read(LOG_READ_CHUNK_BYTES)
                     new_offset = handle.tell()
-                new_lines = [line.rstrip() for line in chunk.splitlines()]
             else:
                 new_offset = offset
+            complete_lines = (pending_bytes + chunk).split(b"\n")
+            pending_bytes = complete_lines.pop()
+            # A live Job may append to an unterminated final line, so keep it
+            # buffered. Terminal Jobs will not append again; flush their final
+            # unterminated line exactly once when the reader reaches EOF.
+            if (
+                pending_bytes
+                and new_offset == size
+                and item["state"] not in ("Running", "Pending")
+            ):
+                complete_lines.append(pending_bytes)
+                pending_bytes = b""
+            new_lines = [
+                line.decode("utf-8", errors="replace").rstrip()
+                for line in complete_lines
+            ]
             error_code = self._error_code
             error_line = self._error_line
             if item["state"] == "Failed" and not self._error_checked:
@@ -188,6 +206,7 @@ class JobDetailScreen(Screen[None]):
                 "item": item,
                 "new_lines": new_lines,
                 "new_offset": new_offset,
+                "pending_bytes": pending_bytes,
                 "error_code": error_code,
                 "error_line": error_line,
                 "reset": reset,
@@ -261,6 +280,7 @@ class JobDetailScreen(Screen[None]):
         clone_btn.display = state in ("Succeeded", "Failed", "Cancelled")
 
         self._update_error_banner(state)
+        self._tail_pending_bytes = snapshot["pending_bytes"]
         self._append_log_lines(
             snapshot["new_lines"], snapshot["new_offset"], reset=snapshot.get("reset", False)
         )

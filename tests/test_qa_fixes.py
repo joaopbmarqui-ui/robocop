@@ -281,6 +281,19 @@ def _seed_job(
     return job_id
 
 
+def _suppress_job_detail_refresh_timer(monkeypatch) -> None:
+    original_set_interval = JobDetailScreen.set_interval
+
+    def set_interval_without_log_refresh(screen, interval, callback, *args, **kwargs):
+        if getattr(callback, "__name__", "") == "_refresh_detail_async":
+            return None
+        return original_set_interval(screen, interval, callback, *args, **kwargs)
+
+    # Keep Textual's internal screen timers, but suppress this screen's
+    # recurring log refresh so explicit test ticks are deterministic.
+    monkeypatch.setattr(JobDetailScreen, "set_interval", set_interval_without_log_refresh)
+
+
 def test_log_view_bounded_and_truncation_hint_truthful(mock_env_with_config) -> None:
     data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
     jobs_dir = data_root / ".dispatch" / "jobs"
@@ -324,16 +337,7 @@ def test_log_tail_read_is_capped_per_tick(
     log_size = log_path.stat().st_size
     assert log_size > chunk_bytes
 
-    original_set_interval = JobDetailScreen.set_interval
-
-    def set_interval_without_log_refresh(screen, interval, callback, *args, **kwargs):
-        if getattr(callback, "__name__", "") == "_refresh_detail_async":
-            return None
-        return original_set_interval(screen, interval, callback, *args, **kwargs)
-
-    # Keep Textual's internal screen timers, but suppress this screen's
-    # recurring log refresh so the initial and manual ticks are deterministic.
-    monkeypatch.setattr(JobDetailScreen, "set_interval", set_interval_without_log_refresh)
+    _suppress_job_detail_refresh_timer(monkeypatch)
 
     async def run() -> None:
         app = DispatchApp()
@@ -352,6 +356,89 @@ def test_log_tail_read_is_capped_per_tick(
             assert list(screen._tail_lines)[-2:] == remainder
             assert list(screen._tail_lines).count(remainder[0]) == 1
             assert list(screen._tail_lines).count(remainder[1]) == 1
+
+    asyncio.run(run())
+
+
+def test_log_tail_byte_cap_preserves_multibyte_line_across_ticks(
+    mock_env_with_config, monkeypatch
+) -> None:
+    data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
+    jobs_dir = data_root / ".dispatch" / "jobs"
+    chunk_bytes = 4
+    logical_line = "\u20ac\u20acx"
+    payload = f"{logical_line}\n".encode("utf-8")
+    job_id = _seed_job(
+        jobs_dir,
+        "20260520T120000Z_utf8chunk",
+        "Succeeded",
+    )
+    log_path = jobs_dir / job_id / "run.log"
+    log_path.write_bytes(payload)
+    assert len(payload) > chunk_bytes
+
+    monkeypatch.setattr(
+        "dispatch.screens.job_detail.LOG_READ_CHUNK_BYTES", chunk_bytes
+    )
+    _suppress_job_detail_refresh_timer(monkeypatch)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = JobDetailScreen(job_id)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            assert screen._tail_offset == chunk_bytes
+            assert list(screen._tail_lines) == []
+
+            await screen._refresh_detail_async()
+
+            assert screen._tail_offset == len(payload)
+            assert list(screen._tail_lines) == [logical_line]
+
+    asyncio.run(run())
+
+
+def test_log_tail_flushes_final_unterminated_line_once(
+    mock_env_with_config, monkeypatch
+) -> None:
+    data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
+    jobs_dir = data_root / ".dispatch" / "jobs"
+    chunk_bytes = 8
+    logical_line = "final-line"
+    payload = logical_line.encode("utf-8")
+    job_id = _seed_job(
+        jobs_dir,
+        "20260520T120000Z_unterminated",
+        "Succeeded",
+    )
+    log_path = jobs_dir / job_id / "run.log"
+    log_path.write_bytes(payload)
+
+    monkeypatch.setattr(
+        "dispatch.screens.job_detail.LOG_READ_CHUNK_BYTES", chunk_bytes
+    )
+    _suppress_job_detail_refresh_timer(monkeypatch)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = JobDetailScreen(job_id)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            assert screen._tail_offset == chunk_bytes
+            assert list(screen._tail_lines) == []
+
+            await screen._refresh_detail_async()
+
+            assert screen._tail_offset == len(payload)
+            assert list(screen._tail_lines) == [logical_line]
+
+            await screen._refresh_detail_async()
+
+            assert list(screen._tail_lines) == [logical_line]
 
     asyncio.run(run())
 

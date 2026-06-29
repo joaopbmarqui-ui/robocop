@@ -15,6 +15,13 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # Helper Functions
 # =============================================================================
 
+def _remove_temp_output(temp_output_file: str):
+    try:
+        os.remove(temp_output_file)
+    except FileNotFoundError:
+        pass
+
+
 def run_export_on_impala(query: str, output_file: str):
     """
     Executes an Impala query to export data to a CSV file.
@@ -31,26 +38,24 @@ def run_export_on_impala(query: str, output_file: str):
         '-q', query, '-o', temp_output_file
     ]
 
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
+    try:
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+    except Exception:
+        _remove_temp_output(temp_output_file)
+        raise
     
     if process.returncode == 0:
         try:
             os.replace(temp_output_file, output_file)
         except Exception:
-            try:
-                os.remove(temp_output_file)
-            except FileNotFoundError:
-                pass
+            _remove_temp_output(temp_output_file)
             raise
         logging.info(f"SUCCESS: Successfully exported data to {output_file}")
         logging.debug(stdout.decode()) 
         return True
     else:
-        try:
-            os.remove(temp_output_file)
-        except FileNotFoundError:
-            pass
+        _remove_temp_output(temp_output_file)
         logging.error(f"ERROR: Impala command failed for output file {output_file}.")
         
         stderr_decoded = stderr.decode()

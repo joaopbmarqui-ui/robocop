@@ -106,3 +106,33 @@ def test_publish_failure_removes_temp_file_and_preserves_existing_csv(
     temp_target = observed_output_targets[0]
     assert output_file.read_text(encoding="utf-8") == "previous complete csv\n"
     assert not temp_target.exists()
+
+
+def test_communicate_failure_removes_temp_file_and_preserves_existing_csv(
+    tmp_path: Path, monkeypatch
+) -> None:
+    output_file = tmp_path / "export.csv"
+    output_file.write_text("previous complete csv\n", encoding="utf-8")
+    observed_output_targets: list[Path] = []
+
+    class FakeProcess:
+        def __init__(self, command: list[str], stdout, stderr) -> None:
+            target = Path(command[command.index("-o") + 1])
+            observed_output_targets.append(target)
+            target.write_text("partial csv\n", encoding="utf-8")
+
+        def communicate(self) -> tuple[bytes, bytes]:
+            raise RuntimeError("communicate failed")
+
+    monkeypatch.setattr(download_to_csv.subprocess, "Popen", FakeProcess)
+
+    try:
+        download_to_csv.run_export_on_impala("select 1", str(output_file))
+    except RuntimeError as exc:
+        assert str(exc) == "communicate failed"
+    else:
+        raise AssertionError("expected communicate failure to be propagated")
+
+    temp_target = observed_output_targets[0]
+    assert output_file.read_text(encoding="utf-8") == "previous complete csv\n"
+    assert not temp_target.exists()

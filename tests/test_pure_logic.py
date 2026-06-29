@@ -7,6 +7,7 @@ or the mock environment — they exercise deterministic functions directly.
 from __future__ import annotations
 
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -652,6 +653,13 @@ class TestJobsListing:
         _write_manifest(jdir, "Running")
         assert jobs.can_launch(root=jdir) is False
 
+    def test_can_launch_false_with_two_pending_jobs(self, tmp_path: Path) -> None:
+        jdir = tmp_path / "jobs"
+        jdir.mkdir()
+        _write_manifest(jdir, "Pending")
+        _write_manifest(jdir, "Pending")
+        assert jobs.can_launch(root=jdir) is False
+
     def test_failed_and_cancelled_do_not_count_toward_cap(self, tmp_path: Path) -> None:
         from dispatch.manifest import now_utc
         jdir = tmp_path / "jobs"
@@ -659,3 +667,46 @@ class TestJobsListing:
         _write_manifest(jdir, "Failed", finished_at=now_utc())
         _write_manifest(jdir, "Cancelled", finished_at=now_utc())
         assert jobs.can_launch(root=jdir) is True
+
+    def test_create_job_if_slot_available_serializes_one_remaining_slot(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("DISPATCH_DATA_ROOT", str(tmp_path))
+        jdir = tmp_path / ".dispatch" / "jobs"
+        jdir.mkdir(parents=True)
+        _write_manifest(jdir, "Running")
+        sql_file = tmp_path / "query.sql"
+        sql_file.write_text("select 1\n", encoding="utf-8")
+
+        def create_one() -> Path | jobs.LaunchSlotUnavailable:
+            try:
+                job_dir, _created = jobs.create_job_if_slot_available(
+                    source={"type": "SqlFile", "sql_path_at_launch": str(sql_file)},
+                    destination={
+                        "type": "Csv",
+                        "schema": "aa_enc",
+                        "table_name": "dispatch_result",
+                        "csv_path": str(tmp_path / "dispatch_result.csv"),
+                    },
+                    params={"to_email": "", "subject": "Dispatch Job"},
+                    launch_cwd=tmp_path,
+                    sql_text="select 1\n",
+                    user="testuser",
+                )
+                return job_dir
+            except jobs.LaunchSlotUnavailable as exc:
+                return exc
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            results = list(executor.map(lambda _index: create_one(), range(2)))
+
+        successes = [result for result in results if isinstance(result, Path)]
+        failures = [result for result in results if isinstance(result, jobs.LaunchSlotUnavailable)]
+        assert len(successes) == 1
+        assert len(failures) == 1
+        manifests = [
+            path
+            for path in jdir.glob("*/manifest.json")
+            if manifest.load(path)["state"] in {"Pending", "Running"}
+        ]
+        assert len(manifests) == jobs.RUNNING_CAP

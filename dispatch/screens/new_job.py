@@ -17,7 +17,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Collapsible, DataTable, Footer, Header, Input, RadioButton, RadioSet, Static
 from textual.worker import Worker
 
-from .. import config, jobs, kerberos, manifest, process, sql
+from .. import config, jobs, manifest, process, sql
 from .confirm import ConfirmScreen
 from .preview import PreviewScreen
 from .sidebar import Sidebar
@@ -152,8 +152,8 @@ class NewJobScreen(Screen[None]):
 
         self._apply_saved_defaults()
         self._apply_prefill()
-        self.kerberos_ttl = await kerberos.ticket_ttl_seconds()
-        self._refresh_kerberos()
+        if hasattr(type(self.app), "kerberos_ttl"):
+            self.watch(self.app, "kerberos_ttl", self._on_kerberos_change, init=True)
         self._detect_sql()
         self._update_field_visibility()
         self._inline_validate()
@@ -448,6 +448,12 @@ class NewJobScreen(Screen[None]):
         launch_btn.disabled = self.kerberos_ttl is None or self.kerberos_ttl < 300
         self._update_validation_summary()
 
+    def _on_kerberos_change(self, value: int | None) -> None:
+        self.kerberos_ttl = value
+        self._refresh_kerberos()
+        self._inline_validate()
+        self._update_validation_summary()
+
     def _read_sql(self) -> str | None:
         sql_path = Path(self._input_value("sql-file"))
         try:
@@ -633,13 +639,26 @@ class NewJobScreen(Screen[None]):
         confirmed = await self._confirm_launch(source, destination)
         if not confirmed:
             return
-        job_dir, _job_manifest = manifest.create_job(
-            source=source,
-            destination=destination,
-            params=self._params(),
-            launch_cwd=self.launch_cwd,
-            sql_text=sql_text,
-        )
+        if hasattr(self.app, "refresh_kerberos"):
+            await self.app.refresh_kerberos()
+        error = self._validate()
+        if error:
+            self._show_message(error, "error")
+            self.notify(error, severity="error")
+            return
+        try:
+            job_dir, _job_manifest = jobs.create_job_if_slot_available(
+                source=source,
+                destination=destination,
+                params=self._params(),
+                launch_cwd=self.launch_cwd,
+                sql_text=sql_text,
+            )
+        except jobs.LaunchSlotUnavailable as exc:
+            error = str(exc)
+            self._show_message(error, "error")
+            self.notify(error, severity="error")
+            return
         await process.launch_runner(job_dir)
         logger.info("Launched Job %s source=%s dest=%s", job_dir.name, source["type"], destination["type"])
         self._save_form_defaults()
@@ -692,9 +711,6 @@ class NewJobScreen(Screen[None]):
     async def action_kinit(self) -> None:
         with self.app.suspend():
             process.run_interactive("kinit")
-        self.kerberos_ttl = await kerberos.ticket_ttl_seconds()
-        self._refresh_kerberos()
-        self._inline_validate()
         await self.app.refresh_kerberos()
         if self.kerberos_ttl is not None:
             self.notify(f"Kerberos refreshed: {self.kerberos_ttl // 60}m", severity="information")
@@ -754,6 +770,7 @@ class NewJobScreen(Screen[None]):
     def _schedule_force_radio(self, radio_set_id: str, button_id: str) -> None:
         self.call_after_refresh(self._force_radio, radio_set_id, button_id)
         self.set_timer(0.05, lambda: self._force_radio(radio_set_id, button_id))
+        self.set_timer(0.25, lambda: self._force_radio(radio_set_id, button_id))
 
     def _force_radio(self, radio_set_id: str, button_id: str) -> None:
         radio_set = self.query_one(radio_set_id, RadioSet)

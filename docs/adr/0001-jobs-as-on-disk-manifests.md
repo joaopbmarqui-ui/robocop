@@ -38,8 +38,9 @@ node.
   contract. Changing them after launch breaks anyone with in-flight or
   historical Jobs, so they are versioned (manifest carries a `schema_version`
   field).
-- Concurrency enforcement is just a count over `manifest.state == "Running"`;
-  no locks needed.
+- Launch-time concurrency enforcement counts Jobs in `Pending` or `Running`
+  state while holding `.dispatch-launch.lock`; the lock only protects the
+  acceptance decision and manifest creation.
 - Cancel is `os.killpg(pgid, SIGTERM)` — clean because the runner spawns the
   orchestrator under a fresh process group via `setsid`.
 

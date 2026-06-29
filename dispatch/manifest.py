@@ -259,13 +259,7 @@ def _csv_path_for_destination(destination: Destination, launch_cwd: Path, table:
     explicit_csv_path = destination.get("csv_path")
     if not explicit_csv_path:
         return str(sql.safe_csv_path(launch_cwd, table or "dispatch_export"))
-
-    resolved_cwd = launch_cwd.resolve()
-    raw_path = Path(explicit_csv_path)
-    output_path = (raw_path if raw_path.is_absolute() else resolved_cwd / raw_path).resolve()
-    if not output_path.is_relative_to(resolved_cwd):
-        raise ValueError("CSV output path must stay within the launch directory")
-    return str(output_path)
+    return str(sql.resolve_csv_output_path(launch_cwd, explicit_csv_path))
 
 
 def build_orchestrator_calls(

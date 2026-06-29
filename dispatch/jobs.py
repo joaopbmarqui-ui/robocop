@@ -17,6 +17,7 @@ logger = logging.getLogger("dispatch.jobs")
 ACTIVE_WINDOW = timedelta(days=7)
 RUNNING_CAP = 2
 LAUNCH_SLOT_STATES = {"Pending", "Running"}
+PENDING_ORPHAN_GRACE = timedelta(minutes=5)
 
 _manifest_cache: dict[Path, tuple[float, manifest.JobManifest]] = {}
 
@@ -115,28 +116,48 @@ def pid_is_alive(pid: int) -> bool:
     return True
 
 
-def _append_stale_log(job_dir: Path, pid: int) -> None:
+def _append_dispatch_log(job_dir: Path, line: str) -> None:
     log_path = job_dir / "run.log"
     if not log_path.exists():
         return
     try:
         with log_path.open("a", encoding="utf-8") as handle:
-            handle.write(f"[dispatch] stale runner pid {pid} not found; manifest marked Failed\n")
+            handle.write(f"{line}\n")
     except OSError:
-        logger.info("Could not append stale-runner note for %s", job_dir)
+        logger.info("Could not append dispatch note for %s", job_dir)
 
 
 def reconcile_manifest(path: Path) -> manifest.JobManifest | None:
     """Load and conservatively reconcile one manifest.
 
-    Only ``Running`` Jobs with a stored PID are reconciled. ``Pending`` Jobs are
-    left untouched because the product has not chosen an automatic age
-    threshold for spawn stalls.
+    ``Running`` Jobs with a stored PID are failed when the PID no longer
+    exists. ``Pending`` Jobs with ``pid=None`` are failed only after the
+    manifest file has remained untouched past ``PENDING_ORPHAN_GRACE``.
     """
     item = _load_manifest_cached(path)
     pid = item.get("pid")
     if item["state"] != "Running" or pid is None or pid_is_alive(pid):
-        return item
+        if item["state"] != "Pending" or pid is not None:
+            return item
+        try:
+            manifest_mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+        except OSError as exc:
+            raise ValueError(str(exc)) from exc
+        now = datetime.now(timezone.utc)
+        if now - manifest_mtime <= PENDING_ORPHAN_GRACE:
+            return item
+        updated = manifest.update(
+            path,
+            state="Failed",
+            exit_code=-1,
+            finished_at=now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        )
+        _manifest_cache.pop(path, None)
+        _append_dispatch_log(
+            path.parent,
+            "[dispatch] Pending job exceeded startup grace; manifest marked Failed",
+        )
+        return updated
     updated = manifest.update(
         path,
         state="Failed",
@@ -144,7 +165,10 @@ def reconcile_manifest(path: Path) -> manifest.JobManifest | None:
         finished_at=manifest.now_utc(),
     )
     _manifest_cache.pop(path, None)
-    _append_stale_log(path.parent, pid)
+    _append_dispatch_log(
+        path.parent,
+        f"[dispatch] stale runner pid {pid} not found; manifest marked Failed",
+    )
     return updated
 
 
@@ -166,7 +190,7 @@ def running_jobs(root: Path | None = None) -> list[manifest.JobManifest]:
 
 
 def launch_slot_jobs(root: Path | None = None) -> list[manifest.JobManifest]:
-    """Jobs that already occupy one of the user's launch slots.
+    """Return up to ``RUNNING_CAP`` Jobs that currently occupy launch slots.
 
     ``Pending`` manifests have passed launch acceptance and are waiting for the
     detached runner to flip them to ``Running``, so they count against the cap.
@@ -187,8 +211,23 @@ def launch_slot_jobs(root: Path | None = None) -> list[manifest.JobManifest]:
     return loaded
 
 
+def count_launch_slot_jobs(root: Path | None = None) -> int:
+    count = 0
+    paths = _manifest_paths(root)
+    for path in paths:
+        try:
+            item = reconcile_manifest(path) or _load_manifest_cached(path)
+        except Exception as exc:
+            logger.warning("Skipping corrupt manifest %s: %s", path, exc)
+            continue
+        if item["state"] in LAUNCH_SLOT_STATES:
+            count += 1
+    _prune_manifest_cache(paths)
+    return count
+
+
 def can_launch(root: Path | None = None) -> bool:
-    return len(launch_slot_jobs(root)) < RUNNING_CAP
+    return count_launch_slot_jobs(root) < RUNNING_CAP
 
 
 @contextmanager
@@ -198,7 +237,7 @@ def _launch_lock(user: str | None = None) -> Iterator[None]:
     lock_path = jobs_path / ".dispatch-launch.lock"
     with lock_path.open("a+b") as handle:
         try:
-            import fcntl  # type: ignore[import-not-found]
+            import fcntl
 
             fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
             try:
@@ -210,7 +249,7 @@ def _launch_lock(user: str | None = None) -> Iterator[None]:
             pass
 
         try:
-            import msvcrt  # type: ignore[import-not-found]
+            import msvcrt
         except ImportError as exc:
             raise RuntimeError(
                 "Dispatch launch locking requires fcntl.flock on POSIX or "
@@ -241,7 +280,7 @@ def create_job_if_slot_available(
     """
     with _launch_lock(user):
         root = config.jobs_dir(user)
-        if not can_launch(root=root):
+        if count_launch_slot_jobs(root=root) >= RUNNING_CAP:
             raise LaunchSlotUnavailable(
                 f"Already at the {RUNNING_CAP}-Job concurrency cap; wait for one to finish"
             )
@@ -277,8 +316,18 @@ def active_jobs(root: Path | None = None) -> list[manifest.JobManifest]:
 def history_jobs(root: Path | None = None) -> list[manifest.JobManifest]:
     now = datetime.now(timezone.utc)
     result = []
-    for item in reconciled_list_manifests(root):
+    paths = _manifest_paths(root)
+    for path in paths:
+        try:
+            if _cached_terminal_outside_active_window(path, now):
+                result.append(_manifest_cache[path][1])
+                continue
+            item = reconcile_manifest(path) or _load_manifest_cached(path)
+        except Exception as exc:
+            logger.warning("Skipping corrupt manifest %s: %s", path, exc)
+            continue
         finished = parse_time(item["finished_at"])
         if finished is not None and now - finished > ACTIVE_WINDOW:
             result.append(item)
+    _prune_manifest_cache(paths)
     return result

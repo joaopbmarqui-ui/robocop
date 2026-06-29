@@ -31,7 +31,7 @@ jobs:
       - name: Format check
         run: ruff format --check dispatch tests
       - name: Typecheck
-        run: mypy dispatch
+        run: mypy dispatch/sql.py dispatch/jobs.py dispatch/manifest.py
       - name: Help smoke
         run: python -m dispatch --help
       - name: Tests

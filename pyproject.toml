@@ -61,3 +61,13 @@ check_untyped_defs = false
 warn_unused_ignores = false
 warn_redundant_casts = true
 disable_error_code = ["arg-type", "assignment", "attr-defined", "list-item", "typeddict-item"]
+
+[[tool.mypy.overrides]]
+module = [
+  "dispatch.sql",
+  "dispatch.jobs",
+  "dispatch.manifest",
+]
+check_untyped_defs = true
+warn_unused_ignores = true
+disable_error_code = []

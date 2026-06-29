@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from pathlib import Path
 
 from dispatch import jobs, manifest, process
@@ -69,6 +70,54 @@ def test_running_jobs_reconcile_dead_pid_before_counting(
     assert [item["pid"] for item in running] == [222_222]
     assert manifest.load(stale_dir / "manifest.json")["state"] == "Failed"
     assert jobs.can_launch() is True
+
+
+def test_orphan_pending_without_pid_reconciles_after_grace(
+    mock_env, tmp_path: Path, monkeypatch
+) -> None:
+    jobs._manifest_cache.clear()
+    job_dir = _create_csv_job(tmp_path)
+    manifest_path = job_dir / "manifest.json"
+    (job_dir / "run.log").write_text("queued\n", encoding="utf-8")
+    old_enough = manifest_path.stat().st_mtime - jobs.PENDING_ORPHAN_GRACE.total_seconds() - 5
+    os.utime(manifest_path, (old_enough, old_enough))
+    monkeypatch.setattr(jobs, "pid_is_alive", lambda pid: False)
+
+    reconciled = jobs.reconcile_manifest(manifest_path)
+
+    assert reconciled is not None
+    assert reconciled["state"] == "Failed"
+    assert reconciled["exit_code"] == -1
+    assert reconciled["finished_at"] is not None
+    assert "Pending job exceeded startup grace" in (job_dir / "run.log").read_text(
+        encoding="utf-8"
+    )
+
+
+def test_fresh_pending_without_pid_stays_pending(mock_env, tmp_path: Path) -> None:
+    jobs._manifest_cache.clear()
+    job_dir = _create_csv_job(tmp_path)
+    manifest_path = job_dir / "manifest.json"
+
+    reconciled = jobs.reconcile_manifest(manifest_path)
+
+    assert reconciled is not None
+    assert reconciled["state"] == "Pending"
+    assert manifest.load(manifest_path)["state"] == "Pending"
+
+
+def test_orphan_pending_frees_launch_slot(mock_env, tmp_path: Path) -> None:
+    jobs._manifest_cache.clear()
+    fresh_dir = _create_csv_job(tmp_path)
+    orphan_dir = _create_csv_job(tmp_path)
+    orphan_manifest = orphan_dir / "manifest.json"
+    old_enough = orphan_manifest.stat().st_mtime - jobs.PENDING_ORPHAN_GRACE.total_seconds() - 5
+    os.utime(orphan_manifest, (old_enough, old_enough))
+
+    assert manifest.load(fresh_dir / "manifest.json")["state"] == "Pending"
+    assert manifest.load(orphan_manifest)["state"] == "Pending"
+    assert jobs.can_launch() is True
+    assert manifest.load(orphan_manifest)["state"] == "Failed"
 
 
 def test_cancel_dead_pid_marks_running_job_failed(

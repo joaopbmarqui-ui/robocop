@@ -753,6 +753,35 @@ class TestJobsListing:
         _write_manifest(jdir, "Pending")
         assert jobs.can_launch(root=jdir) is False
 
+    def test_can_launch_false_when_three_slot_jobs_exist(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("DISPATCH_DATA_ROOT", str(tmp_path))
+        jdir = tmp_path / ".dispatch" / "jobs"
+        jdir.mkdir(parents=True)
+        _write_manifest(jdir, "Running")
+        _write_manifest(jdir, "Pending")
+        _write_manifest(jdir, "Running")
+        sql_file = tmp_path / "query.sql"
+        sql_file.write_text("select 1\n", encoding="utf-8")
+
+        assert jobs.count_launch_slot_jobs(root=jdir) == 3
+        assert jobs.can_launch(root=jdir) is False
+        with pytest.raises(jobs.LaunchSlotUnavailable):
+            jobs.create_job_if_slot_available(
+                source={"type": "SqlFile", "sql_path_at_launch": str(sql_file)},
+                destination={
+                    "type": "Csv",
+                    "schema": "aa_enc",
+                    "table_name": "dispatch_result",
+                    "csv_path": str(tmp_path / "dispatch_result.csv"),
+                },
+                params={"to_email": "", "subject": "Dispatch Job"},
+                launch_cwd=tmp_path,
+                sql_text="select 1\n",
+                user="testuser",
+            )
+
     def test_failed_and_cancelled_do_not_count_toward_cap(self, tmp_path: Path) -> None:
         from dispatch.manifest import now_utc
 
@@ -805,6 +834,62 @@ class TestJobsListing:
 
         assert jobs.active_jobs(root=jdir) == []
         assert loads == 0
+
+    def test_history_jobs_cache_skips_unchanged_old_terminal_manifests(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        jdir = tmp_path / "jobs"
+        jdir.mkdir()
+        old_ts = (datetime.now(timezone.utc) - jobs.ACTIVE_WINDOW - timedelta(days=1)).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+        for _ in range(5):
+            _write_manifest(jdir, "Succeeded", finished_at=old_ts)
+
+        history = jobs.history_jobs(root=jdir)
+        assert len(history) == 5
+
+        calls: list[Path] = []
+        original_reconcile = jobs.reconcile_manifest
+
+        def counting_reconcile(path: Path) -> manifest.JobManifest | None:
+            calls.append(path)
+            return original_reconcile(path)
+
+        monkeypatch.setattr(jobs, "reconcile_manifest", counting_reconcile)
+
+        history = jobs.history_jobs(root=jdir)
+        assert len(history) == 5
+        assert calls == []
+
+    def test_history_jobs_rechecks_manifest_after_old_terminal_mtime_changes(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        jdir = tmp_path / "jobs"
+        jdir.mkdir()
+        old_ts = (datetime.now(timezone.utc) - jobs.ACTIVE_WINDOW - timedelta(days=1)).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+        item = _write_manifest(jdir, "Succeeded", finished_at=old_ts)
+        history = jobs.history_jobs(root=jdir)
+        assert [entry["id"] for entry in history] == [item["id"]]
+
+        manifest_path = next(jdir.glob("*/manifest.json"))
+        current_mtime = manifest_path.stat().st_mtime
+        os.utime(manifest_path, (current_mtime + 5, current_mtime + 5))
+
+        calls: list[Path] = []
+        original_reconcile = jobs.reconcile_manifest
+
+        def counting_reconcile(path: Path) -> manifest.JobManifest | None:
+            calls.append(path)
+            return original_reconcile(path)
+
+        monkeypatch.setattr(jobs, "reconcile_manifest", counting_reconcile)
+
+        history = jobs.history_jobs(root=jdir)
+        assert [entry["id"] for entry in history] == [item["id"]]
+        assert calls == [manifest_path]
 
     def test_create_job_if_slot_available_serializes_one_remaining_slot(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch

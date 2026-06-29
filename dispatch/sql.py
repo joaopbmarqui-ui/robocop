@@ -27,6 +27,27 @@ def validate_full_table(value: str, label: str = "table") -> str | None:
     return None
 
 
+def resolve_csv_output_path(launch_cwd: Path, raw_path: str | Path) -> Path:
+    """Resolve a direct CSV output path inside ``launch_cwd``."""
+    resolved_cwd = launch_cwd.resolve()
+    candidate = Path(raw_path)
+    output_path = (candidate if candidate.is_absolute() else resolved_cwd / candidate).resolve()
+    if not output_path.is_relative_to(resolved_cwd):
+        raise ValueError("CSV output path must stay within the launch directory")
+    if output_path.suffix.lower() != ".csv":
+        raise ValueError("CSV output path must end with .csv")
+    if output_path.parent != resolved_cwd:
+        raise ValueError("CSV output path must be a direct file in the launch directory")
+
+    stem = output_path.stem
+    if not stem or "/" in stem or "\\" in stem or ".." in stem:
+        raise ValueError("CSV filename must be a safe CSV filename stem")
+    identifier_error = validate_identifier(stem, "CSV filename")
+    if identifier_error:
+        raise ValueError(identifier_error)
+    return output_path
+
+
 def safe_csv_path(launch_cwd: Path, table: str) -> Path:
     """Build a CSV path whose plain filename stem cannot escape ``launch_cwd``."""
     if not table or "/" in table or "\\" in table or ".." in table:
@@ -34,12 +55,7 @@ def safe_csv_path(launch_cwd: Path, table: str) -> Path:
     identifier_error = validate_identifier(table, "Table name")
     if identifier_error:
         raise ValueError(identifier_error)
-
-    resolved_cwd = launch_cwd.resolve()
-    output_path = (resolved_cwd / f"{table}.csv").resolve()
-    if not output_path.is_relative_to(resolved_cwd):
-        raise ValueError("CSV output path must stay within the launch directory")
-    return output_path
+    return resolve_csv_output_path(launch_cwd, f"{table}.csv")
 
 
 def detect_source(sql_text: str) -> str:

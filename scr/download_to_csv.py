@@ -35,7 +35,14 @@ def run_export_on_impala(query: str, output_file: str):
     stdout, stderr = process.communicate()
     
     if process.returncode == 0:
-        os.replace(temp_output_file, output_file)
+        try:
+            os.replace(temp_output_file, output_file)
+        except Exception:
+            try:
+                os.remove(temp_output_file)
+            except FileNotFoundError:
+                pass
+            raise
         logging.info(f"SUCCESS: Successfully exported data to {output_file}")
         logging.debug(stdout.decode()) 
         return True

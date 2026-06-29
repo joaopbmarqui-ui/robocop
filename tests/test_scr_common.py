@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -169,3 +170,120 @@ def test_fatal_error_categories_are_in_fatal_set(stderr_text: str, category: str
 )
 def test_each_declared_fatal_error_is_pinned(category: str) -> None:
     assert category in _common.FATAL_ERRORS
+
+
+def test_cycle_through_pools_propagates_unexpected_operation_errors(monkeypatch) -> None:
+    failures: list[int] = []
+    sleeps: list[int] = []
+
+    monkeypatch.setattr(_common.time, "sleep", lambda seconds: sleeps.append(seconds))
+
+    def operation(_pool: str) -> bool:
+        raise RuntimeError("local subprocess startup failed")
+
+    with pytest.raises(RuntimeError, match="local subprocess startup failed"):
+        _common.cycle_through_pools(
+            ["adhoc_fast"],
+            operation,
+            failures.append,
+            retry_interval=30,
+            max_cycles=1,
+        )
+
+    assert failures == []
+    assert sleeps == []
+
+
+def test_cycle_through_pools_raises_timeout_without_promising_unavailable_retry(
+    monkeypatch,
+) -> None:
+    failures: list[int] = []
+    sleeps: list[int] = []
+
+    monkeypatch.setattr(_common.time, "sleep", lambda seconds: sleeps.append(seconds))
+
+    with pytest.raises(TimeoutError, match="Retry cycle limit reached"):
+        _common.cycle_through_pools(
+            ["adhoc_fast"],
+            lambda _pool: False,
+            failures.append,
+            retry_interval=30,
+            max_cycles=1,
+        )
+
+    assert failures == []
+    assert sleeps == []
+
+
+def test_cycle_through_pools_keeps_retry_interval_between_retryable_cycles(
+    monkeypatch,
+) -> None:
+    attempts: list[str] = []
+    failures: list[int] = []
+    sleeps: list[int] = []
+
+    monkeypatch.setattr(_common.time, "sleep", lambda seconds: sleeps.append(seconds))
+
+    def operation(pool: str) -> bool:
+        attempts.append(pool)
+        return False
+
+    with pytest.raises(TimeoutError, match="Retry cycle limit reached"):
+        _common.cycle_through_pools(
+            ["adhoc_fast"],
+            operation,
+            failures.append,
+            retry_interval=30,
+            max_cycles=2,
+        )
+
+    assert attempts == ["adhoc_fast", "adhoc_fast"]
+    assert failures == [1]
+    assert sleeps == [30]
+
+
+def test_send_email_uses_finite_timeout_and_closes_connection(monkeypatch) -> None:
+    smtp_calls: list[tuple[str, int, float]] = []
+    sent: list[tuple[str, list[str], str]] = []
+    closed: list[str] = []
+
+    class FakeSMTP:
+        def __init__(self, host: str, port: int, timeout: float) -> None:
+            smtp_calls.append((host, port, timeout))
+
+        def sendmail(self, from_email: str, recipients: list[str], message: str) -> None:
+            sent.append((from_email, recipients, message))
+
+        def quit(self) -> None:
+            closed.append("quit")
+
+    monkeypatch.setenv("MAILHOST", "smtp.example.test:2525")
+    monkeypatch.setattr(_common.smtplib, "SMTP", FakeSMTP)
+
+    _common.send_email("body", "Subject", "a@example.com;b@example.com")
+
+    assert smtp_calls == [("smtp.example.test", 2525, _common.SMTP_TIMEOUT_SECONDS)]
+    assert sent[0][0] == "AutoQueryExecution_Analytics@mastercard.com"
+    assert sent[0][1] == ["a@example.com", "b@example.com"]
+    assert "Subject" in sent[0][2]
+    assert closed == ["quit"]
+
+
+def test_send_email_closes_connection_when_sendmail_fails(monkeypatch) -> None:
+    closed: list[str] = []
+
+    class FakeSMTP:
+        def __init__(self, _host: str, _port: int, timeout: float) -> None:
+            pass
+
+        def sendmail(self, *_args: Any) -> None:
+            raise OSError("relay unavailable")
+
+        def quit(self) -> None:
+            closed.append("quit")
+
+    monkeypatch.setattr(_common.smtplib, "SMTP", FakeSMTP)
+
+    _common.send_email("body", "Subject", "a@example.com")
+
+    assert closed == ["quit"]

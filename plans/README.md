@@ -25,6 +25,7 @@ the status row when done.
 | 010 | Align the `config.json` email schema | P2 | M | - | DONE |
 | 011 | Unify the product version source | P3 | S | - | DONE |
 | 012 | Apply restrictive permissions to per-user Job data | P3 | S | 003 | DONE |
+| 013 | Harden production `scr/` orchestrators | P1 | M | 005, 007 | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
 REJECTED (with one-line rationale).

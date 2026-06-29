@@ -9,6 +9,8 @@ from pathlib import Path
 
 IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 FULL_TABLE_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*")
+DATE_INICIO_TOKEN = "{date_inicio}"
+DATE_FIM_TOKEN = "{date_fim}"
 
 
 def validate_identifier(value: str, label: str) -> str | None:
@@ -111,6 +113,8 @@ def month_range(start: date, end: date) -> list[date]:
 def monthly_preview(
     sql_template: str, schema: str, table_name: str, start_iso: str, end_iso: str
 ) -> str:
+    if DATE_INICIO_TOKEN not in sql_template or DATE_FIM_TOKEN not in sql_template:
+        raise ValueError("Monthly SQL template must include {date_inicio} and {date_fim} tokens.")
     start = datetime.strptime(start_iso, "%Y-%m-%d").date()
     end = datetime.strptime(end_iso, "%Y-%m-%d").date()
     # Metadata lines are SQL comments so the preview tokenizes cleanly.
@@ -119,7 +123,11 @@ def monthly_preview(
         last_day = calendar.monthrange(month.year, month.month)[1]
         month_end = month.replace(day=last_day)
         dt_ano_mes = month.strftime("%Y%m")
-        resolved = sql_template.format(date_inicio=str(month), date_fim=str(month_end)).strip()
+        resolved = (
+            sql_template.replace(DATE_INICIO_TOKEN, str(month))
+            .replace(DATE_FIM_TOKEN, str(month_end))
+            .strip()
+        )
         lines.extend(
             [
                 "",

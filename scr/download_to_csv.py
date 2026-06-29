@@ -1,9 +1,10 @@
-# flake8: noqa
 # pylint: disable=line-too-long,trailing-whitespace,missing-final-newline,no-else-return,logging-fstring-interpolation,consider-using-with,unspecified-encoding
 import subprocess
 import logging
 import argparse
 import sys
+import os
+import uuid
 
 from _common import FATAL_ERRORS, classificar_erro_impala, cycle_through_pools, validate_full_table
 
@@ -18,20 +19,31 @@ def run_export_on_impala(query: str, output_file: str):
     """
     Executes an Impala query to export data to a CSV file.
     """
+    output_dir = os.path.dirname(output_file) or "."
+    output_name = os.path.basename(output_file)
+    temp_output_file = os.path.join(
+        output_dir,
+        f".{output_name}.{uuid.uuid4().hex}.tmp",
+    )
     command = [
         'impala-shell', '-k', '-i', 'dw.prod.impala.mastercard.int:21000', '--ssl',
         '--delimited', '--print_header', '--output_delimiter=,',
-        '-q', query, '-o', output_file
+        '-q', query, '-o', temp_output_file
     ]
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
     
     if process.returncode == 0:
+        os.replace(temp_output_file, output_file)
         logging.info(f"SUCCESS: Successfully exported data to {output_file}")
         logging.debug(stdout.decode()) 
         return True
     else:
+        try:
+            os.remove(temp_output_file)
+        except FileNotFoundError:
+            pass
         logging.error(f"ERROR: Impala command failed for output file {output_file}.")
         
         stderr_decoded = stderr.decode()

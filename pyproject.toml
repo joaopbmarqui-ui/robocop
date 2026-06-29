@@ -40,6 +40,11 @@ extend-exclude = ["scr", "vendor", "tools/prod_tui", "mocks"]
 select = ["E", "F", "W", "I", "UP"]
 ignore = ["E501"]  # line length handled by formatter; keep to avoid noise
 
+[tool.ruff.lint.per-file-ignores]
+# `scr/` is production-sensitive and intentionally not part of the broad
+# style/upgrade gate yet. Keep correctness coverage without import churn.
+"scr/*.py" = ["I001", "UP", "W"]
+
 [tool.ruff.format]
 line-ending = "lf"
 

@@ -20,7 +20,7 @@ the status row when done.
 | 005 | Expand runner and `scr/` contract coverage before deeper orchestrator work | P2 | M | - | DONE |
 | 006 | Guard offline installation when `vendor/` is empty | P2 | M | - | DONE |
 | 007 | Add conservative lint and typecheck gates | P2 | M | - | DONE |
-| 008 | Add GitHub Actions CI | P2 | M | 007 | TODO |
+| 008 | Add GitHub Actions CI | P2 | M | 007 | DONE |
 | 009 | Cap Job Detail log-tail reads per refresh tick | P2 | S | - | DONE |
 | 010 | Align the `config.json` email schema | P2 | M | - | DONE |
 | 011 | Unify the product version source | P3 | S | - | DONE |

@@ -137,6 +137,9 @@ VPN-bypass pushes, while `bitbucket` is the writable corporate remote and the
 remote Edge Nodes can pull from. Do not push to either remote unless the user
 explicitly asks.
 
+CI (GitHub Actions) runs compile, lint, typecheck, and tests on every push to
+`main` and on PRs to `origin`. See `.github/workflows/ci.yml`.
+
 ## Domain docs
 
 Use the single-context layout when present: optional root `CONTEXT.md` and `docs/adr/`. Read them before deep implementation work.

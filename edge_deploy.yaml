@@ -1,0 +1,16 @@
+# robocop/edge_deploy.yaml
+tool: robocop
+repo_path: /ads_storage/dispatch
+bitbucket_url: https://scm.mastercard.int/stash/scm/~e176097/dispatch.git
+release_branch: main
+runtime_paths: ["dispatch/**/*.py", "dispatch/**/*.tcss", "scr/**/*.py"]
+compile_targets: "dispatch scr"
+version_files: [VERSION, dispatch/version.py, pyproject.toml]
+install_trigger_paths: [install.sh, requirements.txt, pyproject.toml, VERSION, "dispatch/**"]
+dependency_paths: [requirements.txt]
+smoke:
+  standard: ["dispatch --help"]
+  deep: ["<controlled Impala job>"]    # needs Kerberos
+sensitive_paths: ["scr/"]
+tui_chrome_regex: "Dispatch — Impala|Active Jobs|esc Back|n New Job"
+tui_exit: dispatch_dynamic       # keep robocop's dashboard-aware return_to_shell (q at top, esc to pop)

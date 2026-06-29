@@ -5,7 +5,7 @@ ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" && pwd)
 USER_NAME=${USER:-$(id -un)}
 DATA_ROOT=${DISPATCH_DATA_ROOT:-/ads_storage/$USER_NAME}
 DISPATCH_HOME="$DATA_ROOT/.dispatch"
-PYTHON_BIN=${DISPATCH_PYTHON_BIN:-}
+PYTHON_BIN=${EDGE_DEPLOY_PYTHON_BIN:-${DISPATCH_PYTHON_BIN:-}}
 if [ -z "$PYTHON_BIN" ]; then
   if command -v python3.11 >/dev/null 2>&1; then
     PYTHON_BIN=$(command -v python3.11)
@@ -76,7 +76,7 @@ esac
 
 CONFIG="$DISPATCH_HOME/config.json"
 if [ ! -f "$CONFIG" ]; then
-  EMAIL=${DISPATCH_EMAIL:-}
+  EMAIL=${EDGE_DEPLOY_EMAIL:-${DISPATCH_EMAIL:-}}
   if [ -z "$EMAIL" ]; then
     printf "Email: "
     read -r EMAIL

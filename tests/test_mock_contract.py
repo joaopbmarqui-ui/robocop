@@ -26,6 +26,11 @@ IMPALA_SHELL_CMD = (
     if os.name == "nt"
     else [str(IMPALA_SHELL)]
 )
+SCR_DIR = Path(__file__).resolve().parents[1] / "scr"
+if str(SCR_DIR) not in sys.path:
+    sys.path.insert(0, str(SCR_DIR))
+
+import _common  # noqa: E402
 
 
 # Base flags as used by Query_Impala_Parametrized.run_on_impala and
@@ -125,6 +130,38 @@ class TestQueryImpalaParametrizedArgv:
         )
         assert result.returncode != 0
         assert "could not resolve" in result.stderr
+
+    @pytest.mark.parametrize(
+        ("scenario", "expected_category"),
+        [
+            ("syntax_error", "SYNTAX_ERROR"),
+            ("auth_error", "AUTH_ERROR"),
+            ("table_not_found", "TABLE_NOT_FOUND"),
+            ("memory_exceeded", "MEMORY_EXCEEDED"),
+            ("all_queues_full", "QUEUE_FULL"),
+            ("timeout", "TIMEOUT"),
+            ("connection_error", "CONNECTION_ERROR"),
+            ("backpressure", "BACKPRESSURE"),
+            ("host_resolution_error", "HOST_RESOLUTION_ERROR"),
+            ("host_unreachable", "HOST_UNREACHABLE"),
+            ("disk_full", "DISK_FULL"),
+            ("space_limit", "SPACE_LIMIT"),
+            ("duplicate_column", "DUPLICATE_COLUMN"),
+            ("generic_error", "GENERIC_ERROR"),
+        ],
+    )
+    def test_classifier_scenarios_load_and_classify(
+        self, scenario: str, expected_category: str, tmp_path: Path
+    ) -> None:
+        state_dir = str(tmp_path / "state")
+        result = _run(
+            self._argv_for("set request_pool=adhoc_fast; SELECT 1;"),
+            scenario=scenario,
+            env_overrides={"DISPATCH_MOCK_STATE_DIR": state_dir},
+        )
+
+        assert result.returncode != 0
+        assert _common.classificar_erro_impala(result.stderr)["categoria"] == expected_category
 
     def test_pool_extracted_from_set_request_pool_prefix(self, tmp_path: Path) -> None:
         """The pool name extracted by POOL_RE appears in the success output."""

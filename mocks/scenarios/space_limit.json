@@ -1,0 +1,4 @@
+{
+  "description": "The query fails because a scratch-space limit is exceeded.",
+  "delay_seconds": 0
+}

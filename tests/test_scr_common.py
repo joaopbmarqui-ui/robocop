@@ -120,3 +120,54 @@ def test_monthly_argv_rejects_unsafe_identifiers_before_processing(
     assert exc_info.value.code == 2
     assert "plain Impala identifier" in capsys.readouterr().err
     assert process_calls == []
+
+
+@pytest.mark.parametrize(
+    ("stderr_text", "category"),
+    [
+        ("Memory limit exceeded: Not enough memory available", "MEMORY_EXCEEDED"),
+        ("Query timed out while fetching results", "TIMEOUT"),
+        ("Admission rejected: queue is full", "QUEUE_FULL"),
+        ("Could not connect to host: connection refused", "CONNECTION_ERROR"),
+        ("RPC dropped due to backpressure", "BACKPRESSURE"),
+        ("Name or service not known for edge-node", "HOST_RESOLUTION_ERROR"),
+        ("Coordinator unreachable", "HOST_UNREACHABLE"),
+        ("Disk full while writing parquet data", "DISK_FULL"),
+        ("Memory available below required reservation", "MEMORY_AVAILABLE"),
+        ("Scratch space limit exceeded", "SPACE_LIMIT"),
+        ("AnalysisException: duplicate column name id", "DUPLICATE_COLUMN"),
+        ("AuthenticationException: unable to obtain Kerberos principal", "AUTH_ERROR"),
+        ("AnalysisException: could not resolve path to table: missing_table", "TABLE_NOT_FOUND"),
+        ("ParseException: syntax error at line 1", "SYNTAX_ERROR"),
+    ],
+)
+def test_impala_error_classifier_categories(stderr_text: str, category: str) -> None:
+    assert _common.classificar_erro_impala(stderr_text)["categoria"] == category
+
+
+def test_unmatched_stderr_maps_to_generic_error() -> None:
+    assert _common.classificar_erro_impala("unexpected impala stderr")["categoria"] == "GENERIC_ERROR"
+
+
+@pytest.mark.parametrize(
+    ("stderr_text", "category"),
+    [
+        ("AnalysisException: could not resolve path to table: missing_table", "TABLE_NOT_FOUND"),
+        ("ParseException: syntax error at line 1", "SYNTAX_ERROR"),
+        ("AnalysisException: duplicate column name id", "DUPLICATE_COLUMN"),
+        ("AuthenticationException: unable to obtain Kerberos principal", "AUTH_ERROR"),
+        ("unexpected impala stderr", "GENERIC_ERROR"),
+    ],
+)
+def test_fatal_error_categories_are_in_fatal_set(stderr_text: str, category: str) -> None:
+    result = _common.classificar_erro_impala(stderr_text)
+    assert result["categoria"] == category
+    assert result["categoria"] in _common.FATAL_ERRORS
+
+
+@pytest.mark.parametrize(
+    "category",
+    ["TABLE_NOT_FOUND", "SYNTAX_ERROR", "DUPLICATE_COLUMN", "AUTH_ERROR", "GENERIC_ERROR"],
+)
+def test_each_declared_fatal_error_is_pinned(category: str) -> None:
+    assert category in _common.FATAL_ERRORS

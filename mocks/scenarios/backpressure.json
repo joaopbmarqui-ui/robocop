@@ -1,0 +1,4 @@
+{
+  "description": "The coordinator drops the query due to backpressure.",
+  "delay_seconds": 0
+}

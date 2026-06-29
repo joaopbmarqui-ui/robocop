@@ -245,6 +245,28 @@ def script_argv(script: str) -> list[str]:
     return [python, str(script_path)]
 
 
+def _csv_path_for_destination(
+    destination: Destination, launch_cwd: Path, table: str
+) -> str:
+    """Return a CSV path confined to ``launch_cwd``.
+
+    Normal TUI launches provide a validated absolute path, but hand-edited
+    manifests can carry an explicit ``destination["csv_path"]``. Re-check it
+    here before building ``--output-file`` so detached exports cannot write
+    outside the launch-time working directory.
+    """
+    explicit_csv_path = destination.get("csv_path")
+    if not explicit_csv_path:
+        return str(sql.safe_csv_path(launch_cwd, table or "dispatch_export"))
+
+    resolved_cwd = launch_cwd.resolve()
+    raw_path = Path(explicit_csv_path)
+    output_path = (raw_path if raw_path.is_absolute() else resolved_cwd / raw_path).resolve()
+    if not output_path.is_relative_to(resolved_cwd):
+        raise ValueError("CSV output path must stay within the launch directory")
+    return str(output_path)
+
+
 def build_orchestrator_calls(
     job_dir: Path,
     source: Source,
@@ -275,9 +297,7 @@ def build_orchestrator_calls(
         if full_table_error:
             raise ValueError(full_table_error)
         schema, table = full_table.split(".", 1)
-    csv_path = destination.get("csv_path") or str(
-        sql.safe_csv_path(launch_cwd, table or "dispatch_export")
-    )
+    csv_path = _csv_path_for_destination(destination, launch_cwd, table)
     email = str(params.get("to_email", ""))
     subject = str(params.get("subject", "Dispatch Job"))
     calls: list[OrchestratorCall] = []

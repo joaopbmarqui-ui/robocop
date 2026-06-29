@@ -469,6 +469,28 @@ class TestBuildOrchestratorCalls:
             tmp_path.resolve() / "dispatch_smoke_1.csv"
         )
 
+    def test_explicit_csv_path_outside_launch_cwd_is_rejected(
+        self, tmp_path: Path
+    ) -> None:
+        job_dir = tmp_path / "job"
+        job_dir.mkdir()
+        outside_csv = tmp_path.parent / "escape.csv"
+        destination: manifest.Destination = {
+            "type": "Csv",
+            "table_name": "dispatch_smoke_1",
+            "csv_path": str(outside_csv),
+        }
+
+        with pytest.raises(ValueError, match="CSV output path must stay within"):
+            manifest.build_orchestrator_calls(
+                job_dir,
+                {"type": "SqlFile"},
+                destination,
+                {"to_email": "x@y.com", "subject": "S"},
+                tmp_path,
+                "user1",
+            )
+
 
 class TestEffectiveJobSql:
     """job.sql must carry the auto-generated CREATE TABLE wrapper for SqlFile

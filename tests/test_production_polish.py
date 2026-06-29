@@ -9,7 +9,7 @@ from pathlib import Path
 
 from textual.widgets import DataTable, Input, RadioButton, RadioSet
 
-from dispatch import manifest
+from dispatch import jobs, manifest
 from dispatch.app import DispatchApp
 from dispatch.formatting import format_kerberos_ttl, format_state, format_timestamp
 from dispatch.screens.job_detail import JobDetailScreen
@@ -118,7 +118,10 @@ def test_job_detail_hides_cancel_for_finished_jobs(mock_env_with_config) -> None
     asyncio.run(run())
 
 
-def test_job_detail_offers_cancel_for_running_jobs(mock_env_with_config) -> None:
+def test_job_detail_offers_cancel_for_running_jobs(
+    mock_env_with_config, monkeypatch
+) -> None:
+    monkeypatch.setattr(jobs, "pid_is_alive", lambda pid: True)
     data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
     jobs_dir = data_root / ".dispatch" / "jobs"
     job_id = _seed_job(jobs_dir, "20260520T120000Z_run001", "Running", pid=99999)

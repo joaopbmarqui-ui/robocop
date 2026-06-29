@@ -10,7 +10,7 @@ from pathlib import Path
 
 from textual.widgets import Collapsible, DataTable, Input, Static
 
-from dispatch import manifest
+from dispatch import jobs, manifest
 from dispatch.app import DispatchApp
 from dispatch.screens.new_job import NewJobScreen
 from dispatch.version import __version__
@@ -62,8 +62,9 @@ def _seed_job(
 
 
 def test_cockpit_merges_running_and_recent_with_running_first(
-    mock_env_with_config,
+    mock_env_with_config, monkeypatch
 ) -> None:
+    monkeypatch.setattr(jobs, "pid_is_alive", lambda pid: True)
     data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
     jobs_dir = data_root / ".dispatch" / "jobs"
     # Seed so a finished job sorts *before* the running one by id; the cockpit

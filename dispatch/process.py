@@ -8,6 +8,7 @@ import signal
 import subprocess
 import sys
 from pathlib import Path
+from typing import Literal
 
 
 async def run_exec(*argv: str, timeout: float | None = None) -> tuple[int, str, str]:
@@ -41,8 +42,15 @@ async def launch_runner(job_dir: Path) -> int:
     return proc.pid
 
 
-def cancel_process_group(pid: int) -> None:
-    os.killpg(pid, signal.SIGTERM)
+CancelProcessResult = Literal["signaled", "missing"]
+
+
+def cancel_process_group(pid: int) -> CancelProcessResult:
+    try:
+        os.killpg(pid, signal.SIGTERM)
+    except ProcessLookupError:
+        return "missing"
+    return "signaled"
 
 
 def run_interactive(*argv: str) -> int:

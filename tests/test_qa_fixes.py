@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 from textual.widgets import DataTable, RichLog, Static
 
-from dispatch import impala, manifest, process, sql
+from dispatch import impala, jobs, manifest, process, sql
 from dispatch.app import DispatchApp
 from dispatch.screens.browser import BrowserScreen, NO_TABLES_PLACEHOLDER
 from dispatch.screens.job_detail import JobDetailScreen, LOG_VIEW_LINES
@@ -215,7 +215,10 @@ def test_preview_bad_template_dates_does_not_crash(mock_env_with_config, tmp_pat
     asyncio.run(run())
 
 
-def test_validation_summary_reflects_running_cap(mock_env_with_config, tmp_path) -> None:
+def test_validation_summary_reflects_running_cap(
+    mock_env_with_config, monkeypatch, tmp_path
+) -> None:
+    monkeypatch.setattr(jobs, "pid_is_alive", lambda pid: True)
     # Seed two Running jobs so the concurrency cap is hit.
     data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
     jobs_dir = data_root / ".dispatch" / "jobs"

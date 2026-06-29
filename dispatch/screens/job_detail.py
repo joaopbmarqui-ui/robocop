@@ -14,7 +14,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, RichLog, Static
 from textual.worker import Worker
 
-from .. import config, errors, manifest, process
+from .. import config, errors, jobs, manifest, process
 from ..formatting import (
     format_elapsed,
     format_job_id,
@@ -461,13 +461,45 @@ class JobDetailScreen(Screen[None]):
         except Exception:
             return
         pid = item.get("pid")
-        if item["state"] == "Running" and pid:
+        if item["state"] == "Pending" and not pid:
+            confirmed = await self._confirm_pending_cancel(item["id"])
+            if not confirmed:
+                return
+            manifest.update(
+                self.job_dir / "manifest.json",
+                state="Cancelled",
+                exit_code=0,
+                finished_at=manifest.now_utc(),
+            )
+            self.notify(f"Pending Job {item['id']} removed", severity="warning")
+            self._set_static("#job-status-line", "[yellow]Pending Job cancelled[/]")
+            return
+        if item["state"] in ("Running", "Pending") and pid:
             confirmed = await self._confirm_cancel(item["id"], pid)
             if not confirmed:
                 return
-            process.cancel_process_group(pid)
+            try:
+                result = process.cancel_process_group(pid)
+            except ProcessLookupError:
+                result = "missing"
+            except PermissionError:
+                self.notify(
+                    "Permission denied while signalling the Job process group",
+                    severity="error",
+                )
+                return
+            if result == "missing":
+                jobs.reconcile_manifest(self.job_dir / "manifest.json")
+                self.notify(
+                    "Job process is no longer running; manifest marked Failed",
+                    severity="warning",
+                )
+                self._set_static("#job-status-line", "[red]Process missing; marked Failed[/]")
+                return
             self.notify(f"Cancellation requested for Job {item['id']}", severity="warning")
             self._set_static("#job-status-line", "[yellow]Cancellation requested\u2026[/]")
+            return
+        self.notify("No cancellable Job process found", severity="warning")
 
     async def _confirm_cancel(self, job_id: str, pid: int) -> bool:
         loop_future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()
@@ -486,6 +518,29 @@ class JobDetailScreen(Screen[None]):
                 danger=True,
                 confirm_label="Cancel Job",
                 cancel_label="Keep Running",
+            ),
+            callback=on_result,
+        )
+        return await loop_future
+
+    async def _confirm_pending_cancel(self, job_id: str) -> bool:
+        loop_future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()
+
+        def on_result(result: bool | None) -> None:
+            if not loop_future.done():
+                loop_future.set_result(bool(result))
+
+        self.app.push_screen(
+            ConfirmScreen(
+                "Remove Pending Job",
+                (
+                    f"Remove Pending Job [cyan]{job_id}[/]?\n\n"
+                    "No runner PID has been recorded yet. The manifest will be "
+                    "kept for audit history and marked Cancelled."
+                ),
+                danger=True,
+                confirm_label="Remove Pending Job",
+                cancel_label="Keep Pending",
             ),
             callback=on_result,
         )

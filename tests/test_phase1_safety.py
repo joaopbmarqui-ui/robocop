@@ -8,7 +8,7 @@ from pathlib import Path
 
 from textual.widgets import Input
 
-from dispatch import config
+from dispatch import config, jobs
 from dispatch.app import DispatchApp
 from dispatch.screens.browser import BrowserScreen
 from dispatch.screens.job_detail import JobDetailScreen
@@ -55,6 +55,7 @@ def test_browser_drop_requires_confirmation(mock_env_with_config, monkeypatch) -
 
 def test_job_cancel_requires_confirmation(mock_env_with_config, monkeypatch) -> None:
     """Cancel Job must show a confirmation before sending SIGTERM."""
+    monkeypatch.setattr(jobs, "pid_is_alive", lambda pid: True)
     data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
     job_id = "20260516T100000Z_cancel"
     job_dir = data_root / ".dispatch" / "jobs" / job_id

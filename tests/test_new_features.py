@@ -445,6 +445,47 @@ class TestNewJobInlineValidation:
 
         asyncio.run(run())
 
+    def test_launch_runner_failure_marks_manifest_failed(
+        self, mock_env_with_config, monkeypatch, tmp_path: Path
+    ) -> None:
+        sql_path = tmp_path / "query.sql"
+        sql_path.write_text("SELECT 1", encoding="utf-8")
+
+        async def fake_ttl() -> int:
+            return 7200
+
+        async def fail_launch(_job_dir: Path) -> int:
+            raise OSError("nohup unavailable")
+
+        monkeypatch.setattr("dispatch.kerberos.ticket_ttl_seconds", fake_ttl)
+        monkeypatch.setattr("dispatch.process.launch_runner", fail_launch)
+
+        async def run() -> None:
+            app = DispatchApp()
+            prefill = {
+                "source_type": "SqlFile",
+                "dest_type": "Csv",
+                "sql_file": str(sql_path),
+                "table_name": "dispatch_spawn_failure",
+            }
+            async with app.run_test(size=(140, 50)) as pilot:
+                screen = NewJobScreen(tmp_path, prefill=prefill)
+                app.push_screen(screen)
+                await pilot.pause(0.5)
+                monkeypatch.setattr(screen, "_confirm_launch", _async_true)
+
+                await screen._launch_flow()
+                await pilot.pause()
+
+        asyncio.run(run())
+
+        manifests = list((tmp_path / "data" / ".dispatch" / "jobs").glob("*/manifest.json"))
+        assert len(manifests) == 1
+        final = manifest.load(manifests[0])
+        assert final["state"] == "Failed"
+        assert final["exit_code"] == -1
+        assert final["finished_at"] is not None
+
 
 # =============================================================================
 # Preview screen
@@ -473,3 +514,7 @@ class TestPreviewScreen:
                 assert log is not None
 
         asyncio.run(run())
+
+
+async def _async_true(*_args, **_kwargs) -> bool:
+    return True

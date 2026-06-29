@@ -659,7 +659,20 @@ class NewJobScreen(Screen[None]):
             self._show_message(error, "error")
             self.notify(error, severity="error")
             return
-        await process.launch_runner(job_dir)
+        try:
+            await process.launch_runner(job_dir)
+        except OSError as exc:
+            manifest.update(
+                job_dir / "manifest.json",
+                state="Failed",
+                exit_code=-1,
+                finished_at=manifest.now_utc(),
+            )
+            error = f"Could not launch detached runner: {exc}"
+            logger.exception("Failed to launch runner for Job %s", job_dir.name)
+            self._show_message(error, "error")
+            self.notify(error, severity="error")
+            return
         logger.info("Launched Job %s source=%s dest=%s", job_dir.name, source["type"], destination["type"])
         self._save_form_defaults()
         self.notify(f"\u2713 Launched Job {job_dir.name}", severity="information")

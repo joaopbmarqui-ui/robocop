@@ -15,6 +15,22 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def test_version_sources_agree() -> None:
+    """Version metadata must match the edge-node deploy artifact."""
+
+    import re
+
+    from dispatch.version import __version__
+
+    version_file = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+    assert version_file == __version__
+
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    match = re.search(r'^version\s*=\s*"([^"]+)"', pyproject, re.MULTILINE)
+    assert match is not None, "pyproject.toml has no version field"
+    assert match.group(1) == __version__
+
+
 def test_install_updates_path_instead_of_alias_only() -> None:
     install_script = (ROOT / "install.sh").read_text(encoding="utf-8")
 

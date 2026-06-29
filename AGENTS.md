@@ -104,6 +104,7 @@ Lint and typecheck validation:
 
 ```bash
 ruff check dispatch tests
+ruff check scr
 ruff format --check dispatch tests
 mypy dispatch
 ```

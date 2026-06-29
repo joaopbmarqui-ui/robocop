@@ -265,6 +265,26 @@ def test_ensure_private_dir_tightens_existing_directory(
     assert (existing, 0o700) in chmod_calls
 
 
+def test_write_config_tightens_dispatch_home(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("DISPATCH_DATA_ROOT", str(tmp_path))
+    chmod_calls: list[tuple[Path, int]] = []
+    original_chmod = Path.chmod
+
+    def record_chmod(self: Path, mode: int, *args, **kwargs) -> None:
+        chmod_calls.append((self, mode))
+        original_chmod(self, mode, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "chmod", record_chmod)
+
+    config.write_config({"form_defaults": {"email": "dispatch@example.com"}})
+
+    dispatch_home = tmp_path / ".dispatch"
+    assert (dispatch_home / "config.json").is_file()
+    assert (dispatch_home, 0o700) in chmod_calls
+
+
 @pytest.mark.skipif(os.name == "nt", reason="POSIX mode bits are not reliable on Windows")
 def test_create_job_makes_dispatch_job_tree_owner_only(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch

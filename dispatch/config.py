@@ -52,7 +52,7 @@ def read_config(user: str | None = None) -> dict[str, Any]:
 
 def write_config(config: dict[str, Any], user: str | None = None) -> None:
     path = config_path(user)
-    path.parent.mkdir(parents=True, exist_ok=True)
+    ensure_private_dir(path.parent)
     with path.open("w", encoding="utf-8") as handle:
         json.dump(config, handle, indent=2, sort_keys=True)
         handle.write("\n")

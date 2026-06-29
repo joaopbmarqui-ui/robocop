@@ -5,25 +5,20 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
-import os
 from pathlib import Path
-
-import pytest
 
 from dispatch import config, manifest
 from dispatch.app import DispatchApp
 from dispatch.screens.browser import BrowserScreen
-from dispatch.screens.dashboard import DashboardScreen
 from dispatch.screens.help import HelpScreen
-from dispatch.screens.history import HistoryScreen
 from dispatch.screens.job_detail import JobDetailScreen
 from dispatch.screens.new_job import NewJobScreen
 from dispatch.screens.preview import PreviewScreen, sql_syntax
 
-
 # =============================================================================
 # Preview SQL highlighting and scrolling
 # =============================================================================
+
 
 class TestPreviewHighlighting:
     def test_sql_syntax_uses_sql_lexer_with_line_numbers(self) -> None:
@@ -47,6 +42,7 @@ class TestPreviewHighlighting:
 # Browser DESCRIBE parsing
 # =============================================================================
 
+
 class TestBrowserDescribeParsing:
     def test_parse_describe_pipe_delimited(self) -> None:
         raw = "id|string|primary key\nname|varchar|user name\nage|int|"
@@ -69,9 +65,11 @@ class TestBrowserDescribeParsing:
 # Job Detail elapsed time
 # =============================================================================
 
+
 class TestJobDetailElapsed:
     def test_format_elapsed_running_job(self) -> None:
         from datetime import datetime, timezone
+
         from dispatch.formatting import format_elapsed
 
         now = datetime.now(timezone.utc)
@@ -112,6 +110,7 @@ class TestJobDetailElapsed:
 # Config form defaults persistence
 # =============================================================================
 
+
 class TestFormDefaults:
     def test_read_form_defaults_missing_file(self, tmp_path, monkeypatch) -> None:
         monkeypatch.setenv("DISPATCH_DATA_ROOT", str(tmp_path))
@@ -148,19 +147,23 @@ class TestFormDefaults:
 # Kerberos graceful handling
 # =============================================================================
 
+
 class TestKerberosGraceful:
     def test_parse_ttl_garbage_returns_none(self) -> None:
         from dispatch.kerberos import parse_ttl_seconds
+
         assert parse_ttl_seconds("completely invalid") is None
 
     def test_parse_ttl_empty_returns_none(self) -> None:
         from dispatch.kerberos import parse_ttl_seconds
+
         assert parse_ttl_seconds("") is None
 
 
 # =============================================================================
 # Dashboard display ID
 # =============================================================================
+
 
 class TestDashboardDisplayId:
     def test_display_id_strips_date_prefix(self) -> None:
@@ -181,6 +184,7 @@ class TestDashboardDisplayId:
 # Help screen
 # =============================================================================
 
+
 class TestHelpScreen:
     def test_help_screen_renders(self) -> None:
         async def run() -> None:
@@ -200,6 +204,7 @@ class TestHelpScreen:
 # =============================================================================
 # New Job Kerberos launch gating
 # =============================================================================
+
 
 class TestNewJobKerberosGating:
     def test_launch_button_disabled_when_kerberos_missing(
@@ -301,6 +306,7 @@ class TestNewJobKerberosGating:
 # =============================================================================
 # New Job inline validation
 # =============================================================================
+
 
 class TestNewJobInlineValidation:
     def test_validation_summary_is_debounced_during_typing(
@@ -410,9 +416,7 @@ class TestNewJobInlineValidation:
                 app.push_screen(screen)
                 await pilot.pause(0.5)
 
-                expected = (
-                    "Existing table must be schema.table using plain Impala identifiers"
-                )
+                expected = "Existing table must be schema.table using plain Impala identifiers"
                 assert expected in screen._validation_issues()
                 assert screen._validate() == expected
 
@@ -528,12 +532,16 @@ class TestNewJobInlineValidation:
 # Preview screen
 # =============================================================================
 
+
 class TestPreviewScreen:
     def test_preview_stores_source_and_dest_types(self) -> None:
         screen = PreviewScreen(
-            "SQL Preview", "SELECT 1",
-            schema="dw", table="result",
-            source_type="SqlFile", dest_type="Table",
+            "SQL Preview",
+            "SELECT 1",
+            schema="dw",
+            table="result",
+            source_type="SqlFile",
+            dest_type="Table",
         )
         assert screen.source_type == "SqlFile"
         assert screen.dest_type == "Table"

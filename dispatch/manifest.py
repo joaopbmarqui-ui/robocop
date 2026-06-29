@@ -201,7 +201,9 @@ def create_job(
         "source": source,
         "destination": destination,
         "params": params,
-        "orchestrator_calls": build_orchestrator_calls(job_dir, source, destination, params, launch_cwd, job_user),
+        "orchestrator_calls": build_orchestrator_calls(
+            job_dir, source, destination, params, launch_cwd, job_user
+        ),
         "state": "Pending",
         "pid": None,
         "started_at": None,
@@ -246,9 +248,7 @@ def script_argv(script: str) -> list[str]:
     return [python, str(script_path)]
 
 
-def _csv_path_for_destination(
-    destination: Destination, launch_cwd: Path, table: str
-) -> str:
+def _csv_path_for_destination(destination: Destination, launch_cwd: Path, table: str) -> str:
     """Return a CSV path confined to ``launch_cwd``.
 
     Normal TUI launches provide a validated absolute path, but hand-edited

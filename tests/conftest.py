@@ -8,7 +8,6 @@ from pathlib import Path
 
 import pytest
 
-
 WORKSPACE = Path(__file__).resolve().parents[1]
 MOCKS_BIN = WORKSPACE / "mocks" / "bin"
 SCR_DIR = WORKSPACE / "scr"

@@ -61,7 +61,9 @@ class HistoryScreen(Screen[None]):
 
                 yield DataTable(id="history-table")
                 with Vertical(id="history-empty", classes="empty-state"):
-                    yield Static("[dim]No history found \u2014 adjust your search, or check Overview for recent jobs[/]")
+                    yield Static(
+                        "[dim]No history found \u2014 adjust your search, or check Overview for recent jobs[/]"
+                    )
 
                 with Horizontal(id="pagination"):
                     yield Static("", id="page-info")

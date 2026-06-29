@@ -2,20 +2,28 @@
 
 from __future__ import annotations
 
-import calendar
 import asyncio
+import calendar
 import logging
 import os
 from datetime import date, datetime
 from pathlib import Path
 
-logger = logging.getLogger("dispatch.new_job")
-
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.timer import Timer
-from textual.widgets import Button, Collapsible, DataTable, Footer, Header, Input, RadioButton, RadioSet, Static
+from textual.widgets import (
+    Button,
+    Collapsible,
+    DataTable,
+    Footer,
+    Header,
+    Input,
+    RadioButton,
+    RadioSet,
+    Static,
+)
 from textual.worker import Worker
 
 from .. import config, jobs, manifest, process, sql
@@ -23,7 +31,13 @@ from .confirm import ConfirmScreen
 from .preview import PreviewScreen
 from .sidebar import Sidebar
 
-_SOURCE_IDS = {"src-sqlfile": "SqlFile", "src-sqltemplate": "SqlTemplate", "src-existingtable": "ExistingTable"}
+logger = logging.getLogger("dispatch.new_job")
+
+_SOURCE_IDS = {
+    "src-sqlfile": "SqlFile",
+    "src-sqltemplate": "SqlTemplate",
+    "src-existingtable": "ExistingTable",
+}
 _DEST_IDS = {"dst-table": "Table", "dst-csv": "Csv", "dst-table-csv": "Table+Csv"}
 
 
@@ -95,12 +109,20 @@ class NewJobScreen(Screen[None]):
                 with Vertical(id="form-grid"):
                     with Horizontal(classes="form-row", id="row-sql-file"):
                         yield Static("SQL File", classes="field-label", id="lbl-sql-file")
-                        yield Input(value=self._default_sql_file(), placeholder="SQL File", id="sql-file")
+                        yield Input(
+                            value=self._default_sql_file(), placeholder="SQL File", id="sql-file"
+                        )
                     yield Static("", classes="path-hint", id="path-hint")
 
                     with Horizontal(classes="form-row", id="row-existing-table"):
-                        yield Static("Existing Table", classes="field-label", id="lbl-existing-table")
-                        yield Input(value="", placeholder="e.g. analytics.events_existing", id="existing-table")
+                        yield Static(
+                            "Existing Table", classes="field-label", id="lbl-existing-table"
+                        )
+                        yield Input(
+                            value="",
+                            placeholder="e.g. analytics.events_existing",
+                            id="existing-table",
+                        )
 
                     with Horizontal(classes="form-row", id="row-schema"):
                         yield Static("Schema", classes="field-label", id="lbl-schema")
@@ -108,15 +130,23 @@ class NewJobScreen(Screen[None]):
 
                     with Horizontal(classes="form-row", id="row-table-name"):
                         yield Static("Table Name", classes="field-label", id="lbl-table-name")
-                        yield Input(value="dispatch_result", placeholder="Table name", id="table-name")
+                        yield Input(
+                            value="dispatch_result", placeholder="Table name", id="table-name"
+                        )
 
                     with Horizontal(classes="form-row", id="row-start-date"):
                         yield Static("Start Date", classes="field-label", id="lbl-start-date")
-                        yield Input(value=self._default_start_date(), placeholder="YYYY-MM-DD", id="start-date")
+                        yield Input(
+                            value=self._default_start_date(),
+                            placeholder="YYYY-MM-DD",
+                            id="start-date",
+                        )
 
                     with Horizontal(classes="form-row", id="row-end-date"):
                         yield Static("End Date", classes="field-label", id="lbl-end-date")
-                        yield Input(value=self._default_end_date(), placeholder="YYYY-MM-DD", id="end-date")
+                        yield Input(
+                            value=self._default_end_date(), placeholder="YYYY-MM-DD", id="end-date"
+                        )
 
                     with Horizontal(classes="form-row", id="row-email"):
                         yield Static("Email (notifications)", classes="field-label", id="lbl-email")
@@ -190,9 +220,7 @@ class NewJobScreen(Screen[None]):
         picker.clear()
         for entry in self._cwd_sql_files:
             detected = entry["detected"]
-            detected_markup = (
-                f"[cyan]{detected}[/]" if detected == "SqlTemplate" else detected
-            )
+            detected_markup = f"[cyan]{detected}[/]" if detected == "SqlTemplate" else detected
             picker.add_row(
                 entry["name"],
                 detected_markup,
@@ -327,9 +355,7 @@ class NewJobScreen(Screen[None]):
             schema_error = sql.validate_identifier(self._input_value("schema"), "Schema")
             if schema_error:
                 issues.append(schema_error)
-            table_error = sql.validate_identifier(
-                self._input_value("table-name"), "Table name"
-            )
+            table_error = sql.validate_identifier(self._input_value("table-name"), "Table name")
             if table_error:
                 issues.append(table_error)
         if source in ("SqlFile", "SqlTemplate"):
@@ -346,9 +372,7 @@ class NewJobScreen(Screen[None]):
         existing_error: str | None = None
         existing = self._input_value("existing-table")
         if source == "ExistingTable":
-            existing_error = sql.validate_full_table(
-                existing, "Existing table"
-            )
+            existing_error = sql.validate_full_table(existing, "Existing table")
             if existing_error:
                 issues.append(existing_error)
         if destination in ("Csv", "Table+Csv"):
@@ -383,9 +407,7 @@ class NewJobScreen(Screen[None]):
     def _schedule_validation_summary(self) -> None:
         if self._validation_summary_timer is not None:
             self._validation_summary_timer.stop()
-        self._validation_summary_timer = self.set_timer(
-            0.2, self._run_scheduled_validation_summary
-        )
+        self._validation_summary_timer = self.set_timer(0.2, self._run_scheduled_validation_summary)
 
     def _run_scheduled_validation_summary(self) -> None:
         self._validation_summary_timer = None
@@ -514,9 +536,7 @@ class NewJobScreen(Screen[None]):
             schema_error = sql.validate_identifier(self._input_value("schema"), "Schema")
             if schema_error:
                 return schema_error
-            table_error = sql.validate_identifier(
-                self._input_value("table-name"), "Table name"
-            )
+            table_error = sql.validate_identifier(self._input_value("table-name"), "Table name")
             if table_error:
                 return table_error
         csv_table = self._input_value("table-name")
@@ -610,7 +630,9 @@ class NewJobScreen(Screen[None]):
                 self._show_message(date_error, "error")
                 return
             preview = sql.monthly_preview(
-                sql_text, schema, table,
+                sql_text,
+                schema,
+                table,
                 self._input_value("start-date"),
                 self._input_value("end-date"),
             )
@@ -625,14 +647,16 @@ class NewJobScreen(Screen[None]):
             preview = sql_text
         self.app.push_screen(
             PreviewScreen(
-                "SQL Preview", preview,
-                schema=schema, table=table,
+                "SQL Preview",
+                preview,
+                schema=schema,
+                table=table,
                 source_type=source_type,
                 dest_type=self._selected_destination(),
             )
         )
 
-    def action_launch(self) -> "Worker[None]":
+    def action_launch(self) -> Worker[None]:
         """Run the confirm-and-launch flow in a worker.
 
         Awaiting the confirmation future inline would block the message pump
@@ -691,7 +715,9 @@ class NewJobScreen(Screen[None]):
             self._show_message(error, "error")
             self.notify(error, severity="error")
             return
-        logger.info("Launched Job %s source=%s dest=%s", job_dir.name, source["type"], destination["type"])
+        logger.info(
+            "Launched Job %s source=%s dest=%s", job_dir.name, source["type"], destination["type"]
+        )
         self._save_form_defaults()
         self.notify(f"\u2713 Launched Job {job_dir.name}", severity="information")
         self._show_message(f"\u2713 Launched Job {job_dir.name}", "success")
@@ -815,7 +841,8 @@ class NewJobScreen(Screen[None]):
             radio_set._selected = nodes.index(target)
         logger.info(
             "prefill applied %s -> %s (pressed=%s)",
-            radio_set_id, button_id,
+            radio_set_id,
+            button_id,
             radio_set.pressed_button.id if radio_set.pressed_button else None,
         )
         self._update_field_visibility()

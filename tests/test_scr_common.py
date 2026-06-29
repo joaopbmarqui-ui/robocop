@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -40,15 +40,11 @@ def test_validate_identifier_accepts_only_plain_names(value: str, expected: bool
         ("schema.t;drop", False),
     ],
 )
-def test_validate_full_table_requires_exact_schema_and_table(
-    value: str, expected: bool
-) -> None:
+def test_validate_full_table_requires_exact_schema_and_table(value: str, expected: bool) -> None:
     assert _common.validate_full_table(value) is expected
 
 
-def test_download_table_mode_rejects_unsafe_full_table_before_retry(
-    monkeypatch, capsys
-) -> None:
+def test_download_table_mode_rejects_unsafe_full_table_before_retry(monkeypatch, capsys) -> None:
     retry_calls: list[str] = []
     monkeypatch.setattr(
         download_to_csv,
@@ -146,7 +142,9 @@ def test_impala_error_classifier_categories(stderr_text: str, category: str) -> 
 
 
 def test_unmatched_stderr_maps_to_generic_error() -> None:
-    assert _common.classificar_erro_impala("unexpected impala stderr")["categoria"] == "GENERIC_ERROR"
+    assert (
+        _common.classificar_erro_impala("unexpected impala stderr")["categoria"] == "GENERIC_ERROR"
+    )
 
 
 @pytest.mark.parametrize(

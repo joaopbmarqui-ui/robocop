@@ -160,10 +160,7 @@ class JobDetailScreen(Screen[None]):
                 manifest_mtime = manifest_path.stat().st_mtime
             except OSError:
                 return None
-            if (
-                manifest_mtime == cached_manifest_mtime
-                and cached_manifest_item is not None
-            ):
+            if manifest_mtime == cached_manifest_mtime and cached_manifest_item is not None:
                 item = cached_manifest_item
             else:
                 try:
@@ -196,17 +193,10 @@ class JobDetailScreen(Screen[None]):
             # A live Job may append to an unterminated final line, so keep it
             # buffered. Terminal Jobs will not append again; flush their final
             # unterminated line exactly once when the reader reaches EOF.
-            if (
-                pending_bytes
-                and new_offset == size
-                and item["state"] not in ("Running", "Pending")
-            ):
+            if pending_bytes and new_offset == size and item["state"] not in ("Running", "Pending"):
                 complete_lines.append(pending_bytes)
                 pending_bytes = b""
-            new_lines = [
-                line.decode("utf-8", errors="replace").rstrip()
-                for line in complete_lines
-            ]
+            new_lines = [line.decode("utf-8", errors="replace").rstrip() for line in complete_lines]
             error_code = cached_error_code
             error_line = cached_error_line
             if item["state"] == "Failed" and not error_checked:
@@ -329,9 +319,7 @@ class JobDetailScreen(Screen[None]):
                 f"[bold red]{code}[/]: {self._error_line}\n[dim]{errors.suggestion(code)}[/]",
             )
         else:
-            self._set_static(
-                "#error-banner", "[red]Job failed.[/] [dim]Check log for details.[/]"
-            )
+            self._set_static("#error-banner", "[red]Job failed.[/] [dim]Check log for details.[/]")
         if not banner.display:
             banner.display = True
 
@@ -467,7 +455,7 @@ class JobDetailScreen(Screen[None]):
     def _style_log_line(line: str) -> str:
         return style_log_line(line)
 
-    def action_cancel(self) -> "Worker[None]":
+    def action_cancel(self) -> Worker[None]:
         """Run the confirm-and-cancel flow in a worker (see NewJobScreen.action_launch)."""
         return self.run_worker(self._cancel_flow(), name="cancel-flow", exclusive=True)
 

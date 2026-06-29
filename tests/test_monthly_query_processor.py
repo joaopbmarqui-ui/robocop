@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import sys
 from argparse import Namespace
 from pathlib import Path
-import sys
 
 SCR_DIR = Path(__file__).resolve().parents[1] / "scr"
 if str(SCR_DIR) not in sys.path:
@@ -46,8 +46,13 @@ def test_build_monthly_job_query_keeps_temp_join_and_cleanup_in_one_script(tmp_p
     assert "SELECT '2026-05-01' AS start_dt, '2026-05-31' AS end_dt" in query
     assert "SELECT '2026-06-01' AS start_dt, '2026-06-30' AS end_dt" in query
     assert "CREATE TABLE aa_enc.dispatch_smoke_fulljoin" in query
-    assert "SELECT * FROM aa_enc.dispatch_smoke_temp_202605\nUNION ALL\nSELECT * FROM aa_enc.dispatch_smoke_temp_202606" in query
-    assert query.rfind("DROP TABLE IF EXISTS aa_enc.dispatch_smoke_temp_202605") > query.find("CREATE TABLE aa_enc.dispatch_smoke_fulljoin")
+    assert (
+        "SELECT * FROM aa_enc.dispatch_smoke_temp_202605\nUNION ALL\nSELECT * FROM aa_enc.dispatch_smoke_temp_202606"
+        in query
+    )
+    assert query.rfind("DROP TABLE IF EXISTS aa_enc.dispatch_smoke_temp_202605") > query.find(
+        "CREATE TABLE aa_enc.dispatch_smoke_fulljoin"
+    )
     assert "/das/aa/enc/e123456/dispatch_smoke_temp_202605" in query
 
 
@@ -56,8 +61,16 @@ def test_process_monthly_job_invokes_impala_once_for_whole_job(tmp_path: Path, m
     sent_emails = []
     executed = []
 
-    monkeypatch.setattr(monthly, "send_email", lambda body, subject, to_email: sent_emails.append((subject, body, to_email)))
-    monkeypatch.setattr(monthly, "execute_step_with_retry", lambda query, operation_desc, args: executed.append((query, operation_desc)))
+    monkeypatch.setattr(
+        monthly,
+        "send_email",
+        lambda body, subject, to_email: sent_emails.append((subject, body, to_email)),
+    )
+    monkeypatch.setattr(
+        monthly,
+        "execute_step_with_retry",
+        lambda query, operation_desc, args: executed.append((query, operation_desc)),
+    )
 
     monthly.process_monthly_job(args)
 

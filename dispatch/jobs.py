@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from contextlib import contextmanager
 import logging
 import os
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 from . import config, manifest
 
@@ -120,10 +121,7 @@ def _append_stale_log(job_dir: Path, pid: int) -> None:
         return
     try:
         with log_path.open("a", encoding="utf-8") as handle:
-            handle.write(
-                f"[dispatch] stale runner pid {pid} not found; "
-                "manifest marked Failed\n"
-            )
+            handle.write(f"[dispatch] stale runner pid {pid} not found; manifest marked Failed\n")
     except OSError:
         logger.info("Could not append stale-runner note for %s", job_dir)
 

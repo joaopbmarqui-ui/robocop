@@ -107,9 +107,7 @@ def test_job_cancel_requires_confirmation(mock_env_with_config, monkeypatch) -> 
     asyncio.run(run())
 
 
-def test_new_job_launch_requires_confirmation(
-    mock_env_with_config, monkeypatch, tmp_path
-) -> None:
+def test_new_job_launch_requires_confirmation(mock_env_with_config, monkeypatch, tmp_path) -> None:
     """Launch creates no manifest or runner process until explicitly confirmed."""
     sql_file = tmp_path / "query.sql"
     sql_file.write_text("select 1\n", encoding="utf-8")

@@ -94,6 +94,20 @@ edge-node update paths, and production harness validation, see
 
 Run the strongest available subset for the files touched.
 
+Install local development tooling first:
+
+```bash
+python -m pip install -e ".[dev]"
+```
+
+Lint and typecheck validation:
+
+```bash
+ruff check dispatch tests
+ruff format --check dispatch tests
+mypy dispatch
+```
+
 Basic syntax/package validation:
 
 ```bash

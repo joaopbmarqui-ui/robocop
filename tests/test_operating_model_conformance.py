@@ -6,7 +6,6 @@ import shutil
 import subprocess
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -19,8 +18,8 @@ def test_update_script_uses_reset_hard_and_preserves_untracked_runtime_state() -
 
     assert "git fetch --prune" in update
     assert "git reset --hard" in update
-    assert "chmod 755 \"$ROOT_DIR\"" in update
-    assert "chmod -R a+rX \"$ROOT_DIR\"" in update
+    assert 'chmod 755 "$ROOT_DIR"' in update
+    assert 'chmod -R a+rX "$ROOT_DIR"' in update
     assert "git clean" not in update
 
 
@@ -29,8 +28,7 @@ def test_update_script_is_tracked_executable() -> None:
         ["git", "ls-files", "-s", "--", "update.sh"],
         cwd=ROOT,
         text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         check=True,
     )
 
@@ -65,7 +63,10 @@ def test_deployment_remote_docs_use_snapshot_publish_discipline() -> None:
     publish_script = _read("tools/dev/publish_dispatch_snapshot.ps1")
 
     assert "operator-authored snapshot commit" in workflow
-    assert ".\\tools\\dev\\publish_dispatch_snapshot.ps1 -ReviewedCommit <reviewed-robocop-commit> -RunLocalCheck" in workflow
+    assert (
+        ".\\tools\\dev\\publish_dispatch_snapshot.ps1 -ReviewedCommit <reviewed-robocop-commit> -RunLocalCheck"
+        in workflow
+    )
     assert "git switch -c deploy/dispatch-snapshot <reviewed-robocop-commit>" in workflow
     assert "git reset --soft bitbucket/main" in workflow
     assert "git push bitbucket HEAD:main" in workflow
@@ -99,7 +100,7 @@ def test_zip_deploy_scripts_include_the_shared_tree_updater() -> None:
     deploy_both = _read("deploy_nodes_03_04.ps1")
 
     assert "'update.sh'" in deploy_one
-    assert "$UpdateScript = \"update.sh\"" in deploy_one
+    assert '$UpdateScript = "update.sh"' in deploy_one
     assert "chmod +x $SetupScript $UpdateScript" in deploy_one
-    assert "$UpdateScript = \"update.sh\"" in deploy_both
+    assert '$UpdateScript = "update.sh"' in deploy_both
     assert "chmod +x $SetupScript $UpdateScript" in deploy_both

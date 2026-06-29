@@ -22,13 +22,15 @@ LOG = None
 
 def _log(message: str) -> None:
     if LOG is not None:
-        LOG.write(f"{message}\n".encode("utf-8"))
+        LOG.write(f"{message}\n".encode())
         LOG.flush()
 
 
 def _write_error(job_dir: Path, error: Exception) -> None:
     payload = {"error": str(error), "type": type(error).__name__}
-    (job_dir / "manifest.error.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    (job_dir / "manifest.error.json").write_text(
+        json.dumps(payload, indent=2) + "\n", encoding="utf-8"
+    )
 
 
 def _set_terminal_state(state: manifest_io.JobState, exit_code: int) -> None:

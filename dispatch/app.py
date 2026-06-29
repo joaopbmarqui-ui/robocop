@@ -5,8 +5,9 @@ from __future__ import annotations
 import json
 import logging
 import os
+from collections.abc import Iterable
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING
 
 from textual.app import App, SystemCommand
 from textual.reactive import reactive
@@ -16,13 +17,13 @@ from . import config, kerberos, process, setup_logging
 if TYPE_CHECKING:
     from textual.screen import Screen
 from .screens.browser import BrowserScreen
-from .version import __version__
 from .screens.dashboard import DashboardScreen
 from .screens.help import HelpScreen
 from .screens.history import HistoryScreen
 from .screens.job_detail import JobDetailScreen
 from .screens.new_job import NewJobScreen
 from .screens.sidebar import NavItem
+from .version import __version__
 
 logger = logging.getLogger("dispatch.app")
 
@@ -66,7 +67,9 @@ class DispatchApp(App[None]):
         self._too_small_warned = False
         logger.info(
             "Dispatch %s starting, cwd=%s, data_root=%s",
-            __version__, self.launch_cwd, config.data_root(),
+            __version__,
+            self.launch_cwd,
+            config.data_root(),
         )
 
     def _short_cwd(self, max_len: int = 40) -> str:
@@ -83,8 +86,7 @@ class DispatchApp(App[None]):
         if not config.dispatch_home().exists():
             logger.error("Dispatch home %s does not exist", config.dispatch_home())
             self.notify(
-                "Dispatch is not installed for this user. "
-                "Run install.sh to set up.",
+                "Dispatch is not installed for this user. Run install.sh to set up.",
                 severity="error",
                 timeout=0,
             )
@@ -133,28 +135,33 @@ class DispatchApp(App[None]):
         """Refresh the app-wide Kerberos TTL snapshot (mirrored by sidebars)."""
         self.kerberos_ttl = await kerberos.ticket_ttl_seconds()
 
-    def get_system_commands(self, screen: "Screen") -> Iterable[SystemCommand]:
+    def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:
         """Power layer: every destination and key maintenance action is one
         fuzzy search away in the command palette."""
         yield from super().get_system_commands(screen)
         yield SystemCommand(
-            "Overview", "Jobs cockpit: running and recent jobs with live logs",
+            "Overview",
+            "Jobs cockpit: running and recent jobs with live logs",
             lambda: self.open_top_level("overview"),
         )
         yield SystemCommand(
-            "New Job", "Launch a SQL file as an Impala job",
+            "New Job",
+            "Launch a SQL file as an Impala job",
             lambda: self.open_top_level("new_job"),
         )
         yield SystemCommand(
-            "History", "Finished jobs older than 7 days",
+            "History",
+            "Finished jobs older than 7 days",
             lambda: self.open_top_level("history"),
         )
         yield SystemCommand(
-            "Browse metadata", "SHOW TABLES, DESCRIBE, and DROP in Impala",
+            "Browse metadata",
+            "SHOW TABLES, DESCRIBE, and DROP in Impala",
             lambda: self.open_top_level("browse"),
         )
         yield SystemCommand(
-            "Refresh Kerberos (kinit)", "Suspend the UI and run kinit",
+            "Refresh Kerberos (kinit)",
+            "Suspend the UI and run kinit",
             self._kinit_from_palette,
         )
 
@@ -171,9 +178,13 @@ class DispatchApp(App[None]):
         try:
             installed = config.installed_version_path().read_text(encoding="utf-8").strip()
         except OSError:
-            return f"Install incomplete: version file missing. Run install.sh. (running {__version__})"
+            return (
+                f"Install incomplete: version file missing. Run install.sh. (running {__version__})"
+            )
         if installed != __version__:
-            return f"Version mismatch: installed {installed}, running {__version__}. Run install.sh."
+            return (
+                f"Version mismatch: installed {installed}, running {__version__}. Run install.sh."
+            )
         return ""
 
     def on_nav_item_selected(self, event: NavItem.Selected) -> None:

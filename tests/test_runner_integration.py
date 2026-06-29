@@ -48,7 +48,9 @@ def _create_csv_job(tmp_path: Path, user: str = "testuser") -> tuple[Path, manif
     )
 
 
-def _create_sqlfile_table_job(tmp_path: Path, user: str = "testuser") -> tuple[Path, manifest.JobManifest]:
+def _create_sqlfile_table_job(
+    tmp_path: Path, user: str = "testuser"
+) -> tuple[Path, manifest.JobManifest]:
     """Create a minimal SqlFile to Table job manifest."""
     sql_file = tmp_path / "table.sql"
     sql_text = "SELECT 1 AS smoke_test_value"
@@ -85,7 +87,9 @@ def _create_sqlfile_table_plus_csv_job(
     )
 
 
-def _create_sqltemplate_table_job(tmp_path: Path, user: str = "testuser") -> tuple[Path, manifest.JobManifest]:
+def _create_sqltemplate_table_job(
+    tmp_path: Path, user: str = "testuser"
+) -> tuple[Path, manifest.JobManifest]:
     """Create a one-month SqlTemplate to Table job manifest."""
     sql_file = tmp_path / "template.sql"
     sql_text = (
@@ -109,7 +113,9 @@ def _create_sqltemplate_table_job(tmp_path: Path, user: str = "testuser") -> tup
     )
 
 
-def _create_existingtable_csv_job(tmp_path: Path, user: str = "testuser") -> tuple[Path, manifest.JobManifest]:
+def _create_existingtable_csv_job(
+    tmp_path: Path, user: str = "testuser"
+) -> tuple[Path, manifest.JobManifest]:
     """Create a minimal ExistingTable to Csv job manifest."""
     return manifest.create_job(
         source={"type": "ExistingTable", "table_name": "aa_enc.dispatch_smoke_existing"},
@@ -152,8 +158,8 @@ def _read_log(job_dir: Path) -> str:
 # Lifecycle transitions per scenario
 # =============================================================================
 
-class TestRunnerLifecycle:
 
+class TestRunnerLifecycle:
     def test_happy_path_reaches_succeeded(self, mock_env, tmp_path):
         """happy_path scenario: runner sets manifest state to Succeeded."""
         job_dir, _ = _create_csv_job(tmp_path)
@@ -288,8 +294,8 @@ class TestRunnerLifecycle:
 # Manifest state guard (prevents double-spawn)
 # =============================================================================
 
-class TestRunnerStateGuard:
 
+class TestRunnerStateGuard:
     def test_runner_exits_4_when_state_is_not_pending(self, mock_env, tmp_path):
         """Runner exits with code 4 if manifest.state != Pending."""
         job_dir, _ = _create_csv_job(tmp_path)
@@ -318,8 +324,8 @@ class TestRunnerStateGuard:
 # Manifest state transitions during the run
 # =============================================================================
 
-class TestRunnerStateTransitions:
 
+class TestRunnerStateTransitions:
     def test_started_at_populated_after_run(self, mock_env, tmp_path):
         job_dir, _ = _create_csv_job(tmp_path)
         result = _spawn_runner(job_dir)
@@ -350,9 +356,11 @@ class TestRunnerStateTransitions:
 # Cancellation via SIGTERM
 # =============================================================================
 
-class TestRunnerCancellation:
 
-    @pytest.mark.skipif(os.name == "nt", reason="Windows SIGTERM does not exercise the POSIX runner handler")
+class TestRunnerCancellation:
+    @pytest.mark.skipif(
+        os.name == "nt", reason="Windows SIGTERM does not exercise the POSIX runner handler"
+    )
     def test_sigterm_sets_state_to_cancelled(self, mock_env, tmp_path):
         """SIGTERM during an in-flight Job sets manifest.state to Cancelled.
 
@@ -365,18 +373,15 @@ class TestRunnerCancellation:
         marker = tmp_path / "started.txt"
         fake_orch = tmp_path / "sleeping_orch.py"
         fake_orch.write_text(
-            f"import time, pathlib\n"
-            f"pathlib.Path({str(marker)!r}).touch()\n"
-            f"time.sleep(300)\n"
+            f"import time, pathlib\npathlib.Path({str(marker)!r}).touch()\ntime.sleep(300)\n"
         )
 
         # Build the manifest manually to point at the fake orchestrator
         job_dir, initial = _create_csv_job(tmp_path)
         import json
+
         m = json.loads((job_dir / "manifest.json").read_text())
-        m["orchestrator_calls"] = [
-            {"script": "fake", "argv": [sys.executable, str(fake_orch)]}
-        ]
+        m["orchestrator_calls"] = [{"script": "fake", "argv": [sys.executable, str(fake_orch)]}]
         (job_dir / "manifest.json").write_text(json.dumps(m, indent=2))
 
         proc = subprocess.Popen(

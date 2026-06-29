@@ -13,12 +13,10 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections import deque
-from functools import partial
 from datetime import datetime
+from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
-
-logger = logging.getLogger("dispatch.dashboard")
 
 from rich.text import Text
 from textual.app import ComposeResult
@@ -39,6 +37,8 @@ from .sidebar import Sidebar
 
 if TYPE_CHECKING:
     from ..app import DispatchApp
+
+logger = logging.getLogger("dispatch.dashboard")
 
 JOBS_ROW_LIMIT = 100
 DETAIL_TAIL_BYTES = 4096
@@ -180,9 +180,7 @@ class DashboardScreen(Screen[None]):
                     log_path = config.jobs_dir() / job_id / "run.log"
                     error_cache[job_id] = await asyncio.to_thread(errors.classify, log_path)
             if detail_target is None and active:
-                running_item = next(
-                    (item for item in active if item["state"] == "Running"), None
-                )
+                running_item = next((item for item in active if item["state"] == "Running"), None)
                 detail_target = (running_item or active[0])["id"]
                 self._detail_job_id = detail_target
             tail = (
@@ -243,9 +241,7 @@ class DashboardScreen(Screen[None]):
         self._error_cache.update(snapshot["error_cache"])
         self._detect_state_transitions(active)
         self._render_jobs_view()
-        self._update_detail_pane(
-            snapshot["detail_target"], snapshot["detail_tail"], active
-        )
+        self._update_detail_pane(snapshot["detail_target"], snapshot["detail_tail"], active)
 
     def _render_jobs_view(self) -> None:
         """Re-render status strip and table from the cached snapshot (no I/O)."""
@@ -318,8 +314,7 @@ class DashboardScreen(Screen[None]):
         table = self.query_one("#jobs-table", DataTable)
         self._visible_job_ids = {item["id"] for item in items}
         signature = tuple(
-            (item["id"], item["state"], self._error_cache.get(item["id"]))
-            for item in items
+            (item["id"], item["state"], self._error_cache.get(item["id"])) for item in items
         )
         if self._row_signature == signature:
             for item in items:
@@ -400,9 +395,7 @@ class DashboardScreen(Screen[None]):
             f"[dim]{format_elapsed(item)}[/]{suffix}",
         )
         if tail:
-            self._set_static(
-                "#detail-log", "\n".join(style_log_line(line) for line in tail)
-            )
+            self._set_static("#detail-log", "\n".join(style_log_line(line) for line in tail))
         else:
             self._set_static("#detail-log", "[dim]No log output yet.[/]")
 
@@ -502,7 +495,7 @@ class DashboardScreen(Screen[None]):
 
         return None
 
-    def _dispatch_app(self) -> "DispatchApp":
+    def _dispatch_app(self) -> DispatchApp:
         return cast("DispatchApp", self.app)
 
     def action_new_job(self) -> None:
@@ -520,9 +513,7 @@ class DashboardScreen(Screen[None]):
         if not job_id:
             self.notify("Select a job first.", severity="warning")
             return
-        state = next(
-            (item["state"] for item in self._active_cache if item["id"] == job_id), None
-        )
+        state = next((item["state"] for item in self._active_cache if item["id"] == job_id), None)
         if state != "Running":
             self.notify("Only Running jobs can be cancelled.", severity="warning")
             return

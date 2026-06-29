@@ -7,11 +7,8 @@ import re
 from datetime import date, datetime
 from pathlib import Path
 
-
 IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
-FULL_TABLE_RE = re.compile(
-    r"[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*"
-)
+FULL_TABLE_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*")
 
 
 def validate_identifier(value: str, label: str) -> str | None:
@@ -111,7 +108,9 @@ def month_range(start: date, end: date) -> list[date]:
     return months
 
 
-def monthly_preview(sql_template: str, schema: str, table_name: str, start_iso: str, end_iso: str) -> str:
+def monthly_preview(
+    sql_template: str, schema: str, table_name: str, start_iso: str, end_iso: str
+) -> str:
     start = datetime.strptime(start_iso, "%Y-%m-%d").date()
     end = datetime.strptime(end_iso, "%Y-%m-%d").date()
     # Metadata lines are SQL comments so the preview tokenizes cleanly.

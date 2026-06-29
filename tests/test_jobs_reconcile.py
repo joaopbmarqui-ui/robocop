@@ -29,9 +29,7 @@ def _create_csv_job(tmp_path: Path, *, user: str = "testuser") -> Path:
     return job_dir
 
 
-def test_stale_running_manifest_reconciles_to_failed(
-    mock_env, tmp_path: Path, monkeypatch
-) -> None:
+def test_stale_running_manifest_reconciles_to_failed(mock_env, tmp_path: Path, monkeypatch) -> None:
     job_dir = _create_csv_job(tmp_path)
     manifest_path = job_dir / "manifest.json"
     (job_dir / "run.log").write_text("started\n", encoding="utf-8")

@@ -16,6 +16,8 @@ dependencies = [
 dev = [
   "pytest",
   "pytest-asyncio",
+  "ruff",
+  "mypy",
 ]
 
 [project.scripts]
@@ -26,3 +28,31 @@ include = ["dispatch*"]
 
 [tool.setuptools.package-data]
 dispatch = ["*.tcss"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["scr", "vendor", "tools/prod_tui", "mocks"]
+
+[tool.ruff.lint]
+# Start conservative: real errors + obvious style, not the full default set
+# that churns the codebase. Expand later once the baseline is clean.
+select = ["E", "F", "W", "I", "UP"]
+ignore = ["E501"]  # line length handled by formatter; keep to avoid noise
+
+[tool.ruff.format]
+line-ending = "lf"
+
+[tool.mypy]
+python_version = "3.10"
+platform = "linux"
+packages = ["dispatch"]
+exclude = ["scr/", "tools/prod_tui/", "mocks/"]
+ignore_missing_imports = true
+# Start non-strict: catch real type errors without forcing annotations on
+# every function. The initial baseline also suppresses current TypedDict/Textual
+# precision gaps so this gate can land without behavioral rewrites.
+check_untyped_defs = false
+warn_unused_ignores = false
+warn_redundant_casts = true
+disable_error_code = ["arg-type", "assignment", "attr-defined", "list-item", "typeddict-item"]

@@ -17,12 +17,12 @@ from textual.widgets import DataTable, RichLog, Static
 
 from dispatch import impala, jobs, manifest, process, sql
 from dispatch.app import DispatchApp
-from dispatch.screens.browser import BrowserScreen, NO_TABLES_PLACEHOLDER
-from dispatch.screens.job_detail import JobDetailScreen, LOG_VIEW_LINES
+from dispatch.screens.browser import NO_TABLES_PLACEHOLDER, BrowserScreen
+from dispatch.screens.job_detail import LOG_VIEW_LINES, JobDetailScreen
 from dispatch.screens.new_job import NewJobScreen
 
-
 # ── sql.py date helpers (F2 / NJ-15) ─────────────────────────────────────
+
 
 def test_validate_date_range_accepts_valid() -> None:
     assert sql.validate_date_range("2026-01-01", "2026-03-31") is None
@@ -48,6 +48,7 @@ def test_orchestrator_date_roundtrip() -> None:
 
 # ── Clone prefill mapping (F6 / JD-45) ───────────────────────────────────
 
+
 def test_clone_prefill_reads_params_email_subject_and_dates() -> None:
     item = {
         "source": {"type": "SqlTemplate", "sql_path_at_launch": "/tmp/q.sql"},
@@ -68,6 +69,7 @@ def test_clone_prefill_reads_params_email_subject_and_dates() -> None:
 
 
 # ── Impala timeout message (F10 / IMP-06) ────────────────────────────────
+
 
 def test_impala_query_timeout_has_message(monkeypatch) -> None:
     async def fake_run_exec(*argv, timeout=None):
@@ -91,6 +93,7 @@ def test_show_tables_strips_impala_shell_name_header(monkeypatch) -> None:
     inflated the count and made the auto-describe of row 0 fail with
     "Could not resolve path: 'schema.name'").
     """
+
     async def fake_query(sql: str) -> str:
         return "name\ndispatch_smoke_a\ndispatch_smoke_b\n"
 
@@ -105,6 +108,7 @@ def test_show_tables_strips_impala_shell_name_header(monkeypatch) -> None:
 
 
 # ── New Job validation (F1-F5) ───────────────────────────────────────────
+
 
 def _new_job_screen(app: DispatchApp, cwd: Path) -> NewJobScreen:
     screen = NewJobScreen(cwd)
@@ -191,9 +195,7 @@ def test_launch_blocks_bad_template_dates(mock_env_with_config, tmp_path) -> Non
 
 
 def test_preview_bad_template_dates_does_not_crash(mock_env_with_config, tmp_path) -> None:
-    (tmp_path / "t.sql").write_text(
-        "select '{date_inicio}' , '{date_fim}'\n", encoding="utf-8"
-    )
+    (tmp_path / "t.sql").write_text("select '{date_inicio}' , '{date_fim}'\n", encoding="utf-8")
 
     async def run() -> None:
         app = DispatchApp()
@@ -238,6 +240,7 @@ def test_validation_summary_reflects_running_cap(
 
 
 # ── Job Detail log view (F7 / F8 / F9) ───────────────────────────────────
+
 
 def _seed_job(
     jobs_dir: Path,
@@ -320,9 +323,7 @@ def test_log_view_bounded_and_truncation_hint_truthful(mock_env_with_config) -> 
     asyncio.run(run())
 
 
-def test_log_tail_read_is_capped_per_tick(
-    mock_env_with_config, monkeypatch
-) -> None:
+def test_log_tail_read_is_capped_per_tick(mock_env_with_config, monkeypatch) -> None:
     data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
     jobs_dir = data_root / ".dispatch" / "jobs"
     chunk_bytes = 65536
@@ -370,7 +371,7 @@ def test_log_tail_byte_cap_preserves_multibyte_line_across_ticks(
     jobs_dir = data_root / ".dispatch" / "jobs"
     chunk_bytes = 4
     logical_line = "\u20ac\u20acx"
-    payload = f"{logical_line}\n".encode("utf-8")
+    payload = f"{logical_line}\n".encode()
     job_id = _seed_job(
         jobs_dir,
         "20260520T120000Z_utf8chunk",
@@ -380,9 +381,7 @@ def test_log_tail_byte_cap_preserves_multibyte_line_across_ticks(
     log_path.write_bytes(payload)
     assert len(payload) > chunk_bytes
 
-    monkeypatch.setattr(
-        "dispatch.screens.job_detail.LOG_READ_CHUNK_BYTES", chunk_bytes
-    )
+    monkeypatch.setattr("dispatch.screens.job_detail.LOG_READ_CHUNK_BYTES", chunk_bytes)
     _suppress_job_detail_refresh_timer(monkeypatch)
 
     async def run() -> None:
@@ -403,9 +402,7 @@ def test_log_tail_byte_cap_preserves_multibyte_line_across_ticks(
     asyncio.run(run())
 
 
-def test_log_tail_flushes_final_unterminated_line_once(
-    mock_env_with_config, monkeypatch
-) -> None:
+def test_log_tail_flushes_final_unterminated_line_once(mock_env_with_config, monkeypatch) -> None:
     data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
     jobs_dir = data_root / ".dispatch" / "jobs"
     chunk_bytes = 8
@@ -419,9 +416,7 @@ def test_log_tail_flushes_final_unterminated_line_once(
     log_path = jobs_dir / job_id / "run.log"
     log_path.write_bytes(payload)
 
-    monkeypatch.setattr(
-        "dispatch.screens.job_detail.LOG_READ_CHUNK_BYTES", chunk_bytes
-    )
+    monkeypatch.setattr("dispatch.screens.job_detail.LOG_READ_CHUNK_BYTES", chunk_bytes)
     _suppress_job_detail_refresh_timer(monkeypatch)
 
     async def run() -> None:
@@ -491,6 +486,7 @@ def test_log_rotation_resets_without_duplicates(mock_env_with_config) -> None:
 
 # ── Browser empty-placeholder gating (F9 / BRW-05) ───────────────────────
 
+
 def test_browser_placeholder_not_actionable(mock_env_with_config) -> None:
     async def run() -> None:
         app = DispatchApp()
@@ -511,6 +507,7 @@ def test_browser_placeholder_not_actionable(mock_env_with_config) -> None:
 
 
 # ── Dashboard selection/cancel feedback (F11 / F12 / F13) ────────────────
+
 
 def test_dashboard_cancel_no_selection_notifies(mock_env_with_config) -> None:
     notes: list[str] = []
@@ -575,6 +572,7 @@ def test_dashboard_filter_zero_match_clears_selection(mock_env_with_config) -> N
 
 # ── Status strip ordering (F15 / OVW-02) ─────────────────────────────────
 
+
 def test_status_strip_kerberos_first(mock_env_with_config) -> None:
     async def run() -> None:
         app = DispatchApp()
@@ -587,6 +585,7 @@ def test_status_strip_kerberos_first(mock_env_with_config) -> None:
 
 
 # ── Sidebar manual collapse persistence (F16 / SIDE-08) ──────────────────
+
 
 def test_sidebar_manual_collapse_survives_resize(mock_env_with_config) -> None:
     from dispatch.screens.sidebar import Sidebar
@@ -606,6 +605,7 @@ def test_sidebar_manual_collapse_survives_resize(mock_env_with_config) -> None:
 
 
 # ── Help accuracy (F17 / HELP-02) ────────────────────────────────────────
+
 
 def test_help_quick_reference_lists_cancel_and_filter() -> None:
     from dispatch.screens.help import QUICK_HELP

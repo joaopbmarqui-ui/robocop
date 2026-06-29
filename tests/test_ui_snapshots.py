@@ -24,14 +24,14 @@ from pathlib import Path
 
 from textual.app import App
 
-from dispatch.app import DispatchApp
 from dispatch import manifest
+from dispatch.app import DispatchApp
 from dispatch.screens.confirm import ConfirmScreen
-
 
 # ---------------------------------------------------------------------------
 # Snapshot test — structural / content checks, no pixel geometry
 # ---------------------------------------------------------------------------
+
 
 def test_dashboard_snapshot(mock_env_with_config, tmp_path) -> None:
     """App renders to a valid SVG containing expected semantic content.
@@ -68,6 +68,7 @@ def test_dashboard_snapshot(mock_env_with_config, tmp_path) -> None:
 # ---------------------------------------------------------------------------
 # Behavior test — dashboard renders job data from seeded manifests
 # ---------------------------------------------------------------------------
+
 
 def _seed_job(jobs_dir: Path, state: str, source_type: str = "SqlFile") -> manifest.JobManifest:
     """Write a minimal manifest to ``jobs_dir`` and return it."""
@@ -128,12 +129,8 @@ def test_dashboard_shows_job_data(mock_env_with_config, tmp_path) -> None:
     # Both state labels from dashboard.py's _state_display logic must appear.
     # Textual strips markup (`[green]...[/]`) when rendering to the terminal,
     # so the plain words "SUCCEEDED" and "FAILED" appear in the SVG text nodes.
-    assert "SUCCEEDED" in text, (
-        "Expected 'SUCCEEDED' job state label in dashboard screenshot"
-    )
-    assert "FAILED" in text, (
-        "Expected 'FAILED' job state label in dashboard screenshot"
-    )
+    assert "SUCCEEDED" in text, "Expected 'SUCCEEDED' job state label in dashboard screenshot"
+    assert "FAILED" in text, "Expected 'FAILED' job state label in dashboard screenshot"
 
 
 def test_confirm_screen_enter_confirms() -> None:

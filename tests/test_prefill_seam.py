@@ -1,4 +1,5 @@
 """Tests for the New Job prefill path and the DISPATCH_TEST_PREFILL seam."""
+
 from __future__ import annotations
 
 import asyncio

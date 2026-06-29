@@ -15,12 +15,12 @@ from pathlib import Path
 
 import pytest
 
-from dispatch import config, impala, kerberos, manifest, jobs, sql
-
+from dispatch import config, impala, jobs, kerberos, manifest, sql
 
 # =============================================================================
 # sql identifier and CSV-path validation
 # =============================================================================
+
 
 @pytest.mark.parametrize(
     ("value", "expected"),
@@ -40,7 +40,10 @@ def test_plain_impala_identifier_validation(value: str, expected: str | None) ->
     ("value", "expected"),
     [
         ("aa_enc.dispatch_smoke_1", None),
-        ("schema.table.extra", "Existing table must be schema.table using plain Impala identifiers"),
+        (
+            "schema.table.extra",
+            "Existing table must be schema.table using plain Impala identifiers",
+        ),
         ("schema.bad-name", "Existing table must be schema.table using plain Impala identifiers"),
         ("schema.t;drop", "Existing table must be schema.table using plain Impala identifiers"),
         ("", "Existing table must be schema.table using plain Impala identifiers"),
@@ -94,9 +97,7 @@ def test_show_tables_rejects_quoted_pattern_before_query(monkeypatch) -> None:
 
 
 @pytest.mark.parametrize("helper_name", ["describe_table", "drop_table"])
-def test_full_table_helpers_reject_unsafe_name_before_query(
-    monkeypatch, helper_name: str
-) -> None:
+def test_full_table_helpers_reject_unsafe_name_before_query(monkeypatch, helper_name: str) -> None:
     queries: list[str] = []
 
     async def fake_query(statement: str) -> str:
@@ -117,6 +118,7 @@ def test_full_table_helpers_reject_unsafe_name_before_query(
 # =============================================================================
 # kerberos.parse_ttl_seconds
 # =============================================================================
+
 
 class TestParseTtlSeconds:
     """MIT Kerberos klist output parser."""
@@ -221,6 +223,7 @@ async def test_ticket_ttl_returns_none_when_klist_times_out(monkeypatch) -> None
 # manifest.validate and LEGAL_CELLS
 # =============================================================================
 
+
 def _minimal_manifest(**overrides) -> dict:
     """Return a valid manifest dict, optionally overriding fields."""
     base: dict = {
@@ -231,7 +234,9 @@ def _minimal_manifest(**overrides) -> dict:
         "source": {"type": "SqlFile"},
         "destination": {"type": "Csv"},
         "params": {},
-        "orchestrator_calls": [{"script": "download_to_csv.py", "argv": ["python3", "download_to_csv.py"]}],
+        "orchestrator_calls": [
+            {"script": "download_to_csv.py", "argv": ["python3", "download_to_csv.py"]}
+        ],
         "state": "Pending",
         "pid": None,
         "started_at": None,
@@ -317,13 +322,16 @@ class TestManifestValidate:
     def test_all_valid_states_accepted(self, state: str) -> None:
         manifest.validate(_minimal_manifest(state=state))
 
-    @pytest.mark.parametrize("source_type,dest_type", [
-        ("SqlFile", "Table"),
-        ("SqlFile", "Csv"),
-        ("SqlFile", "Table+Csv"),
-        ("SqlTemplate", "Table"),
-        ("ExistingTable", "Csv"),
-    ])
+    @pytest.mark.parametrize(
+        "source_type,dest_type",
+        [
+            ("SqlFile", "Table"),
+            ("SqlFile", "Csv"),
+            ("SqlFile", "Table+Csv"),
+            ("SqlTemplate", "Table"),
+            ("ExistingTable", "Csv"),
+        ],
+    )
     def test_all_legal_cells_accepted(self, source_type: str, dest_type: str) -> None:
         data = _minimal_manifest(
             source={"type": source_type},
@@ -331,14 +339,17 @@ class TestManifestValidate:
         )
         manifest.validate(data)
 
-    @pytest.mark.parametrize("source_type,dest_type", [
-        ("SqlTemplate", "Csv"),
-        ("SqlTemplate", "Table+Csv"),
-        ("ExistingTable", "Table"),
-        ("ExistingTable", "Table+Csv"),
-        ("SqlFile", "Unknown"),
-        ("Unknown", "Csv"),
-    ])
+    @pytest.mark.parametrize(
+        "source_type,dest_type",
+        [
+            ("SqlTemplate", "Csv"),
+            ("SqlTemplate", "Table+Csv"),
+            ("ExistingTable", "Table"),
+            ("ExistingTable", "Table+Csv"),
+            ("SqlFile", "Unknown"),
+            ("Unknown", "Csv"),
+        ],
+    )
     def test_illegal_cells_raise(self, source_type: str, dest_type: str) -> None:
         data = _minimal_manifest(
             source={"type": source_type},
@@ -370,6 +381,7 @@ class TestManifestValidate:
 # manifest.build_orchestrator_calls — argv shape per legal cell
 # =============================================================================
 
+
 class TestBuildOrchestratorCalls:
     def _build(
         self,
@@ -382,9 +394,17 @@ class TestBuildOrchestratorCalls:
         job_dir.mkdir()
         source: manifest.Source = {"type": source_type}  # type: ignore[assignment]
         dest: manifest.Destination = {  # type: ignore[assignment]
-            "type": dest_type, "schema": "dw", "table_name": "t", **dest_overrides
+            "type": dest_type,
+            "schema": "dw",
+            "table_name": "t",
+            **dest_overrides,
         }
-        params: dict = {"to_email": "x@y.com", "subject": "S", "start_date": "01/01/2026", "end_date": "02/01/2026"}
+        params: dict = {
+            "to_email": "x@y.com",
+            "subject": "S",
+            "start_date": "01/01/2026",
+            "end_date": "02/01/2026",
+        }
         return manifest.build_orchestrator_calls(job_dir, source, dest, params, tmp_path, "user1")
 
     def test_sqlfile_csv_single_download_call(self, tmp_path: Path) -> None:
@@ -419,9 +439,7 @@ class TestBuildOrchestratorCalls:
         assert "--table-name" in calls[0]["argv"]
         assert "--query-file" not in calls[0]["argv"]
 
-    def test_existingtable_rejects_unsafe_full_table_before_argv(
-        self, tmp_path: Path
-    ) -> None:
+    def test_existingtable_rejects_unsafe_full_table_before_argv(self, tmp_path: Path) -> None:
         job_dir = tmp_path / "job"
         job_dir.mkdir()
         source: manifest.Source = {
@@ -513,13 +531,9 @@ class TestBuildOrchestratorCalls:
         )
 
         output_index = calls[0]["argv"].index("--output-file") + 1
-        assert Path(calls[0]["argv"][output_index]) == (
-            tmp_path.resolve() / "dispatch_smoke_1.csv"
-        )
+        assert Path(calls[0]["argv"][output_index]) == (tmp_path.resolve() / "dispatch_smoke_1.csv")
 
-    def test_explicit_csv_path_outside_launch_cwd_is_rejected(
-        self, tmp_path: Path
-    ) -> None:
+    def test_explicit_csv_path_outside_launch_cwd_is_rejected(self, tmp_path: Path) -> None:
         job_dir = tmp_path / "job"
         job_dir.mkdir()
         outside_csv = tmp_path.parent / "escape.csv"
@@ -550,7 +564,9 @@ class TestEffectiveJobSql:
     def _sql(self, source_type: str, dest_type: str) -> str:
         source: manifest.Source = {"type": source_type}  # type: ignore[assignment]
         dest: manifest.Destination = {  # type: ignore[assignment]
-            "type": dest_type, "schema": "aa_enc", "table_name": "dispatch_smoke_x"
+            "type": dest_type,
+            "schema": "aa_enc",
+            "table_name": "dispatch_smoke_x",
         }
         return manifest._effective_job_sql(source, dest, self.SELECT, "user1")
 
@@ -581,7 +597,9 @@ class TestEffectiveJobSql:
         ddl = "CREATE TABLE aa_enc.mine STORED AS PARQUET AS SELECT 1"
         source: manifest.Source = {"type": "SqlFile"}  # type: ignore[assignment]
         dest: manifest.Destination = {  # type: ignore[assignment]
-            "type": "Table", "schema": "aa_enc", "table_name": "mine"
+            "type": "Table",
+            "schema": "aa_enc",
+            "table_name": "mine",
         }
         out = manifest._effective_job_sql(source, dest, ddl, "user1")
         assert out == ddl
@@ -612,7 +630,10 @@ class TestIsSelfContainedDdl:
 # jobs.active_jobs, history_jobs, can_launch
 # =============================================================================
 
-def _write_manifest(jobs_dir: Path, state: str, finished_at: str | None = None) -> manifest.JobManifest:
+
+def _write_manifest(
+    jobs_dir: Path, state: str, finished_at: str | None = None
+) -> manifest.JobManifest:
     """Write a minimal manifest to disk and return it."""
     job_id = f"20260516T100000Z_{state[:6].lower().replace('+', 'p')}"
     # make each job_id unique by appending a counter based on dir count
@@ -656,6 +677,7 @@ class TestJobsListing:
 
     def test_recent_succeeded_job_is_active(self, tmp_path: Path) -> None:
         from dispatch.manifest import now_utc
+
         jdir = tmp_path / "jobs"
         jdir.mkdir()
         _write_manifest(jdir, "Succeeded", finished_at=now_utc())
@@ -664,6 +686,7 @@ class TestJobsListing:
 
     def test_old_succeeded_job_is_history_not_active(self, tmp_path: Path) -> None:
         from datetime import timedelta
+
         jdir = tmp_path / "jobs"
         jdir.mkdir()
         old_ts = (datetime.now(timezone.utc) - timedelta(days=8)).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -678,9 +701,9 @@ class TestJobsListing:
         jdir.mkdir()
         # 7 days minus 60 seconds — well inside ACTIVE_WINDOW even accounting
         # for the small delay between computing this timestamp and the jobs call.
-        inside_ts = (datetime.now(timezone.utc) - timedelta(days=7) + timedelta(seconds=60)).strftime(
-            "%Y-%m-%dT%H:%M:%SZ"
-        )
+        inside_ts = (
+            datetime.now(timezone.utc) - timedelta(days=7) + timedelta(seconds=60)
+        ).strftime("%Y-%m-%dT%H:%M:%SZ")
         _write_manifest(jdir, "Succeeded", finished_at=inside_ts)
         active = jobs.active_jobs(root=jdir)
         assert len(active) == 1
@@ -712,6 +735,7 @@ class TestJobsListing:
 
     def test_failed_and_cancelled_do_not_count_toward_cap(self, tmp_path: Path) -> None:
         from dispatch.manifest import now_utc
+
         jdir = tmp_path / "jobs"
         jdir.mkdir()
         _write_manifest(jdir, "Failed", finished_at=now_utc())
@@ -741,9 +765,9 @@ class TestJobsListing:
     ) -> None:
         jdir = tmp_path / "jobs"
         jdir.mkdir()
-        old_ts = (
-            datetime.now(timezone.utc) - jobs.ACTIVE_WINDOW - timedelta(days=1)
-        ).strftime("%Y-%m-%dT%H:%M:%SZ")
+        old_ts = (datetime.now(timezone.utc) - jobs.ACTIVE_WINDOW - timedelta(days=1)).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
         for _ in range(5):
             _write_manifest(jdir, "Succeeded", finished_at=old_ts)
 

@@ -28,9 +28,7 @@ async def query(sql: str) -> str:
     except (asyncio.TimeoutError, TimeoutError):
         # str(TimeoutError()) is empty, which would surface as a blank error in
         # the Browser; give the user an actionable message instead.
-        raise RuntimeError(
-            f"impala-shell timed out after {QUERY_TIMEOUT_SECONDS}s"
-        ) from None
+        raise RuntimeError(f"impala-shell timed out after {QUERY_TIMEOUT_SECONDS}s") from None
     if rc != 0:
         raise RuntimeError(stderr or stdout or f"impala-shell exited {rc}")
     return stdout

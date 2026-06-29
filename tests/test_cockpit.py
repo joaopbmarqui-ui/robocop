@@ -306,9 +306,7 @@ def test_cockpit_slash_filter_narrows_jobs(mock_env_with_config) -> None:
     asyncio.run(run())
 
 
-def test_new_job_picker_lists_cwd_files_and_fills_form(
-    mock_env_with_config, tmp_path
-) -> None:
+def test_new_job_picker_lists_cwd_files_and_fills_form(mock_env_with_config, tmp_path) -> None:
     (tmp_path / "alpha.sql").write_text("select 1\n", encoding="utf-8")
     (tmp_path / "beta_template.sql").write_text(
         "select * from t where d between '{date_inicio}' and '{date_fim}'\n",
@@ -330,9 +328,7 @@ def test_new_job_picker_lists_cwd_files_and_fills_form(
             await pilot.press("down")
             await pilot.pause(0.5)
 
-            assert screen.query_one("#sql-file", Input).value == str(
-                tmp_path / "beta_template.sql"
-            )
+            assert screen.query_one("#sql-file", Input).value == str(tmp_path / "beta_template.sql")
             # Picking the template flips source detection to SqlTemplate.
             assert screen._selected_source() == "SqlTemplate"
 
@@ -351,9 +347,24 @@ def test_new_job_matrix_shows_legal_cells_and_toggles(mock_env_with_config, tmp_
 
             matrix = screen.query_one("#matrix-table", DataTable)
             assert matrix.row_count == 3
-            assert matrix.get_row_at(0) == ["SqlFile", "[green]\u2713[/]", "[green]\u2713[/]", "[green]\u2713[/]"]
-            assert matrix.get_row_at(1) == ["SqlTemplate", "[green]\u2713[/]", "[dim]\u2014[/]", "[dim]\u2014[/]"]
-            assert matrix.get_row_at(2) == ["ExistingTable", "[dim]\u2014[/]", "[green]\u2713[/]", "[dim]\u2014[/]"]
+            assert matrix.get_row_at(0) == [
+                "SqlFile",
+                "[green]\u2713[/]",
+                "[green]\u2713[/]",
+                "[green]\u2713[/]",
+            ]
+            assert matrix.get_row_at(1) == [
+                "SqlTemplate",
+                "[green]\u2713[/]",
+                "[dim]\u2014[/]",
+                "[dim]\u2014[/]",
+            ]
+            assert matrix.get_row_at(2) == [
+                "ExistingTable",
+                "[dim]\u2014[/]",
+                "[green]\u2713[/]",
+                "[dim]\u2014[/]",
+            ]
 
             collapsible = screen.query_one("#matrix-collapsible", Collapsible)
             assert collapsible.collapsed is False

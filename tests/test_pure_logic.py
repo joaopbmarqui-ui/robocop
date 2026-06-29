@@ -7,13 +7,15 @@ or the mock environment — they exercise deterministic functions directly.
 from __future__ import annotations
 
 import asyncio
+import os
+import stat
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
 
-from dispatch import impala, kerberos, manifest, jobs, sql
+from dispatch import config, impala, kerberos, manifest, jobs, sql
 
 
 # =============================================================================
@@ -238,6 +240,51 @@ def _minimal_manifest(**overrides) -> dict:
     }
     base.update(overrides)
     return base
+
+
+def test_ensure_private_dir_tightens_existing_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    existing = tmp_path / "private"
+    existing.mkdir()
+    chmod_calls: list[tuple[Path, int]] = []
+    original_chmod = Path.chmod
+
+    def record_chmod(self: Path, mode: int, *args, **kwargs) -> None:
+        chmod_calls.append((self, mode))
+        original_chmod(self, mode, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "chmod", record_chmod)
+
+    assert config.ensure_private_dir(existing) == existing
+    assert (existing, 0o700) in chmod_calls
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX mode bits are not reliable on Windows")
+def test_create_job_makes_dispatch_job_tree_owner_only(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("DISPATCH_DATA_ROOT", str(tmp_path))
+
+    job_dir, _created = manifest.create_job(
+        source={"type": "SqlFile"},
+        destination={
+            "type": "Csv",
+            "schema": "aa_enc",
+            "table_name": "dispatch_result",
+            "csv_path": str(tmp_path / "dispatch_result.csv"),
+        },
+        params={"to_email": "", "subject": "Dispatch Job"},
+        launch_cwd=tmp_path,
+        sql_text="select 1\n",
+        user="testuser",
+    )
+
+    dispatch_home = tmp_path / ".dispatch"
+    jobs_root = dispatch_home / "jobs"
+    assert stat.S_IMODE(dispatch_home.stat().st_mode) == 0o700
+    assert stat.S_IMODE(jobs_root.stat().st_mode) == 0o700
+    assert stat.S_IMODE(job_dir.stat().st_mode) == 0o700
 
 
 class TestManifestValidate:

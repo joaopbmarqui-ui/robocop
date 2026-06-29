@@ -22,6 +22,13 @@ def dispatch_home(user: str | None = None) -> Path:
     return data_root(user) / ".dispatch"
 
 
+def ensure_private_dir(path: Path) -> Path:
+    """Create a per-user Dispatch directory and enforce owner-only access."""
+    path.mkdir(parents=True, exist_ok=True, mode=0o700)
+    path.chmod(0o700)
+    return path
+
+
 def jobs_dir(user: str | None = None) -> Path:
     return dispatch_home(user) / "jobs"
 

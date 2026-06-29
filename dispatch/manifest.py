@@ -187,8 +187,9 @@ def create_job(
 ) -> tuple[Path, JobManifest]:
     job_user = user or config.current_user()
     job_id = new_job_id()
-    job_dir = config.jobs_dir(job_user) / job_id
-    job_dir.mkdir(parents=True)
+    home_dir = config.ensure_private_dir(config.dispatch_home(job_user))
+    jobs_root = config.ensure_private_dir(home_dir / "jobs")
+    job_dir = config.ensure_private_dir(jobs_root / job_id)
     (job_dir / "job.sql").write_text(
         _effective_job_sql(source, destination, sql_text, job_user), encoding="utf-8"
     )

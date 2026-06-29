@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -191,6 +192,9 @@ exit 0
     assert result.returncode == 0, result.stderr
     dispatch_home = data_root / ".dispatch"
     assert (dispatch_home / "jobs").is_dir()
+    if os.name != "nt":
+        assert stat.S_IMODE(dispatch_home.stat().st_mode) == 0o700
+        assert stat.S_IMODE((dispatch_home / "jobs").stat().st_mode) == 0o700
     assert (dispatch_home / "venv" / "bin" / "python").is_file()
     data = json.loads((dispatch_home / "config.json").read_text(encoding="utf-8"))
     assert data == {"form_defaults": {"email": email}}

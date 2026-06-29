@@ -22,6 +22,7 @@ if [ ! -d "$DATA_ROOT" ] || [ ! -w "$DATA_ROOT" ]; then
 fi
 
 mkdir -p "$DISPATCH_HOME/jobs"
+chmod 700 "$DISPATCH_HOME" "$DISPATCH_HOME/jobs"
 
 LOCK_FILE="$DISPATCH_HOME/install.lock"
 # exec 9>"$LOCK_FILE"

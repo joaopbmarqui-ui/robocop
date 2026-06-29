@@ -24,7 +24,7 @@ the status row when done.
 | 009 | Cap Job Detail log-tail reads per refresh tick | P2 | S | - | DONE |
 | 010 | Align the `config.json` email schema | P2 | M | - | DONE |
 | 011 | Unify the product version source | P3 | S | - | DONE |
-| 012 | Apply restrictive permissions to per-user Job data | P3 | S | 003 | TODO |
+| 012 | Apply restrictive permissions to per-user Job data | P3 | S | 003 | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
 REJECTED (with one-line rationale).

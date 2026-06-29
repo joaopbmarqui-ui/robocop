@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import os
-from pathlib import Path
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 from textual.widgets import DataTable, Input
 
@@ -232,9 +232,7 @@ def test_sidebar_view_logs_from_history_uses_selected_job(
     asyncio.run(run())
 
 
-def test_dashboard_top_level_actions_open_expected_screens(
-    mock_env_with_config, tmp_path
-) -> None:
+def test_dashboard_top_level_actions_open_expected_screens(mock_env_with_config, tmp_path) -> None:
     """Dashboard keyboard actions should still open the same top-level screens."""
     (tmp_path / "query.sql").write_text("select 1\n", encoding="utf-8")
 
@@ -382,9 +380,7 @@ def test_browser_placeholder_and_auto_describe_after_show_tables(
             app.push_screen(screen)
             await pilot.pause(0.5)
 
-            assert "aa_enc.dispatch_result" in str(
-                screen.query_one("#file-preview-title").render()
-            )
+            assert "aa_enc.dispatch_result" in str(screen.query_one("#file-preview-title").render())
             # The data is now in the DataTable, not the Static body
             describe_table = screen.query_one("#describe-table", DataTable)
             assert describe_table.display is True
@@ -434,9 +430,7 @@ def test_browser_show_tables_failure_replaces_stale_schema_with_error(
     asyncio.run(run())
 
 
-def test_browser_drop_requires_typing_full_table_name(
-    mock_env_with_config, monkeypatch
-) -> None:
+def test_browser_drop_requires_typing_full_table_name(mock_env_with_config, monkeypatch) -> None:
     """DROP confirmation requires the fully-qualified table name, not just Y."""
     calls: list[str] = []
 

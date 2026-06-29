@@ -11,7 +11,6 @@ from pathlib import Path
 
 import pytest
 
-
 WORKSPACE = Path(__file__).resolve().parents[1]
 MOCKS_DIR = WORKSPACE / "mocks"
 POWERSHELL = shutil.which("powershell") or shutil.which("pwsh")
@@ -55,8 +54,7 @@ def test_dev_env_ps1_compiles_wrappers_with_detected_python_launcher(
         dev_env = temp_mocks / "dev-env.ps1"
         wrapper = temp_mocks / "bin" / "impala-shell.exe"
         command = (
-            f"& {{ . '{dev_env}'; "
-            f"& '{wrapper}' '--output_delimiter=|' '-q' 'SHOW TABLES IN dw;' }}"
+            f"& {{ . '{dev_env}'; & '{wrapper}' '--output_delimiter=|' '-q' 'SHOW TABLES IN dw;' }}"
         )
 
         result = subprocess.run(

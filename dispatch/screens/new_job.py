@@ -2,27 +2,42 @@
 
 from __future__ import annotations
 
-import calendar
 import asyncio
+import calendar
 import logging
 import os
 from datetime import date, datetime
 from pathlib import Path
 
-logger = logging.getLogger("dispatch.new_job")
-
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
-from textual.widgets import Button, Collapsible, DataTable, Footer, Header, Input, RadioButton, RadioSet, Static
+from textual.timer import Timer
+from textual.widgets import (
+    Button,
+    Collapsible,
+    DataTable,
+    Footer,
+    Header,
+    Input,
+    RadioButton,
+    RadioSet,
+    Static,
+)
 from textual.worker import Worker
 
-from .. import config, jobs, kerberos, manifest, process, sql
+from .. import config, jobs, manifest, process, sql
 from .confirm import ConfirmScreen
 from .preview import PreviewScreen
 from .sidebar import Sidebar
 
-_SOURCE_IDS = {"src-sqlfile": "SqlFile", "src-sqltemplate": "SqlTemplate", "src-existingtable": "ExistingTable"}
+logger = logging.getLogger("dispatch.new_job")
+
+_SOURCE_IDS = {
+    "src-sqlfile": "SqlFile",
+    "src-sqltemplate": "SqlTemplate",
+    "src-existingtable": "ExistingTable",
+}
 _DEST_IDS = {"dst-table": "Table", "dst-csv": "Csv", "dst-table-csv": "Table+Csv"}
 
 
@@ -49,6 +64,7 @@ class NewJobScreen(Screen[None]):
         # (path, exists) memo so keystrokes in unrelated fields do not stat()
         # the SQL path (potentially a slow network mount) on every change.
         self._sql_exists_cache: tuple[str, bool] | None = None
+        self._validation_summary_timer: Timer | None = None
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
@@ -93,12 +109,20 @@ class NewJobScreen(Screen[None]):
                 with Vertical(id="form-grid"):
                     with Horizontal(classes="form-row", id="row-sql-file"):
                         yield Static("SQL File", classes="field-label", id="lbl-sql-file")
-                        yield Input(value=self._default_sql_file(), placeholder="SQL File", id="sql-file")
+                        yield Input(
+                            value=self._default_sql_file(), placeholder="SQL File", id="sql-file"
+                        )
                     yield Static("", classes="path-hint", id="path-hint")
 
                     with Horizontal(classes="form-row", id="row-existing-table"):
-                        yield Static("Existing Table", classes="field-label", id="lbl-existing-table")
-                        yield Input(value="", placeholder="e.g. analytics.events_existing", id="existing-table")
+                        yield Static(
+                            "Existing Table", classes="field-label", id="lbl-existing-table"
+                        )
+                        yield Input(
+                            value="",
+                            placeholder="e.g. analytics.events_existing",
+                            id="existing-table",
+                        )
 
                     with Horizontal(classes="form-row", id="row-schema"):
                         yield Static("Schema", classes="field-label", id="lbl-schema")
@@ -106,15 +130,23 @@ class NewJobScreen(Screen[None]):
 
                     with Horizontal(classes="form-row", id="row-table-name"):
                         yield Static("Table Name", classes="field-label", id="lbl-table-name")
-                        yield Input(value="dispatch_result", placeholder="Table name", id="table-name")
+                        yield Input(
+                            value="dispatch_result", placeholder="Table name", id="table-name"
+                        )
 
                     with Horizontal(classes="form-row", id="row-start-date"):
                         yield Static("Start Date", classes="field-label", id="lbl-start-date")
-                        yield Input(value=self._default_start_date(), placeholder="YYYY-MM-DD", id="start-date")
+                        yield Input(
+                            value=self._default_start_date(),
+                            placeholder="YYYY-MM-DD",
+                            id="start-date",
+                        )
 
                     with Horizontal(classes="form-row", id="row-end-date"):
                         yield Static("End Date", classes="field-label", id="lbl-end-date")
-                        yield Input(value=self._default_end_date(), placeholder="YYYY-MM-DD", id="end-date")
+                        yield Input(
+                            value=self._default_end_date(), placeholder="YYYY-MM-DD", id="end-date"
+                        )
 
                     with Horizontal(classes="form-row", id="row-email"):
                         yield Static("Email (notifications)", classes="field-label", id="lbl-email")
@@ -152,8 +184,8 @@ class NewJobScreen(Screen[None]):
 
         self._apply_saved_defaults()
         self._apply_prefill()
-        self.kerberos_ttl = await kerberos.ticket_ttl_seconds()
-        self._refresh_kerberos()
+        if hasattr(type(self.app), "kerberos_ttl"):
+            self.watch(self.app, "kerberos_ttl", self._on_kerberos_change, init=True)
         self._detect_sql()
         self._update_field_visibility()
         self._inline_validate()
@@ -188,9 +220,7 @@ class NewJobScreen(Screen[None]):
         picker.clear()
         for entry in self._cwd_sql_files:
             detected = entry["detected"]
-            detected_markup = (
-                f"[cyan]{detected}[/]" if detected == "SqlTemplate" else detected
-            )
+            detected_markup = f"[cyan]{detected}[/]" if detected == "SqlTemplate" else detected
             picker.add_row(
                 entry["name"],
                 detected_markup,
@@ -269,9 +299,14 @@ class NewJobScreen(Screen[None]):
 
     def on_input_changed(self, event: Input.Changed) -> None:
         self._inline_validate()
-        self._update_validation_summary()
+        self._schedule_validation_summary()
         if event.input.id == "sql-file":
             self._refresh_path_hint()
+
+    def on_unmount(self) -> None:
+        if self._validation_summary_timer is not None:
+            self._validation_summary_timer.stop()
+            self._validation_summary_timer = None
 
     def action_toggle_matrix(self) -> None:
         collapsible = self.query_one("#matrix-collapsible", Collapsible)
@@ -316,6 +351,13 @@ class NewJobScreen(Screen[None]):
         destination = self._selected_destination()
         if (source, destination) not in manifest.LEGAL_CELLS:
             issues.append(f"Illegal combination: {source} \u2192 {destination}")
+        if destination in ("Table", "Table+Csv"):
+            schema_error = sql.validate_identifier(self._input_value("schema"), "Schema")
+            if schema_error:
+                issues.append(schema_error)
+            table_error = sql.validate_identifier(self._input_value("table-name"), "Table name")
+            if table_error:
+                issues.append(table_error)
         if source in ("SqlFile", "SqlTemplate"):
             if not self._input_value("sql-file"):
                 issues.append("SQL file path is required")
@@ -327,8 +369,20 @@ class NewJobScreen(Screen[None]):
             )
             if date_error:
                 issues.append(date_error)
-        if source == "ExistingTable" and not self._input_value("existing-table"):
-            issues.append("Existing table name is required")
+        existing_error: str | None = None
+        existing = self._input_value("existing-table")
+        if source == "ExistingTable":
+            existing_error = sql.validate_full_table(existing, "Existing table")
+            if existing_error:
+                issues.append(existing_error)
+        if destination in ("Csv", "Table+Csv"):
+            csv_table = self._input_value("table-name")
+            if source == "ExistingTable" and existing_error is None:
+                _schema, csv_table = existing.split(".", 1)
+            try:
+                sql.safe_csv_path(self.launch_cwd, csv_table)
+            except ValueError as exc:
+                issues.append(str(exc))
         email = self._input_value("email")
         if email and ("@" not in email or "." not in email.split("@")[-1]):
             issues.append("Invalid email format")
@@ -349,6 +403,15 @@ class NewJobScreen(Screen[None]):
             summary.update(f"[red]\u2717 {len(issues)} issue(s): {first}{extra}[/]")
         else:
             summary.update("[green]\u2713 Ready to launch (checks passing)[/]")
+
+    def _schedule_validation_summary(self) -> None:
+        if self._validation_summary_timer is not None:
+            self._validation_summary_timer.stop()
+        self._validation_summary_timer = self.set_timer(0.2, self._run_scheduled_validation_summary)
+
+    def _run_scheduled_validation_summary(self) -> None:
+        self._validation_summary_timer = None
+        self._update_validation_summary()
 
     def _update_field_visibility(self) -> None:
         source = self._selected_source()
@@ -425,6 +488,12 @@ class NewJobScreen(Screen[None]):
         launch_btn.disabled = self.kerberos_ttl is None or self.kerberos_ttl < 300
         self._update_validation_summary()
 
+    def _on_kerberos_change(self, value: int | None) -> None:
+        self.kerberos_ttl = value
+        self._refresh_kerberos()
+        self._inline_validate()
+        self._update_validation_summary()
+
     def _read_sql(self) -> str | None:
         sql_path = Path(self._input_value("sql-file"))
         try:
@@ -463,6 +532,25 @@ class NewJobScreen(Screen[None]):
         destination_type = self._selected_destination()
         if (source_type, destination_type) not in manifest.LEGAL_CELLS:
             return f"Illegal Source/Destination cell: {source_type}/{destination_type}"
+        if destination_type in ("Table", "Table+Csv"):
+            schema_error = sql.validate_identifier(self._input_value("schema"), "Schema")
+            if schema_error:
+                return schema_error
+            table_error = sql.validate_identifier(self._input_value("table-name"), "Table name")
+            if table_error:
+                return table_error
+        csv_table = self._input_value("table-name")
+        if source_type == "ExistingTable":
+            existing = self._input_value("existing-table")
+            existing_error = sql.validate_full_table(existing, "Existing table")
+            if existing_error:
+                return existing_error
+            _schema, csv_table = existing.split(".", 1)
+        if destination_type in ("Csv", "Table+Csv"):
+            try:
+                sql.safe_csv_path(self.launch_cwd, csv_table)
+            except ValueError as exc:
+                return str(exc)
         email = self._input_value("email")
         if email and ("@" not in email or "." not in email.split("@")[-1]):
             return "Invalid email format"
@@ -473,8 +561,6 @@ class NewJobScreen(Screen[None]):
         if self.kerberos_ttl < 300:
             return "Kerberos ticket TTL is under 5 minutes"
         if source_type == "ExistingTable":
-            if not self._input_value("existing-table"):
-                return "Existing table name is required"
             return None
         sql_text = self._read_sql()
         if sql_text is None:
@@ -503,7 +589,7 @@ class NewJobScreen(Screen[None]):
                 schema, table = existing.split(".", 1)
         else:
             source = {"type": source_type, "sql_path_at_launch": self._input_value("sql-file")}
-        csv_path = str(self.launch_cwd / f"{table}.csv")
+        csv_path = str(sql.safe_csv_path(self.launch_cwd, table))
         destination: manifest.Destination = {
             "type": destination_type,
             "schema": schema,
@@ -544,7 +630,9 @@ class NewJobScreen(Screen[None]):
                 self._show_message(date_error, "error")
                 return
             preview = sql.monthly_preview(
-                sql_text, schema, table,
+                sql_text,
+                schema,
+                table,
                 self._input_value("start-date"),
                 self._input_value("end-date"),
             )
@@ -559,14 +647,16 @@ class NewJobScreen(Screen[None]):
             preview = sql_text
         self.app.push_screen(
             PreviewScreen(
-                "SQL Preview", preview,
-                schema=schema, table=table,
+                "SQL Preview",
+                preview,
+                schema=schema,
+                table=table,
                 source_type=source_type,
                 dest_type=self._selected_destination(),
             )
         )
 
-    def action_launch(self) -> "Worker[None]":
+    def action_launch(self) -> Worker[None]:
         """Run the confirm-and-launch flow in a worker.
 
         Awaiting the confirmation future inline would block the message pump
@@ -591,15 +681,43 @@ class NewJobScreen(Screen[None]):
         confirmed = await self._confirm_launch(source, destination)
         if not confirmed:
             return
-        job_dir, _job_manifest = manifest.create_job(
-            source=source,
-            destination=destination,
-            params=self._params(),
-            launch_cwd=self.launch_cwd,
-            sql_text=sql_text,
+        if hasattr(self.app, "refresh_kerberos"):
+            await self.app.refresh_kerberos()
+        error = self._validate()
+        if error:
+            self._show_message(error, "error")
+            self.notify(error, severity="error")
+            return
+        try:
+            job_dir, _job_manifest = jobs.create_job_if_slot_available(
+                source=source,
+                destination=destination,
+                params=self._params(),
+                launch_cwd=self.launch_cwd,
+                sql_text=sql_text,
+            )
+        except jobs.LaunchSlotUnavailable as exc:
+            error = str(exc)
+            self._show_message(error, "error")
+            self.notify(error, severity="error")
+            return
+        try:
+            await process.launch_runner(job_dir)
+        except OSError as exc:
+            manifest.update(
+                job_dir / "manifest.json",
+                state="Failed",
+                exit_code=-1,
+                finished_at=manifest.now_utc(),
+            )
+            error = f"Could not launch detached runner: {exc}"
+            logger.exception("Failed to launch runner for Job %s", job_dir.name)
+            self._show_message(error, "error")
+            self.notify(error, severity="error")
+            return
+        logger.info(
+            "Launched Job %s source=%s dest=%s", job_dir.name, source["type"], destination["type"]
         )
-        await process.launch_runner(job_dir)
-        logger.info("Launched Job %s source=%s dest=%s", job_dir.name, source["type"], destination["type"])
         self._save_form_defaults()
         self.notify(f"\u2713 Launched Job {job_dir.name}", severity="information")
         self._show_message(f"\u2713 Launched Job {job_dir.name}", "success")
@@ -650,9 +768,6 @@ class NewJobScreen(Screen[None]):
     async def action_kinit(self) -> None:
         with self.app.suspend():
             process.run_interactive("kinit")
-        self.kerberos_ttl = await kerberos.ticket_ttl_seconds()
-        self._refresh_kerberos()
-        self._inline_validate()
         await self.app.refresh_kerberos()
         if self.kerberos_ttl is not None:
             self.notify(f"Kerberos refreshed: {self.kerberos_ttl // 60}m", severity="information")
@@ -712,6 +827,7 @@ class NewJobScreen(Screen[None]):
     def _schedule_force_radio(self, radio_set_id: str, button_id: str) -> None:
         self.call_after_refresh(self._force_radio, radio_set_id, button_id)
         self.set_timer(0.05, lambda: self._force_radio(radio_set_id, button_id))
+        self.set_timer(0.25, lambda: self._force_radio(radio_set_id, button_id))
 
     def _force_radio(self, radio_set_id: str, button_id: str) -> None:
         radio_set = self.query_one(radio_set_id, RadioSet)
@@ -725,7 +841,8 @@ class NewJobScreen(Screen[None]):
             radio_set._selected = nodes.index(target)
         logger.info(
             "prefill applied %s -> %s (pressed=%s)",
-            radio_set_id, button_id,
+            radio_set_id,
+            button_id,
             radio_set.pressed_button.id if radio_set.pressed_button else None,
         )
         self._update_field_visibility()

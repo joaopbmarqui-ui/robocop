@@ -14,7 +14,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, RichLog, Static
 from textual.worker import Worker
 
-from .. import config, errors, manifest, process
+from .. import config, errors, jobs, manifest, process
 from ..formatting import (
     format_elapsed,
     format_job_id,
@@ -29,6 +29,11 @@ from .sidebar import Sidebar
 # chatty jobs cannot grow the UI without limit. The RichLog widget and the
 # in-memory deque share this window so the truncation hint stays truthful.
 LOG_VIEW_LINES = 200
+
+# Maximum bytes read per 1s refresh tick. A chatty orchestrator can append
+# more than this between ticks; the remainder is picked up on the next tick
+# by carrying the offset forward. Bounds memory and RichLog write bursts.
+LOG_READ_CHUNK_BYTES = 65536
 
 
 class JobDetailScreen(Screen[None]):
@@ -53,6 +58,7 @@ class JobDetailScreen(Screen[None]):
         self.cancel_on_mount = cancel_on_mount
         self._tail_offset = 0
         self._tail_lines: deque[str] = deque(maxlen=LOG_VIEW_LINES)
+        self._tail_pending_bytes = b""
         self._evicted_line_count = 0
         self._search_query = ""
         self._error_code: str | None = None
@@ -64,6 +70,7 @@ class JobDetailScreen(Screen[None]):
         # Manifest mtime cache: skip the JSON parse when the file is unchanged.
         self._manifest_mtime: float | None = None
         self._manifest_item: dict[str, Any] | None = None
+        self._refresh_in_flight = False
         # Last markup painted per Static, to skip no-op repaints over SSH.
         self._static_cache: dict[str, str] = {}
 
@@ -137,23 +144,29 @@ class JobDetailScreen(Screen[None]):
         self.set_interval(1.0, self._refresh_detail_async)
 
     async def _refresh_detail_async(self) -> None:
+        if self._refresh_in_flight:
+            return
+        self._refresh_in_flight = True
         manifest_path = self.job_dir / "manifest.json"
         log_path = self.job_dir / "run.log"
+        cached_manifest_mtime = self._manifest_mtime
+        cached_manifest_item = self._manifest_item
+        cached_error_code = self._error_code
+        cached_error_line = self._error_line
+        error_checked = self._error_checked
 
         def _read() -> dict[str, Any] | None:
             try:
                 manifest_mtime = manifest_path.stat().st_mtime
             except OSError:
                 return None
-            if manifest_mtime == self._manifest_mtime and self._manifest_item is not None:
-                item = self._manifest_item
+            if manifest_mtime == cached_manifest_mtime and cached_manifest_item is not None:
+                item = cached_manifest_item
             else:
                 try:
                     item = manifest.load(manifest_path)
                 except Exception:
                     return None
-                self._manifest_mtime = manifest_mtime
-                self._manifest_item = item
             new_lines: list[str] = []
             try:
                 size = log_path.stat().st_size
@@ -166,29 +179,45 @@ class JobDetailScreen(Screen[None]):
             reset = size < offset
             if reset:
                 offset = 0
+            pending_bytes = b"" if reset else self._tail_pending_bytes
+            chunk = b""
             if size > offset:
-                with log_path.open("r", encoding="utf-8", errors="replace") as handle:
+                with log_path.open("rb") as handle:
                     handle.seek(offset)
-                    new_lines = [line.rstrip() for line in handle]
+                    chunk = handle.read(LOG_READ_CHUNK_BYTES)
                     new_offset = handle.tell()
             else:
                 new_offset = offset
-            error_code = self._error_code
-            error_line = self._error_line
-            if item["state"] == "Failed" and not self._error_checked:
+            complete_lines = (pending_bytes + chunk).split(b"\n")
+            pending_bytes = complete_lines.pop()
+            # A live Job may append to an unterminated final line, so keep it
+            # buffered. Terminal Jobs will not append again; flush their final
+            # unterminated line exactly once when the reader reaches EOF.
+            if pending_bytes and new_offset == size and item["state"] not in ("Running", "Pending"):
+                complete_lines.append(pending_bytes)
+                pending_bytes = b""
+            new_lines = [line.decode("utf-8", errors="replace").rstrip() for line in complete_lines]
+            error_code = cached_error_code
+            error_line = cached_error_line
+            if item["state"] == "Failed" and not error_checked:
                 error_code = errors.classify(log_path)
                 error_line = errors.first_matching_line(log_path, error_code)
             return {
                 "item": item,
+                "manifest_mtime": manifest_mtime,
                 "new_lines": new_lines,
                 "new_offset": new_offset,
+                "pending_bytes": pending_bytes,
                 "error_code": error_code,
                 "error_line": error_line,
                 "reset": reset,
             }
 
-        snapshot = await asyncio.to_thread(_read)
-        self._apply_detail_snapshot(snapshot)
+        try:
+            snapshot = await asyncio.to_thread(_read)
+            self._apply_detail_snapshot(snapshot)
+        finally:
+            self._refresh_in_flight = False
 
     def _set_static(self, selector: str, markup: str) -> None:
         """Update a Static only when its content actually changed."""
@@ -201,6 +230,8 @@ class JobDetailScreen(Screen[None]):
         if snapshot is None:
             return
         item = snapshot["item"]
+        self._manifest_mtime = snapshot["manifest_mtime"]
+        self._manifest_item = item
         self._error_code = snapshot["error_code"]
         self._error_line = snapshot["error_line"]
         dest = item["destination"]
@@ -255,6 +286,7 @@ class JobDetailScreen(Screen[None]):
         clone_btn.display = state in ("Succeeded", "Failed", "Cancelled")
 
         self._update_error_banner(state)
+        self._tail_pending_bytes = snapshot["pending_bytes"]
         self._append_log_lines(
             snapshot["new_lines"], snapshot["new_offset"], reset=snapshot.get("reset", False)
         )
@@ -287,9 +319,7 @@ class JobDetailScreen(Screen[None]):
                 f"[bold red]{code}[/]: {self._error_line}\n[dim]{errors.suggestion(code)}[/]",
             )
         else:
-            self._set_static(
-                "#error-banner", "[red]Job failed.[/] [dim]Check log for details.[/]"
-            )
+            self._set_static("#error-banner", "[red]Job failed.[/] [dim]Check log for details.[/]")
         if not banner.display:
             banner.display = True
 
@@ -425,7 +455,7 @@ class JobDetailScreen(Screen[None]):
     def _style_log_line(line: str) -> str:
         return style_log_line(line)
 
-    def action_cancel(self) -> "Worker[None]":
+    def action_cancel(self) -> Worker[None]:
         """Run the confirm-and-cancel flow in a worker (see NewJobScreen.action_launch)."""
         return self.run_worker(self._cancel_flow(), name="cancel-flow", exclusive=True)
 
@@ -435,13 +465,45 @@ class JobDetailScreen(Screen[None]):
         except Exception:
             return
         pid = item.get("pid")
-        if item["state"] == "Running" and pid:
+        if item["state"] == "Pending" and not pid:
+            confirmed = await self._confirm_pending_cancel(item["id"])
+            if not confirmed:
+                return
+            manifest.update(
+                self.job_dir / "manifest.json",
+                state="Cancelled",
+                exit_code=0,
+                finished_at=manifest.now_utc(),
+            )
+            self.notify(f"Pending Job {item['id']} removed", severity="warning")
+            self._set_static("#job-status-line", "[yellow]Pending Job cancelled[/]")
+            return
+        if item["state"] in ("Running", "Pending") and pid:
             confirmed = await self._confirm_cancel(item["id"], pid)
             if not confirmed:
                 return
-            process.cancel_process_group(pid)
+            try:
+                result = process.cancel_process_group(pid)
+            except ProcessLookupError:
+                result = "missing"
+            except PermissionError:
+                self.notify(
+                    "Permission denied while signalling the Job process group",
+                    severity="error",
+                )
+                return
+            if result == "missing":
+                jobs.reconcile_manifest(self.job_dir / "manifest.json")
+                self.notify(
+                    "Job process is no longer running; manifest marked Failed",
+                    severity="warning",
+                )
+                self._set_static("#job-status-line", "[red]Process missing; marked Failed[/]")
+                return
             self.notify(f"Cancellation requested for Job {item['id']}", severity="warning")
             self._set_static("#job-status-line", "[yellow]Cancellation requested\u2026[/]")
+            return
+        self.notify("No cancellable Job process found", severity="warning")
 
     async def _confirm_cancel(self, job_id: str, pid: int) -> bool:
         loop_future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()
@@ -460,6 +522,29 @@ class JobDetailScreen(Screen[None]):
                 danger=True,
                 confirm_label="Cancel Job",
                 cancel_label="Keep Running",
+            ),
+            callback=on_result,
+        )
+        return await loop_future
+
+    async def _confirm_pending_cancel(self, job_id: str) -> bool:
+        loop_future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()
+
+        def on_result(result: bool | None) -> None:
+            if not loop_future.done():
+                loop_future.set_result(bool(result))
+
+        self.app.push_screen(
+            ConfirmScreen(
+                "Remove Pending Job",
+                (
+                    f"Remove Pending Job [cyan]{job_id}[/]?\n\n"
+                    "No runner PID has been recorded yet. The manifest will be "
+                    "kept for audit history and marked Cancelled."
+                ),
+                danger=True,
+                confirm_label="Remove Pending Job",
+                cancel_label="Keep Pending",
             ),
             callback=on_result,
         )

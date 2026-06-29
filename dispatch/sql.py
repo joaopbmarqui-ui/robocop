@@ -3,7 +3,59 @@
 from __future__ import annotations
 
 import calendar
+import re
 from datetime import date, datetime
+from pathlib import Path
+
+IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+FULL_TABLE_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*")
+DATE_INICIO_TOKEN = "{date_inicio}"
+DATE_FIM_TOKEN = "{date_fim}"
+
+
+def validate_identifier(value: str, label: str) -> str | None:
+    """Return a clear error when ``value`` is not a plain Impala identifier."""
+    if not IDENTIFIER_RE.fullmatch(value):
+        return f"{label} must be a plain Impala identifier"
+    return None
+
+
+def validate_full_table(value: str, label: str = "table") -> str | None:
+    """Return a clear error unless ``value`` is exactly ``schema.table``."""
+    if not FULL_TABLE_RE.fullmatch(value):
+        return f"{label} must be schema.table using plain Impala identifiers"
+    return None
+
+
+def resolve_csv_output_path(launch_cwd: Path, raw_path: str | Path) -> Path:
+    """Resolve a direct CSV output path inside ``launch_cwd``."""
+    resolved_cwd = launch_cwd.resolve()
+    candidate = Path(raw_path)
+    output_path = (candidate if candidate.is_absolute() else resolved_cwd / candidate).resolve()
+    if not output_path.is_relative_to(resolved_cwd):
+        raise ValueError("CSV output path must stay within the launch directory")
+    if output_path.suffix.lower() != ".csv":
+        raise ValueError("CSV output path must end with .csv")
+    if output_path.parent != resolved_cwd:
+        raise ValueError("CSV output path must be a direct file in the launch directory")
+
+    stem = output_path.stem
+    if not stem or "/" in stem or "\\" in stem or ".." in stem:
+        raise ValueError("CSV filename must be a safe CSV filename stem")
+    identifier_error = validate_identifier(stem, "CSV filename")
+    if identifier_error:
+        raise ValueError(identifier_error)
+    return output_path
+
+
+def safe_csv_path(launch_cwd: Path, table: str) -> Path:
+    """Build a CSV path whose plain filename stem cannot escape ``launch_cwd``."""
+    if not table or "/" in table or "\\" in table or ".." in table:
+        raise ValueError("Table name must be a safe CSV filename stem")
+    identifier_error = validate_identifier(table, "Table name")
+    if identifier_error:
+        raise ValueError(identifier_error)
+    return resolve_csv_output_path(launch_cwd, f"{table}.csv")
 
 
 def detect_source(sql_text: str) -> str:
@@ -74,7 +126,11 @@ def month_range(start: date, end: date) -> list[date]:
     return months
 
 
-def monthly_preview(sql_template: str, schema: str, table_name: str, start_iso: str, end_iso: str) -> str:
+def monthly_preview(
+    sql_template: str, schema: str, table_name: str, start_iso: str, end_iso: str
+) -> str:
+    if DATE_INICIO_TOKEN not in sql_template or DATE_FIM_TOKEN not in sql_template:
+        raise ValueError("Monthly SQL template must include {date_inicio} and {date_fim} tokens.")
     start = datetime.strptime(start_iso, "%Y-%m-%d").date()
     end = datetime.strptime(end_iso, "%Y-%m-%d").date()
     # Metadata lines are SQL comments so the preview tokenizes cleanly.
@@ -83,7 +139,11 @@ def monthly_preview(sql_template: str, schema: str, table_name: str, start_iso: 
         last_day = calendar.monthrange(month.year, month.month)[1]
         month_end = month.replace(day=last_day)
         dt_ano_mes = month.strftime("%Y%m")
-        resolved = sql_template.format(date_inicio=str(month), date_fim=str(month_end)).strip()
+        resolved = (
+            sql_template.replace(DATE_INICIO_TOKEN, str(month))
+            .replace(DATE_FIM_TOKEN, str(month_end))
+            .strip()
+        )
         lines.extend(
             [
                 "",

@@ -1,4 +1,3 @@
-# flake8: noqa
 # pylint: disable=line-too-long,trailing-whitespace,missing-final-newline,logging-fstring-interpolation,too-many-locals,f-string-without-interpolation,unspecified-encoding
 import logging
 import argparse
@@ -10,7 +9,7 @@ import calendar
 # Assumes Query_Impala_Parametrized.py is in the same directory on the remote server.
 try:
     from Query_Impala_Parametrized import run_on_impala
-    from _common import cycle_through_pools, send_email
+    from _common import cycle_through_pools, send_email, validate_identifier
 except ImportError:
     logging.error("Fatal Error: Could not import functions from Query_Impala_Parametrized.py.")
     sys.exit(1)
@@ -19,6 +18,9 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # --- Helper Functions ---
+DATE_INICIO_TOKEN = "{date_inicio}"
+DATE_FIM_TOKEN = "{date_fim}"
+
 
 def monthly_range(start_date, end_date):
     """Generator for iterating through the first day of each month in a date range."""
@@ -26,6 +28,17 @@ def monthly_range(start_date, end_date):
     while current_date <= end_date:
         yield current_date
         current_date = (current_date + timedelta(days=32)).replace(day=1)
+
+
+def render_monthly_sql(sql_template: str, date_inicio: str, date_fim: str) -> str:
+    if DATE_INICIO_TOKEN not in sql_template or DATE_FIM_TOKEN not in sql_template:
+        raise ValueError(
+            "Monthly SQL template must include {date_inicio} and {date_fim} tokens."
+        )
+    return sql_template.replace(DATE_INICIO_TOKEN, date_inicio).replace(
+        DATE_FIM_TOKEN, date_fim
+    )
+
 
 def execute_step_with_retry(query: str, operation_desc: str, args):
     """
@@ -89,7 +102,7 @@ def build_monthly_job_query(args, sql_template: str) -> tuple[str, list[str], st
         date_inicio_str, date_fim_str = str(date.date()), str(month_end_date.date())
         dt_ano_mes = date.strftime('%Y%m')
         temp_table_name = f"{args.schema}.{args.table_name}_temp_{dt_ano_mes}"
-        monthly_sql = sql_template.format(date_inicio=date_inicio_str, date_fim=date_fim_str)
+        monthly_sql = render_monthly_sql(sql_template, date_inicio_str, date_fim_str)
         statements.append(f"""
             DROP TABLE IF EXISTS {temp_table_name};
             CREATE TABLE {temp_table_name}
@@ -122,8 +135,8 @@ def process_monthly_job(args):
 
     monthly_query, planned_temp_tables, final_table_name = build_monthly_job_query(args, sql_template)
 
-    plan_message = (f"Monthly partitioned job has started.\n\nExecution Plan:\n-----------------\n"
-                    f"1. The following temporary tables will be created:\n")
+    plan_message = ("Monthly partitioned job has started.\n\nExecution Plan:\n-----------------\n"
+                    "1. The following temporary tables will be created:\n")
     for tbl in planned_temp_tables:
         plan_message += f"   - {tbl}\n"
     plan_message += (f"\n2. The temporary tables will be joined into the final table:\n   - {final_table_name}\n\n"
@@ -152,6 +165,14 @@ def main():
     parser.add_argument('--to-email', required=True, help='Recipient email address.')
     parser.add_argument('--subject', required=True, help='Base subject for emails.')
     args = parser.parse_args()
+
+    for value, flag in (
+        (args.schema, "--schema"),
+        (args.table_name, "--table-name"),
+        (args.user, "--user"),
+    ):
+        if not validate_identifier(value):
+            parser.error(f"{flag} must be a plain Impala identifier")
 
     try:
         process_monthly_job(args)

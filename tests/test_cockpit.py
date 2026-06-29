@@ -5,13 +5,15 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 from textual.widgets import Collapsible, DataTable, Input, Static
 
-from dispatch import manifest
+from dispatch import jobs, manifest
 from dispatch.app import DispatchApp
+from dispatch.screens.job_detail import JobDetailScreen
 from dispatch.screens.new_job import NewJobScreen
 from dispatch.version import __version__
 
@@ -62,8 +64,9 @@ def _seed_job(
 
 
 def test_cockpit_merges_running_and_recent_with_running_first(
-    mock_env_with_config,
+    mock_env_with_config, monkeypatch
 ) -> None:
+    monkeypatch.setattr(jobs, "pid_is_alive", lambda pid: True)
     data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
     jobs_dir = data_root / ".dispatch" / "jobs"
     # Seed so a finished job sorts *before* the running one by id; the cockpit
@@ -178,6 +181,97 @@ def test_cockpit_detail_pane_tails_selected_job_log(mock_env_with_config) -> Non
     asyncio.run(run())
 
 
+def test_dashboard_refresh_in_flight_skips_overlapping_tick(
+    mock_env_with_config, monkeypatch
+) -> None:
+    calls = 0
+
+    def slow_active_jobs() -> list[dict]:
+        nonlocal calls
+        calls += 1
+        time.sleep(0.05)
+        return []
+
+    monkeypatch.setattr(jobs, "active_jobs", slow_active_jobs)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            await pilot.pause(0.2)
+            calls_at_mount = calls
+            first = asyncio.create_task(app.screen._refresh_jobs_async())  # type: ignore[attr-defined]
+            await pilot.pause(0.01)
+            second = asyncio.create_task(app.screen._refresh_jobs_async())  # type: ignore[attr-defined]
+            await asyncio.gather(first, second)
+
+            assert calls - calls_at_mount == 1
+
+    asyncio.run(run())
+
+
+def test_hidden_dashboard_refresh_returns_without_listing_jobs(
+    mock_env_with_config, monkeypatch, tmp_path: Path
+) -> None:
+    calls = 0
+
+    def counted_active_jobs() -> list[dict]:
+        nonlocal calls
+        calls += 1
+        return []
+
+    monkeypatch.setattr(jobs, "active_jobs", counted_active_jobs)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            dashboard = app.screen
+            await pilot.pause(0.2)
+            app.push_screen(NewJobScreen(tmp_path))
+            await pilot.pause(0.2)
+            calls_before = calls
+            await dashboard._refresh_jobs_async()  # type: ignore[attr-defined]
+
+            assert calls == calls_before
+
+    asyncio.run(run())
+
+
+def test_job_detail_refresh_in_flight_skips_overlapping_tick(
+    mock_env_with_config, monkeypatch
+) -> None:
+    data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
+    jobs_dir = data_root / ".dispatch" / "jobs"
+    job_id = _seed_job(jobs_dir, "20260520T120000Z_detail", "Running", pid=4242)
+    calls = 0
+    original_load = manifest.load
+
+    def slow_load(path: Path) -> manifest.JobManifest:
+        nonlocal calls
+        calls += 1
+        time.sleep(0.05)
+        return original_load(path)
+
+    monkeypatch.setattr(manifest, "load", slow_load)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = JobDetailScreen(job_id)
+            app.push_screen(screen)
+            await pilot.pause(0.2)
+            calls_at_mount = calls
+            screen._manifest_item = None
+            screen._manifest_mtime = None
+            first = asyncio.create_task(screen._refresh_detail_async())
+            await pilot.pause(0.01)
+            second = asyncio.create_task(screen._refresh_detail_async())
+            await asyncio.gather(first, second)
+
+            assert calls - calls_at_mount == 1
+
+    asyncio.run(run())
+
+
 def test_cockpit_slash_filter_narrows_jobs(mock_env_with_config) -> None:
     data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
     jobs_dir = data_root / ".dispatch" / "jobs"
@@ -212,9 +306,7 @@ def test_cockpit_slash_filter_narrows_jobs(mock_env_with_config) -> None:
     asyncio.run(run())
 
 
-def test_new_job_picker_lists_cwd_files_and_fills_form(
-    mock_env_with_config, tmp_path
-) -> None:
+def test_new_job_picker_lists_cwd_files_and_fills_form(mock_env_with_config, tmp_path) -> None:
     (tmp_path / "alpha.sql").write_text("select 1\n", encoding="utf-8")
     (tmp_path / "beta_template.sql").write_text(
         "select * from t where d between '{date_inicio}' and '{date_fim}'\n",
@@ -236,9 +328,7 @@ def test_new_job_picker_lists_cwd_files_and_fills_form(
             await pilot.press("down")
             await pilot.pause(0.5)
 
-            assert screen.query_one("#sql-file", Input).value == str(
-                tmp_path / "beta_template.sql"
-            )
+            assert screen.query_one("#sql-file", Input).value == str(tmp_path / "beta_template.sql")
             # Picking the template flips source detection to SqlTemplate.
             assert screen._selected_source() == "SqlTemplate"
 
@@ -257,9 +347,24 @@ def test_new_job_matrix_shows_legal_cells_and_toggles(mock_env_with_config, tmp_
 
             matrix = screen.query_one("#matrix-table", DataTable)
             assert matrix.row_count == 3
-            assert matrix.get_row_at(0) == ["SqlFile", "[green]\u2713[/]", "[green]\u2713[/]", "[green]\u2713[/]"]
-            assert matrix.get_row_at(1) == ["SqlTemplate", "[green]\u2713[/]", "[dim]\u2014[/]", "[dim]\u2014[/]"]
-            assert matrix.get_row_at(2) == ["ExistingTable", "[dim]\u2014[/]", "[green]\u2713[/]", "[dim]\u2014[/]"]
+            assert matrix.get_row_at(0) == [
+                "SqlFile",
+                "[green]\u2713[/]",
+                "[green]\u2713[/]",
+                "[green]\u2713[/]",
+            ]
+            assert matrix.get_row_at(1) == [
+                "SqlTemplate",
+                "[green]\u2713[/]",
+                "[dim]\u2014[/]",
+                "[dim]\u2014[/]",
+            ]
+            assert matrix.get_row_at(2) == [
+                "ExistingTable",
+                "[dim]\u2014[/]",
+                "[green]\u2713[/]",
+                "[dim]\u2014[/]",
+            ]
 
             collapsible = screen.query_one("#matrix-collapsible", Collapsible)
             assert collapsible.collapsed is False

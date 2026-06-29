@@ -15,14 +15,14 @@ from pathlib import Path
 import pytest
 from textual.widgets import DataTable, RichLog, Static
 
-from dispatch import impala, manifest, process, sql
+from dispatch import impala, jobs, manifest, process, sql
 from dispatch.app import DispatchApp
-from dispatch.screens.browser import BrowserScreen, NO_TABLES_PLACEHOLDER
-from dispatch.screens.job_detail import JobDetailScreen, LOG_VIEW_LINES
+from dispatch.screens.browser import NO_TABLES_PLACEHOLDER, BrowserScreen
+from dispatch.screens.job_detail import LOG_VIEW_LINES, JobDetailScreen
 from dispatch.screens.new_job import NewJobScreen
 
-
 # ── sql.py date helpers (F2 / NJ-15) ─────────────────────────────────────
+
 
 def test_validate_date_range_accepts_valid() -> None:
     assert sql.validate_date_range("2026-01-01", "2026-03-31") is None
@@ -48,6 +48,7 @@ def test_orchestrator_date_roundtrip() -> None:
 
 # ── Clone prefill mapping (F6 / JD-45) ───────────────────────────────────
 
+
 def test_clone_prefill_reads_params_email_subject_and_dates() -> None:
     item = {
         "source": {"type": "SqlTemplate", "sql_path_at_launch": "/tmp/q.sql"},
@@ -68,6 +69,7 @@ def test_clone_prefill_reads_params_email_subject_and_dates() -> None:
 
 
 # ── Impala timeout message (F10 / IMP-06) ────────────────────────────────
+
 
 def test_impala_query_timeout_has_message(monkeypatch) -> None:
     async def fake_run_exec(*argv, timeout=None):
@@ -91,6 +93,7 @@ def test_show_tables_strips_impala_shell_name_header(monkeypatch) -> None:
     inflated the count and made the auto-describe of row 0 fail with
     "Could not resolve path: 'schema.name'").
     """
+
     async def fake_query(sql: str) -> str:
         return "name\ndispatch_smoke_a\ndispatch_smoke_b\n"
 
@@ -105,6 +108,7 @@ def test_show_tables_strips_impala_shell_name_header(monkeypatch) -> None:
 
 
 # ── New Job validation (F1-F5) ───────────────────────────────────────────
+
 
 def _new_job_screen(app: DispatchApp, cwd: Path) -> NewJobScreen:
     screen = NewJobScreen(cwd)
@@ -191,9 +195,7 @@ def test_launch_blocks_bad_template_dates(mock_env_with_config, tmp_path) -> Non
 
 
 def test_preview_bad_template_dates_does_not_crash(mock_env_with_config, tmp_path) -> None:
-    (tmp_path / "t.sql").write_text(
-        "select '{date_inicio}' , '{date_fim}'\n", encoding="utf-8"
-    )
+    (tmp_path / "t.sql").write_text("select '{date_inicio}' , '{date_fim}'\n", encoding="utf-8")
 
     async def run() -> None:
         app = DispatchApp()
@@ -215,7 +217,10 @@ def test_preview_bad_template_dates_does_not_crash(mock_env_with_config, tmp_pat
     asyncio.run(run())
 
 
-def test_validation_summary_reflects_running_cap(mock_env_with_config, tmp_path) -> None:
+def test_validation_summary_reflects_running_cap(
+    mock_env_with_config, monkeypatch, tmp_path
+) -> None:
+    monkeypatch.setattr(jobs, "pid_is_alive", lambda pid: True)
     # Seed two Running jobs so the concurrency cap is hit.
     data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
     jobs_dir = data_root / ".dispatch" / "jobs"
@@ -235,6 +240,7 @@ def test_validation_summary_reflects_running_cap(mock_env_with_config, tmp_path)
 
 
 # ── Job Detail log view (F7 / F8 / F9) ───────────────────────────────────
+
 
 def _seed_job(
     jobs_dir: Path,
@@ -281,6 +287,19 @@ def _seed_job(
     return job_id
 
 
+def _suppress_job_detail_refresh_timer(monkeypatch) -> None:
+    original_set_interval = JobDetailScreen.set_interval
+
+    def set_interval_without_log_refresh(screen, interval, callback, *args, **kwargs):
+        if getattr(callback, "__name__", "") == "_refresh_detail_async":
+            return None
+        return original_set_interval(screen, interval, callback, *args, **kwargs)
+
+    # Keep Textual's internal screen timers, but suppress this screen's
+    # recurring log refresh so explicit test ticks are deterministic.
+    monkeypatch.setattr(JobDetailScreen, "set_interval", set_interval_without_log_refresh)
+
+
 def test_log_view_bounded_and_truncation_hint_truthful(mock_env_with_config) -> None:
     data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
     jobs_dir = data_root / ".dispatch" / "jobs"
@@ -300,6 +319,124 @@ def test_log_view_bounded_and_truncation_hint_truthful(mock_env_with_config) -> 
             # The hint claims hidden lines only because they really are hidden.
             hint = screen.query_one("#truncation-hint", Static)
             assert hint.display is True
+
+    asyncio.run(run())
+
+
+def test_log_tail_read_is_capped_per_tick(mock_env_with_config, monkeypatch) -> None:
+    data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
+    jobs_dir = data_root / ".dispatch" / "jobs"
+    chunk_bytes = 65536
+    remainder = ["remainder one", "remainder two"]
+    one_kib_line = "x" * 1023
+    log_lines = [one_kib_line] * (chunk_bytes // 1024) + remainder
+    job_id = _seed_job(
+        jobs_dir,
+        "20260520T120000Z_chunked",
+        "Succeeded",
+        log_lines=log_lines,
+    )
+    log_path = jobs_dir / job_id / "run.log"
+    log_path.write_bytes(("\n".join(log_lines) + "\n").encode("utf-8"))
+    log_size = log_path.stat().st_size
+    assert log_size > chunk_bytes
+
+    _suppress_job_detail_refresh_timer(monkeypatch)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = JobDetailScreen(job_id)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            assert screen._tail_offset == chunk_bytes
+            assert screen._tail_offset < log_size
+            assert not any(line in screen._tail_lines for line in remainder)
+
+            await screen._refresh_detail_async()
+
+            assert screen._tail_offset == log_size
+            assert list(screen._tail_lines)[-2:] == remainder
+            assert list(screen._tail_lines).count(remainder[0]) == 1
+            assert list(screen._tail_lines).count(remainder[1]) == 1
+
+    asyncio.run(run())
+
+
+def test_log_tail_byte_cap_preserves_multibyte_line_across_ticks(
+    mock_env_with_config, monkeypatch
+) -> None:
+    data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
+    jobs_dir = data_root / ".dispatch" / "jobs"
+    chunk_bytes = 4
+    logical_line = "\u20ac\u20acx"
+    payload = f"{logical_line}\n".encode()
+    job_id = _seed_job(
+        jobs_dir,
+        "20260520T120000Z_utf8chunk",
+        "Succeeded",
+    )
+    log_path = jobs_dir / job_id / "run.log"
+    log_path.write_bytes(payload)
+    assert len(payload) > chunk_bytes
+
+    monkeypatch.setattr("dispatch.screens.job_detail.LOG_READ_CHUNK_BYTES", chunk_bytes)
+    _suppress_job_detail_refresh_timer(monkeypatch)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = JobDetailScreen(job_id)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            assert screen._tail_offset == chunk_bytes
+            assert list(screen._tail_lines) == []
+
+            await screen._refresh_detail_async()
+
+            assert screen._tail_offset == len(payload)
+            assert list(screen._tail_lines) == [logical_line]
+
+    asyncio.run(run())
+
+
+def test_log_tail_flushes_final_unterminated_line_once(mock_env_with_config, monkeypatch) -> None:
+    data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
+    jobs_dir = data_root / ".dispatch" / "jobs"
+    chunk_bytes = 8
+    logical_line = "final-line"
+    payload = logical_line.encode("utf-8")
+    job_id = _seed_job(
+        jobs_dir,
+        "20260520T120000Z_unterminated",
+        "Succeeded",
+    )
+    log_path = jobs_dir / job_id / "run.log"
+    log_path.write_bytes(payload)
+
+    monkeypatch.setattr("dispatch.screens.job_detail.LOG_READ_CHUNK_BYTES", chunk_bytes)
+    _suppress_job_detail_refresh_timer(monkeypatch)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = JobDetailScreen(job_id)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            assert screen._tail_offset == chunk_bytes
+            assert list(screen._tail_lines) == []
+
+            await screen._refresh_detail_async()
+
+            assert screen._tail_offset == len(payload)
+            assert list(screen._tail_lines) == [logical_line]
+
+            await screen._refresh_detail_async()
+
+            assert list(screen._tail_lines) == [logical_line]
 
     asyncio.run(run())
 
@@ -349,6 +486,7 @@ def test_log_rotation_resets_without_duplicates(mock_env_with_config) -> None:
 
 # ── Browser empty-placeholder gating (F9 / BRW-05) ───────────────────────
 
+
 def test_browser_placeholder_not_actionable(mock_env_with_config) -> None:
     async def run() -> None:
         app = DispatchApp()
@@ -369,6 +507,7 @@ def test_browser_placeholder_not_actionable(mock_env_with_config) -> None:
 
 
 # ── Dashboard selection/cancel feedback (F11 / F12 / F13) ────────────────
+
 
 def test_dashboard_cancel_no_selection_notifies(mock_env_with_config) -> None:
     notes: list[str] = []
@@ -433,6 +572,7 @@ def test_dashboard_filter_zero_match_clears_selection(mock_env_with_config) -> N
 
 # ── Status strip ordering (F15 / OVW-02) ─────────────────────────────────
 
+
 def test_status_strip_kerberos_first(mock_env_with_config) -> None:
     async def run() -> None:
         app = DispatchApp()
@@ -445,6 +585,7 @@ def test_status_strip_kerberos_first(mock_env_with_config) -> None:
 
 
 # ── Sidebar manual collapse persistence (F16 / SIDE-08) ──────────────────
+
 
 def test_sidebar_manual_collapse_survives_resize(mock_env_with_config) -> None:
     from dispatch.screens.sidebar import Sidebar
@@ -464,6 +605,7 @@ def test_sidebar_manual_collapse_survives_resize(mock_env_with_config) -> None:
 
 
 # ── Help accuracy (F17 / HELP-02) ────────────────────────────────────────
+
 
 def test_help_quick_reference_lists_cancel_and_filter() -> None:
     from dispatch.screens.help import QUICK_HELP

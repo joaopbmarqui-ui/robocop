@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import asyncio
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 from textual.widgets import DataTable, Input, RadioButton, RadioSet
 
-from dispatch import manifest
+from dispatch import jobs, manifest
 from dispatch.app import DispatchApp
 from dispatch.formatting import format_kerberos_ttl, format_state, format_timestamp
 from dispatch.screens.job_detail import JobDetailScreen
@@ -90,9 +90,7 @@ def test_template_source_auto_corrects_illegal_destination(mock_env_with_config)
             dest = screen.query_one("#destination", RadioSet)
             assert dest.pressed_button is not None
             assert dest.pressed_button.id == "dst-table"
-            assert screen._validate() != (
-                "Illegal Source/Destination cell: SqlTemplate/Csv"
-            )
+            assert screen._validate() != ("Illegal Source/Destination cell: SqlTemplate/Csv")
 
     asyncio.run(run())
 
@@ -118,7 +116,8 @@ def test_job_detail_hides_cancel_for_finished_jobs(mock_env_with_config) -> None
     asyncio.run(run())
 
 
-def test_job_detail_offers_cancel_for_running_jobs(mock_env_with_config) -> None:
+def test_job_detail_offers_cancel_for_running_jobs(mock_env_with_config, monkeypatch) -> None:
+    monkeypatch.setattr(jobs, "pid_is_alive", lambda pid: True)
     data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
     jobs_dir = data_root / ".dispatch" / "jobs"
     job_id = _seed_job(jobs_dir, "20260520T120000Z_run001", "Running", pid=99999)
@@ -230,9 +229,7 @@ def test_dashboard_preserves_cursor_across_refresh(mock_env_with_config) -> None
 
             await pilot.press("down")
             await pilot.pause()
-            selected_before = table.coordinate_to_cell_key(
-                table.cursor_coordinate
-            ).row_key.value
+            selected_before = table.coordinate_to_cell_key(table.cursor_coordinate).row_key.value
 
             # Force a content change so the rebuild path runs, then refresh.
             _seed_job(jobs_dir, "20260520T120009Z_jobnew", "Succeeded")
@@ -240,9 +237,7 @@ def test_dashboard_preserves_cursor_across_refresh(mock_env_with_config) -> None
             await pilot.pause()
 
             assert table.row_count == 4
-            selected_after = table.coordinate_to_cell_key(
-                table.cursor_coordinate
-            ).row_key.value
+            selected_after = table.coordinate_to_cell_key(table.cursor_coordinate).row_key.value
             assert selected_after == selected_before
 
     asyncio.run(run())

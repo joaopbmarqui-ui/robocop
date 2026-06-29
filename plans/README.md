@@ -1,97 +1,102 @@
 # Dispatch Improvement Plans
 
-This is the consolidated implementation backlog from PRs #23 and #24, vetted
-against local `main` at commit `8b4241e`. PR #23 provides the five core plans.
-Unique findings from PR #24 were either added as Plans 006-012, folded into an
-existing core plan, or explicitly rejected/deferred below.
+Plans **001–013** were implemented on branch `codex/implement-plans` (HEAD
+`b33c803` at audit time). Plans **014–020** are follow-up work from the
+`codex/implement-plans` vs `main` branch audit (2026-06-29).
 
-Execute plans in dependency order. Each executor must read its assigned plan
-fully, honor its STOP conditions, run every verification command, and update
-the status row when done.
+Execute in dependency order. Each executor must read its assigned plan fully,
+honor STOP conditions, run every verification command, and update the status row
+when done.
 
 ## Execution order and status
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |---|---|---|---|---|---|
-| 001 | Harden launch identifiers and CSV output paths | P1 | M | - | TODO |
-| 002 | Make launch preflight live and enforce the Job cap at creation | P1 | M | 001 | TODO |
-| 003 | Reconcile stale Running and orphan Pending Jobs | P1 | M | 002 | TODO |
-| 004 | Bound manifest refresh work for SSH-scale supervision | P2 | M | 002, 003 | TODO |
-| 005 | Expand runner and `scr/` contract coverage before deeper orchestrator work | P2 | M | - | TODO |
-| 006 | Guard offline installation when `vendor/` is empty | P2 | M | - | TODO |
-| 007 | Add conservative lint and typecheck gates | P2 | M | - | TODO |
-| 008 | Add GitHub Actions CI | P2 | M | 007 | TODO |
-| 009 | Cap Job Detail log-tail reads per refresh tick | P2 | S | - | TODO |
-| 010 | Align the `config.json` email schema | P2 | M | - | TODO |
-| 011 | Unify the product version source | P3 | S | - | TODO |
-| 012 | Apply restrictive permissions to per-user Job data | P3 | S | 003 | TODO |
+| 001 | Harden launch identifiers and CSV output paths | P1 | M | - | DONE on `codex/implement-plans` |
+| 002 | Make launch preflight live and enforce the Job cap at creation | P1 | M | 001 | DONE on `codex/implement-plans` |
+| 003 | Reconcile stale Running and orphan Pending Jobs | P1 | M | 002 | DONE on `codex/implement-plans` |
+| 004 | Bound manifest refresh work for SSH-scale supervision | P2 | M | 002, 003 | DONE on `codex/implement-plans` |
+| 005 | Expand runner and `scr/` contract coverage | P2 | M | - | DONE on `codex/implement-plans` |
+| 006 | Guard offline installation when `vendor/` is empty | P2 | M | - | DONE on `codex/implement-plans` |
+| 007 | Add conservative lint and typecheck gates | P2 | M | - | DONE on `codex/implement-plans` |
+| 008 | Add GitHub Actions CI | P2 | M | 007 | DONE on `codex/implement-plans` |
+| 009 | Cap Job Detail log-tail reads per refresh tick | P2 | S | - | DONE on `codex/implement-plans` |
+| 010 | Align the `config.json` email schema | P2 | M | - | DONE on `codex/implement-plans` |
+| 011 | Unify the product version source | P3 | S | - | DONE on `codex/implement-plans` |
+| 012 | Apply restrictive permissions to per-user Job data | P3 | S | 003 | DONE on `codex/implement-plans` |
+| 013 | Harden production `scr/` orchestrators | P1 | M | 005, 007 | DONE on `codex/implement-plans` |
+| 014 | Bound History manifest refresh work | P2 | M | 004 | DONE |
+| 015 | Refresh user-story tracker evidence | P2 | S | - | DONE |
+| 016 | Harden explicit CSV paths in manifests | P2 | S | 001 | DONE |
+| 017 | Add CI coverage for offline install guard | P2 | S | 006, 008 | DONE (already covered; docs synced) |
+| 018 | Make the launch-slot cap strict under corruption | P2 | S | 002, 003 | DONE |
+| 019 | Reconcile orphan Pending jobs after runner startup failure | P2 | M | 003 | DONE (mtime grace policy) |
+| 020 | Tighten the mypy gate incrementally | P3 | M | 007, 008 | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
 REJECTED (with one-line rationale).
 
 ## Recommended execution waves
 
-1. **Launch correctness and security:** 001, 002, 003.
-2. **Supervision performance and coverage:** 004, 005, 009.
-3. **Installation and developer gates:** 006, 007, then 008.
-4. **Configuration and low-risk hygiene:** 010, 011, 012.
+### Wave A — merge `codex/implement-plans`
 
-Plans without dependencies may run independently, but changes to the same file
-must still be serialized. In particular:
+Land Plans 001–013 via merge/rebase of `codex/implement-plans` onto `main`.
+Run full `pytest` and edge harness smoke before deploy.
 
-- 001 and 002 both edit `dispatch/screens/new_job.py`; run 001 first.
-- 003 follows 002 because launch-slot semantics define which manifests consume
-  capacity.
-- 004 follows 002 and 003 so refresh optimization preserves launch-cap and
-  stale-Job reconciliation behavior.
-- 008 follows 007 because CI invokes the lint and typecheck gates.
-- 012 follows 003 because both plans touch Job-directory lifecycle behavior.
-- 005 may run independently, but coordinate its `tests/test_pure_logic.py`
-  changes with Plan 001.
+### Wave B — docs and quick hardening (post-merge)
 
-## Consolidation decisions
+1. **015** — tracker evidence (docs only; no code conflict).
+2. **016** — explicit CSV path validation (`dispatch/sql.py`, `dispatch/manifest.py`).
+3. **017** — CI install-guard step (`.github/workflows/ci.yml`).
 
-### Folded into core plans
+### Wave C — supervision correctness
 
-- PR #24 stale-Running reconciliation and Pending cancellation are covered by
-  Plan 003.
-- PR #24 synchronous New Job scans, manifest-cache concurrency, bounded
-  dashboard scans, and hidden-screen refresh work belong in Plan 004. Executors
-  must choose one coherent refresh design rather than landing four interacting
-  micro-fixes independently.
-- PR #24 identifier validation is covered more completely by Plan 001, including
-  CSV path containment and production-orchestrator entry validation.
-- PR #24 validation deduplication and runner/classifier tests are covered by
-  Plans 002 and 005.
+4. **018** — strict launch-slot counting (`dispatch/jobs.py`).
+5. **019** — orphan Pending reconciliation (`dispatch/jobs.py`; coordinate with 018).
+6. **014** — History refresh bounds (`dispatch/jobs.py`; builds on 004 cache helpers).
 
-### Rejected
+### Wave D — typing hygiene
 
-- **Change Impala `SHOW TABLES LIKE` from `*` to `%`:** incorrect. Impala uses
-  Unix-style `*` wildcards for SHOW patterns; `%` is not the equivalent here.
-- **Change production-harness SSH from `StrictHostKeyChecking=no` to
-  `accept-new`:** the current choice is documented in the Edge operating model.
-  Changing operator SSH policy is not a source-only cleanup.
-- **Immediately consolidate `scr/` retry loops:** production-sensitive and lower
-  confidence. Land Plan 005 characterization coverage before proposing this
-  behavior-preserving refactor.
-- **Treat UPDATE/DELETE/REPLACE/CALL as self-contained DDL:** the current helper
-  is deliberately scoped to DDL leaders. Expanding statement classes requires a
-  product requirement and safety review, not an opportunistic fix.
+7. **020** — incremental mypy tightening (`pyproject.toml`, core `dispatch/` modules).
 
-### Deferred or tracked as direction
+## Dependency graph (014–020)
 
-- Resume partial `Table+Csv` Jobs and add per-step manifest progress after the
-  launch/reconciliation plans establish the state contract.
-- Add one-keystroke rerun and Browser-to-CSV shortcuts as post-v1 product work.
-- Investigate the SqlTemplate `_fulljoin` naming contract only if users report
-  ambiguity or downstream integration failures.
-- Revisit monthly-query architecture only with production evidence. Commit
-  `8b4241e` already pins dependent monthly statements to one Impala session.
+```text
+004 ──► 014
+001 ──► 016
+006 ──► 017 ◄── 008
+002 ──► 018 ◄── 003
+003 ──► 019 (run after 018 if both touch jobs.py)
+007 ──► 020 ◄── 008
+015 (independent)
+```
 
-## Source PR disposition
+Serialize edits to `dispatch/jobs.py`: **018 → 019 → 014**.
 
-- PR #23 is fully represented by Plans 001-005.
-- PR #24 contributes Plans 006-012 and the decisions above; its duplicate,
-  invalid, unrelated, and policy-sensitive recommendations are intentionally
-  not copied as standalone plans.
-- Neither PR should be merged after this consolidation commit lands on `main`.
+## Branch audit source (2026-06-29)
+
+| Plan | Audit finding |
+|---|---|
+| 014 | History uses full `reconciled_list_manifests()` scan (introduced) |
+| 015 | User-story tracker stale vs Pending+Running cap (introduced) |
+| 016 | Explicit manifest `csv_path` containment-only (introduced) |
+| 017 | CI skips offline `install.sh` guard tests (introduced) |
+| 018 | `can_launch()` undercounts when >2 slot jobs exist (introduced) |
+| 019 | Stuck Pending without pid after runner crash (pre-existing) |
+| 020 | Permissive mypy baseline (pre-existing config) |
+
+## Consolidation decisions (001–013)
+
+Unchanged from the original consolidation — see plan files 001–012 and
+`plans/013-scr-hardening-design.md`. Rejected items (Impala `%` wildcard, SSH
+`StrictHostKeyChecking` policy change, opportunistic `scr/` retry consolidation)
+remain rejected.
+
+## Findings considered and rejected
+
+- **Monthly coordinator pin regression** — intentional fix on `main` (`59b1b02`);
+  branch adds tests and `render_monthly_sql()`, not a defect.
+- **`cycle_through_pools` retry-count semantics** — intentional Plan 013 behavior;
+  covered by `tests/test_scr_common.py`.
+- **Merge without edge harness** — not a code plan; operators must still run
+  `tools/prod_tui` smoke before production deploy.

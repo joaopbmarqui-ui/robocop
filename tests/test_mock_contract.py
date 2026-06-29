@@ -18,22 +18,22 @@ from pathlib import Path
 
 import pytest
 
-
 MOCKS_BIN = Path(__file__).resolve().parents[1] / "mocks" / "bin"
 IMPALA_SHELL = MOCKS_BIN / "impala-shell"
-IMPALA_SHELL_CMD = (
-    [sys.executable, str(IMPALA_SHELL)]
-    if os.name == "nt"
-    else [str(IMPALA_SHELL)]
-)
+IMPALA_SHELL_CMD = [sys.executable, str(IMPALA_SHELL)] if os.name == "nt" else [str(IMPALA_SHELL)]
+SCR_DIR = Path(__file__).resolve().parents[1] / "scr"
+if str(SCR_DIR) not in sys.path:
+    sys.path.insert(0, str(SCR_DIR))
 
+import _common  # noqa: E402
 
 # Base flags as used by Query_Impala_Parametrized.run_on_impala and
 # download_to_csv.run_export_on_impala (docs/archive/legacy-plans/plan.md §13.1)
 BASE_ARGV = [
     *IMPALA_SHELL_CMD,
     "-k",
-    "-i", "dw.prod.impala.mastercard.int:21000",
+    "-i",
+    "dw.prod.impala.mastercard.int:21000",
     "--ssl",
     "--delimited",
     "--print_header",
@@ -63,6 +63,7 @@ def _run(
 # ---------------------------------------------------------------------------
 # §13.1 Query_Impala_Parametrized argv shape
 # ---------------------------------------------------------------------------
+
 
 class TestQueryImpalaParametrizedArgv:
     """Exact argv from Query_Impala_Parametrized.run_on_impala."""
@@ -126,6 +127,38 @@ class TestQueryImpalaParametrizedArgv:
         assert result.returncode != 0
         assert "could not resolve" in result.stderr
 
+    @pytest.mark.parametrize(
+        ("scenario", "expected_category"),
+        [
+            ("syntax_error", "SYNTAX_ERROR"),
+            ("auth_error", "AUTH_ERROR"),
+            ("table_not_found", "TABLE_NOT_FOUND"),
+            ("memory_exceeded", "MEMORY_EXCEEDED"),
+            ("all_queues_full", "QUEUE_FULL"),
+            ("timeout", "TIMEOUT"),
+            ("connection_error", "CONNECTION_ERROR"),
+            ("backpressure", "BACKPRESSURE"),
+            ("host_resolution_error", "HOST_RESOLUTION_ERROR"),
+            ("host_unreachable", "HOST_UNREACHABLE"),
+            ("disk_full", "DISK_FULL"),
+            ("space_limit", "SPACE_LIMIT"),
+            ("duplicate_column", "DUPLICATE_COLUMN"),
+            ("generic_error", "GENERIC_ERROR"),
+        ],
+    )
+    def test_classifier_scenarios_load_and_classify(
+        self, scenario: str, expected_category: str, tmp_path: Path
+    ) -> None:
+        state_dir = str(tmp_path / "state")
+        result = _run(
+            self._argv_for("set request_pool=adhoc_fast; SELECT 1;"),
+            scenario=scenario,
+            env_overrides={"DISPATCH_MOCK_STATE_DIR": state_dir},
+        )
+
+        assert result.returncode != 0
+        assert _common.classificar_erro_impala(result.stderr)["categoria"] == expected_category
+
     def test_pool_extracted_from_set_request_pool_prefix(self, tmp_path: Path) -> None:
         """The pool name extracted by POOL_RE appears in the success output."""
         state_dir = str(tmp_path / "state")
@@ -141,11 +174,17 @@ class TestQueryImpalaParametrizedArgv:
         """The orchestrators may add flags in future; the mock must not reject them."""
         state_dir = str(tmp_path / "state")
         result = subprocess.run(
-            IMPALA_SHELL_CMD + [
-                "-k", "--ssl", "--delimited", "--print_header",
+            IMPALA_SHELL_CMD
+            + [
+                "-k",
+                "--ssl",
+                "--delimited",
+                "--print_header",
                 "--output_delimiter=|",
-                "--future-unknown-flag", "somevalue",
-                "-q", "set request_pool=adhoc; SELECT 1;",
+                "--future-unknown-flag",
+                "somevalue",
+                "-q",
+                "set request_pool=adhoc; SELECT 1;",
             ],
             capture_output=True,
             text=True,
@@ -163,6 +202,7 @@ class TestQueryImpalaParametrizedArgv:
 # §13.1 download_to_csv argv shape (uses --output_delimiter=, and -o)
 # ---------------------------------------------------------------------------
 
+
 class TestDownloadToCsvArgv:
     """Exact argv from download_to_csv.run_export_on_impala."""
 
@@ -172,8 +212,10 @@ class TestDownloadToCsvArgv:
         result = _run(
             [
                 "--output_delimiter=,",
-                "-q", "set request_pool=adhoc_fast; set mem_limit=1000g; SELECT 1;",
-                "-o", str(out_file),
+                "-q",
+                "set request_pool=adhoc_fast; set mem_limit=1000g; SELECT 1;",
+                "-o",
+                str(out_file),
             ],
             scenario="happy_path",
             env_overrides={"DISPATCH_MOCK_STATE_DIR": state_dir},
@@ -188,7 +230,8 @@ class TestDownloadToCsvArgv:
         result = _run(
             [
                 "--output_delimiter=,",
-                "-q", "set request_pool=adhoc_fast; set mem_limit=1000g; SELECT 1;",
+                "-q",
+                "set request_pool=adhoc_fast; set mem_limit=1000g; SELECT 1;",
             ],
             scenario="happy_path",
             env_overrides={"DISPATCH_MOCK_STATE_DIR": state_dir},
@@ -200,10 +243,13 @@ class TestDownloadToCsvArgv:
 # Metadata query routing (schema queries bypass scenario dispatch)
 # ---------------------------------------------------------------------------
 
+
 class TestMetadataQueryRouting:
     """SHOW TABLES, DESCRIBE, DROP TABLE must succeed regardless of scenario."""
 
-    @pytest.mark.parametrize("scenario", ["happy_path", "syntax_error", "auth_error", "all_queues_full"])
+    @pytest.mark.parametrize(
+        "scenario", ["happy_path", "syntax_error", "auth_error", "all_queues_full"]
+    )
     def test_show_tables_always_succeeds(self, scenario: str, tmp_path: Path) -> None:
         state_dir = str(tmp_path / "state")
         result = _run(
@@ -240,6 +286,7 @@ class TestMetadataQueryRouting:
 # memory_exceeded retry simulation
 # ---------------------------------------------------------------------------
 
+
 class TestMemoryExceededScenario:
     def test_first_two_calls_fail_third_succeeds(self, tmp_path: Path) -> None:
         state_dir = str(tmp_path / "state")
@@ -275,4 +322,6 @@ class TestMemoryExceededScenario:
         # dir_b starts fresh — first call should also fail, not succeed
         env_b = {**os.environ, **mock_defaults, "DISPATCH_MOCK_STATE_DIR": dir_b}
         result_b1 = subprocess.run(argv, capture_output=True, text=True, env=env_b)
-        assert result_b1.returncode != 0, "Fresh state dir should start at count=1, which is a failure"
+        assert result_b1.returncode != 0, (
+            "Fresh state dir should start at count=1, which is a failure"
+        )

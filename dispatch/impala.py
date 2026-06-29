@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 
-from . import process
+from . import process, sql
 
 QUERY_TIMEOUT_SECONDS = 30
 
@@ -28,15 +28,18 @@ async def query(sql: str) -> str:
     except (asyncio.TimeoutError, TimeoutError):
         # str(TimeoutError()) is empty, which would surface as a blank error in
         # the Browser; give the user an actionable message instead.
-        raise RuntimeError(
-            f"impala-shell timed out after {QUERY_TIMEOUT_SECONDS}s"
-        ) from None
+        raise RuntimeError(f"impala-shell timed out after {QUERY_TIMEOUT_SECONDS}s") from None
     if rc != 0:
         raise RuntimeError(stderr or stdout or f"impala-shell exited {rc}")
     return stdout
 
 
 async def show_tables(schema: str, pattern: str = "*") -> list[str]:
+    schema_error = sql.validate_identifier(schema, "Schema")
+    if schema_error:
+        raise ValueError(schema_error)
+    if "'" in pattern:
+        raise ValueError("SHOW TABLES pattern must not contain a single quote")
     output = await query(f"SHOW TABLES IN {schema} LIKE '{pattern}';")
     tables: list[str] = []
     for raw_line in output.splitlines():
@@ -53,9 +56,17 @@ async def show_tables(schema: str, pattern: str = "*") -> list[str]:
     return tables
 
 
+def _require_full_table(full_table: str) -> None:
+    full_table_error = sql.validate_full_table(full_table, "Table")
+    if full_table_error:
+        raise ValueError(full_table_error)
+
+
 async def describe_table(full_table: str) -> str:
+    _require_full_table(full_table)
     return await query(f"DESCRIBE {full_table};")
 
 
 async def drop_table(full_table: str) -> str:
+    _require_full_table(full_table)
     return await query(f"DROP TABLE IF EXISTS {full_table};")

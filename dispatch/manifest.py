@@ -187,8 +187,9 @@ def create_job(
 ) -> tuple[Path, JobManifest]:
     job_user = user or config.current_user()
     job_id = new_job_id()
-    job_dir = config.jobs_dir(job_user) / job_id
-    job_dir.mkdir(parents=True)
+    home_dir = config.ensure_private_dir(config.dispatch_home(job_user))
+    jobs_root = config.ensure_private_dir(home_dir / "jobs")
+    job_dir = config.ensure_private_dir(jobs_root / job_id)
     (job_dir / "job.sql").write_text(
         _effective_job_sql(source, destination, sql_text, job_user), encoding="utf-8"
     )
@@ -200,7 +201,9 @@ def create_job(
         "source": source,
         "destination": destination,
         "params": params,
-        "orchestrator_calls": build_orchestrator_calls(job_dir, source, destination, params, launch_cwd, job_user),
+        "orchestrator_calls": build_orchestrator_calls(
+            job_dir, source, destination, params, launch_cwd, job_user
+        ),
         "state": "Pending",
         "pid": None,
         "started_at": None,
@@ -245,6 +248,20 @@ def script_argv(script: str) -> list[str]:
     return [python, str(script_path)]
 
 
+def _csv_path_for_destination(destination: Destination, launch_cwd: Path, table: str) -> str:
+    """Return a CSV path confined to ``launch_cwd``.
+
+    Normal TUI launches provide a validated absolute path, but hand-edited
+    manifests can carry an explicit ``destination["csv_path"]``. Re-check it
+    here before building ``--output-file`` so detached exports cannot write
+    outside the launch-time working directory.
+    """
+    explicit_csv_path = destination.get("csv_path")
+    if not explicit_csv_path:
+        return str(sql.safe_csv_path(launch_cwd, table or "dispatch_export"))
+    return str(sql.resolve_csv_output_path(launch_cwd, explicit_csv_path))
+
+
 def build_orchestrator_calls(
     job_dir: Path,
     source: Source,
@@ -261,7 +278,21 @@ def build_orchestrator_calls(
     schema = destination.get("schema", "")
     table = destination.get("table_name", "")
     full_table = f"{schema}.{table}" if schema and "." not in table else table
-    csv_path = destination.get("csv_path") or str(launch_cwd / f"{table or 'dispatch_export'}.csv")
+    if destination_type in {"Table", "Table+Csv"}:
+        for value, label in ((schema, "Schema"), (table, "Table name")):
+            identifier_error = sql.validate_identifier(value, label)
+            if identifier_error:
+                raise ValueError(identifier_error)
+        full_table_error = sql.validate_full_table(full_table, "Destination table")
+        if full_table_error:
+            raise ValueError(full_table_error)
+    if source_type == "ExistingTable":
+        full_table = source.get("table_name") or full_table
+        full_table_error = sql.validate_full_table(full_table, "Existing table")
+        if full_table_error:
+            raise ValueError(full_table_error)
+        schema, table = full_table.split(".", 1)
+    csv_path = _csv_path_for_destination(destination, launch_cwd, table)
     email = str(params.get("to_email", ""))
     subject = str(params.get("subject", "Dispatch Job"))
     calls: list[OrchestratorCall] = []

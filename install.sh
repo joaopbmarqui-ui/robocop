@@ -22,6 +22,7 @@ if [ ! -d "$DATA_ROOT" ] || [ ! -w "$DATA_ROOT" ]; then
 fi
 
 mkdir -p "$DISPATCH_HOME/jobs"
+chmod 700 "$DISPATCH_HOME" "$DISPATCH_HOME/jobs"
 
 LOCK_FILE="$DISPATCH_HOME/install.lock"
 # exec 9>"$LOCK_FILE"
@@ -39,9 +40,16 @@ command -v impala-shell >/dev/null 2>&1 || { echo "impala-shell not found on PAT
 "$PYTHON_BIN" -m venv "$DISPATCH_HOME/venv"
 if [ -n "$(find "$ROOT_DIR/vendor" -maxdepth 1 -name '*.whl' -print -quit 2>/dev/null)" ]; then
   "$DISPATCH_HOME/venv/bin/pip" install --no-index --find-links="$ROOT_DIR/vendor" -r "$ROOT_DIR/requirements.txt"
-else
+elif [ "${DISPATCH_ALLOW_ONLINE_PIP:-0}" = "1" ]; then
+  echo "WARNING: vendor/ has no wheels; falling back to PyPI (DISPATCH_ALLOW_ONLINE_PIP=1)." >&2
   "$DISPATCH_HOME/venv/bin/pip" install --index-url "${DISPATCH_PIP_INDEX_URL:-https://pypi.org/simple}" \
     -r "$ROOT_DIR/requirements.txt"
+else
+  echo "vendor/ has no wheels and DISPATCH_ALLOW_ONLINE_PIP is not set." >&2
+  echo "Rebuild the wheelhouse for Linux before installing on an edge node:" >&2
+  echo "  pip download -r requirements.txt -d vendor --platform manylinux2014_x86_64 --python-version 3.10 --abi cp310 --only-binary=:all:" >&2
+  echo "Or set DISPATCH_ALLOW_ONLINE_PIP=1 for a dev-only install with PyPI access." >&2
+  exit 1
 fi
 # "$DISPATCH_HOME/venv/bin/pip" install --no-deps -e "$ROOT_DIR"
 
@@ -73,7 +81,20 @@ if [ ! -f "$CONFIG" ]; then
     printf "Email: "
     read -r EMAIL
   fi
-  printf '{\n  "email": "%s"\n}\n' "$EMAIL" >"$CONFIG"
+  CONFIG_TMP="$CONFIG.tmp.$$"
+  trap 'rm -f "$CONFIG_TMP"' 0
+  trap 'exit 1' 1 2 15
+  "$PYTHON_BIN" - "$CONFIG_TMP" "$EMAIL" <<'PY'
+import json
+import sys
+
+config_path, email = sys.argv[1:]
+with open(config_path, "w", encoding="utf-8", newline="\n") as config_file:
+    json.dump({"form_defaults": {"email": email}}, config_file, indent=2)
+    config_file.write("\n")
+PY
+  mv "$CONFIG_TMP" "$CONFIG"
+  trap - 0 1 2 15
 fi
 
 cp "$ROOT_DIR/VERSION" "$DISPATCH_HOME/installed_version"

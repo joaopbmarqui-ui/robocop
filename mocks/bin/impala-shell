@@ -162,6 +162,24 @@ def apply_scenario(scenario: dict, pool: str, count: int, output_file: str | Non
         return _fail("AnalysisException: could not resolve path to table: unknown_table")
     if name == "memory_exceeded" and count <= int(scenario.get("failures_before_success", 2)):
         return _fail("Memory limit exceeded: Not enough memory available")
+    if name == "timeout":
+        return _fail("Query timed out while fetching results")
+    if name == "connection_error":
+        return _fail("Could not connect to impala coordinator: connection refused")
+    if name == "backpressure":
+        return _fail("RPC dropped due to backpressure")
+    if name == "host_resolution_error":
+        return _fail("Name or service not known for edge-node")
+    if name == "host_unreachable":
+        return _fail("Coordinator host unreachable")
+    if name == "disk_full":
+        return _fail("Disk full while writing parquet data")
+    if name == "space_limit":
+        return _fail("Scratch space limit exceeded")
+    if name == "duplicate_column":
+        return _fail("AnalysisException: duplicate column name id")
+    if name == "generic_error":
+        return _fail("Unexpected impala-shell failure")
 
     # happy_path / slow / memory_exceeded after failures → success
     if output_file:

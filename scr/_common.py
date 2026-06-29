@@ -1,6 +1,7 @@
 # pylint: disable=logging-fstring-interpolation,too-many-return-statements,too-many-branches
 import logging
 import os
+import re
 import smtplib
 import time
 from email.mime.multipart import MIMEMultipart
@@ -10,6 +11,19 @@ from typing import Callable
 
 
 FATAL_ERRORS = {"TABLE_NOT_FOUND", "SYNTAX_ERROR", "DUPLICATE_COLUMN", "AUTH_ERROR", "GENERIC_ERROR"}
+IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+FULL_TABLE_RE = re.compile(
+    r"[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*"
+)
+SMTP_TIMEOUT_SECONDS = 30.0
+
+
+def validate_identifier(value: str) -> bool:
+    return IDENTIFIER_RE.fullmatch(value) is not None
+
+
+def validate_full_table(value: str) -> bool:
+    return FULL_TABLE_RE.fullmatch(value) is not None
 
 
 def send_email(messageBody, subject, to_email):
@@ -24,9 +38,11 @@ def send_email(messageBody, subject, to_email):
     try:
         mailhost = os.environ.get("MAILHOST", "mailhost.mclocal.int")
         host, _, port = mailhost.partition(":")
-        server = smtplib.SMTP(host, int(port) if port else 0)
-        server.sendmail(from_email, to_email.split(';'), msg.as_string())
-        server.quit()
+        server = smtplib.SMTP(host, int(port) if port else 0, timeout=SMTP_TIMEOUT_SECONDS)
+        try:
+            server.sendmail(from_email, to_email.split(';'), msg.as_string())
+        finally:
+            server.quit()
         logging.info(f"Email sent to {to_email} with subject: {subject}")
     except Exception as e:
         logging.error(f"Failed to send email. Error: {e}")
@@ -86,15 +102,10 @@ def cycle_through_pools(
     retry_cnt = 1
     while True:
         for pool in pools:
-            try:
-                if operation(pool):
-                    return True
-            except Exception as e:
-                logging.error(f"An unexpected script error occurred in queue {pool}: {e}")
-                time.sleep(2)
-                continue
+            if operation(pool):
+                return True
+        if max_cycles is not None and retry_cnt >= max_cycles:
+            raise TimeoutError("Retry cycle limit reached.")
         on_cycle_failure(retry_cnt)
         retry_cnt += 1
         time.sleep(retry_interval)
-        if max_cycles is not None and retry_cnt > max_cycles:
-            raise TimeoutError("Retry cycle limit reached.")

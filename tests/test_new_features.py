@@ -5,25 +5,20 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
-import os
 from pathlib import Path
-
-import pytest
 
 from dispatch import config, manifest
 from dispatch.app import DispatchApp
 from dispatch.screens.browser import BrowserScreen
-from dispatch.screens.dashboard import DashboardScreen
 from dispatch.screens.help import HelpScreen
-from dispatch.screens.history import HistoryScreen
 from dispatch.screens.job_detail import JobDetailScreen
 from dispatch.screens.new_job import NewJobScreen
 from dispatch.screens.preview import PreviewScreen, sql_syntax
 
-
 # =============================================================================
 # Preview SQL highlighting and scrolling
 # =============================================================================
+
 
 class TestPreviewHighlighting:
     def test_sql_syntax_uses_sql_lexer_with_line_numbers(self) -> None:
@@ -47,6 +42,7 @@ class TestPreviewHighlighting:
 # Browser DESCRIBE parsing
 # =============================================================================
 
+
 class TestBrowserDescribeParsing:
     def test_parse_describe_pipe_delimited(self) -> None:
         raw = "id|string|primary key\nname|varchar|user name\nage|int|"
@@ -69,9 +65,11 @@ class TestBrowserDescribeParsing:
 # Job Detail elapsed time
 # =============================================================================
 
+
 class TestJobDetailElapsed:
     def test_format_elapsed_running_job(self) -> None:
         from datetime import datetime, timezone
+
         from dispatch.formatting import format_elapsed
 
         now = datetime.now(timezone.utc)
@@ -112,6 +110,7 @@ class TestJobDetailElapsed:
 # Config form defaults persistence
 # =============================================================================
 
+
 class TestFormDefaults:
     def test_read_form_defaults_missing_file(self, tmp_path, monkeypatch) -> None:
         monkeypatch.setenv("DISPATCH_DATA_ROOT", str(tmp_path))
@@ -148,19 +147,23 @@ class TestFormDefaults:
 # Kerberos graceful handling
 # =============================================================================
 
+
 class TestKerberosGraceful:
     def test_parse_ttl_garbage_returns_none(self) -> None:
         from dispatch.kerberos import parse_ttl_seconds
+
         assert parse_ttl_seconds("completely invalid") is None
 
     def test_parse_ttl_empty_returns_none(self) -> None:
         from dispatch.kerberos import parse_ttl_seconds
+
         assert parse_ttl_seconds("") is None
 
 
 # =============================================================================
 # Dashboard display ID
 # =============================================================================
+
 
 class TestDashboardDisplayId:
     def test_display_id_strips_date_prefix(self) -> None:
@@ -181,6 +184,7 @@ class TestDashboardDisplayId:
 # Help screen
 # =============================================================================
 
+
 class TestHelpScreen:
     def test_help_screen_renders(self) -> None:
         async def run() -> None:
@@ -200,6 +204,7 @@ class TestHelpScreen:
 # =============================================================================
 # New Job Kerberos launch gating
 # =============================================================================
+
 
 class TestNewJobKerberosGating:
     def test_launch_button_disabled_when_kerberos_missing(
@@ -302,7 +307,45 @@ class TestNewJobKerberosGating:
 # New Job inline validation
 # =============================================================================
 
+
 class TestNewJobInlineValidation:
+    def test_validation_summary_is_debounced_during_typing(
+        self, mock_env_with_config, monkeypatch, tmp_path: Path
+    ) -> None:
+        sql_path = tmp_path / "query.sql"
+        sql_path.write_text("SELECT 1", encoding="utf-8")
+
+        async def fake_ttl() -> int:
+            return 7200
+
+        monkeypatch.setattr("dispatch.kerberos.ticket_ttl_seconds", fake_ttl)
+
+        async def run() -> None:
+            app = DispatchApp()
+            async with app.run_test(size=(140, 50)) as pilot:
+                screen = NewJobScreen(tmp_path, prefill={"sql_file": str(sql_path)})
+                app.push_screen(screen)
+                await pilot.pause(0.5)
+
+                calls = 0
+                original = screen._update_validation_summary
+
+                def counting_update() -> None:
+                    nonlocal calls
+                    calls += 1
+                    original()
+
+                screen._update_validation_summary = counting_update  # type: ignore[method-assign]
+                screen.query_one("#table-name").value = "dispatch_result_2"
+                await pilot.pause(0.05)
+
+                assert calls == 0
+
+                await pilot.pause(0.3)
+                assert calls == 1
+
+        asyncio.run(run())
+
     def test_inline_validation_shows_kerberos_status(
         self, mock_env_with_config, monkeypatch
     ) -> None:
@@ -322,17 +365,183 @@ class TestNewJobInlineValidation:
 
         asyncio.run(run())
 
+    def test_table_destination_rejects_unsafe_table_name(
+        self, mock_env_with_config, monkeypatch, tmp_path: Path
+    ) -> None:
+        sql_path = tmp_path / "query.sql"
+        sql_path.write_text("SELECT 1", encoding="utf-8")
+
+        async def fake_ttl() -> int:
+            return 7200
+
+        monkeypatch.setattr("dispatch.kerberos.ticket_ttl_seconds", fake_ttl)
+
+        async def run() -> None:
+            app = DispatchApp()
+            prefill = {
+                "source_type": "SqlFile",
+                "dest_type": "Table+Csv",
+                "sql_file": str(sql_path),
+                "schema": "aa_enc",
+                "table_name": "../escape",
+            }
+            async with app.run_test(size=(140, 50)) as pilot:
+                screen = NewJobScreen(tmp_path, prefill=prefill)
+                app.push_screen(screen)
+                await pilot.pause(0.5)
+
+                issues = screen._validation_issues()
+                assert "Table name must be a plain Impala identifier" in issues
+                assert screen._validate() == "Table name must be a plain Impala identifier"
+
+        asyncio.run(run())
+
+    def test_existing_table_source_requires_safe_full_table(
+        self, mock_env_with_config, monkeypatch, tmp_path: Path
+    ) -> None:
+        async def fake_ttl() -> int:
+            return 7200
+
+        monkeypatch.setattr("dispatch.kerberos.ticket_ttl_seconds", fake_ttl)
+
+        async def run() -> None:
+            app = DispatchApp()
+            prefill = {
+                "source_type": "ExistingTable",
+                "dest_type": "Csv",
+                "existing_table": "schema.table.extra",
+            }
+            async with app.run_test(size=(140, 50)) as pilot:
+                screen = NewJobScreen(tmp_path, prefill=prefill)
+                app.push_screen(screen)
+                await pilot.pause(0.5)
+
+                expected = "Existing table must be schema.table using plain Impala identifiers"
+                assert expected in screen._validation_issues()
+                assert screen._validate() == expected
+
+        asyncio.run(run())
+
+    def test_csv_destination_uses_resolved_launch_directory(
+        self, mock_env_with_config, monkeypatch, tmp_path: Path
+    ) -> None:
+        sql_path = tmp_path / "query.sql"
+        sql_path.write_text("SELECT 1", encoding="utf-8")
+        (tmp_path / "nested").mkdir()
+        launch_cwd = tmp_path / "nested" / ".."
+
+        async def fake_ttl() -> int:
+            return 7200
+
+        monkeypatch.setattr("dispatch.kerberos.ticket_ttl_seconds", fake_ttl)
+
+        async def run() -> None:
+            app = DispatchApp()
+            prefill = {
+                "source_type": "SqlFile",
+                "dest_type": "Table+Csv",
+                "sql_file": str(sql_path),
+                "schema": "aa_enc",
+                "table_name": "dispatch_smoke_1",
+            }
+            async with app.run_test(size=(140, 50)) as pilot:
+                screen = NewJobScreen(launch_cwd, prefill=prefill)
+                app.push_screen(screen)
+                await pilot.pause(0.5)
+
+                _source, destination = screen._source_destination()
+                assert Path(destination["csv_path"]) == (
+                    tmp_path.resolve() / "dispatch_smoke_1.csv"
+                )
+
+        asyncio.run(run())
+
+    def test_csv_destination_validates_computed_filename_stem(
+        self, mock_env_with_config, monkeypatch, tmp_path: Path
+    ) -> None:
+        sql_path = tmp_path / "query.sql"
+        sql_path.write_text("SELECT 1", encoding="utf-8")
+
+        async def fake_ttl() -> int:
+            return 7200
+
+        monkeypatch.setattr("dispatch.kerberos.ticket_ttl_seconds", fake_ttl)
+
+        async def run() -> None:
+            app = DispatchApp()
+            prefill = {
+                "source_type": "SqlFile",
+                "dest_type": "Csv",
+                "sql_file": str(sql_path),
+                "table_name": r"..\escape",
+            }
+            async with app.run_test(size=(140, 50)) as pilot:
+                screen = NewJobScreen(tmp_path, prefill=prefill)
+                app.push_screen(screen)
+                await pilot.pause(0.5)
+
+                expected = "Table name must be a safe CSV filename stem"
+                assert expected in screen._validation_issues()
+                assert screen._validate() == expected
+
+        asyncio.run(run())
+
+    def test_launch_runner_failure_marks_manifest_failed(
+        self, mock_env_with_config, monkeypatch, tmp_path: Path
+    ) -> None:
+        sql_path = tmp_path / "query.sql"
+        sql_path.write_text("SELECT 1", encoding="utf-8")
+
+        async def fake_ttl() -> int:
+            return 7200
+
+        async def fail_launch(_job_dir: Path) -> int:
+            raise OSError("nohup unavailable")
+
+        monkeypatch.setattr("dispatch.kerberos.ticket_ttl_seconds", fake_ttl)
+        monkeypatch.setattr("dispatch.process.launch_runner", fail_launch)
+
+        async def run() -> None:
+            app = DispatchApp()
+            prefill = {
+                "source_type": "SqlFile",
+                "dest_type": "Csv",
+                "sql_file": str(sql_path),
+                "table_name": "dispatch_spawn_failure",
+            }
+            async with app.run_test(size=(140, 50)) as pilot:
+                screen = NewJobScreen(tmp_path, prefill=prefill)
+                app.push_screen(screen)
+                await pilot.pause(0.5)
+                monkeypatch.setattr(screen, "_confirm_launch", _async_true)
+
+                await screen._launch_flow()
+                await pilot.pause()
+
+        asyncio.run(run())
+
+        manifests = list((tmp_path / "data" / ".dispatch" / "jobs").glob("*/manifest.json"))
+        assert len(manifests) == 1
+        final = manifest.load(manifests[0])
+        assert final["state"] == "Failed"
+        assert final["exit_code"] == -1
+        assert final["finished_at"] is not None
+
 
 # =============================================================================
 # Preview screen
 # =============================================================================
 
+
 class TestPreviewScreen:
     def test_preview_stores_source_and_dest_types(self) -> None:
         screen = PreviewScreen(
-            "SQL Preview", "SELECT 1",
-            schema="dw", table="result",
-            source_type="SqlFile", dest_type="Table",
+            "SQL Preview",
+            "SELECT 1",
+            schema="dw",
+            table="result",
+            source_type="SqlFile",
+            dest_type="Table",
         )
         assert screen.source_type == "SqlFile"
         assert screen.dest_type == "Table"
@@ -350,3 +559,7 @@ class TestPreviewScreen:
                 assert log is not None
 
         asyncio.run(run())
+
+
+async def _async_true(*_args, **_kwargs) -> bool:
+    return True

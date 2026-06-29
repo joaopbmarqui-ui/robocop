@@ -15,7 +15,6 @@ from .. import impala
 from .confirm import ConfirmScreen
 from .sidebar import Sidebar
 
-
 NO_TABLES_PLACEHOLDER = "(no tables)"
 
 
@@ -50,7 +49,9 @@ class BrowserScreen(Screen[None]):
                         yield Static("[dim]Schema \u00b7 table filter[/]", classes="input-caption")
                         with Horizontal(id="browser-query-row"):
                             yield Input(value="aa_enc", placeholder="Schema", id="schema")
-                            yield Input(value="*", placeholder="Filter (e.g. dispatch_*)", id="filter")
+                            yield Input(
+                                value="*", placeholder="Filter (e.g. dispatch_*)", id="filter"
+                            )
                             yield Button("Load Tables [S]", id="show", variant="default")
                         yield DataTable(id="browser-table")
                         with Horizontal(id="browser-status"):
@@ -172,9 +173,7 @@ class BrowserScreen(Screen[None]):
         table.clear()
         for name in self._tables:
             table.add_row(name, "table")
-        self.query_one("#browser-count", Static).update(
-            f"[dim]{len(self._tables)} tables[/]"
-        )
+        self.query_one("#browser-count", Static).update(f"[dim]{len(self._tables)} tables[/]")
         if not self._tables:
             table.add_row(NO_TABLES_PLACEHOLDER, "")
             self._show_detail_placeholder()
@@ -196,9 +195,7 @@ class BrowserScreen(Screen[None]):
             result = str(exc)
 
         self._describe_text = result
-        self.query_one("#file-preview-title", Static).update(
-            f"[bold cyan]{full}[/]"
-        )
+        self.query_one("#file-preview-title", Static).update(f"[bold cyan]{full}[/]")
         self.query_one("#file-preview-path", Static).update("")
 
         columns = self._parse_describe(result)
@@ -219,9 +216,7 @@ class BrowserScreen(Screen[None]):
             self.query_one("#describe-body").display = True
             self.query_one("#describe-table").display = False
 
-        self.query_one("#browser-selected", Static).update(
-            f"[cyan]Selected: {full}[/]"
-        )
+        self.query_one("#browser-selected", Static).update(f"[cyan]Selected: {full}[/]")
         self._update_action_state()
 
     @staticmethod
@@ -235,11 +230,13 @@ class BrowserScreen(Screen[None]):
             if parts[:3] == ["name", "type", "comment"]:
                 continue  # impala-shell header row, not a real column
             if len(parts) >= 2:
-                columns.append({
-                    "name": parts[0],
-                    "type": parts[1],
-                    "comment": parts[2] if len(parts) > 2 else "",
-                })
+                columns.append(
+                    {
+                        "name": parts[0],
+                        "type": parts[1],
+                        "comment": parts[2] if len(parts) > 2 else "",
+                    }
+                )
         return columns
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
@@ -254,7 +251,7 @@ class BrowserScreen(Screen[None]):
         if self.query_one("#browser-table", DataTable).has_focus:
             self.query_one("#browser-table", DataTable).action_cursor_up()
 
-    def action_drop(self) -> "Worker[None]":
+    def action_drop(self) -> Worker[None]:
         """Run the confirm-and-drop flow in a worker (see NewJobScreen.action_launch)."""
         return self.run_worker(self._drop_flow(), name="drop-flow", exclusive=True)
 

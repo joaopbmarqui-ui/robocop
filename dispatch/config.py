@@ -22,6 +22,13 @@ def dispatch_home(user: str | None = None) -> Path:
     return data_root(user) / ".dispatch"
 
 
+def ensure_private_dir(path: Path) -> Path:
+    """Create a per-user Dispatch directory and enforce owner-only access."""
+    path.mkdir(parents=True, exist_ok=True, mode=0o700)
+    path.chmod(0o700)
+    return path
+
+
 def jobs_dir(user: str | None = None) -> Path:
     return dispatch_home(user) / "jobs"
 
@@ -45,7 +52,7 @@ def read_config(user: str | None = None) -> dict[str, Any]:
 
 def write_config(config: dict[str, Any], user: str | None = None) -> None:
     path = config_path(user)
-    path.parent.mkdir(parents=True, exist_ok=True)
+    ensure_private_dir(path.parent)
     with path.open("w", encoding="utf-8") as handle:
         json.dump(config, handle, indent=2, sort_keys=True)
         handle.write("\n")

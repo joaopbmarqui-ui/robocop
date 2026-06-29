@@ -24,7 +24,7 @@ The legacy Windows GUI is not the product direction. Do not reintroduce Windows 
 - The TUI captures the launch-time current working directory once.
 - CSV outputs are written uncompressed to the launch-time working directory.
 - Table + CSV jobs are decomposed into table creation followed by separate CSV export.
-- The TUI must refuse illegal source/destination combinations, missing Kerberos tickets, tickets with less than five minutes remaining, and more than two simultaneously Running jobs.
+- The TUI must refuse illegal source/destination combinations, missing Kerberos tickets, tickets with less than five minutes remaining, and more than two simultaneously slot-consuming `Pending` or `Running` jobs.
 - `scr/` orchestrators are production-sensitive. Prefer not to change them unless the task explicitly requires it and existing ADRs allow it.
 
 ## Dependency policy
@@ -94,6 +94,25 @@ edge-node update paths, and production harness validation, see
 
 Run the strongest available subset for the files touched.
 
+Install local development tooling first:
+
+```bash
+python -m pip install -e ".[dev]"
+```
+
+Lint and typecheck validation:
+
+```bash
+ruff check dispatch tests
+ruff check scr
+ruff format --check dispatch tests
+mypy dispatch/sql.py dispatch/jobs.py dispatch/manifest.py
+```
+
+The mypy gate is intentionally tighter for `dispatch.sql`, `dispatch.jobs`, and
+`dispatch.manifest` via per-module overrides; keep new type suppressions out of
+that slice unless a reviewer agrees they are unavoidable.
+
 Basic syntax/package validation:
 
 ```bash
@@ -122,6 +141,11 @@ Keep both code remotes in mind: `origin` is GitHub for issues and occasional
 VPN-bypass pushes, while `bitbucket` is the writable corporate remote and the
 remote Edge Nodes can pull from. Do not push to either remote unless the user
 explicitly asks.
+
+CI (GitHub Actions) runs compile, lint, targeted core-module typecheck, and
+tests on every push to `main` and on PRs to `origin`. The install/onboarding
+suite remains covered by the shared `Tests` step, including
+`tests/test_install_onboarding.py`. See `.github/workflows/ci.yml`.
 
 ## Domain docs
 

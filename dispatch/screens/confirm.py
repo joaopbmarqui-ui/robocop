@@ -39,11 +39,7 @@ class ConfirmScreen(ModalScreen[bool]):
     def compose(self) -> ComposeResult:
         classes = "danger" if self.danger else ""
         with Vertical(id="confirm-dialog", classes=classes):
-            title_markup = (
-                f"[bold red]{self.title}[/]"
-                if self.danger
-                else f"[bold]{self.title}[/]"
-            )
+            title_markup = f"[bold red]{self.title}[/]" if self.danger else f"[bold]{self.title}[/]"
             yield Static(title_markup, id="confirm-title")
             yield Static(self.body, id="confirm-body")
             if self.required_confirmation_text:

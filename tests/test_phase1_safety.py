@@ -8,6 +8,7 @@ from pathlib import Path
 
 from textual.widgets import Input
 
+from dispatch import config, jobs
 from dispatch.app import DispatchApp
 from dispatch.screens.browser import BrowserScreen
 from dispatch.screens.job_detail import JobDetailScreen
@@ -54,6 +55,7 @@ def test_browser_drop_requires_confirmation(mock_env_with_config, monkeypatch) -
 
 def test_job_cancel_requires_confirmation(mock_env_with_config, monkeypatch) -> None:
     """Cancel Job must show a confirmation before sending SIGTERM."""
+    monkeypatch.setattr(jobs, "pid_is_alive", lambda pid: True)
     data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
     job_id = "20260516T100000Z_cancel"
     job_dir = data_root / ".dispatch" / "jobs" / job_id
@@ -105,9 +107,7 @@ def test_job_cancel_requires_confirmation(mock_env_with_config, monkeypatch) -> 
     asyncio.run(run())
 
 
-def test_new_job_launch_requires_confirmation(
-    mock_env_with_config, monkeypatch, tmp_path
-) -> None:
+def test_new_job_launch_requires_confirmation(mock_env_with_config, monkeypatch, tmp_path) -> None:
     """Launch creates no manifest or runner process until explicitly confirmed."""
     sql_file = tmp_path / "query.sql"
     sql_file.write_text("select 1\n", encoding="utf-8")
@@ -141,6 +141,52 @@ def test_new_job_launch_requires_confirmation(
             await pilot.press("y")
             await worker.wait()
             assert len(launched) == 1
+
+    asyncio.run(run())
+
+
+def test_new_job_rechecks_preflight_after_confirm_before_manifest(
+    mock_env_with_config, monkeypatch, tmp_path
+) -> None:
+    """Launch refuses if Kerberos drops below five minutes while confirm is open."""
+    sql_file = tmp_path / "query.sql"
+    sql_file.write_text("select 1\n", encoding="utf-8")
+    ttl = 3600
+    launched: list[Path] = []
+
+    async def fake_ttl() -> int:
+        return ttl
+
+    async def fake_launch_runner(job_dir: Path) -> int:
+        launched.append(job_dir)
+        return 123
+
+    async def fake_confirm(self, source, destination) -> bool:
+        nonlocal ttl
+        ttl = 299
+        self.app.kerberos_ttl = 299
+        await asyncio.sleep(0)
+        return True
+
+    monkeypatch.setattr("dispatch.kerberos.ticket_ttl_seconds", fake_ttl)
+    monkeypatch.setattr("dispatch.process.launch_runner", fake_launch_runner)
+    monkeypatch.setattr(NewJobScreen, "_confirm_launch", fake_confirm)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(140, 50)) as pilot:
+            screen = NewJobScreen(tmp_path)
+            app.push_screen(screen)
+            await pilot.pause()
+
+            worker = screen.action_launch()
+            await worker.wait()
+            await pilot.pause()
+
+            assert launched == []
+            assert list(config.jobs_dir().glob("*/manifest.json")) == []
+            warning = str(screen.query_one("#warning-text").render())
+            assert "Kerberos ticket TTL is under 5 minutes" in warning
 
     asyncio.run(run())
 

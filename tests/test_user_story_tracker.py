@@ -6,7 +6,6 @@ import csv
 import re
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 TRACKER = ROOT / "docs" / "dispatch_user_story_tracker.csv"
 AUDIT = ROOT / "docs" / "dispatch_user_story_completion_audit.md"
@@ -137,7 +136,9 @@ def test_tracker_test_evidence_references_existing_files_or_explicit_manual_evid
         for entry in _evidence_entries(row["test_evidence"]):
             path = _evidence_file(entry)
             if path is not None:
-                assert path.exists(), f"{row['feature_id']} references missing test evidence: {entry}"
+                assert path.exists(), (
+                    f"{row['feature_id']} references missing test evidence: {entry}"
+                )
 
 
 def test_tracker_evidence_line_ranges_are_inside_existing_files() -> None:
@@ -183,7 +184,9 @@ def test_pending_audit_matrix_has_route_and_required_evidence() -> None:
     }
     matrix_rows: dict[str, tuple[str, str]] = {}
     for line in audit.splitlines():
-        match = re.match(r"\| (?P<feature>[A-Z]+-\d{3}) \| (?P<route>[^|]+) \| (?P<evidence>[^|]+) \|", line)
+        match = re.match(
+            r"\| (?P<feature>[A-Z]+-\d{3}) \| (?P<route>[^|]+) \| (?P<evidence>[^|]+) \|", line
+        )
         if match:
             matrix_rows[match.group("feature")] = (
                 match.group("route").strip(),
@@ -214,7 +217,9 @@ def test_completion_audit_states_not_complete_while_pending_gates_remain() -> No
     rows = _tracker_rows()
     audit = AUDIT.read_text(encoding="utf-8")
     pending = [row for row in rows if re.search(r"pending", row["retest_status"], re.IGNORECASE)]
-    verdict_match = re.search(r"Not complete\..*?(\d+) real-environment user-story gates? pending", audit, re.DOTALL)
+    verdict_match = re.search(
+        r"Not complete\..*?(\d+) real-environment user-story gates? pending", audit, re.DOTALL
+    )
 
     assert pending
     assert "## Prompt-To-Artifact Checklist" in audit
@@ -241,7 +246,9 @@ def test_tracker_and_audit_keep_harness_commands_config_explicit() -> None:
     offenders: list[str] = []
 
     for artifact in (TRACKER, AUDIT):
-        for line_number, line in enumerate(artifact.read_text(encoding="utf-8").splitlines(), start=1):
+        for line_number, line in enumerate(
+            artifact.read_text(encoding="utf-8").splitlines(), start=1
+        ):
             if command_pattern.search(line) and "--config" not in line:
                 offenders.append(f"{artifact.relative_to(ROOT)}:{line_number}:{line}")
 

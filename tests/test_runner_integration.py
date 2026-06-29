@@ -48,6 +48,89 @@ def _create_csv_job(tmp_path: Path, user: str = "testuser") -> tuple[Path, manif
     )
 
 
+def _create_sqlfile_table_job(
+    tmp_path: Path, user: str = "testuser"
+) -> tuple[Path, manifest.JobManifest]:
+    """Create a minimal SqlFile to Table job manifest."""
+    sql_file = tmp_path / "table.sql"
+    sql_text = "SELECT 1 AS smoke_test_value"
+    sql_file.write_text(sql_text, encoding="utf-8")
+    return manifest.create_job(
+        source={"type": "SqlFile", "sql_path_at_launch": str(sql_file)},
+        destination={"type": "Table", "schema": "aa_enc", "table_name": "dispatch_smoke_table"},
+        params={"to_email": "test@example.com", "subject": "Test Table"},
+        launch_cwd=tmp_path,
+        sql_text=sql_text,
+        user=user,
+    )
+
+
+def _create_sqlfile_table_plus_csv_job(
+    tmp_path: Path, user: str = "testuser"
+) -> tuple[Path, manifest.JobManifest]:
+    """Create a minimal SqlFile to Table+Csv job manifest."""
+    sql_file = tmp_path / "table_plus_csv.sql"
+    sql_text = "SELECT 1 AS smoke_test_value"
+    sql_file.write_text(sql_text, encoding="utf-8")
+    return manifest.create_job(
+        source={"type": "SqlFile", "sql_path_at_launch": str(sql_file)},
+        destination={
+            "type": "Table+Csv",
+            "schema": "aa_enc",
+            "table_name": "dispatch_smoke_table",
+            "csv_path": str(tmp_path / "dispatch_smoke_table.csv"),
+        },
+        params={"to_email": "test@example.com", "subject": "Test Table Csv"},
+        launch_cwd=tmp_path,
+        sql_text=sql_text,
+        user=user,
+    )
+
+
+def _create_sqltemplate_table_job(
+    tmp_path: Path, user: str = "testuser"
+) -> tuple[Path, manifest.JobManifest]:
+    """Create a one-month SqlTemplate to Table job manifest."""
+    sql_file = tmp_path / "template.sql"
+    sql_text = (
+        "SELECT 1 AS smoke_test_value, "
+        "CAST('{date_inicio}' AS STRING) AS date_inicio, "
+        "CAST('{date_fim}' AS STRING) AS date_fim"
+    )
+    sql_file.write_text(sql_text, encoding="utf-8")
+    return manifest.create_job(
+        source={"type": "SqlTemplate", "sql_path_at_launch": str(sql_file)},
+        destination={"type": "Table", "schema": "aa_enc", "table_name": "dispatch_smoke_monthly"},
+        params={
+            "to_email": "test@example.com",
+            "subject": "Test Monthly",
+            "start_date": "01/01/2026",
+            "end_date": "01/31/2026",
+        },
+        launch_cwd=tmp_path,
+        sql_text=sql_text,
+        user=user,
+    )
+
+
+def _create_existingtable_csv_job(
+    tmp_path: Path, user: str = "testuser"
+) -> tuple[Path, manifest.JobManifest]:
+    """Create a minimal ExistingTable to Csv job manifest."""
+    return manifest.create_job(
+        source={"type": "ExistingTable", "table_name": "aa_enc.dispatch_smoke_existing"},
+        destination={
+            "type": "Csv",
+            "schema": "aa_enc",
+            "table_name": "dispatch_smoke_existing",
+            "csv_path": str(tmp_path / "dispatch_smoke_existing.csv"),
+        },
+        params={"to_email": "test@example.com", "subject": "Test Existing Table"},
+        launch_cwd=tmp_path,
+        user=user,
+    )
+
+
 def _spawn_runner(job_dir: Path) -> subprocess.CompletedProcess:
     """Run dispatch.runner synchronously and return the completed process."""
     return subprocess.run(
@@ -63,12 +146,20 @@ def _read_log(job_dir: Path) -> str:
     return log.read_text(encoding="utf-8", errors="replace") if log.exists() else ""
 
 
+# Legal runner coverage matrix:
+# - SqlFile -> Csv: happy path, CSV output, fatal scenarios, retry scenario.
+# - SqlFile -> Table: happy path, Query_Impala_Parametrized.py call contract.
+# - SqlFile -> Table+Csv: happy path, table call then CSV export call, plain CSV output.
+# - SqlTemplate -> Table: one-month happy path through monthly_query_processor.py.
+# - ExistingTable -> Csv: happy path, download by --table-name rather than --query-file.
+
+
 # =============================================================================
 # Lifecycle transitions per scenario
 # =============================================================================
 
-class TestRunnerLifecycle:
 
+class TestRunnerLifecycle:
     def test_happy_path_reaches_succeeded(self, mock_env, tmp_path):
         """happy_path scenario: runner sets manifest state to Succeeded."""
         job_dir, _ = _create_csv_job(tmp_path)
@@ -96,6 +187,68 @@ class TestRunnerLifecycle:
         assert csv_path.suffix == ".csv"
         assert not (tmp_path / "test_export.csv.gz").exists()
         assert not any(job_dir.glob("*.csv*"))
+
+    def test_sqlfile_table_reaches_succeeded_with_query_impala(self, mock_env, tmp_path):
+        """SqlFile -> Table runs Query_Impala_Parametrized.py and succeeds."""
+        job_dir, initial = _create_sqlfile_table_job(tmp_path)
+        assert [call["script"] for call in initial["orchestrator_calls"]] == [
+            "Query_Impala_Parametrized.py"
+        ]
+
+        result = _spawn_runner(job_dir)
+        assert result.returncode == 0, result.stderr or result.stdout or _read_log(job_dir)
+
+        final = manifest.load(job_dir / "manifest.json")
+        assert final["state"] == "Succeeded", _read_log(job_dir)
+
+    def test_sqlfile_table_plus_csv_decomposes_and_writes_plain_csv(self, mock_env, tmp_path):
+        """SqlFile -> Table+Csv creates the table first, then exports plain CSV."""
+        job_dir, initial = _create_sqlfile_table_plus_csv_job(tmp_path)
+        assert [call["script"] for call in initial["orchestrator_calls"]] == [
+            "Query_Impala_Parametrized.py",
+            "download_to_csv.py",
+        ]
+
+        result = _spawn_runner(job_dir)
+        assert result.returncode == 0, result.stderr or result.stdout or _read_log(job_dir)
+
+        final = manifest.load(job_dir / "manifest.json")
+        csv_path = Path(final["destination"]["csv_path"])
+        assert final["state"] == "Succeeded", _read_log(job_dir)
+        assert csv_path == tmp_path / "dispatch_smoke_table.csv"
+        assert csv_path.exists()
+        assert csv_path.suffix == ".csv"
+        assert not (tmp_path / "dispatch_smoke_table.csv.gz").exists()
+
+    def test_existingtable_csv_reaches_succeeded_using_table_name(self, mock_env, tmp_path):
+        """ExistingTable -> Csv exports by --table-name, not --query-file."""
+        job_dir, initial = _create_existingtable_csv_job(tmp_path)
+        argv = initial["orchestrator_calls"][0]["argv"]
+        assert initial["orchestrator_calls"][0]["script"] == "download_to_csv.py"
+        assert "--table-name" in argv
+        assert "--query-file" not in argv
+
+        result = _spawn_runner(job_dir)
+        assert result.returncode == 0, result.stderr or result.stdout or _read_log(job_dir)
+
+        final = manifest.load(job_dir / "manifest.json")
+        csv_path = Path(final["destination"]["csv_path"])
+        assert final["state"] == "Succeeded", _read_log(job_dir)
+        assert csv_path == tmp_path / "dispatch_smoke_existing.csv"
+        assert csv_path.exists()
+
+    def test_sqltemplate_table_runner_contract(self, mock_env, tmp_path):
+        """SqlTemplate -> Table runs monthly_query_processor.py for a one-month range."""
+        job_dir, initial = _create_sqltemplate_table_job(tmp_path)
+        assert [call["script"] for call in initial["orchestrator_calls"]] == [
+            "monthly_query_processor.py"
+        ]
+
+        result = _spawn_runner(job_dir)
+        assert result.returncode == 0, result.stderr or result.stdout or _read_log(job_dir)
+
+        final = manifest.load(job_dir / "manifest.json")
+        assert final["state"] == "Succeeded", _read_log(job_dir)
 
     def test_syntax_error_reaches_failed(self, mock_env, monkeypatch, tmp_path):
         """syntax_error is a FATAL_ERRORS member → orchestrator exits 1 → Failed."""
@@ -141,8 +294,8 @@ class TestRunnerLifecycle:
 # Manifest state guard (prevents double-spawn)
 # =============================================================================
 
-class TestRunnerStateGuard:
 
+class TestRunnerStateGuard:
     def test_runner_exits_4_when_state_is_not_pending(self, mock_env, tmp_path):
         """Runner exits with code 4 if manifest.state != Pending."""
         job_dir, _ = _create_csv_job(tmp_path)
@@ -171,8 +324,8 @@ class TestRunnerStateGuard:
 # Manifest state transitions during the run
 # =============================================================================
 
-class TestRunnerStateTransitions:
 
+class TestRunnerStateTransitions:
     def test_started_at_populated_after_run(self, mock_env, tmp_path):
         job_dir, _ = _create_csv_job(tmp_path)
         result = _spawn_runner(job_dir)
@@ -203,9 +356,11 @@ class TestRunnerStateTransitions:
 # Cancellation via SIGTERM
 # =============================================================================
 
-class TestRunnerCancellation:
 
-    @pytest.mark.skipif(os.name == "nt", reason="Windows SIGTERM does not exercise the POSIX runner handler")
+class TestRunnerCancellation:
+    @pytest.mark.skipif(
+        os.name == "nt", reason="Windows SIGTERM does not exercise the POSIX runner handler"
+    )
     def test_sigterm_sets_state_to_cancelled(self, mock_env, tmp_path):
         """SIGTERM during an in-flight Job sets manifest.state to Cancelled.
 
@@ -218,18 +373,15 @@ class TestRunnerCancellation:
         marker = tmp_path / "started.txt"
         fake_orch = tmp_path / "sleeping_orch.py"
         fake_orch.write_text(
-            f"import time, pathlib\n"
-            f"pathlib.Path({str(marker)!r}).touch()\n"
-            f"time.sleep(300)\n"
+            f"import time, pathlib\npathlib.Path({str(marker)!r}).touch()\ntime.sleep(300)\n"
         )
 
         # Build the manifest manually to point at the fake orchestrator
         job_dir, initial = _create_csv_job(tmp_path)
         import json
+
         m = json.loads((job_dir / "manifest.json").read_text())
-        m["orchestrator_calls"] = [
-            {"script": "fake", "argv": [sys.executable, str(fake_orch)]}
-        ]
+        m["orchestrator_calls"] = [{"script": "fake", "argv": [sys.executable, str(fake_orch)]}]
         (job_dir / "manifest.json").write_text(json.dumps(m, indent=2))
 
         proc = subprocess.Popen(

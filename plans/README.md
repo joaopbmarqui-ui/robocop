@@ -16,7 +16,7 @@ the status row when done.
 | 001 | Harden launch identifiers and CSV output paths | P1 | M | - | DONE |
 | 002 | Make launch preflight live and enforce the Job cap at creation | P1 | M | 001 | DONE |
 | 003 | Reconcile stale Running and orphan Pending Jobs | P1 | M | 002 | DONE |
-| 004 | Bound manifest refresh work for SSH-scale supervision | P2 | M | 002, 003 | TODO |
+| 004 | Bound manifest refresh work for SSH-scale supervision | P2 | M | 002, 003 | DONE |
 | 005 | Expand runner and `scr/` contract coverage before deeper orchestrator work | P2 | M | - | DONE |
 | 006 | Guard offline installation when `vendor/` is empty | P2 | M | - | DONE |
 | 007 | Add conservative lint and typecheck gates | P2 | M | - | TODO |

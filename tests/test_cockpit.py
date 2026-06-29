@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from textual.widgets import Collapsible, DataTable, Input, Static
 
 from dispatch import jobs, manifest
 from dispatch.app import DispatchApp
+from dispatch.screens.job_detail import JobDetailScreen
 from dispatch.screens.new_job import NewJobScreen
 from dispatch.version import __version__
 
@@ -175,6 +177,97 @@ def test_cockpit_detail_pane_tails_selected_job_log(mock_env_with_config) -> Non
             title = str(app.screen.query_one("#detail-title", Static).render())
             assert "tail01" in title
             assert "SUCCEEDED" in title
+
+    asyncio.run(run())
+
+
+def test_dashboard_refresh_in_flight_skips_overlapping_tick(
+    mock_env_with_config, monkeypatch
+) -> None:
+    calls = 0
+
+    def slow_active_jobs() -> list[dict]:
+        nonlocal calls
+        calls += 1
+        time.sleep(0.05)
+        return []
+
+    monkeypatch.setattr(jobs, "active_jobs", slow_active_jobs)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            await pilot.pause(0.2)
+            calls_at_mount = calls
+            first = asyncio.create_task(app.screen._refresh_jobs_async())  # type: ignore[attr-defined]
+            await pilot.pause(0.01)
+            second = asyncio.create_task(app.screen._refresh_jobs_async())  # type: ignore[attr-defined]
+            await asyncio.gather(first, second)
+
+            assert calls - calls_at_mount == 1
+
+    asyncio.run(run())
+
+
+def test_hidden_dashboard_refresh_returns_without_listing_jobs(
+    mock_env_with_config, monkeypatch, tmp_path: Path
+) -> None:
+    calls = 0
+
+    def counted_active_jobs() -> list[dict]:
+        nonlocal calls
+        calls += 1
+        return []
+
+    monkeypatch.setattr(jobs, "active_jobs", counted_active_jobs)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            dashboard = app.screen
+            await pilot.pause(0.2)
+            app.push_screen(NewJobScreen(tmp_path))
+            await pilot.pause(0.2)
+            calls_before = calls
+            await dashboard._refresh_jobs_async()  # type: ignore[attr-defined]
+
+            assert calls == calls_before
+
+    asyncio.run(run())
+
+
+def test_job_detail_refresh_in_flight_skips_overlapping_tick(
+    mock_env_with_config, monkeypatch
+) -> None:
+    data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
+    jobs_dir = data_root / ".dispatch" / "jobs"
+    job_id = _seed_job(jobs_dir, "20260520T120000Z_detail", "Running", pid=4242)
+    calls = 0
+    original_load = manifest.load
+
+    def slow_load(path: Path) -> manifest.JobManifest:
+        nonlocal calls
+        calls += 1
+        time.sleep(0.05)
+        return original_load(path)
+
+    monkeypatch.setattr(manifest, "load", slow_load)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = JobDetailScreen(job_id)
+            app.push_screen(screen)
+            await pilot.pause(0.2)
+            calls_at_mount = calls
+            screen._manifest_item = None
+            screen._manifest_mtime = None
+            first = asyncio.create_task(screen._refresh_detail_async())
+            await pilot.pause(0.01)
+            second = asyncio.create_task(screen._refresh_detail_async())
+            await asyncio.gather(first, second)
+
+            assert calls - calls_at_mount == 1
 
     asyncio.run(run())
 

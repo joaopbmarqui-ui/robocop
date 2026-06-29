@@ -14,6 +14,7 @@ logger = logging.getLogger("dispatch.new_job")
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
+from textual.timer import Timer
 from textual.widgets import Button, Collapsible, DataTable, Footer, Header, Input, RadioButton, RadioSet, Static
 from textual.worker import Worker
 
@@ -49,6 +50,7 @@ class NewJobScreen(Screen[None]):
         # (path, exists) memo so keystrokes in unrelated fields do not stat()
         # the SQL path (potentially a slow network mount) on every change.
         self._sql_exists_cache: tuple[str, bool] | None = None
+        self._validation_summary_timer: Timer | None = None
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
@@ -269,9 +271,14 @@ class NewJobScreen(Screen[None]):
 
     def on_input_changed(self, event: Input.Changed) -> None:
         self._inline_validate()
-        self._update_validation_summary()
+        self._schedule_validation_summary()
         if event.input.id == "sql-file":
             self._refresh_path_hint()
+
+    def on_unmount(self) -> None:
+        if self._validation_summary_timer is not None:
+            self._validation_summary_timer.stop()
+            self._validation_summary_timer = None
 
     def action_toggle_matrix(self) -> None:
         collapsible = self.query_one("#matrix-collapsible", Collapsible)
@@ -372,6 +379,17 @@ class NewJobScreen(Screen[None]):
             summary.update(f"[red]\u2717 {len(issues)} issue(s): {first}{extra}[/]")
         else:
             summary.update("[green]\u2713 Ready to launch (checks passing)[/]")
+
+    def _schedule_validation_summary(self) -> None:
+        if self._validation_summary_timer is not None:
+            self._validation_summary_timer.stop()
+        self._validation_summary_timer = self.set_timer(
+            0.2, self._run_scheduled_validation_summary
+        )
+
+    def _run_scheduled_validation_summary(self) -> None:
+        self._validation_summary_timer = None
+        self._update_validation_summary()
 
     def _update_field_visibility(self) -> None:
         source = self._selected_source()

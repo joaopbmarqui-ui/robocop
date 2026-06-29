@@ -303,6 +303,43 @@ class TestNewJobKerberosGating:
 # =============================================================================
 
 class TestNewJobInlineValidation:
+    def test_validation_summary_is_debounced_during_typing(
+        self, mock_env_with_config, monkeypatch, tmp_path: Path
+    ) -> None:
+        sql_path = tmp_path / "query.sql"
+        sql_path.write_text("SELECT 1", encoding="utf-8")
+
+        async def fake_ttl() -> int:
+            return 7200
+
+        monkeypatch.setattr("dispatch.kerberos.ticket_ttl_seconds", fake_ttl)
+
+        async def run() -> None:
+            app = DispatchApp()
+            async with app.run_test(size=(140, 50)) as pilot:
+                screen = NewJobScreen(tmp_path, prefill={"sql_file": str(sql_path)})
+                app.push_screen(screen)
+                await pilot.pause(0.5)
+
+                calls = 0
+                original = screen._update_validation_summary
+
+                def counting_update() -> None:
+                    nonlocal calls
+                    calls += 1
+                    original()
+
+                screen._update_validation_summary = counting_update  # type: ignore[method-assign]
+                screen.query_one("#table-name").value = "dispatch_result_2"
+                await pilot.pause(0.05)
+
+                assert calls == 0
+
+                await pilot.pause(0.3)
+                assert calls == 1
+
+        asyncio.run(run())
+
     def test_inline_validation_shows_kerberos_status(
         self, mock_env_with_config, monkeypatch
     ) -> None:

@@ -43,6 +43,28 @@ def _load_manifest_cached(path: Path) -> manifest.JobManifest:
     return loaded
 
 
+def _cached_terminal_outside_active_window(path: Path, now: datetime) -> bool:
+    """Return whether an unchanged cached manifest can be skipped by Overview.
+
+    The active dashboard only needs Running/Pending Jobs plus terminal Jobs
+    inside the seven-day supervision window. Once a terminal manifest is cached
+    and known to be older than that window, each refresh only stats the file to
+    detect changes rather than reparsing JSON or reconciling process state.
+    """
+    cached = _manifest_cache.get(path)
+    if cached is None:
+        return False
+    try:
+        mtime = path.stat().st_mtime
+    except OSError as exc:
+        raise ValueError(str(exc)) from exc
+    cached_mtime, item = cached
+    if cached_mtime != mtime or item["state"] in LAUNCH_SLOT_STATES:
+        return False
+    finished = parse_time(item["finished_at"])
+    return finished is not None and now - finished > ACTIVE_WINDOW
+
+
 def _manifest_paths(root: Path | None = None) -> list[Path]:
     base = root or config.jobs_dir()
     if not base.exists():
@@ -113,7 +135,7 @@ def reconcile_manifest(path: Path) -> manifest.JobManifest | None:
     left untouched because the product has not chosen an automatic age
     threshold for spawn stalls.
     """
-    item = manifest.load(path)
+    item = _load_manifest_cached(path)
     pid = item.get("pid")
     if item["state"] != "Running" or pid is None or pid_is_alive(pid):
         return item
@@ -151,11 +173,20 @@ def launch_slot_jobs(root: Path | None = None) -> list[manifest.JobManifest]:
     ``Pending`` manifests have passed launch acceptance and are waiting for the
     detached runner to flip them to ``Running``, so they count against the cap.
     """
-    return [
-        item
-        for item in reconciled_list_manifests(root)
-        if item["state"] in LAUNCH_SLOT_STATES
-    ]
+    paths = _manifest_paths(root)
+    loaded: list[manifest.JobManifest] = []
+    for path in paths:
+        try:
+            item = reconcile_manifest(path) or _load_manifest_cached(path)
+        except Exception as exc:
+            logger.warning("Skipping corrupt manifest %s: %s", path, exc)
+            continue
+        if item["state"] in LAUNCH_SLOT_STATES:
+            loaded.append(item)
+            if len(loaded) >= RUNNING_CAP:
+                break
+    _prune_manifest_cache(paths)
+    return loaded
 
 
 def can_launch(root: Path | None = None) -> bool:
@@ -229,10 +260,19 @@ def create_job_if_slot_available(
 def active_jobs(root: Path | None = None) -> list[manifest.JobManifest]:
     now = datetime.now(timezone.utc)
     result = []
-    for item in reconciled_list_manifests(root):
+    paths = _manifest_paths(root)
+    for path in paths:
+        try:
+            if _cached_terminal_outside_active_window(path, now):
+                continue
+            item = reconcile_manifest(path) or _load_manifest_cached(path)
+        except Exception as exc:
+            logger.warning("Skipping corrupt manifest %s: %s", path, exc)
+            continue
         finished = parse_time(item["finished_at"])
         if item["state"] == "Running" or finished is None or now - finished <= ACTIVE_WINDOW:
             result.append(item)
+    _prune_manifest_cache(paths)
     return result
 
 

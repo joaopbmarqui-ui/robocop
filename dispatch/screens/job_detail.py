@@ -70,6 +70,7 @@ class JobDetailScreen(Screen[None]):
         # Manifest mtime cache: skip the JSON parse when the file is unchanged.
         self._manifest_mtime: float | None = None
         self._manifest_item: dict[str, Any] | None = None
+        self._refresh_in_flight = False
         # Last markup painted per Static, to skip no-op repaints over SSH.
         self._static_cache: dict[str, str] = {}
 
@@ -143,23 +144,32 @@ class JobDetailScreen(Screen[None]):
         self.set_interval(1.0, self._refresh_detail_async)
 
     async def _refresh_detail_async(self) -> None:
+        if self._refresh_in_flight:
+            return
+        self._refresh_in_flight = True
         manifest_path = self.job_dir / "manifest.json"
         log_path = self.job_dir / "run.log"
+        cached_manifest_mtime = self._manifest_mtime
+        cached_manifest_item = self._manifest_item
+        cached_error_code = self._error_code
+        cached_error_line = self._error_line
+        error_checked = self._error_checked
 
         def _read() -> dict[str, Any] | None:
             try:
                 manifest_mtime = manifest_path.stat().st_mtime
             except OSError:
                 return None
-            if manifest_mtime == self._manifest_mtime and self._manifest_item is not None:
-                item = self._manifest_item
+            if (
+                manifest_mtime == cached_manifest_mtime
+                and cached_manifest_item is not None
+            ):
+                item = cached_manifest_item
             else:
                 try:
                     item = manifest.load(manifest_path)
                 except Exception:
                     return None
-                self._manifest_mtime = manifest_mtime
-                self._manifest_item = item
             new_lines: list[str] = []
             try:
                 size = log_path.stat().st_size
@@ -197,13 +207,14 @@ class JobDetailScreen(Screen[None]):
                 line.decode("utf-8", errors="replace").rstrip()
                 for line in complete_lines
             ]
-            error_code = self._error_code
-            error_line = self._error_line
-            if item["state"] == "Failed" and not self._error_checked:
+            error_code = cached_error_code
+            error_line = cached_error_line
+            if item["state"] == "Failed" and not error_checked:
                 error_code = errors.classify(log_path)
                 error_line = errors.first_matching_line(log_path, error_code)
             return {
                 "item": item,
+                "manifest_mtime": manifest_mtime,
                 "new_lines": new_lines,
                 "new_offset": new_offset,
                 "pending_bytes": pending_bytes,
@@ -212,8 +223,11 @@ class JobDetailScreen(Screen[None]):
                 "reset": reset,
             }
 
-        snapshot = await asyncio.to_thread(_read)
-        self._apply_detail_snapshot(snapshot)
+        try:
+            snapshot = await asyncio.to_thread(_read)
+            self._apply_detail_snapshot(snapshot)
+        finally:
+            self._refresh_in_flight = False
 
     def _set_static(self, selector: str, markup: str) -> None:
         """Update a Static only when its content actually changed."""
@@ -226,6 +240,8 @@ class JobDetailScreen(Screen[None]):
         if snapshot is None:
             return
         item = snapshot["item"]
+        self._manifest_mtime = snapshot["manifest_mtime"]
+        self._manifest_item = item
         self._error_code = snapshot["error_code"]
         self._error_line = snapshot["error_line"]
         dest = item["destination"]

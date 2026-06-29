@@ -82,6 +82,7 @@ class DashboardScreen(Screen[None]):
         self._filter_needle = ""
         self._detail_job_id: str | None = None
         self._detail_visible = True
+        self._refresh_in_flight = False
         # IDs currently rendered in the table (post-filter); selection and
         # actions are restricted to these so a filtered-out job is never the
         # silent target of View Logs / Cancel.
@@ -160,6 +161,11 @@ class DashboardScreen(Screen[None]):
     # ── Data refresh ────────────────────────────────────────────────────
 
     async def _refresh_jobs_async(self) -> None:
+        if self.app.screen is not self:
+            return
+        if self._refresh_in_flight:
+            return
+        self._refresh_in_flight = True
         try:
             detail_target = self._detail_job_id
             active = await asyncio.to_thread(jobs.active_jobs)
@@ -194,6 +200,8 @@ class DashboardScreen(Screen[None]):
             )
         except Exception as exc:
             self.notify(f"Job refresh failed: {exc}", severity="error")
+        finally:
+            self._refresh_in_flight = False
 
     def _read_log_tail(self, job_id: str) -> list[str]:
         """Tail the job log, skipping the read when size/mtime are unchanged."""

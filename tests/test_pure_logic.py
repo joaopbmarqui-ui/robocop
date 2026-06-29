@@ -592,6 +592,9 @@ def _write_manifest(jobs_dir: Path, state: str, finished_at: str | None = None) 
 
 
 class TestJobsListing:
+    def setup_method(self) -> None:
+        jobs._manifest_cache.clear()
+
     def test_no_jobs_dir_returns_empty(self, tmp_path: Path) -> None:
         assert jobs.active_jobs(root=tmp_path / "nonexistent") == []
         assert jobs.history_jobs(root=tmp_path / "nonexistent") == []
@@ -667,6 +670,50 @@ class TestJobsListing:
         _write_manifest(jdir, "Failed", finished_at=now_utc())
         _write_manifest(jdir, "Cancelled", finished_at=now_utc())
         assert jobs.can_launch(root=jdir) is True
+
+    def test_launch_slot_short_circuit_stops_after_cap(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        paths = [Path(f"/jobs/job-{index}/manifest.json") for index in range(10)]
+        calls: list[Path] = []
+
+        def fake_reconcile(path: Path) -> manifest.JobManifest:
+            calls.append(path)
+            return _minimal_manifest(id=path.parent.name, state="Running")
+
+        monkeypatch.setattr(jobs, "_manifest_paths", lambda root=None: paths)
+        monkeypatch.setattr(jobs, "reconcile_manifest", fake_reconcile)
+
+        launch_slots = jobs.launch_slot_jobs(root=Path("/jobs"))
+
+        assert len(launch_slots) == jobs.RUNNING_CAP
+        assert calls == paths[: jobs.RUNNING_CAP]
+
+    def test_active_jobs_cache_skips_unchanged_old_terminal_manifests(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        jdir = tmp_path / "jobs"
+        jdir.mkdir()
+        old_ts = (
+            datetime.now(timezone.utc) - jobs.ACTIVE_WINDOW - timedelta(days=1)
+        ).strftime("%Y-%m-%dT%H:%M:%SZ")
+        for _ in range(5):
+            _write_manifest(jdir, "Succeeded", finished_at=old_ts)
+
+        assert jobs.active_jobs(root=jdir) == []
+
+        loads = 0
+        original_load = manifest.load
+
+        def counting_load(path: Path) -> manifest.JobManifest:
+            nonlocal loads
+            loads += 1
+            return original_load(path)
+
+        monkeypatch.setattr(manifest, "load", counting_load)
+
+        assert jobs.active_jobs(root=jdir) == []
+        assert loads == 0
 
     def test_create_job_if_slot_available_serializes_one_remaining_slot(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch

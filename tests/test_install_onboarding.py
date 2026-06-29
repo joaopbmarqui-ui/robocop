@@ -6,6 +6,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -92,7 +93,20 @@ chmod +x "$3/bin/pip"
     assert "DISPATCH_ALLOW_ONLINE_PIP" in result.stderr
 
 
-def test_install_creates_runtime_artifacts_with_mocked_edge_tools(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "email",
+    [
+        pytest.param("dispatch-smoke@example.com", id="simple"),
+        pytest.param(
+            'dispatch"team\\north\tline\nnext@example.com',
+            id="json-special-characters",
+        ),
+    ],
+)
+def test_install_creates_runtime_artifacts_with_mocked_edge_tools(
+    tmp_path: Path,
+    email: str,
+) -> None:
     if shutil.which("sh") is None:
         pytest.skip("install.sh smoke requires sh")
 
@@ -126,8 +140,11 @@ EOF
   chmod +x "$3/bin/python"
   exit 0
 fi
+if [ "${1:-}" = "-" ]; then
+  exec "__REAL_PYTHON__" "$@"
+fi
 exit 0
-""",
+""".replace("__REAL_PYTHON__", fake_path(Path(sys.executable))),
         encoding="utf-8",
     )
     fake_python.chmod(0o755)
@@ -139,7 +156,7 @@ exit 0
             "HOME": fake_path(home),
             "USER": "testuser",
             "DISPATCH_DATA_ROOT": fake_path(data_root),
-            "DISPATCH_EMAIL": "dispatch-smoke@example.com",
+            "DISPATCH_EMAIL": email,
             "DISPATCH_PYTHON_BIN": fake_path(fake_python),
             "PATH": f"{fake_path(fake_bin)}{os.pathsep}{env['PATH']}",
         }
@@ -160,7 +177,7 @@ exit 0
     assert (dispatch_home / "jobs").is_dir()
     assert (dispatch_home / "venv" / "bin" / "python").is_file()
     data = json.loads((dispatch_home / "config.json").read_text(encoding="utf-8"))
-    assert data["form_defaults"]["email"] == "dispatch-smoke@example.com"
+    assert data == {"form_defaults": {"email": email}}
     assert (dispatch_home / "installed_version").read_text(encoding="utf-8") == (
         ROOT / "VERSION"
     ).read_text(encoding="utf-8")

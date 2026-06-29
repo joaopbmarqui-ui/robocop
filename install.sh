@@ -80,7 +80,20 @@ if [ ! -f "$CONFIG" ]; then
     printf "Email: "
     read -r EMAIL
   fi
-  printf '{\n  "form_defaults": {\n    "email": "%s"\n  }\n}\n' "$EMAIL" >"$CONFIG"
+  CONFIG_TMP="$CONFIG.tmp.$$"
+  trap 'rm -f "$CONFIG_TMP"' 0
+  trap 'exit 1' 1 2 15
+  "$PYTHON_BIN" - "$CONFIG_TMP" "$EMAIL" <<'PY'
+import json
+import sys
+
+config_path, email = sys.argv[1:]
+with open(config_path, "w", encoding="utf-8", newline="\n") as config_file:
+    json.dump({"form_defaults": {"email": email}}, config_file, indent=2)
+    config_file.write("\n")
+PY
+  mv "$CONFIG_TMP" "$CONFIG"
+  trap - 0 1 2 15
 fi
 
 cp "$ROOT_DIR/VERSION" "$DISPATCH_HOME/installed_version"

@@ -1,144 +1,137 @@
 # Dispatch Edge Deploy Workflow
 
-Run from `D:\Projects\robocop` unless a command is explicitly remote.
+Run normal releases from `D:\Projects\edge-deploy-core`, not from this repo.
 
-## 1. Local Preflight
+## 1. Default Release
 
 ```powershell
+cd D:\Projects\robocop
 git status --short --branch
-git remote -v
-git log --oneline --decorate --max-count=8
 .\tools\dev\local_check.ps1
+git add <files>
+git commit -m "Describe the change"
+
+cd D:\Projects\edge-deploy-core
+py -m edge_deploy release --tool robocop --smoke standard
 ```
 
-If the worktree is dirty, identify whether the dirt belongs to the current deployment work. Preserve unrelated user changes.
+Use `--tool both` when Autobench and Dispatch should be released in the same
+process.
 
-## 2. Publish a Bitbucket Snapshot
+The release command owns:
+
+- deployment snapshot publication,
+- node03 and node04 update,
+- interactive RSA prompt handling in the visible terminal,
+- safe Git preflight and bounded remote-tracking-ref repair,
+- drift and smoke validation,
+- JSON release reports under `edge-deploy\reports\release-*`.
+
+## 2. Release Evidence
+
+Accept the release only when:
+
+- `release.json` has `overall_status: "passed"`,
+- each Robocop rollout report has `status: "passed"`,
+- update, drift, and smoke checks passed for node03 and node04,
+- `remote_git_preflight` is present for each node,
+- no secret-shaped values are present in the report.
+
+Report the release directory, local source commit, deployment SHA, nodes
+updated, and any authentication handoff.
+
+## 3. Recovery Entry Criteria
+
+Use the remaining sections only when:
+
+- the release command is unavailable,
+- a release report points to a node-specific condition that needs manual
+  inspection,
+- a first-time node bootstrap is required,
+- offline dependencies must be refreshed outside the orchestrator.
+
+Do not use these commands as the normal release workflow.
+
+## 4. Repo-Local Snapshot Recovery
+
+If the orchestrator cannot publish, the repo-local helper can create a
+deployment snapshot:
 
 ```powershell
-git fetch bitbucket main
-$source = (git rev-parse --short HEAD).Trim()
-$parent = (git rev-parse bitbucket/main).Trim()
-$tree = (git rev-parse 'HEAD^{tree}').Trim()
-$date = Get-Date -Format 'yyyy-MM-dd HH:mm'
-$message = "Deploy snapshot: Dispatch from robocop local main $source ($date)"
-$snapshot = (git commit-tree $tree -p $parent -m $message).Trim()
-git show --stat --oneline --no-renames --max-count=1 $snapshot
-git push bitbucket ($snapshot + ':refs/heads/main')
+cd D:\Projects\robocop
+.\tools\dev\publish_dispatch_snapshot.ps1 -ReviewedCommit <sha> -RunLocalCheck
 git fetch bitbucket main
 git log --oneline -1 bitbucket/main
 ```
 
-If Soteri flags `PASSWORD_IN_URL`, inspect the lines. For documentation false positives, remove literal credential-in-URL examples and publish a new snapshot. Do not store embedded credentials in Git remote URLs.
+Record why the orchestrator publish path was bypassed.
 
-## 3. Prepare Authenticated Edge Sessions
+## 5. Manual Node Recovery
 
-Inspect before sending commands:
+Prepare authenticated sessions only after inspecting current panes:
 
 ```powershell
 tmux ls
-tmux capture-pane -t 0 -p -S -60
-tmux capture-pane -t autobench_node04 -p -S -60
+tmux list-panes -a -F "#{session_name}:#{window_index}.#{pane_index} #{pane_current_command} #{pane_current_path}"
+tmux capture-pane -t <session> -p -S -80
 ```
 
-If SSH has auto-logged out, put each pane back at PASSCODE prompt:
+If SSH has logged out, restart SSH and let the human enter the RSA PASSCODE.
 
-```powershell
-tmux send-keys -t 0 'ssh -p 2222 -o ServerAliveInterval=30 e176097@hde2stl020003.mastercard.int' Enter
-tmux send-keys -t autobench_node04 'ssh -p 2222 -o ServerAliveInterval=30 e176097@hde2stl020004.mastercard.int' Enter
-```
-
-Wait for the user to authenticate and confirm both panes are at remote shell prompts.
-
-## 4. Update Each Node
-
-Prefer literal tmux injection for complex commands:
-
-```powershell
-$sha = '<snapshot-sha>'
-$node03 = @'
-cd /ads_storage/dispatch && echo __NODE03_DEPLOY_START__ && GIT_TERMINAL_PROMPT=0 git fetch bitbucket main && git reset --hard <snapshot-sha> && chmod 755 /ads_storage/dispatch && chmod -R a+rX /ads_storage/dispatch && chmod +x update.sh install.sh && PYBIN=$(command -v python3.11 || command -v python3.10 || command -v python3) && echo PYBIN:$PYBIN && $PYBIN -m compileall dispatch scr && DISPATCH_EMAIL=${DISPATCH_EMAIL:-e176097@mastercard.com} DISPATCH_PYTHON_BIN=$PYBIN ./install.sh && echo INSTALLED_VERSION && cat /ads_storage/$USER/.dispatch/installed_version && echo DISPATCH_HELP && ~/.local/bin/dispatch --help | head -8 && echo __NODE03_DEPLOY_END__
-'@.Replace('<snapshot-sha>', $sha)
-tmux send-keys -t 0 -l $node03
-tmux send-keys -t 0 Enter
-```
-
-For node04, use session `autobench_node04` and replace the markers with `NODE04`.
-
-Poll until end markers appear:
-
-```powershell
-tmux capture-pane -t 0 -p -S -160
-tmux capture-pane -t autobench_node04 -p -S -160
-```
-
-## 5. Repair Broken Remote-Tracking Refs
-
-If the remote fetch reports `cannot lock ref 'refs/remotes/bitbucket/main': unable to resolve reference`, run this in the affected remote checkout, then rerun the update:
+On the node, the recovery update shape is:
 
 ```bash
 cd /ads_storage/dispatch
-git update-ref -d refs/remotes/bitbucket/main 2>/dev/null || true
-rm -f .git/refs/remotes/bitbucket/main .git/logs/refs/remotes/bitbucket/main .git/packed-refs.lock
-mkdir -p .git/refs/remotes/bitbucket .git/logs/refs/remotes/bitbucket
-GIT_TERMINAL_PROMPT=0 git fetch bitbucket main
-git reset --hard <snapshot-sha>
-```
-
-## 6. Prove `update.sh`
-
-Run on each node after install:
-
-```bash
-cd /ads_storage/dispatch
-GIT_TERMINAL_PROMPT=0 GIT_REMOTE=bitbucket GIT_BRANCH=main ./update.sh <snapshot-sha>
+GIT_TERMINAL_PROMPT=0 DISPATCH_UPDATE_REMOTE=bitbucket DISPATCH_UPDATE_BRANCH=main ./update.sh <snapshot-sha>
 git log --oneline -1
 git status --porcelain
+```
+
+`update.sh` preserves untracked runtime paths, reasserts shared permissions,
+and repairs the known corrupt `refs/remotes/bitbucket/main` signature. If the
+script reports that install is needed, run:
+
+```bash
+cd /ads_storage/dispatch
+DISPATCH_EMAIL=${DISPATCH_EMAIL:-e176097@mastercard.com} DISPATCH_PYTHON_BIN=$(command -v python3.11 || command -v python3.10 || command -v python3) ./install.sh
 cat /ads_storage/$USER/.dispatch/installed_version
 ~/.local/bin/dispatch --help | head -8
 ```
 
-Expected evidence:
+## 6. Repo-Local Harness Recovery
 
-- HEAD is the snapshot SHA.
-- `git status --porcelain` prints nothing.
-- installed version prints the repo version.
-- help output starts with `usage: dispatch [-h]`.
+`tools.prod_tui deploy` is a recovery/diagnostic interface when the shared
+release command is unavailable or when a node report needs deeper evidence:
 
-## 7. Shared Permissions
-
-Apply on each node:
-
-```bash
-cd /ads_storage/dispatch
-chmod 755 /ads_storage/dispatch
-chmod -R a+rX /ads_storage/dispatch
-chmod a+x /ads_storage/dispatch/*.sh /ads_storage/dispatch/scr/*.py
+```powershell
+py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <deployment-sha> --install auto --json-report tools/prod_tui/reports/deploy-node03.json
+py -m tools.prod_tui drift --config tools/prod_tui/config.yaml --commit <deployment-sha> --json-report tools/prod_tui/reports/drift-node03.json
+py -m tools.prod_tui smoke --config tools/prod_tui/config.yaml --level all --save-screens --reuse-session --json-report tools/prod_tui/reports/smoke-node03.json
 ```
 
-Verify with quote-free commands:
+For node04, use `tools/prod_tui/config-node04.yaml` consistently.
 
-```bash
-ls -ld /ads_storage/dispatch
-ls -l /ads_storage/dispatch/*.sh /ads_storage/dispatch/scr/*.py
-find /ads_storage/dispatch -type d ! -perm -001 -print | head -20
+## 7. Offline Bootstrap or Dependency Recovery
+
+Use the bundle path only for first-time setup, vendor refreshes, offline
+installs, or recovery when the server working tree is not usable:
+
+```powershell
+cd D:\Projects\robocop
+.\deploy_and_install.ps1
 ```
 
-Expected evidence:
+The generated `dispatch_deploy.zip` is an artifact and must not be committed.
 
-- `/ads_storage/dispatch` is `drwxr-xr-x` or more permissive.
-- `install.sh`, `update.sh`, and `scr/*.py` are `-rwxr-xr-x` or more permissive.
-- The non-world-traversable directory scan prints no paths.
-
-## 8. Final Report
+## 8. Final Recovery Report
 
 Include:
 
-- local source commit
-- Bitbucket snapshot SHA
-- nodes updated
-- local validation result
-- remote compile/install/help result
-- `update.sh` final verification result
-- shared-permission evidence
-- any repaired remote-state issue or auth handoff
+- why the default `edge_deploy release` path was not sufficient,
+- local source commit,
+- deployment SHA,
+- nodes touched,
+- remote update/install/smoke evidence,
+- drift evidence,
+- shared-permission evidence,
+- any authentication or remote-state issue.

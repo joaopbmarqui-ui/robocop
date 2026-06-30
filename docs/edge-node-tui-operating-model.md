@@ -39,16 +39,21 @@ Recommended companion docs for each tool:
 
 ## Golden Path
 
-For normal development and deployment:
+For normal development and deployment of the current Dispatch tool:
 
 1. Develop and test locally.
 2. Commit the change.
-3. Push to the corporate Git remote.
-4. On each Edge Node, fetch and checkout the target commit.
-5. Run the per-user installer.
-6. Verify node drift is zero.
-7. Run production smoke checks through tmux/SSH.
-8. Record the deployed commit and report path.
+3. Run the shared release orchestrator from `D:\Projects\edge-deploy-core`:
+
+   ```powershell
+   py -m edge_deploy release --tool robocop --smoke standard
+   ```
+
+4. Enter RSA PASSCODEs in the visible terminal when prompted.
+5. Verify the generated release report shows successful update, drift, smoke,
+   and `remote_git_preflight` checks for node03 and node04.
+6. Record the release report directory, source commit, deployment SHA, and any
+   authentication handoff.
 
 Every exception should be explicit. Zip upload, manual file sync, and direct
 remote edits are fallback paths, not the default workflow.
@@ -563,13 +568,28 @@ First-time local setup:
 py -m pip install -e ".[dev]"
 ```
 
-## Deployment Paths
+## Release and Recovery Paths
 
-Use three deployment paths, each with a clear purpose.
+Use one default release path and keep lower-level deployment paths for explicit
+recovery or diagnostics.
 
-### 1. Git Reset on the Edge Node
+### 1. Shared Release Orchestrator
 
-Preferred for committed, reviewable deployments:
+Default for committed, reviewable Dispatch deployments:
+
+```powershell
+cd D:\Projects\edge-deploy-core
+py -m edge_deploy release --tool robocop --smoke standard
+```
+
+Use `--tool both` for a coordinated Autobench + Dispatch release. The
+orchestrator publishes the deployment snapshot, updates each Edge Node, runs
+drift and smoke checks, and writes the release report.
+
+### 2. Git Reset on the Edge Node
+
+Recovery path when the orchestrator is unavailable or a release report calls
+for node-specific repair:
 
 ```bash
 cd /ads_storage/<tool>
@@ -581,22 +601,22 @@ Use a tool-specific variable name in real projects, for example
 `ANALYZER_PYTHON_BIN` or `REPORT_TUI_PYTHON_BIN`. The generic examples use
 `TOOL_PYTHON_BIN` only as a placeholder.
 
-Use exact commit checkout for release validation or rollback:
+Use exact commit checkout for recovery validation or rollback:
 
 ```bash
 GIT_REMOTE=<deployment-remote> GIT_BRANCH=main ./update.sh <commit-sha>
 ./install.sh
 ```
 
-For production promotion, exact commits are better than branch names. Branch
-names are convenient; commit IDs are auditable.
+For recovery, exact commits are better than branch names. Branch names are
+convenient; commit IDs are auditable.
 
 `update.sh` should fetch the deployment remote, `git reset --hard` the shared
 tree to the target ref, and reassert shared read/execute permissions. It must
 not `git clean`, because per-node untracked runtime/vendor artifacts can be
 intentionally present.
 
-Recommended update record:
+Recommended recovery record:
 
 ```text
 node=<edge-node>
@@ -609,7 +629,7 @@ drift=0
 report=<path>
 ```
 
-### 2. Incremental Sync Over an Authenticated Session
+### 3. Incremental Sync Over an Authenticated Session
 
 Useful for fast iteration when:
 
@@ -632,7 +652,7 @@ deploy-all  deploy all tracked runtime files, including sensitive/shared scripts
 If a tool has high-risk runtime scripts, make `sync` refuse them by default and
 require an explicit flag or mode for full parity.
 
-### 3. Full Bundle Upload
+### 4. Full Bundle Upload
 
 Use for:
 
@@ -655,8 +675,8 @@ Bundle upload should still end in the same state as Git pull:
 4. drift verified where possible,
 5. smoke checks run.
 
-If a bundle path skips these steps, it is not equivalent to the normal
-deployment path.
+If a bundle path skips these steps, it is not equivalent to the default release
+path.
 
 ## Drift Detection
 
@@ -1051,18 +1071,17 @@ For a new Edge Node TUI, create these before production use:
 
 ## Mature Workflow Checklist
 
-Use this as the release/update loop:
+Use this as the release/update loop for Dispatch:
 
 1. Run local checks.
 2. Commit the change.
-3. Push to corporate Git.
-4. On each Edge Node, fetch and checkout the target commit.
-5. Run `install.sh`.
-6. Verify deployed file drift is zero.
-7. Run Level 1/2 smoke.
-8. Run controlled action checks if the change touches user workflows.
-9. Record the deployed commit and report path.
-10. Leave the session in a clean shell state.
+3. Run `py -m edge_deploy release --tool robocop --smoke standard` from
+   `D:\Projects\edge-deploy-core`.
+4. Enter RSA PASSCODEs in the visible terminal when prompted.
+5. Verify release report success for both nodes.
+6. Run deeper harness levels only when the change touches user workflows or the
+   release report calls for diagnosis.
+7. Record the release report directory and deployed SHA.
 
 If any step fails, stop and fix the workflow before continuing. A mature Edge
 Node TUI workflow is valuable because it fails early and visibly, before users

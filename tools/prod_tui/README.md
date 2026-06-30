@@ -1,6 +1,17 @@
 # Dispatch Production TUI Harness
 
-This directory contains the **local tmux/psmux + SSH** harness for validating the real Dispatch Textual TUI on a Hadoop Edge Node.
+This directory contains the **local tmux/psmux + SSH** harness for validating and diagnosing the real Dispatch Textual TUI on a Hadoop Edge Node.
+
+The default release workflow is not this harness directly. For normal
+production releases, run the shared orchestrator:
+
+```powershell
+cd D:\Projects\edge-deploy-core
+py -m edge_deploy release --tool robocop --smoke standard
+```
+
+Use this harness when the release report calls for deeper node diagnosis or
+when a controlled manual recovery needs extra smoke/drift evidence.
 
 Instead of SSHing into the Edge Node and spinning up tmux there, the harness creates a **local** tmux session whose pane is the SSH connection itself. All pane control (key injection, screen capture, attach) happens locally. One-off remote commands (file writes, `impala-shell` queries) run through the already-authenticated tmux pane so the harness does not burn a second RSA prompt.
 
@@ -156,14 +167,16 @@ By default Level 3 first runs Level 1 and 2. Use `--skip-level12` only when an o
 
 Audit logs are written as JSONL under `tools/prod_tui/logs/`.
 
-## Deploying / keeping nodes in sync (`_seam_deploy.py`)
+## Recovery deployment / keeping nodes in sync (`_seam_deploy.py`)
 
 For the complete contributor workflow, including GitHub + Bitbucket remote
 policy and when to use each deploy path, see
 [`docs/development-workflow.md`](../../docs/development-workflow.md).
 
-For committed, reviewable deployments, use the public deploy/drift commands
-against an already-authenticated session:
+Normal releases are handled by `edge_deploy release`. Use the public
+deploy/drift commands below only when the orchestrator is unavailable or a
+release report calls for node-specific recovery against an already-authenticated
+session:
 
 ```powershell
 py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <deployment-sha> --install auto --json-report tools/prod_tui/reports/deploy-node03.json --reuse-session
@@ -218,7 +231,7 @@ ADR-0005 human review for merging that change.
 ### Which deploy path to use
 
 - Use `py -m tools.prod_tui deploy` plus `py -m tools.prod_tui drift` for
-  committed deployments that should be reproducible and reviewable.
+  recovery or diagnostic work against committed deployment snapshots.
 - Use `_seam_deploy sync` for fast local-to-node iteration after the node's
   tmux/SSH/Kerberos session is already healthy.
 - Use `_seam_deploy deploy-all` only for an intentional parity operation that

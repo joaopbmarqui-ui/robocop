@@ -33,11 +33,19 @@ DISPATCH_EMAIL=you@example.com DISPATCH_PYTHON_BIN=$(command -v python3) ./insta
 dispatch
 ```
 
-For the full contributor workflow, including local validation, GitHub +
-Bitbucket remotes, edge-node updates, and production harness checks, see
+For the full contributor workflow, including local validation, the default
+`edge-deploy-core` release command, recovery paths, and production harness
+checks, see
 [docs/development-workflow.md](docs/development-workflow.md).
 
-A README-only release validates snapshot publishing, rollout, drift, and standard smoke checks without triggering installation.
+Default production releases run from `D:\Projects\edge-deploy-core`:
+
+```powershell
+py -m edge_deploy release --tool robocop --smoke standard
+```
+
+A README-only release validates the same release pipeline without triggering
+installation.
 
 ## Run
 

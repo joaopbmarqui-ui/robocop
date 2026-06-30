@@ -45,15 +45,22 @@ The skill contains the project-specific rules for Textual architecture, performa
 
 ## Edge deployment skill
 
-For Bitbucket snapshot publishing, Edge Node updates, tmux/SSH deployment,
-remote smoke checks, or shared `/ads_storage/dispatch` permission fixes, use:
+For the default development and release workflow, use
+`docs/development-workflow.md`. Releases are orchestrated from
+`D:\Projects\edge-deploy-core` with `py -m edge_deploy release`; repo-local
+Bitbucket publishing, `tools.prod_tui deploy`, `update.sh`, and tmux/SSH
+steps are recovery, bootstrap, or deep-troubleshooting paths.
+
+For Dispatch-specific recovery details, Edge Node diagnostics, remote smoke
+checks, or shared `/ads_storage/dispatch` permission fixes, use:
 
 ```text
 .agents/skills/dispatch-edge-deploy/SKILL.md
 ```
 
-The skill captures the repeatable procedure for deploying Dispatch through the
-corporate `bitbucket` remote and validating node03/node04.
+The skill delegates the normal release to `edge-deploy-core` and keeps
+repo-local node tooling documented for explicit recovery, bootstrap, and
+diagnostic work only.
 
 ## Improve skill
 
@@ -86,8 +93,8 @@ Useful mock scenarios:
 
 Captured emails are written to `mocks/sent_emails/` and should not be committed.
 
-For the full development workflow, including local checks, Bitbucket sync,
-edge-node update paths, and production harness validation, see
+For the full development workflow, including local checks, orchestrated
+release, recovery paths, and production harness validation, see
 `docs/development-workflow.md`.
 
 ## Validation

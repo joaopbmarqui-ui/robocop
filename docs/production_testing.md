@@ -3,6 +3,17 @@
 This is the canonical process for validating the real Dispatch Textual TUI on a
 Hadoop Edge Node.
 
+For normal production releases, run the shared release orchestrator instead of
+driving this harness directly:
+
+```powershell
+cd D:\Projects\edge-deploy-core
+py -m edge_deploy release --tool robocop --smoke standard
+```
+
+Use this document for deeper validation, recovery, or diagnosis after reviewing
+the release report.
+
 ```text
 local machine
   └─ tmux session
@@ -112,13 +123,15 @@ preflight, tmux, smoke, job, level, and deploy commands.
 The agent loop is: capture screen → reason about the visible UI → send a
 key/action → capture again → assert the expected state.
 
-## Deployment Path Before Testing
+## Recovery or Diagnostic Deployment Before Testing
 
 Use [docs/development-workflow.md](./development-workflow.md) as the canonical
-workflow. Choose the deployment path before running production checks:
+workflow. The paths below are recovery and diagnostic options when the shared
+release command is unavailable or a release report points to node-specific
+follow-up:
 
-- **Bitbucket reset via `update.sh`:** preferred for committed, reviewable
-  deployments. Use the public harness commands so the node update, install
+- **Bitbucket reset via `update.sh`:** recovery path for committed, reviewable
+  snapshots. Use the public harness commands so the node update, install
   decision, drift evidence, and JSON report share one command shape:
 
   ```powershell

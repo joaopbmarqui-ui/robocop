@@ -32,12 +32,22 @@ Use this kit when you are starting a **new** terminal UI that will:
 Skip this kit if the tool is a local-only CLI, a web app, or does not need
 per-node deployment and SSH-terminal validation.
 
-**Golden path you are implementing:**
+**Golden path for current Dispatch releases:**
 
 ```text
-local dev -> commit -> push corporate Git -> per-node fetch/checkout ->
-install.sh -> drift zero -> tmux/SSH smoke -> record commit + report
+local dev -> commit -> edge_deploy release -> per-node update/drift/smoke ->
+record release report
 ```
+
+For Dispatch today, run the default release from `D:\Projects\edge-deploy-core`:
+
+```powershell
+py -m edge_deploy release --tool robocop --smoke standard
+```
+
+The older per-node fetch/install/smoke command shape remains useful when
+bootstrapping a new tool that has not yet been added to `edge-deploy-core`, or
+when doing explicit recovery.
 
 ---
 
@@ -52,7 +62,7 @@ roles.
 | Installer | `install.sh` | Idempotent per-user install; preserves user state |
 | Version stamp | `VERSION` | Deployed version written to user runtime home |
 | End-user onboarding | `onboarding.md` | One page: where, install, launch, 2-3 fixes |
-| Dev workflow | `docs/development-workflow.md` | Local loop, Git push, Edge update |
+| Dev workflow | `docs/development-workflow.md` | Local loop, default release command, recovery paths |
 | Operator bootstrap | `docs/edge-node-first-time-setup.md` | Deploy key, shared tree, node inventory |
 | Production testing | `docs/production-testing.md` | Harness levels, safety, failure classes |
 | Operating assumptions | `docs/edge-node-tui-operating-model.md` | Filled copy of the neutral model (tool names) |
@@ -114,7 +124,7 @@ GIT_TERMINAL_PROMPT=0 git fetch <deployment-remote> main
 
 If this prompts, fix credentials before relying on automation.
 
-### Preferred Edge Node update
+### Recovery Edge Node update
 
 ```bash
 cd /ads_storage/<tool>
@@ -122,7 +132,7 @@ GIT_REMOTE=<deployment-remote> GIT_BRANCH=main ./update.sh
 TOOL_PYTHON_BIN=$(command -v python3.11 || command -v python3.10) ./install.sh
 ```
 
-For release validation or rollback, pin an exact commit:
+For recovery validation or rollback, pin an exact commit:
 
 ```bash
 GIT_REMOTE=<deployment-remote> GIT_BRANCH=main ./update.sh <commit-sha>

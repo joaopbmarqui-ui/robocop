@@ -33,6 +33,9 @@ DISPATCH_EMAIL=you@example.com DISPATCH_PYTHON_BIN=$(command -v python3) ./insta
 dispatch
 ```
 
+Contributors should use [CONTRIBUTING.md](CONTRIBUTING.md) for setup,
+validation, commit, and release handoff.
+
 For the full contributor workflow, including local validation, the default
 `edge-deploy-core` release command, recovery paths, and production harness
 checks, see

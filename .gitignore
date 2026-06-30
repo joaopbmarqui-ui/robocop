@@ -6,6 +6,9 @@ tools/prod_tui/reports/
 tools/prod_tui/logs/
 tools/prod_tui/*.log
 tools/prod_tui/_remote_*.py
+home_screen.svg
+view_tui_mockups.html
+robocop_handoff.md
 .understand-anything/
 .venv/
 *.pyc

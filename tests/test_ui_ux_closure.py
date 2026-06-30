@@ -9,7 +9,7 @@ from pathlib import Path
 
 from textual.widgets import DataTable, Input
 
-from dispatch import manifest
+from dispatch import impala, manifest
 from dispatch.app import DispatchApp
 from dispatch.screens.browser import BrowserScreen
 from dispatch.screens.history import PAGE_SIZE, HistoryScreen
@@ -359,6 +359,21 @@ def test_history_empty_state_focuses_search_for_keyboard_use(
     asyncio.run(run())
 
 
+def _fake_table_sizes(
+    sizes: dict[str, tuple[int | None, str]],
+):
+    async def fake(schema: str, table_names: list[str]) -> dict[str, impala.TableStats]:
+        return {
+            name: impala.TableStats(
+                size_bytes=sizes.get(name, (None, "—"))[0],
+                size_display=sizes.get(name, (None, "—"))[1],
+            )
+            for name in table_names
+        }
+
+    return fake
+
+
 def test_browser_placeholder_and_auto_describe_after_show_tables(
     mock_env_with_config, monkeypatch
 ) -> None:
@@ -371,6 +386,15 @@ def test_browser_placeholder_and_auto_describe_after_show_tables(
         return "name|type|comment\nid|string|primary key"
 
     monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
+    monkeypatch.setattr(
+        "dispatch.impala.table_sizes",
+        _fake_table_sizes(
+            {
+                "dispatch_result": (13_212_057, "12.6 MB"),
+                "dispatch_archive": (1_342_177_280, "1.2 GB"),
+            }
+        ),
+    )
     monkeypatch.setattr("dispatch.impala.describe_table", fake_describe_table)
 
     async def run() -> None:
@@ -408,6 +432,10 @@ def test_browser_show_tables_failure_replaces_stale_schema_with_error(
         return "name|type|comment\nid|string|primary key"
 
     monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
+    monkeypatch.setattr(
+        "dispatch.impala.table_sizes",
+        _fake_table_sizes({"dispatch_result": (13_212_057, "12.6 MB")}),
+    )
     monkeypatch.setattr("dispatch.impala.describe_table", fake_describe_table)
 
     async def run() -> None:
@@ -430,6 +458,46 @@ def test_browser_show_tables_failure_replaces_stale_schema_with_error(
     asyncio.run(run())
 
 
+def test_browser_sorts_by_table_size(mock_env_with_config, monkeypatch) -> None:
+    """Browser can cycle sort modes and order rows by on-disk size."""
+
+    async def fake_show_tables(schema: str, pattern: str = "*") -> list[str]:
+        return ["dispatch_alpha", "dispatch_zulu"]
+
+    async def fake_describe_table(full_table: str) -> str:
+        return "name|type|comment\nid|string|primary key"
+
+    async def fake_table_sizes(schema: str, table_names: list[str]) -> dict[str, impala.TableStats]:
+        return {
+            "dispatch_alpha": impala.TableStats(size_bytes=13_212_057, size_display="12.6 MB"),
+            "dispatch_zulu": impala.TableStats(size_bytes=1_342_177_280, size_display="1.2 GB"),
+        }
+
+    monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
+    monkeypatch.setattr("dispatch.impala.table_sizes", fake_table_sizes)
+    monkeypatch.setattr("dispatch.impala.describe_table", fake_describe_table)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = BrowserScreen(auto_load=False)
+            app.push_screen(screen)
+            await pilot.pause()
+            await screen.action_show_tables(describe_selection=False)
+            await pilot.pause()
+
+            table = screen.query_one("#browser-table", DataTable)
+            assert table.get_row_at(0)[0] == "dispatch_alpha"
+            assert table.get_row_at(1)[0] == "dispatch_zulu"
+
+            screen.action_cycle_sort()
+            assert table.get_row_at(0)[0] == "dispatch_zulu"
+            assert table.get_row_at(1)[0] == "dispatch_alpha"
+            assert table.get_row_at(0)[2] == "1.2 GB"
+
+    asyncio.run(run())
+
+
 def test_browser_drop_requires_typing_full_table_name(mock_env_with_config, monkeypatch) -> None:
     """DROP confirmation requires the fully-qualified table name, not just Y."""
     calls: list[str] = []
@@ -447,7 +515,7 @@ def test_browser_drop_requires_typing_full_table_name(mock_env_with_config, monk
             app.push_screen(screen)
             await pilot.pause()
             table = screen.query_one("#browser-table")
-            table.add_row("danger_table", "table")
+            table.add_row("danger_table", "table", "12.6 MB")
             table.cursor_coordinate = (0, 0)
 
             worker = screen.action_drop()
@@ -485,7 +553,7 @@ def test_typed_drop_confirmation_button_does_not_bypass_input(
             app.push_screen(screen)
             await pilot.pause()
             table = screen.query_one("#browser-table")
-            table.add_row("danger_table", "table")
+            table.add_row("danger_table", "table", "12.6 MB")
             table.cursor_coordinate = (0, 0)
 
             worker = screen.action_drop()
@@ -561,7 +629,7 @@ def test_browser_drop_replaces_schema_table_with_persistent_result_message(
             app.push_screen(screen)
             await pilot.pause()
             table = screen.query_one("#browser-table", DataTable)
-            table.add_row("danger_table", "table")
+            table.add_row("danger_table", "table", "12.6 MB")
             table.cursor_coordinate = (0, 0)
 
             await screen.action_describe()

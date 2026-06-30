@@ -59,6 +59,7 @@ HELP_TEXT = """\
 
 [bold]Browser[/]
   [b]S[/]         Load tables for schema + filter
+  [b]O[/]         Cycle sort: name \u2192 size
   [b]Enter[/]     Describe selected table
   [b]D[/]         Drop selected table (typed confirmation)
   [b]B / Esc[/]   Back

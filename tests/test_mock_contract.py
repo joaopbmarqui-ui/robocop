@@ -281,6 +281,17 @@ class TestMetadataQueryRouting:
         )
         assert result.returncode == 0
 
+    @pytest.mark.parametrize("scenario", ["happy_path", "syntax_error"])
+    def test_show_table_stats_always_succeeds(self, scenario: str, tmp_path: Path) -> None:
+        state_dir = str(tmp_path / "state")
+        result = _run(
+            ["--output_delimiter=|", "-q", "SHOW TABLE STATS aa_enc.dispatch_result;"],
+            scenario=scenario,
+            env_overrides={"DISPATCH_MOCK_STATE_DIR": state_dir},
+        )
+        assert result.returncode == 0
+        assert "12.60MB" in result.stdout
+
 
 # ---------------------------------------------------------------------------
 # memory_exceeded retry simulation

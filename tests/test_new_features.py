@@ -61,6 +61,38 @@ class TestBrowserDescribeParsing:
         assert len(columns) == 1
 
 
+class TestDataSizeFormatting:
+    def test_parse_data_size_units(self) -> None:
+        from dispatch.formatting import parse_data_size
+
+        assert parse_data_size("0B") == 0
+        assert parse_data_size("12.60MB") == 13_212_057
+        assert parse_data_size("370.45MB") == 388_444_979
+        assert parse_data_size("1.25GB") == 1_342_177_280
+
+    def test_format_data_size_is_consistent(self) -> None:
+        from dispatch.formatting import format_data_size
+
+        assert format_data_size(0) == "0 B"
+        assert format_data_size(13_212_057) == "12.6 MB"
+        assert format_data_size(1_342_177_280) == "1.2 GB"
+        assert format_data_size(None) == "—"
+
+
+class TestImpalaTableStatsParsing:
+    def test_parse_table_stats_output_sums_partitions(self) -> None:
+        from dispatch.impala import parse_table_stats_output
+
+        raw = (
+            "#Rows|#Files|Size|Bytes Cached|Format|Incremental stats\n"
+            "-1|1|12.60MB|NOT CACHED|TEXT|false\n"
+            "-1|2|1.25GB|NOT CACHED|PARQUET|false\n"
+        )
+        stats = parse_table_stats_output(raw)
+        assert stats.size_bytes == 13_212_057 + 1_342_177_280
+        assert stats.size_display == "1.3 GB"
+
+
 # =============================================================================
 # Job Detail elapsed time
 # =============================================================================

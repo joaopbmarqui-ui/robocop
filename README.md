@@ -37,7 +37,7 @@ For the full contributor workflow, including local validation, GitHub +
 Bitbucket remotes, edge-node updates, and production harness checks, see
 [docs/development-workflow.md](docs/development-workflow.md).
 
-Docs-only release markers are safe for deployment validation; runtime behavior changes only when code/config paths change.
+A README-only release validates snapshot publishing, rollout, drift, and standard smoke checks without triggering installation.
 
 ## Run
 

@@ -116,6 +116,7 @@ context:
 .\tools\dev\publish_dispatch_snapshot.ps1 -ReviewedCommit <sha> -RunLocalCheck
 .\deploy_and_install.ps1
 py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <deployment-sha> --install auto --json-report tools/prod_tui/reports/deploy-node03.json
+py -m tools.prod_tui drift --config tools/prod_tui/config.yaml --commit <deployment-sha> --json-report tools/prod_tui/reports/drift-node03.json
 ```
 
 ```bash

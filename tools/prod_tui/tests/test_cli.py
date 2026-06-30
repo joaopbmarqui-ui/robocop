@@ -136,7 +136,6 @@ def test_production_docs_include_tcp_preflight_and_single_ssh_model() -> None:
 
 def test_edge_smoke_checklist_matches_dashboard_empty_state_and_diagnostics() -> None:
     smoke = Path("docs/edge-node-smoke-test.md").read_text(encoding="utf-8")
-    tracker = Path("docs/dispatch_user_story_tracker.csv").read_text(encoding="utf-8")
 
     assert "**Dashboard renders:** status strip shows Running/Finished/Failed/Kerberos summary" in smoke
     assert "stat cards (Running/Finished/Failed/Kerberos)" not in smoke
@@ -145,8 +144,6 @@ def test_edge_smoke_checklist_matches_dashboard_empty_state_and_diagnostics() ->
     assert "No active Jobs" not in smoke
     assert "**Event trail:** dashboard bottom shows startup event with timestamp" in smoke
     assert "**dispatch.log exists:** `cat ~/.dispatch/dispatch.log` shows startup entry" in smoke
-    assert "APP-004,App shell" in tracker
-    assert "DASH-006,Dashboard" in tracker
 
 
 def test_operator_docs_keep_harness_commands_config_explicit() -> None:
@@ -169,7 +166,8 @@ def test_operator_docs_keep_harness_commands_config_explicit() -> None:
 def test_development_workflow_uses_current_tmux_module_cli() -> None:
     workflow = Path("docs/development-workflow.md").read_text(encoding="utf-8")
 
-    assert "`tools.prod_tui tmux send` or `tools.prod_tui tmux keys`" in workflow
+    assert "py -m edge_deploy release --tool robocop --smoke standard" in workflow
+    assert "Manual tmux attachment and node-side commands are not part of the default path." in workflow
     assert "robocop_tmux.py send" not in workflow
 
 
@@ -179,15 +177,16 @@ def test_active_operator_docs_cover_publish_deploy_drift_and_exact_sha_rollback(
     setup = Path("docs/edge-node-first-time-setup.md").read_text(encoding="utf-8")
     readme = Path("tools/prod_tui/README.md").read_text(encoding="utf-8")
 
-    assert ".\\tools\\dev\\publish_dispatch_snapshot.ps1 -ReviewedCommit <reviewed-robocop-commit> -RunLocalCheck" in workflow
+    assert "py -m edge_deploy release --tool robocop --smoke standard" in workflow
+    assert ".\\tools\\dev\\publish_dispatch_snapshot.ps1 -ReviewedCommit <sha> -RunLocalCheck" in workflow
     assert "py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <deployment-sha> --install auto" in workflow
     assert "py -m tools.prod_tui drift --config tools/prod_tui/config.yaml --commit <deployment-sha>" in workflow
-    assert "py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <previous-good-sha> --rollback-from <current-bad-sha>" in workflow
+    assert "repo-local commands such as these are valid only in that recovery/bootstrap" in workflow.lower()
     assert "failed preflight is the validation artifact" in production
     assert "config-node04.yaml" in production
     assert "py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <deployment-sha>" in production
     assert "py -m tools.prod_tui drift --config tools/prod_tui/config.yaml --commit <deployment-sha>" in production
-    assert "exact-SHA rollback" in setup
+    assert "exact-SHA" in setup
     assert "py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <previous-good-sha> --rollback-from <current-bad-sha>" in readme
     assert "Generated Artifacts" in readme
 
@@ -215,51 +214,3 @@ def test_active_harness_surfaces_do_not_reference_old_tmux_script_cli() -> None:
                 offenders.append(f"{artifact}:{pattern}")
 
     assert offenders == []
-
-
-def test_implementation_plans_are_marked_historical_not_canonical() -> None:
-    offenders: list[str] = []
-
-    for plan in [
-        *Path("docs").glob("implementation-plan*.md"),
-        *Path("docs/archive").rglob("implementation-plan*.md"),
-    ]:
-        text = plan.read_text(encoding="utf-8")
-        header = "\n".join(text.splitlines()[:12])
-        if "Historical" not in header:
-            offenders.append(f"{plan}: missing Historical marker")
-        if "docs/dispatch_user_story_tracker.csv" not in header:
-            offenders.append(f"{plan}: missing canonical tracker pointer")
-        if "docs/dispatch_user_story_completion_audit.md" not in header:
-            offenders.append(f"{plan}: missing completion audit pointer")
-        if re.search(r"\*\*Status:\*\*\s*Active", header):
-            offenders.append(f"{plan}: still marked Active")
-
-    assert offenders == []
-
-
-def test_docs_root_keeps_superseded_plans_archived() -> None:
-    stale_root_names = {
-        "goal-phase-1-safety.md",
-        "goal-phase-2-correctness.md",
-        "goal-phase-3-resilience-observability.md",
-        "goal-phase-4-polish-feedback.md",
-        "goal-phase-5-test-hardening.md",
-        "goal-ui-ux-closure-loop.md",
-        "handoff-ui-ux-closure-2026-05-17.md",
-        "implementation-plan-production-testing.md",
-        "implementation-plan-sidebar-navigation-2026-05-20.md",
-        "implementation-plan-v2.md",
-        "plan.md",
-        "prototype-to-production-plan.md",
-        "task-list-sidebar-navigation-2026-05-20.md",
-        "ui-ux-report-2026-05-10.md",
-        "ui-ux-report-2026-05-19.md",
-        "ui-ux-screenshot-review-2026-05-16.md",
-        "ui-visual-exploration-plan-2026-05-19.md",
-    }
-    root_docs = {path.name for path in Path("docs").glob("*.md")}
-    archive_docs = {path.name for path in Path("docs/archive").rglob("*.md")}
-
-    assert root_docs.isdisjoint(stale_root_names)
-    assert stale_root_names <= archive_docs

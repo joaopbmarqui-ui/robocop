@@ -163,25 +163,22 @@ def test_operator_docs_keep_harness_commands_config_explicit() -> None:
     assert offenders == []
 
 
-def test_development_workflow_uses_current_tmux_module_cli() -> None:
-    workflow = Path("docs/development-workflow.md").read_text(encoding="utf-8")
+def test_release_workflow_uses_current_module_cli() -> None:
+    workflow = Path("docs/release-workflow.md").read_text(encoding="utf-8")
 
-    assert "py -m edge_deploy release --tool robocop --smoke standard" in workflow
-    assert "Manual tmux attachment and node-side commands are not part of the default path." in workflow
+    assert "python -m edge_deploy release" in workflow
+    assert "--tool robocop" not in workflow
     assert "robocop_tmux.py send" not in workflow
 
 
 def test_active_operator_docs_cover_publish_deploy_drift_and_exact_sha_rollback() -> None:
-    workflow = Path("docs/development-workflow.md").read_text(encoding="utf-8")
+    workflow = Path("docs/release-workflow.md").read_text(encoding="utf-8")
     production = Path("docs/production_testing.md").read_text(encoding="utf-8")
     setup = Path("docs/edge-node-first-time-setup.md").read_text(encoding="utf-8")
     readme = Path("tools/prod_tui/README.md").read_text(encoding="utf-8")
 
-    assert "py -m edge_deploy release --tool robocop --smoke standard" in workflow
-    assert ".\\tools\\dev\\publish_dispatch_snapshot.ps1 -ReviewedCommit <sha> -RunLocalCheck" in workflow
-    assert "py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <deployment-sha> --install auto" in workflow
-    assert "py -m tools.prod_tui drift --config tools/prod_tui/config.yaml --commit <deployment-sha>" in workflow
-    assert "repo-local commands such as these are valid only in that recovery/bootstrap" in workflow.lower()
+    assert "python -m edge_deploy release" in workflow
+    assert "Bootstrap and recovery procedures" in workflow
     assert "failed preflight is the validation artifact" in production
     assert "config-node04.yaml" in production
     assert "py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <deployment-sha>" in production
@@ -193,7 +190,7 @@ def test_active_operator_docs_cover_publish_deploy_drift_and_exact_sha_rollback(
 
 def test_active_harness_surfaces_do_not_reference_old_tmux_script_cli() -> None:
     active_artifacts = [
-        Path("docs/development-workflow.md"),
+        Path("docs/release-workflow.md"),
         Path("docs/edge-node-smoke-test.md"),
         Path("docs/production_testing.md"),
         Path("tools/prod_tui/README.md"),

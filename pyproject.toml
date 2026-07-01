@@ -18,7 +18,9 @@ dev = [
   "pytest-asyncio",
   "ruff",
   "mypy",
-  "edge-deploy-core @ git+https://scm.mastercard.int/stash/scm/~e176097/edge-deploy-core.git@main",
+]
+release = [
+  "edge-deploy-core @ git+https://github.com/pedrochagasmaster/edge-deploy-core.git@v1.0.0",
 ]
 
 [project.scripts]
@@ -40,6 +42,9 @@ extend-exclude = ["scr", "vendor", "tools/prod_tui", "mocks"]
 # that churns the codebase. Expand later once the baseline is clean.
 select = ["E", "F", "W", "I", "UP"]
 ignore = ["E501"]  # line length handled by formatter; keep to avoid noise
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "tools/prod_tui/tests"]
 
 [tool.ruff.lint.per-file-ignores]
 # `scr/` is production-sensitive and intentionally not part of the broad

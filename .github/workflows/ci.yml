@@ -35,4 +35,4 @@ jobs:
       - name: Help smoke
         run: python -m dispatch --help
       - name: Tests
-        run: python -m pytest tests tools/prod_tui/tests -q
+        run: python -m pytest

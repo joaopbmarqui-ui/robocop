@@ -7,7 +7,7 @@ For normal production releases, run the shared release orchestrator instead of
 driving this harness directly:
 
 ```powershell
-py -m edge_deploy release --tool robocop --smoke standard
+python -m edge_deploy release
 ```
 
 Use this document for deeper validation, recovery, or diagnosis after reviewing
@@ -124,7 +124,7 @@ key/action → capture again → assert the expected state.
 
 ## Recovery or Diagnostic Deployment Before Testing
 
-Use [docs/development-workflow.md](./development-workflow.md) as the canonical
+Use [release-workflow.md](release-workflow.md) as the canonical
 workflow. The paths below are recovery and diagnostic options when the shared
 release command is unavailable or a release report points to node-specific
 follow-up:

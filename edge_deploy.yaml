@@ -1,6 +1,7 @@
 # robocop/edge_deploy.yaml
 tool: robocop
 repo_path: /ads_storage/dispatch
+github_url: https://github.com/pedrochagasmaster/robocop.git
 bitbucket_url: https://scm.mastercard.int/stash/scm/~e176097/dispatch.git
 release_branch: main
 runtime_paths: ["dispatch/**/*.py", "dispatch/**/*.tcss", "scr/**/*.py"]

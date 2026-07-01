@@ -36,19 +36,8 @@ dispatch
 Contributors should use [CONTRIBUTING.md](CONTRIBUTING.md) for setup,
 validation, commit, and release handoff.
 
-For the full contributor workflow, including local validation, the default
-`edge-deploy-core` release command, recovery paths, and production harness
-checks, see
-[docs/development-workflow.md](docs/development-workflow.md).
-
-Default production releases use the installed `edge-deploy-core` package:
-
-```powershell
-py -m edge_deploy release --tool robocop --smoke standard
-```
-
-A README-only release validates the same release pipeline without triggering
-installation.
+Normal development ends with a GitHub pull request. Release Operators use
+[docs/release-workflow.md](docs/release-workflow.md).
 
 ## Run
 

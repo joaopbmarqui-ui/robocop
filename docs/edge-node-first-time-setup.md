@@ -5,7 +5,7 @@ real Hadoop Edge Node. It is not the default release workflow. After bootstrap,
 use the shared orchestrator:
 
 ```powershell
-py -m edge_deploy release --tool robocop --smoke standard
+python -m edge_deploy release
 ```
 
 It covers:
@@ -126,7 +126,7 @@ DISPATCH_EMAIL=you@example.com DISPATCH_PYTHON_BIN=$(command -v python3.11) ./in
 ```
 
 For the normal release workflow and recovery-only exact-SHA rollback details, see
-[docs/development-workflow.md](./development-workflow.md).
+[release-workflow.md](release-workflow.md).
 
 
 

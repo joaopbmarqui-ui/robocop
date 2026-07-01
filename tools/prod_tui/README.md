@@ -6,7 +6,7 @@ The default release workflow is not this harness directly. For normal
 production releases, run the shared orchestrator:
 
 ```powershell
-py -m edge_deploy release --tool robocop --smoke standard
+python -m edge_deploy release
 ```
 
 Use this harness when the release report calls for deeper node diagnosis or
@@ -170,7 +170,7 @@ Audit logs are written as JSONL under `tools/prod_tui/logs/`.
 
 For the complete contributor workflow, including GitHub + Bitbucket remote
 policy and when to use each deploy path, see
-[`docs/development-workflow.md`](../../docs/development-workflow.md).
+[`docs/release-workflow.md`](../../docs/release-workflow.md).
 
 Normal releases are handled by `edge_deploy release`. Use the public
 deploy/drift commands below only when the orchestrator is unavailable or a

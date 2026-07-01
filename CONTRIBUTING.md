@@ -1,77 +1,35 @@
 # Contributing to Dispatch
 
-This is the shortest safe path for making a change.
+Development ends with a reviewed GitHub pull request. Deployment is a separate
+Release Operator responsibility.
 
-## 1. Set up
+## Contributor
+
+Local developers and Cursor agents follow the same path:
 
 ```bash
-cd <robocop-repo>
+git switch main
+git pull --ff-only origin main
+git switch -c <short-branch-name>
 python -m pip install -e ".[dev]"
-python -m edge_deploy --help
+python -m pytest
 ```
 
-For local TUI runs, always source the mock environment in the same shell:
+For local TUI work, source `mocks/dev-env.sh`. For `scr/` changes, follow
+[docs/adr/0005-scr-modification-policy.md](docs/adr/0005-scr-modification-policy.md).
 
-```bash
-source mocks/dev-env.sh
-DISPATCH_EMAIL=you@example.com DISPATCH_PYTHON_BIN=$(command -v python3) ./install.sh
-```
+Commit the focused change, push the branch to GitHub, and open a pull request
+against `main`. Contributors without write access may use a fork.
 
-## 2. Make a change
+Include the test result and release risk. Do not commit reports, screens, logs,
+deploy bundles, credentials, passcodes, Kerberos passwords, or ad hoc server
+files.
 
-Start from `main` unless the user asks for a branch.
+## Maintainer
 
-```bash
-git status --short --branch
-git branch -vv
-```
+Merge only after CI passes on Python 3.10 and 3.12 and one human Maintainer
+approves. Use squash merge and delete the merged branch. Do not push directly
+to `main`.
 
-Use focused tests for the files you touched.
-
-For TUI work, use `.agents/skills/dispatch-textual-tui/SKILL.md`.
-
-For `scr/` work, read `docs/adr/0005-scr-modification-policy.md` first.
-
-## 3. Validate locally
-
-Fast checks:
-
-```bash
-python -m compileall dispatch scr
-python -m dispatch --help
-```
-
-Mock smoke:
-
-```bash
-source mocks/dev-env.sh
-DISPATCH_MOCK_SCENARIO=happy_path python -m dispatch
-```
-
-Full local gate:
-
-```powershell
-.\tools\dev\local_check.ps1
-```
-
-## 4. Commit
-
-```bash
-git diff
-git add <files>
-git commit -m "Describe the change"
-```
-
-Do not commit generated reports, screens, logs, deploy zips, credentials,
-passcodes, Kerberos passwords, or ad hoc server files.
-
-## 5. Release
-
-Normal releases use the installed `edge-deploy-core` package. You do not need a
-separate sibling checkout under `D:\Projects`.
-
-```powershell
-py -m edge_deploy release --tool robocop --smoke standard
-```
-
-Use repo-local deployment tools only for bootstrap, recovery, or diagnosis.
+Release work starts only after merge and is documented in
+[docs/release-workflow.md](docs/release-workflow.md).

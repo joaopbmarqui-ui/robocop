@@ -5,8 +5,9 @@ This is the shortest safe path for making a change.
 ## 1. Set up
 
 ```bash
-cd D:\Projects\robocop
+cd <robocop-repo>
 python -m pip install -e ".[dev]"
+python -m edge_deploy --help
 ```
 
 For local TUI runs, always source the mock environment in the same shell:
@@ -66,10 +67,10 @@ passcodes, Kerberos passwords, or ad hoc server files.
 
 ## 5. Release
 
-Normal releases happen from `edge-deploy-core`, not from this repo:
+Normal releases use the installed `edge-deploy-core` package. You do not need a
+separate sibling checkout under `D:\Projects`.
 
 ```powershell
-cd D:\Projects\edge-deploy-core
 py -m edge_deploy release --tool robocop --smoke standard
 ```
 

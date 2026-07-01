@@ -6,7 +6,6 @@ The default release workflow is not this harness directly. For normal
 production releases, run the shared orchestrator:
 
 ```powershell
-cd D:\Projects\edge-deploy-core
 py -m edge_deploy release --tool robocop --smoke standard
 ```
 

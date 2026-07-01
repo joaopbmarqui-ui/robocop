@@ -4,16 +4,16 @@ This is the canonical Dispatch/Robocop release workflow. For local setup,
 focused tests, and commit hygiene, start with
 [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
-The default release path is the shared release orchestrator in
-`D:\Projects\edge-deploy-core`; repo-local deployment commands are retained for
-bootstrap, recovery, and deep troubleshooting.
+The default release path is the installed `edge-deploy-core` package; repo-local
+deployment commands are retained for bootstrap, recovery, and deep
+troubleshooting.
 
 ## Default Workflow
 
 1. Start from `main` unless the user explicitly asks for another branch.
 
    ```powershell
-   cd D:\Projects\robocop
+   cd <robocop-repo>
    git status --short --branch
    git branch -vv
    ```
@@ -34,10 +34,9 @@ bootstrap, recovery, and deep troubleshooting.
    git commit -m "Describe the change"
    ```
 
-5. Release from `edge-deploy-core`:
+5. Release with the installed `edge-deploy-core` package:
 
    ```powershell
-   cd D:\Projects\edge-deploy-core
    py -m edge_deploy release --tool robocop --smoke standard
    ```
 
@@ -45,7 +44,8 @@ bootstrap, recovery, and deep troubleshooting.
    The release command publishes the deployable snapshot, drives node03 and
    node04 updates, handles the interactive RSA prompts in the visible terminal,
    runs drift/smoke validation, and writes the release evidence under
-   `D:\Projects\edge-deploy-core\edge-deploy\reports\release-*`.
+   `edge-deploy\reports\release-*` under the current shell directory unless
+   `--report-dir` is set.
 
 6. Verify the release report:
 
@@ -83,7 +83,7 @@ asks. The release orchestrator owns the normal deployment push.
 
 | Situation | Use | Scope |
 | --- | --- | --- |
-| Normal development release | `py -m edge_deploy release --tool robocop --smoke standard` from `D:\Projects\edge-deploy-core` | Default path for production promotion, node updates, drift, smoke, and report evidence. |
+| Normal development release | `py -m edge_deploy release --tool robocop --smoke standard` | Default path for production promotion, node updates, drift, smoke, and report evidence. |
 | Coordinated Autobench + Dispatch release | `py -m edge_deploy release --tool both --smoke standard` | Default path when both tools need the same release process. |
 | Exact rollback or targeted recovery | `edge_deploy release` with the selected rollback/recovery option, or the repo-local skill when the orchestrator cannot proceed | Operator-controlled exception; record the report path and target SHA. |
 | First-time node bootstrap or offline dependency refresh | `deploy_and_install.ps1`, `install.sh`, and `vendor/` refresh | Bootstrap/recovery only, not the default release path. |
@@ -138,7 +138,7 @@ Use the repo-local production harness for additional diagnosis or deeper
 coverage:
 
 ```powershell
-cd D:\Projects\robocop
+cd <robocop-repo>
 py -m tools.prod_tui smoke --config tools/prod_tui/config-node04.yaml --level all --save-screens
 py -m tools.prod_tui job --config tools/prod_tui/config-node04.yaml --reuse-session
 py -m tools.prod_tui level --config tools/prod_tui/config-node04.yaml --level 4 --reuse-session

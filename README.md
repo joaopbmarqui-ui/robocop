@@ -41,7 +41,7 @@ For the full contributor workflow, including local validation, the default
 checks, see
 [docs/development-workflow.md](docs/development-workflow.md).
 
-Default production releases run from `D:\Projects\edge-deploy-core`:
+Default production releases use the installed `edge-deploy-core` package:
 
 ```powershell
 py -m edge_deploy release --tool robocop --smoke standard

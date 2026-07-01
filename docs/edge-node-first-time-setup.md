@@ -5,7 +5,6 @@ real Hadoop Edge Node. It is not the default release workflow. After bootstrap,
 use the shared orchestrator:
 
 ```powershell
-cd D:\Projects\edge-deploy-core
 py -m edge_deploy release --tool robocop --smoke standard
 ```
 

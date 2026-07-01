@@ -18,6 +18,7 @@ dev = [
   "pytest-asyncio",
   "ruff",
   "mypy",
+  "edge-deploy-core @ git+https://scm.mastercard.int/stash/scm/~e176097/edge-deploy-core.git@main",
 ]
 
 [project.scripts]

@@ -57,7 +57,7 @@ For release, recovery, Edge Node diagnostics, or shared
 
 ## Release workflow
 
-Default releases are orchestrated from `D:\Projects\edge-deploy-core`:
+Default releases are orchestrated by the installed `edge-deploy-core` package:
 
 ```powershell
 py -m edge_deploy release --tool robocop --smoke standard

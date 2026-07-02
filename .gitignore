@@ -19,3 +19,5 @@ __pycache__/
 .pylint.d/
 build/
 *.egg-info/
+vendor/
+.edge-deploy-bundles/

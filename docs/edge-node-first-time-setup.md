@@ -17,7 +17,10 @@ It covers:
 
 ## 1. Prepare the deployable tree locally
 
-Confirm the vendored wheels exist:
+Normal releases use content-addressed bundles managed by edge-deploy-core v1.1.0.
+The commands below are bootstrap/recovery guidance only; `vendor/` is not committed.
+
+Confirm a bootstrap wheelhouse exists:
 
 ```bash
 ls vendor/*.whl

@@ -5,6 +5,9 @@ ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" && pwd)
 USER_NAME=${USER:-$(id -un)}
 DATA_ROOT=${DISPATCH_DATA_ROOT:-/ads_storage/$USER_NAME}
 DISPATCH_HOME="$DATA_ROOT/.dispatch"
+BUNDLE_DIR=${EDGE_DEPLOY_BUNDLE_DIR:-/ads_storage/$USER/.edge-deploy/bundles/robocop/current}
+WHEEL_DIR="$BUNDLE_DIR/wheels"
+REQUIREMENTS_FILE="$BUNDLE_DIR/requirements/requirements.txt"
 PYTHON_BIN=${EDGE_DEPLOY_PYTHON_BIN:-${DISPATCH_PYTHON_BIN:-}}
 if [ -z "$PYTHON_BIN" ]; then
   if command -v python3.11 >/dev/null 2>&1; then
@@ -38,19 +41,12 @@ command -v klist >/dev/null 2>&1 || { echo "klist not found on PATH" >&2; exit 1
 command -v impala-shell >/dev/null 2>&1 || { echo "impala-shell not found on PATH" >&2; exit 1; }
 
 "$PYTHON_BIN" -m venv "$DISPATCH_HOME/venv"
-if [ -n "$(find "$ROOT_DIR/vendor" -maxdepth 1 -name '*.whl' -print -quit 2>/dev/null)" ]; then
-  "$DISPATCH_HOME/venv/bin/pip" install --no-index --find-links="$ROOT_DIR/vendor" -r "$ROOT_DIR/requirements.txt"
-elif [ "${DISPATCH_ALLOW_ONLINE_PIP:-0}" = "1" ]; then
-  echo "WARNING: vendor/ has no wheels; falling back to PyPI (DISPATCH_ALLOW_ONLINE_PIP=1)." >&2
-  "$DISPATCH_HOME/venv/bin/pip" install --index-url "${DISPATCH_PIP_INDEX_URL:-https://pypi.org/simple}" \
-    -r "$ROOT_DIR/requirements.txt"
-else
-  echo "vendor/ has no wheels and DISPATCH_ALLOW_ONLINE_PIP is not set." >&2
-  echo "Rebuild the wheelhouse for Linux before installing on an edge node:" >&2
-  echo "  pip download -r requirements.txt -d vendor --platform manylinux2014_x86_64 --python-version 3.10 --abi cp310 --only-binary=:all:" >&2
-  echo "Or set DISPATCH_ALLOW_ONLINE_PIP=1 for a dev-only install with PyPI access." >&2
+if [ ! -f "$BUNDLE_DIR/manifest.json" ] || [ ! -f "$REQUIREMENTS_FILE" ]; then
+  echo "Verified dependency bundle not found: $BUNDLE_DIR" >&2
+  echo "Run the edge-deploy dependency delivery phase before installing." >&2
   exit 1
 fi
+"$DISPATCH_HOME/venv/bin/pip" install --no-index --find-links="$WHEEL_DIR" -r "$REQUIREMENTS_FILE"
 # "$DISPATCH_HOME/venv/bin/pip" install --no-deps -e "$ROOT_DIR"
 
 LOCAL_BIN="$HOME/.local/bin"

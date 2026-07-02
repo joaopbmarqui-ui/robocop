@@ -12,7 +12,7 @@ git switch main
 git pull --ff-only origin main
 git switch -c <short-branch-name>
 python -m pip install -e ".[dev]"
-python -m pytest
+python -m pytest -n 4 --dist loadfile
 ```
 
 For local TUI work, source `mocks/dev-env.sh`. For `scr/` changes, follow

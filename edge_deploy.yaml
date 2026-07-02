@@ -9,6 +9,13 @@ compile_targets: "dispatch scr"
 version_files: [VERSION, dispatch/version.py, pyproject.toml]
 install_trigger_paths: [install.sh, requirements.txt, pyproject.toml, VERSION, "dispatch/**"]
 dependency_paths: [requirements.txt]
+dependency_bundle:
+  requirements_file: requirements.txt
+  constraints_file: ""
+  python_version: "3.10"
+  implementation: cp
+  abi: cp310
+  platform: manylinux2014_x86_64
 smoke:
   standard: ["dispatch --help"]
   deep: ["<controlled Impala job>"]    # needs Kerberos

@@ -45,7 +45,14 @@ def test_install_prints_current_session_next_step() -> None:
     assert "export PATH=" in install_script
 
 
-def test_install_fails_when_vendor_empty_and_no_online_opt_in(
+def test_update_permissions_do_not_recurse_through_runtime_directories() -> None:
+    update_script = (ROOT / "update.sh").read_text(encoding="utf-8")
+
+    assert "chmod -R" not in update_script
+    assert "$CHANGED_FILES" in update_script
+
+
+def test_install_fails_when_verified_bundle_is_missing(
     tmp_path: Path,
 ) -> None:
     if shutil.which("sh") is None:
@@ -105,7 +112,7 @@ chmod +x "$3/bin/pip"
     )
 
     assert result.returncode != 0
-    assert "DISPATCH_ALLOW_ONLINE_PIP" in result.stderr
+    assert "Verified dependency bundle not found" in result.stderr
 
 
 @pytest.mark.parametrize(
@@ -131,6 +138,12 @@ def test_install_creates_runtime_artifacts_with_mocked_edge_tools(
     home.mkdir()
     data_root.mkdir(parents=True)
     fake_bin.mkdir()
+    bundle = tmp_path / "bundle"
+    (bundle / "wheels").mkdir(parents=True)
+    (bundle / "requirements").mkdir()
+    (bundle / "manifest.json").write_text("{}\n", encoding="utf-8")
+    (bundle / "requirements" / "requirements.txt").write_text("demo==1.0\n", encoding="utf-8")
+    (bundle / "wheels" / "demo-1.0-py3-none-any.whl").write_bytes(b"wheel")
 
     for name in ("klist", "impala-shell"):
         tool = fake_bin / name
@@ -167,7 +180,7 @@ exit 0
     env = os.environ.copy()
     env.update(
         {
-            "DISPATCH_ALLOW_ONLINE_PIP": "1",
+            "EDGE_DEPLOY_BUNDLE_DIR": fake_path(bundle),
             "HOME": fake_path(home),
             "USER": "testuser",
             "DISPATCH_DATA_ROOT": fake_path(data_root),

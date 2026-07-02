@@ -16,11 +16,12 @@ dependencies = [
 dev = [
   "pytest",
   "pytest-asyncio",
+  "pytest-xdist>=3.6,<4",
   "ruff",
   "mypy",
 ]
 release = [
-  "edge-deploy-core @ git+https://github.com/pedrochagasmaster/edge-deploy-core.git@v1.0.0",
+  "edge-deploy-core @ git+https://github.com/pedrochagasmaster/edge-deploy-core.git@v1.1.0",
 ]
 
 [project.scripts]

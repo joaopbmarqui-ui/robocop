@@ -8,6 +8,7 @@ REMOTE_REF="refs/remotes/$REMOTE_NAME/$BRANCH_NAME"
 TARGET_REF=${1:-$REMOTE_REF}
 
 cd "$ROOT_DIR"
+CURRENT_HEAD=$(git rev-parse HEAD 2>/dev/null || true)
 
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   echo "$ROOT_DIR is not a Git working tree" >&2
@@ -28,13 +29,28 @@ FETCH_OUTPUT=$(git fetch --prune "$REMOTE_NAME" "$BRANCH_NAME:$REMOTE_REF" 2>&1)
       ;;
   esac
 }
+CHANGED_FILES=""
+if [ -n "$CURRENT_HEAD" ] && git rev-parse --verify "$TARGET_REF" >/dev/null 2>&1; then
+  CHANGED_FILES=$(git diff --name-only "$CURRENT_HEAD" "$TARGET_REF" 2>/dev/null || true)
+fi
 git reset --hard "$TARGET_REF"
 
 # Keep the shared tree readable/traversable for analysts. Git restores tracked
 # executable bits during reset; a+rX preserves those bits while fixing directory
 # traversal and read permissions. Untracked runtime/vendor files are preserved.
 chmod 755 "$ROOT_DIR"
-chmod -R a+rX "$ROOT_DIR"
+while IFS= read -r _path; do
+  [ -n "$_path" ] || continue
+  [ -e "$_path" ] && chmod a+r "$_path" 2>/dev/null || true
+  _parent=$(dirname "$_path")
+  while [ "$_parent" != "." ] && [ "$_parent" != "/" ]; do
+    chmod a+rx "$_parent" 2>/dev/null || true
+    _parent=$(dirname "$_parent")
+  done
+done <<EOF
+$CHANGED_FILES
+EOF
+chmod a+rx . update.sh install.sh 2>/dev/null || true
 
 echo "Dispatch shared tree updated:"
 echo "  path:   $ROOT_DIR"

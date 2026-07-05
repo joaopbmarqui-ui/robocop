@@ -1,0 +1,5 @@
+{
+  "source_type": "ExistingTable",
+  "dest_type": "Csv",
+  "existing_table": "analytics.events_existing"
+}

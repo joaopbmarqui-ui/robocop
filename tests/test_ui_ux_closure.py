@@ -584,3 +584,141 @@ def test_browser_drop_replaces_schema_table_with_persistent_result_message(
             assert calls == ["aa_enc.danger_table"]
 
     asyncio.run(run())
+
+
+def test_browser_drop_refreshes_table_list_after_success(mock_env_with_config, monkeypatch) -> None:
+    """Successful DROP should reload the Browse table list without manual refresh."""
+    show_calls = 0
+    tables_state = ["table_a", "table_b"]
+
+    async def fake_show_tables(schema: str, pattern: str = "*") -> list[str]:
+        nonlocal show_calls
+        show_calls += 1
+        return list(tables_state)
+
+    async def fake_drop_table(full_table: str) -> str:
+        short_name = full_table.rsplit(".", 1)[-1]
+        if short_name in tables_state:
+            tables_state.remove(short_name)
+        return f"Dropped {full_table}"
+
+    monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
+    monkeypatch.setattr("dispatch.impala.drop_table", fake_drop_table)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = BrowserScreen(auto_load=False)
+            app.push_screen(screen)
+            await pilot.pause()
+            await screen.action_show_tables()
+            await pilot.pause()
+
+            table = screen.query_one("#browser-table", DataTable)
+            table.cursor_coordinate = (0, 0)
+
+            worker = screen.action_drop()
+            await pilot.pause()
+            confirm_input = app.screen.query_one("#confirm-input", Input)
+            confirm_input.value = "aa_enc.table_a"
+            await pilot.press("enter")
+            await worker.wait()
+            await pilot.pause()
+
+            rows = [table.get_row_at(i)[0] for i in range(table.row_count)]
+            assert rows == ["table_b"]
+            assert "1 tables" in str(screen.query_one("#browser-count").render())
+            assert show_calls == 2
+
+    asyncio.run(run())
+
+
+def test_browser_drop_last_table_shows_placeholder(mock_env_with_config, monkeypatch) -> None:
+    """Dropping the only visible table should show the empty-list placeholder."""
+    tables_state = ["only_table"]
+
+    async def fake_show_tables(schema: str, pattern: str = "*") -> list[str]:
+        return list(tables_state)
+
+    async def fake_drop_table(full_table: str) -> str:
+        tables_state.clear()
+        return f"Dropped {full_table}"
+
+    monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
+    monkeypatch.setattr("dispatch.impala.drop_table", fake_drop_table)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = BrowserScreen(auto_load=False)
+            app.push_screen(screen)
+            await pilot.pause()
+            await screen.action_show_tables()
+            await pilot.pause()
+
+            table = screen.query_one("#browser-table", DataTable)
+            table.cursor_coordinate = (0, 0)
+
+            worker = screen.action_drop()
+            await pilot.pause()
+            confirm_input = app.screen.query_one("#confirm-input", Input)
+            confirm_input.value = "aa_enc.only_table"
+            await pilot.press("enter")
+            await worker.wait()
+            await pilot.pause()
+
+            rows = [table.get_row_at(i)[0] for i in range(table.row_count)]
+            assert rows == ["(no tables)"]
+            assert screen.query_one("#drop").disabled is True
+
+    asyncio.run(run())
+
+
+def test_browser_multi_table_drop_refreshes_list_once(mock_env_with_config, monkeypatch) -> None:
+    """Multi-table DROP should refresh the list after all tables are dropped."""
+    show_calls = 0
+    tables_state = ["table_a", "table_b", "table_c"]
+    drop_calls: list[str] = []
+
+    async def fake_show_tables(schema: str, pattern: str = "*") -> list[str]:
+        nonlocal show_calls
+        show_calls += 1
+        return list(tables_state)
+
+    async def fake_drop_table(full_table: str) -> str:
+        drop_calls.append(full_table)
+        short_name = full_table.rsplit(".", 1)[-1]
+        if short_name in tables_state:
+            tables_state.remove(short_name)
+        return f"Dropped {full_table}"
+
+    monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
+    monkeypatch.setattr("dispatch.impala.drop_table", fake_drop_table)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = BrowserScreen(auto_load=False)
+            app.push_screen(screen)
+            await pilot.pause()
+            await screen.action_show_tables()
+            await pilot.pause()
+
+            targets = ["aa_enc.table_a", "aa_enc.table_b"]
+            monkeypatch.setattr(screen, "_drop_targets", lambda: targets)
+
+            worker = screen.action_drop()
+            await pilot.pause()
+            confirm_input = app.screen.query_one("#confirm-input", Input)
+            confirm_input.value = "aa_enc.table_a, aa_enc.table_b"
+            await pilot.press("enter")
+            await worker.wait()
+            await pilot.pause()
+
+            table = screen.query_one("#browser-table", DataTable)
+            rows = [table.get_row_at(i)[0] for i in range(table.row_count)]
+            assert rows == ["table_c"]
+            assert drop_calls == targets
+            assert show_calls == 2
+
+    asyncio.run(run())

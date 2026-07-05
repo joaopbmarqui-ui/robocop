@@ -29,13 +29,13 @@ import sys
 import time
 from pathlib import Path
 
-
 POOL_RE = re.compile(r"\s*set\s+request_pool\s*=\s*(\w+)\s*;", re.IGNORECASE)
 
 
 # ---------------------------------------------------------------------------
 # Scenario loading
 # ---------------------------------------------------------------------------
+
 
 def _scenario_path(name: str) -> Path:
     root = Path(__file__).resolve().parents[1]
@@ -58,10 +58,42 @@ def _load_scenario() -> dict:
 # Call-count state (drives memory_exceeded retry simulation)
 # ---------------------------------------------------------------------------
 
+
 def _state_file(scenario: str) -> Path:
     root = Path(os.environ.get("DISPATCH_MOCK_STATE_DIR", "/tmp/dispatch_mock_state"))
     root.mkdir(parents=True, exist_ok=True)
     return root / f"{scenario}.count"
+
+
+def _dropped_tables_file() -> Path:
+    root = Path(os.environ.get("DISPATCH_MOCK_STATE_DIR", "/tmp/dispatch_mock_state"))
+    root.mkdir(parents=True, exist_ok=True)
+    return root / "dropped_tables.json"
+
+
+def _load_dropped_tables() -> set[str]:
+    path = _dropped_tables_file()
+    if not path.exists():
+        return set()
+    with path.open("r", encoding="utf-8") as handle:
+        payload = json.load(handle)
+    return {str(name).lower() for name in payload}
+
+
+def _record_dropped_table(full_table: str) -> None:
+    dropped = _load_dropped_tables()
+    dropped.add(full_table.lower())
+    short_name = full_table.rsplit(".", 1)[-1].lower()
+    dropped.add(short_name)
+    _dropped_tables_file().write_text(
+        json.dumps(sorted(dropped), indent=2),
+        encoding="utf-8",
+    )
+
+
+def _is_dropped_table(table_name: str) -> bool:
+    lowered = table_name.lower()
+    return lowered in _load_dropped_tables()
 
 
 def _increment_count(scenario: str) -> int:
@@ -79,6 +111,7 @@ def _increment_count(scenario: str) -> int:
 # Shared helpers
 # ---------------------------------------------------------------------------
 
+
 def _write_csv(path: str) -> None:
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -93,6 +126,7 @@ def _fail(message: str) -> int:
 # ---------------------------------------------------------------------------
 # SQL routing  (seam: query type → tag)
 # ---------------------------------------------------------------------------
+
 
 def route_sql(normalized_query: str) -> str:
     """Map a normalised SQL query to a routing tag.
@@ -115,7 +149,15 @@ def route_sql(normalized_query: str) -> str:
 # Schema-query handler  (seam: tag → stdout + exit code)
 # ---------------------------------------------------------------------------
 
-def handle_schema_query(tag: str) -> int:
+
+def _parse_drop_table(normalized_query: str) -> str | None:
+    match = re.match(r"drop table if exists\s+([\w.]+)\s*;?", normalized_query)
+    if not match:
+        return None
+    return match.group(1)
+
+
+def handle_schema_query(tag: str, *, normalized_query: str = "") -> int:
     """Respond to metadata queries that bypass scenario dispatch.
 
     Each branch emits mock rows matching the delimiter contract used by the
@@ -126,8 +168,9 @@ def handle_schema_query(tag: str) -> int:
         # single "name" column header before the data rows. Reproduce it so the
         # show_tables parser is exercised against faithful output.
         print("name")
-        print("dispatch_result")
-        print("dispatch_monthly_fulljoin")
+        for table_name in ("dispatch_result", "dispatch_monthly_fulljoin"):
+            if not _is_dropped_table(table_name):
+                print(table_name)
         return 0
     if tag == "DESCRIBE":
         print("name|type|comment")
@@ -135,6 +178,9 @@ def handle_schema_query(tag: str) -> int:
         print("value|string|mock value")
         return 0
     if tag == "DROP_TABLE":
+        dropped = _parse_drop_table(normalized_query)
+        if dropped:
+            _record_dropped_table(dropped)
         print("Table dropped")
         return 0
     raise ValueError(f"handle_schema_query called with non-metadata tag: {tag!r}")
@@ -143,6 +189,7 @@ def handle_schema_query(tag: str) -> int:
 # ---------------------------------------------------------------------------
 # Scenario handler  (seam: scenario × call-count → exit code + side-effects)
 # ---------------------------------------------------------------------------
+
 
 def apply_scenario(scenario: dict, pool: str, count: int, output_file: str | None) -> int:
     """Map the active scenario and call state to an exit code.
@@ -192,6 +239,7 @@ def apply_scenario(scenario: dict, pool: str, count: int, output_file: str | Non
 # Entry point
 # ---------------------------------------------------------------------------
 
+
 def main() -> int:
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-q", "--query", dest="query", default="")
@@ -211,7 +259,7 @@ def main() -> int:
     normalized_query = " ".join(query.lower().split())
     tag = route_sql(normalized_query)
     if tag != "DATA_QUERY":
-        return handle_schema_query(tag)
+        return handle_schema_query(tag, normalized_query=normalized_query)
 
     return apply_scenario(scenario, pool, count, args.output_file)
 

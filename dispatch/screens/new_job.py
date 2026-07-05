@@ -152,7 +152,10 @@ class NewJobScreen(Screen[None]):
                         yield Static("Email (notifications)", classes="field-label", id="lbl-email")
                         yield Input(
                             value=os.environ.get("DISPATCH_EMAIL", ""),
-                            placeholder=os.environ.get("DISPATCH_EMAIL", "user@example.com"),
+                            placeholder=os.environ.get(
+                                "DISPATCH_EMAIL",
+                                "name.surname@mastercard.com,name2.surname2@mastercard.com",
+                            ),
                             id="email",
                         )
 

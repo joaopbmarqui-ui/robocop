@@ -578,6 +578,22 @@ Input:focus {
     min-width: 16;
 }
 
+#browser-select-row {
+    layout: horizontal;
+    height: auto;
+    padding: 0 0 1 0;
+}
+
+#browser-select-row Button {
+    min-width: 16;
+    margin: 0 1 0 0;
+}
+
+#browser-selection-count {
+    width: 1fr;
+    color: $text-muted;
+}
+
 .input-caption {
     color: $text-muted;
     height: 1;

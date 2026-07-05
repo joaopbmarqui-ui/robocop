@@ -59,8 +59,10 @@ HELP_TEXT = """\
 
 [bold]Browser[/]
   [b]S[/]         Load tables for schema + filter
-  [b]Enter[/]     Describe selected table
-  [b]D[/]         Drop selected table (typed confirmation)
+  [b]Space[/]     Toggle table selection for bulk drop
+  [b]A[/]         Select all loaded tables (toggle)
+  [b]Enter[/]     Describe highlighted table
+  [b]D[/]         Drop checked tables (type I AM SURE, then DROP)
   [b]B / Esc[/]   Back
 
 [dim]Press Esc or ? to close.[/]\

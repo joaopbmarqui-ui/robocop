@@ -27,6 +27,7 @@ class ConfirmScreen(ModalScreen[bool]):
         confirm_label: str = "Confirm",
         cancel_label: str = "Cancel",
         required_confirmation_text: str | None = None,
+        secondary_confirmation_text: str | None = None,
     ) -> None:
         super().__init__()
         self.title = title
@@ -35,6 +36,7 @@ class ConfirmScreen(ModalScreen[bool]):
         self.confirm_label = confirm_label
         self.cancel_label = cancel_label
         self.required_confirmation_text = required_confirmation_text
+        self.secondary_confirmation_text = secondary_confirmation_text
 
     def compose(self) -> ComposeResult:
         classes = "danger" if self.danger else ""
@@ -47,24 +49,44 @@ class ConfirmScreen(ModalScreen[bool]):
                     placeholder=f"Type {self.required_confirmation_text} to confirm",
                     id="confirm-input",
                 )
-            help_text = (
-                "Type the exact name, then [bold]Y[/] or [bold]Enter[/] to confirm; "
-                "[bold]N[/] or [bold]Esc[/] cancels."
-                if self.required_confirmation_text
-                else "[bold]Y[/] or [bold]Enter[/] to confirm; "
-                "[bold]N[/] or [bold]Esc[/] to cancel."
-            )
+            if self.secondary_confirmation_text:
+                yield Input(
+                    placeholder=f"Type {self.secondary_confirmation_text} to confirm",
+                    id="confirm-input-secondary",
+                )
+            help_text = self._help_text()
             yield Static(help_text, id="confirm-help")
             with Horizontal(id="confirm-buttons"):
                 variant = "error" if self.danger else "primary"
                 yield Button(self.confirm_label, id="confirm-yes", variant=variant)
                 yield Button(self.cancel_label, id="confirm-no", variant="default")
 
+    def _help_text(self) -> str:
+        if self.required_confirmation_text and self.secondary_confirmation_text:
+            return (
+                f"Type [bold]{self.required_confirmation_text}[/], then "
+                f"[bold]{self.secondary_confirmation_text}[/] exactly; "
+                "[bold]Enter[/] confirms when both match; "
+                "[bold]N[/] or [bold]Esc[/] cancels."
+            )
+        if self.required_confirmation_text:
+            return (
+                f"Type [bold]{self.required_confirmation_text}[/] exactly, then "
+                "[bold]Y[/] or [bold]Enter[/] to confirm; "
+                "[bold]N[/] or [bold]Esc[/] cancels."
+            )
+        return "[bold]Y[/] or [bold]Enter[/] to confirm; [bold]N[/] or [bold]Esc[/] to cancel."
+
     def on_mount(self) -> None:
         if self.required_confirmation_text:
             self.query_one("#confirm-input", Input).focus()
         else:
             self.query_one("#confirm-yes", Button).focus()
+        self._update_confirm_enabled()
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if event.input.id in {"confirm-input", "confirm-input-secondary"}:
+            self._update_confirm_enabled()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "confirm-yes":
@@ -73,16 +95,35 @@ class ConfirmScreen(ModalScreen[bool]):
             self.action_cancel()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
-        if event.input.id == "confirm-input":
+        if event.input.id in {"confirm-input", "confirm-input-secondary"}:
             self.action_confirm()
 
-    def action_confirm(self) -> None:
+    def _confirmation_matches(self) -> bool:
         if self.required_confirmation_text:
             value = self.query_one("#confirm-input", Input).value.strip()
             if value != self.required_confirmation_text:
+                return False
+        if self.secondary_confirmation_text:
+            value = self.query_one("#confirm-input-secondary", Input).value.strip()
+            if value != self.secondary_confirmation_text:
+                return False
+        return True
+
+    def _update_confirm_enabled(self) -> None:
+        needs_typed_confirmation = bool(
+            self.required_confirmation_text or self.secondary_confirmation_text
+        )
+        if not needs_typed_confirmation:
+            return
+        self.query_one("#confirm-yes", Button).disabled = not self._confirmation_matches()
+
+    def action_confirm(self) -> None:
+        if self.required_confirmation_text or self.secondary_confirmation_text:
+            if not self._confirmation_matches():
                 self.query_one("#confirm-help", Static).update(
-                    "[red]Type the exact resource name to confirm.[/]"
+                    "[red]Type the exact confirmation text(s) to proceed.[/]"
                 )
+                self._update_confirm_enabled()
                 return
         self.dismiss(True)
 

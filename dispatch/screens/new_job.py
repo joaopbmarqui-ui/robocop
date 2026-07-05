@@ -56,6 +56,7 @@ class NewJobScreen(Screen[None]):
         super().__init__()
         self.launch_cwd = launch_cwd
         self.prefill = prefill or {}
+        self._eid = config.current_user()
         self.kerberos_ttl: int | None = None
         self._matrix_collapsed = bool(config.read_form_defaults())
         self._prefilled = bool(self.prefill)
@@ -130,9 +131,17 @@ class NewJobScreen(Screen[None]):
 
                     with Horizontal(classes="form-row", id="row-table-name"):
                         yield Static("Table Name", classes="field-label", id="lbl-table-name")
-                        yield Input(
-                            value="dispatch_result", placeholder="Table name", id="table-name"
-                        )
+                        with Horizontal(classes="eid-table-name-field"):
+                            yield Static(
+                                sql.eid_table_prefix(self._eid),
+                                id="table-name-prefix",
+                                classes="input-prefix",
+                            )
+                            yield Input(
+                                value="dispatch_result",
+                                placeholder="suffix",
+                                id="table-name-suffix",
+                            )
 
                     with Horizontal(classes="form-row", id="row-start-date"):
                         yield Static("Start Date", classes="field-label", id="lbl-start-date")
@@ -280,6 +289,26 @@ class NewJobScreen(Screen[None]):
     def _input_value(self, widget_id: str) -> str:
         return self.query_one(f"#{widget_id}", Input).value.strip()
 
+    def _table_name_suffix_input(self) -> Input:
+        return self.query_one("#table-name-suffix", Input)
+
+    def _table_name_field_active(self) -> bool:
+        source = self._selected_source()
+        destination = self._selected_destination()
+        return destination in ("Table", "Table+Csv") or source == "SqlTemplate"
+
+    def _table_name_value(self) -> str:
+        suffix = self._normalize_table_name_suffix(self._table_name_suffix_input().value)
+        if self._table_name_field_active():
+            return sql.join_eid_table_name(self._eid, suffix)
+        return suffix
+
+    def _set_table_name_suffix(self, value: str) -> None:
+        self._table_name_suffix_input().value = sql.split_eid_table_suffix(value, self._eid)
+
+    def _normalize_table_name_suffix(self, raw: str) -> str:
+        return sql.split_eid_table_suffix(raw, self._eid).strip()
+
     def _selected_source(self) -> str:
         radio_set = self.query_one("#source", RadioSet)
         if radio_set.pressed_button is not None:
@@ -298,6 +327,10 @@ class NewJobScreen(Screen[None]):
         self._update_validation_summary()
 
     def on_input_changed(self, event: Input.Changed) -> None:
+        if event.input.id == "table-name-suffix":
+            normalized = self._normalize_table_name_suffix(event.value)
+            if normalized != event.value:
+                event.input.value = normalized
         self._inline_validate()
         self._schedule_validation_summary()
         if event.input.id == "sql-file":
@@ -355,7 +388,7 @@ class NewJobScreen(Screen[None]):
             schema_error = sql.validate_identifier(self._input_value("schema"), "Schema")
             if schema_error:
                 issues.append(schema_error)
-            table_error = sql.validate_identifier(self._input_value("table-name"), "Table name")
+            table_error = sql.validate_eid_table_name(self._table_name_value(), self._eid)
             if table_error:
                 issues.append(table_error)
         if source in ("SqlFile", "SqlTemplate"):
@@ -376,7 +409,7 @@ class NewJobScreen(Screen[None]):
             if existing_error:
                 issues.append(existing_error)
         if destination in ("Csv", "Table+Csv"):
-            csv_table = self._input_value("table-name")
+            csv_table = self._table_name_value()
             if source == "ExistingTable" and existing_error is None:
                 _schema, csv_table = existing.split(".", 1)
             try:
@@ -536,10 +569,10 @@ class NewJobScreen(Screen[None]):
             schema_error = sql.validate_identifier(self._input_value("schema"), "Schema")
             if schema_error:
                 return schema_error
-            table_error = sql.validate_identifier(self._input_value("table-name"), "Table name")
+            table_error = sql.validate_eid_table_name(self._table_name_value(), self._eid)
             if table_error:
                 return table_error
-        csv_table = self._input_value("table-name")
+        csv_table = self._table_name_value()
         if source_type == "ExistingTable":
             existing = self._input_value("existing-table")
             existing_error = sql.validate_full_table(existing, "Existing table")
@@ -581,7 +614,7 @@ class NewJobScreen(Screen[None]):
         source_type = self._selected_source()
         destination_type = self._selected_destination()
         schema = self._input_value("schema")
-        table = self._input_value("table-name")
+        table = self._table_name_value()
         if source_type == "ExistingTable":
             existing = self._input_value("existing-table") or f"{schema}.{table}"
             source: manifest.Source = {"type": "ExistingTable", "table_name": existing}
@@ -615,7 +648,7 @@ class NewJobScreen(Screen[None]):
         source_type = self._selected_source()
         destination_type = self._selected_destination()
         schema = self._input_value("schema")
-        table = self._input_value("table-name")
+        table = self._table_name_value()
         if source_type == "ExistingTable":
             self._show_message("Preview is not available for ExistingTable source.", "warning")
             return
@@ -788,7 +821,6 @@ class NewJobScreen(Screen[None]):
             "sql_file": "sql-file",
             "existing_table": "existing-table",
             "schema": "schema",
-            "table_name": "table-name",
             "email": "email",
             "subject": "subject",
             "start_date": "start-date",
@@ -798,6 +830,9 @@ class NewJobScreen(Screen[None]):
             value = self.prefill.get(key, "")
             if value:
                 self.query_one(f"#{widget_id}", Input).value = str(value)
+        table_name = self.prefill.get("table_name", "")
+        if table_name:
+            self._set_table_name_suffix(str(table_name))
         source_type = self.prefill.get("source_type")
         source_btn = {
             "SqlFile": "src-sqlfile",

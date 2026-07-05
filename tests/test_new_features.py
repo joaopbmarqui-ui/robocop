@@ -336,7 +336,7 @@ class TestNewJobInlineValidation:
                     original()
 
                 screen._update_validation_summary = counting_update  # type: ignore[method-assign]
-                screen.query_one("#table-name").value = "dispatch_result_2"
+                screen.query_one("#table-name-suffix").value = "dispatch_result_2"
                 await pilot.pause(0.05)
 
                 assert calls == 0
@@ -391,8 +391,8 @@ class TestNewJobInlineValidation:
                 await pilot.pause(0.5)
 
                 issues = screen._validation_issues()
-                assert "Table name must be a plain Impala identifier" in issues
-                assert screen._validate() == "Table name must be a plain Impala identifier"
+                assert "Table name suffix must be a plain Impala identifier" in issues
+                assert screen._validate() == "Table name suffix must be a plain Impala identifier"
 
         asyncio.run(run())
 
@@ -450,9 +450,11 @@ class TestNewJobInlineValidation:
                 await pilot.pause(0.5)
 
                 _source, destination = screen._source_destination()
+                eid = config.current_user()
                 assert Path(destination["csv_path"]) == (
-                    tmp_path.resolve() / "dispatch_smoke_1.csv"
+                    tmp_path.resolve() / f"{eid}_dispatch_smoke_1.csv"
                 )
+                assert destination["table_name"] == f"{eid}_dispatch_smoke_1"
 
         asyncio.run(run())
 

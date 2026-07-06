@@ -1,3 +1,36 @@
-#!/usr/bin/env sh
-echo "mock kinit accepted"
-exit 0
+#!/usr/bin/env python3
+"""Fake kinit for Dispatch development mode."""
+
+from __future__ import annotations
+
+import os
+import sys
+from pathlib import Path
+
+
+def _state_root() -> Path:
+    root = Path(os.environ.get("DISPATCH_MOCK_STATE_DIR", "/tmp/dispatch_mock_state"))
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
+def _ticket_ttl_file() -> Path:
+    return _state_root() / "klist_ttl"
+
+
+def main() -> int:
+    password = sys.stdin.read()
+    if password.endswith("\n"):
+        password = password[:-1]
+    scenario = os.environ.get("DISPATCH_MOCK_SCENARIO", "happy_path")
+    if scenario == "auth_error" or not password:
+        print("kinit: Password incorrect while getting initial credentials", file=sys.stderr)
+        return 1
+    ttl = os.environ.get("DISPATCH_MOCK_KINIT_TTL", "28800")
+    _ticket_ttl_file().write_text(str(ttl), encoding="utf-8")
+    print("mock kinit accepted")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

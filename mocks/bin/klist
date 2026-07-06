@@ -4,10 +4,22 @@
 import os
 import sys
 from datetime import datetime, timedelta
+from pathlib import Path
+
+
+def _ticket_ttl() -> int:
+    state_root = Path(os.environ.get("DISPATCH_MOCK_STATE_DIR", "/tmp/dispatch_mock_state"))
+    state_file = state_root / "klist_ttl"
+    if state_file.exists():
+        try:
+            return int(state_file.read_text(encoding="utf-8").strip())
+        except ValueError:
+            return 0
+    return int(os.environ.get("DISPATCH_MOCK_KLIST_TTL", "28800"))
 
 
 def main() -> int:
-    ttl = int(os.environ.get("DISPATCH_MOCK_KLIST_TTL", "28800"))
+    ttl = _ticket_ttl()
     if ttl <= 0:
         return 1
     if "-s" in sys.argv[1:]:

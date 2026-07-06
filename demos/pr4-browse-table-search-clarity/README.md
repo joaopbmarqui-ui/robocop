@@ -27,4 +27,9 @@ source mocks/dev-env.sh
 | `docs/videos/pr4-browse-table-search-clarity.gif` | Lightweight PR embed |
 | `demos/pr4-browse-table-search-clarity/frames/*.png` | Individual PNG frames |
 
-Requires `ffmpeg` on `PATH`.
+Requires `ffmpeg` on `PATH` and the `cairosvg` Python package (used to
+rasterise Textual's SVG screenshots into genuine PNG frames):
+
+```bash
+/workspace/.venv/bin/pip install cairosvg
+```

@@ -125,8 +125,19 @@ def _bootstrap_capture_env() -> None:
 
 
 async def _capture_screen_png(app: DispatchApp, path: Path) -> None:
+    # Textual only exports SVG; rasterise it to a genuine PNG so the committed
+    # ``frames/*.png`` are real PNGs (not SVG payloads with a .png extension)
+    # and can be decoded by ffmpeg when building the video.
+    import cairosvg
+
     path.parent.mkdir(parents=True, exist_ok=True)
-    app.save_screenshot(filename=str(path))
+    svg_markup = app.export_screenshot()
+    cairosvg.svg2png(
+        bytestring=svg_markup.encode("utf-8"),
+        write_to=str(path),
+        output_width=1600,
+        background_color="#1e1e2e",
+    )
 
 
 async def capture_before_frame() -> Path:

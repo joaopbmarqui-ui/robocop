@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from textual.app import App, SystemCommand
 from textual.reactive import reactive
 
-from . import config, kerberos, process, setup_logging
+from . import config, kerberos, process, runtime, setup_logging
 
 if TYPE_CHECKING:
     from textual.screen import Screen
@@ -21,6 +21,7 @@ from .screens.dashboard import DashboardScreen
 from .screens.help import HelpScreen
 from .screens.history import HistoryScreen
 from .screens.job_detail import JobDetailScreen
+from .screens.kerberos_login import KerberosLoginScreen
 from .screens.new_job import NewJobScreen
 from .screens.sidebar import NavItem
 from .version import __version__
@@ -92,6 +93,12 @@ class DispatchApp(App[None]):
             )
 
         self._check_terminal_size()
+        self.run_worker(self._startup_flow(), name="startup-flow", exclusive=True)
+
+    async def _startup_flow(self) -> None:
+        if not await self._ensure_kerberos_for_jupyter():
+            self.exit()
+            return
         self.push_screen(DashboardScreen())
         await self.refresh_kerberos()
         self.set_interval(60.0, self.refresh_kerberos)
@@ -119,6 +126,17 @@ class DispatchApp(App[None]):
 
     def on_resize(self) -> None:
         self._check_terminal_size()
+
+    async def _ensure_kerberos_for_jupyter(self) -> bool:
+        """Gate startup in Jupyter until Kerberos is available."""
+        if not runtime.is_jupyter_notebook():
+            return True
+        if await kerberos.has_ticket():
+            return True
+        authenticated = await self.push_screen_wait(KerberosLoginScreen())
+        if not authenticated:
+            self.notify("Kerberos sign-in is required to use Dispatch.", severity="error")
+        return bool(authenticated)
 
     def _check_terminal_size(self) -> None:
         too_small = self.size.width < MIN_WIDTH or self.size.height < MIN_HEIGHT

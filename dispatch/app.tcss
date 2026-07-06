@@ -704,3 +704,40 @@ HelpScreen {
 #help-body {
     height: auto;
 }
+
+/* ── Kerberos login modal ───────────────────────────────────────────── */
+
+KerberosLoginScreen {
+    align: center middle;
+}
+
+#kerberos-login-dialog {
+    width: 56;
+    height: auto;
+    border: double $primary;
+    padding: 1 2;
+    background: $surface;
+}
+
+#kerberos-login-title {
+    height: auto;
+    padding: 0 0 1 0;
+}
+
+#kerberos-login-body {
+    height: auto;
+    color: $text-muted;
+    padding: 0 0 1 0;
+}
+
+#kerberos-login-error {
+    height: auto;
+    min-height: 1;
+    padding: 0 0 1 0;
+}
+
+#kerberos-login-buttons {
+    height: auto;
+    align: center middle;
+    padding: 1 0 0 0;
+}

@@ -364,6 +364,11 @@ RadioSet:focus-within {
     height: 3;
 }
 
+.form-row RadioSet {
+    width: 1fr;
+    height: 3;
+}
+
 Input:focus {
     border: tall $primary;
 }

@@ -39,6 +39,12 @@ _SOURCE_IDS = {
     "src-existingtable": "ExistingTable",
 }
 _DEST_IDS = {"dst-table": "Table", "dst-csv": "Csv", "dst-table-csv": "Table+Csv"}
+_EXISTING_SCHEMA_IDS = {
+    "esc-coe-enc": "coe_enc",
+    "esc-aa-enc": "aa_enc",
+    "esc-other": "other",
+}
+_KNOWN_EXISTING_SCHEMAS = frozenset({"coe_enc", "aa_enc"})
 
 
 class NewJobScreen(Screen[None]):
@@ -118,13 +124,26 @@ class NewJobScreen(Screen[None]):
                         )
                     yield Static("", classes="path-hint", id="path-hint")
 
+                    with Horizontal(classes="form-row", id="row-existing-schema"):
+                        yield Static("Schema", classes="field-label", id="lbl-existing-schema")
+                        with RadioSet(id="existing-schema"):
+                            yield RadioButton("coe_enc", id="esc-coe-enc")
+                            yield RadioButton("aa_enc", value=True, id="esc-aa-enc")
+                            yield RadioButton("other", id="esc-other")
+
+                    with Horizontal(classes="form-row", id="row-existing-schema-custom"):
+                        yield Static(
+                            "Custom Schema", classes="field-label", id="lbl-existing-schema-custom"
+                        )
+                        yield Input(value="", placeholder="Schema", id="existing-schema-custom")
+
                     with Horizontal(classes="form-row", id="row-existing-table"):
                         yield Static(
                             "Existing Table", classes="field-label", id="lbl-existing-table"
                         )
                         yield Input(
                             value="",
-                            placeholder="e.g. analytics.events_existing",
+                            placeholder="e.g. events_existing",
                             id="existing-table",
                         )
 
@@ -336,6 +355,25 @@ class NewJobScreen(Screen[None]):
             return _DEST_IDS.get(radio_set.pressed_button.id or "", "Csv")
         return "Csv"
 
+    def _selected_existing_schema_choice(self) -> str:
+        radio_set = self.query_one("#existing-schema", RadioSet)
+        if radio_set.pressed_button is not None:
+            return _EXISTING_SCHEMA_IDS.get(radio_set.pressed_button.id or "", "aa_enc")
+        return "aa_enc"
+
+    def _existing_table_schema(self) -> str:
+        choice = self._selected_existing_schema_choice()
+        if choice in _KNOWN_EXISTING_SCHEMAS:
+            return choice
+        return self._input_value("existing-schema-custom")
+
+    def _existing_full_table(self) -> str:
+        schema = self._existing_table_schema()
+        table = self._input_value("existing-table")
+        if schema and table:
+            return f"{schema}.{table}"
+        return table
+
     def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
         self._update_field_visibility()
         self._inline_validate()
@@ -420,8 +458,14 @@ class NewJobScreen(Screen[None]):
             if date_error:
                 issues.append(date_error)
         existing_error: str | None = None
-        existing = self._input_value("existing-table")
+        existing = self._existing_full_table()
         if source == "ExistingTable":
+            if self._selected_existing_schema_choice() == "other":
+                schema_error = sql.validate_identifier(
+                    self._input_value("existing-schema-custom"), "Schema"
+                )
+                if schema_error:
+                    issues.append(schema_error)
             existing_error = sql.validate_full_table(existing, "Existing table")
             if existing_error:
                 issues.append(existing_error)
@@ -486,7 +530,13 @@ class NewJobScreen(Screen[None]):
         show_picker = is_sql and bool(self._cwd_sql_files) and not self._prefilled
         self.query_one("#sql-file-picker").display = show_picker
         self.query_one("#picker-caption").display = show_picker
+        existing_schema_choice = self._selected_existing_schema_choice()
+        show_existing_custom_schema = is_existing and existing_schema_choice == "other"
+        self.query_one("#row-existing-schema").display = is_existing
+        self.query_one("#row-existing-schema-custom").display = show_existing_custom_schema
         self.query_one("#row-existing-table").display = is_existing
+        custom_schema_input = self.query_one("#existing-schema-custom", Input)
+        custom_schema_input.disabled = not show_existing_custom_schema
         self.query_one("#row-schema").display = needs_table
         self.query_one("#row-table-name").display = needs_table
         self.query_one("#row-start-date").display = is_template
@@ -597,7 +647,13 @@ class NewJobScreen(Screen[None]):
                 return table_error
         csv_table = self._table_name_value()
         if source_type == "ExistingTable":
-            existing = self._input_value("existing-table")
+            if self._selected_existing_schema_choice() == "other":
+                schema_error = sql.validate_identifier(
+                    self._input_value("existing-schema-custom"), "Schema"
+                )
+                if schema_error:
+                    return schema_error
+            existing = self._existing_full_table()
             existing_error = sql.validate_full_table(existing, "Existing table")
             if existing_error:
                 return existing_error
@@ -642,7 +698,7 @@ class NewJobScreen(Screen[None]):
         schema = self._input_value("schema")
         table = self._table_name_value()
         if source_type == "ExistingTable":
-            existing = self._input_value("existing-table") or f"{schema}.{table}"
+            existing = self._existing_full_table() or f"{schema}.{table}"
             source: manifest.Source = {"type": "ExistingTable", "table_name": existing}
             if "." in existing:
                 schema, table = existing.split(".", 1)
@@ -845,7 +901,6 @@ class NewJobScreen(Screen[None]):
             pass
         mapping = {
             "sql_file": "sql-file",
-            "existing_table": "existing-table",
             "schema": "schema",
             "email": "email",
             "subject": "subject",
@@ -859,6 +914,9 @@ class NewJobScreen(Screen[None]):
         table_name = self.prefill.get("table_name", "")
         if table_name:
             self._set_table_name_suffix(str(table_name))
+        existing_table = self.prefill.get("existing_table", "")
+        if existing_table:
+            self._apply_existing_table_prefill(str(existing_table))
         source_type = self.prefill.get("source_type")
         source_btn = {
             "SqlFile": "src-sqlfile",
@@ -884,6 +942,23 @@ class NewJobScreen(Screen[None]):
         # After the radios settle, scroll the destination-specific fields into
         # view so a prefilled (re-run) form lands on its key inputs.
         self.call_after_refresh(self._scroll_prefill_fields)
+
+    def _apply_existing_table_prefill(self, existing_table: str) -> None:
+        """Split a prefilled ``schema.table`` into schema choice + table name."""
+        if "." not in existing_table:
+            self.query_one("#existing-table", Input).value = existing_table
+            return
+        schema_part, table_part = existing_table.split(".", 1)
+        self.query_one("#existing-table", Input).value = table_part
+        if schema_part in _KNOWN_EXISTING_SCHEMAS:
+            schema_btn = {
+                "coe_enc": "esc-coe-enc",
+                "aa_enc": "esc-aa-enc",
+            }[schema_part]
+            self._schedule_force_radio("#existing-schema", schema_btn)
+            return
+        self._schedule_force_radio("#existing-schema", "esc-other")
+        self.query_one("#existing-schema-custom", Input).value = schema_part
 
     def _schedule_force_radio(self, radio_set_id: str, button_id: str) -> None:
         self.call_after_refresh(self._force_radio, radio_set_id, button_id)

@@ -345,6 +345,30 @@ RadioSet:focus-within {
     height: 3;
 }
 
+.eid-table-name-field {
+    width: 1fr;
+    height: 3;
+}
+
+.eid-table-name-field .input-prefix {
+    width: auto;
+    height: 3;
+    content-align-vertical: middle;
+    color: $text-muted;
+    text-style: bold;
+    padding: 0 1 0 0;
+}
+
+.eid-table-name-field Input {
+    width: 1fr;
+    height: 3;
+}
+
+.form-row RadioSet {
+    width: 1fr;
+    height: 3;
+}
+
 Input:focus {
     border: tall $primary;
 }
@@ -567,15 +591,61 @@ Input:focus {
     layout: horizontal;
     height: auto;
     padding: 0 0 1 0;
+    align-vertical: bottom;
 }
 
-#browser-query-row Input {
+.browser-field {
     width: 1fr;
+    height: auto;
     margin: 0 1 0 0;
+}
+
+.browser-field .field-label {
+    color: $text-muted;
+    text-style: bold;
+    height: 1;
+    margin: 0 0 1 0;
+}
+
+.browser-field-header {
+    height: 1;
+    margin: 0 0 1 0;
+}
+
+.browser-field-header .field-label {
+    width: auto;
+    margin: 0 1 0 0;
+}
+
+.browser-field-header .field-hint {
+    width: 1fr;
+    color: $text-muted;
+    text-style: italic;
+}
+
+.browser-field Input {
+    width: 1fr;
 }
 
 #browser-query-row Button {
     min-width: 16;
+    margin: 0;
+}
+
+#browser-select-row {
+    layout: horizontal;
+    height: auto;
+    padding: 0 0 1 0;
+}
+
+#browser-select-row Button {
+    min-width: 16;
+    margin: 0 1 0 0;
+}
+
+#browser-selection-count {
+    width: 1fr;
+    color: $text-muted;
 }
 
 .input-caption {
@@ -703,4 +773,41 @@ HelpScreen {
 
 #help-body {
     height: auto;
+}
+
+/* ── Kerberos login modal ───────────────────────────────────────────── */
+
+KerberosLoginScreen {
+    align: center middle;
+}
+
+#kerberos-login-dialog {
+    width: 56;
+    height: auto;
+    border: double $primary;
+    padding: 1 2;
+    background: $surface;
+}
+
+#kerberos-login-title {
+    height: auto;
+    padding: 0 0 1 0;
+}
+
+#kerberos-login-body {
+    height: auto;
+    color: $text-muted;
+    padding: 0 0 1 0;
+}
+
+#kerberos-login-error {
+    height: auto;
+    min-height: 1;
+    padding: 0 0 1 0;
+}
+
+#kerberos-login-buttons {
+    height: auto;
+    align: center middle;
+    padding: 1 0 0 0;
 }

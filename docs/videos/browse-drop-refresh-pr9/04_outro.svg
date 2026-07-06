@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1040" viewBox="0 0 1800 1040">
+  <rect width="1800" height="1040" fill="#101418"/>
+  <text x="900" y="470" fill="#d7e3f4" font-size="54" font-family="monospace" text-anchor="middle">No Load Tables [S] pressed</text>
+  <text x="900" y="560" fill="#8aa0bf" font-size="30" font-family="monospace" text-anchor="middle">List refreshed automatically after successful DROP</text>
+</svg>

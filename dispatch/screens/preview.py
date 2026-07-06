@@ -8,6 +8,7 @@ from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, RichLog, Static
 
+from .. import manifest
 from .sidebar import Sidebar
 
 
@@ -66,7 +67,7 @@ class PreviewScreen(Screen[None]):
                     target = self.schema + "." + self.table if self.schema and self.table else ""
                     yield Static("[bold]Target:[/] " + target if target else "")
                     yield Static(
-                        f"{self.source_type} \u2192 {self.dest_type}",
+                        f"{manifest.source_display_label(self.source_type)} \u2192 {self.dest_type}",
                         id="preview-meta",
                     )
 

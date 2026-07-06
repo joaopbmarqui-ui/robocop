@@ -1,0 +1,3 @@
+# Intermediate recorder artifacts (final PNG frames are committed).
+_*.svg
+concat.txt

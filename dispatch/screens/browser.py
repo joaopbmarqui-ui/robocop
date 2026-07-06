@@ -46,12 +46,22 @@ class BrowserScreen(Screen[None]):
 
                 with Horizontal(id="browser-split"):
                     with Vertical(id="browser-left"):
-                        yield Static("[dim]Schema \u00b7 table filter[/]", classes="input-caption")
                         with Horizontal(id="browser-query-row"):
-                            yield Input(value="aa_enc", placeholder="Schema", id="schema")
-                            yield Input(
-                                value="*", placeholder="Filter (e.g. dispatch_*)", id="filter"
-                            )
+                            with Vertical(classes="browser-field"):
+                                yield Static("Schema", classes="field-label")
+                                yield Input(value="aa_enc", placeholder="Schema", id="schema")
+                            with Vertical(classes="browser-field", id="browser-filter-field"):
+                                with Horizontal(classes="browser-field-header"):
+                                    yield Static("Table name", classes="field-label")
+                                    yield Static(
+                                        "type firstword* and load",
+                                        classes="field-hint",
+                                    )
+                                yield Input(
+                                    value="*",
+                                    placeholder="Filter (e.g. dispatch_*)",
+                                    id="filter",
+                                )
                             yield Button("Load Tables [S]", id="show", variant="default")
                         yield DataTable(id="browser-table")
                         with Horizontal(id="browser-status"):

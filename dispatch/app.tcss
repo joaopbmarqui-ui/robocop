@@ -591,15 +591,45 @@ Input:focus {
     layout: horizontal;
     height: auto;
     padding: 0 0 1 0;
+    align-vertical: bottom;
 }
 
-#browser-query-row Input {
+.browser-field {
     width: 1fr;
+    height: auto;
     margin: 0 1 0 0;
+}
+
+.browser-field .field-label {
+    color: $text-muted;
+    text-style: bold;
+    height: 1;
+    margin: 0 0 1 0;
+}
+
+.browser-field-header {
+    height: 1;
+    margin: 0 0 1 0;
+}
+
+.browser-field-header .field-label {
+    width: auto;
+    margin: 0 1 0 0;
+}
+
+.browser-field-header .field-hint {
+    width: 1fr;
+    color: $text-muted;
+    text-style: italic;
+}
+
+.browser-field Input {
+    width: 1fr;
 }
 
 #browser-query-row Button {
     min-width: 16;
+    margin: 0;
 }
 
 .input-caption {

@@ -18,9 +18,7 @@ from dispatch.screens.new_job import NewJobScreen
 from dispatch.screens.sidebar import NavItem
 
 
-def _prepare_checked_table(
-    screen: BrowserScreen, table_name: str = "danger_table"
-) -> DataTable:
+def _prepare_checked_table(screen: BrowserScreen, table_name: str = "danger_table") -> DataTable:
     screen._tables = [table_name]
     screen._checked = {table_name}
     table = screen.query_one("#browser-table", DataTable)

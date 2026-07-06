@@ -232,9 +232,7 @@ class BrowserScreen(Screen[None]):
             for name in (full_name, self._table_short_name(full_name))
         }
         self._tables = [name for name in self._tables if name not in dropped_names]
-        self._table_rows = [
-            row for row in self._table_rows if row.get("name") not in dropped_names
-        ]
+        self._table_rows = [row for row in self._table_rows if row.get("name") not in dropped_names]
         self._render_table_list()
         self._update_action_state()
 
@@ -262,7 +260,9 @@ class BrowserScreen(Screen[None]):
         self._rebuild_table_rows(sizes)
 
         self._render_table_list(
-            selected_before=self._tables[0] if describe_selection and self._tables else selected_before
+            selected_before=self._tables[0]
+            if describe_selection and self._tables
+            else selected_before
         )
         if not self._tables:
             self._checked.clear()
@@ -408,9 +408,7 @@ class BrowserScreen(Screen[None]):
         else:
             self._checked = set(self._tables)
         cursor_name = self._selected_table()
-        self._render_table_list(
-            selected_before=cursor_name if cursor_name in self._tables else ""
-        )
+        self._render_table_list(selected_before=cursor_name if cursor_name in self._tables else "")
         self._update_action_state()
 
     def action_drop(self) -> Worker[None]:

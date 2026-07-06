@@ -175,6 +175,46 @@ class BrowserScreen(Screen[None]):
         elif event.button.id == "back":
             self.app.pop_screen()
 
+    @staticmethod
+    def _table_short_name(table_name: str) -> str:
+        return table_name.rsplit(".", 1)[-1]
+
+    def _drop_targets(self) -> list[str]:
+        """Return fully-qualified table names selected for DROP."""
+        full = self._full_table()
+        return [full] if full else []
+
+    def _rebuild_table_rows(self, sizes: dict[str, impala.TableStats] | None = None) -> None:
+        """Rebuild the backing row model for the current ``self._tables``."""
+        sizes = sizes or {}
+        self._table_rows = []
+        for name in self._tables:
+            stats = sizes.get(name, impala.TableStats(size_bytes=None, size_display="—"))
+            self._table_rows.append(
+                {
+                    "name": name,
+                    "type": "table",
+                    "size_display": stats.size_display,
+                    "size_bytes": stats.size_bytes,
+                }
+            )
+
+    def _remove_dropped_tables_from_list(self, dropped_full_names: list[str]) -> None:
+        """Remove dropped tables from the visible list without waiting on Impala."""
+        if not dropped_full_names:
+            return
+        dropped_names = {
+            name
+            for full_name in dropped_full_names
+            for name in (full_name, self._table_short_name(full_name))
+        }
+        self._tables = [name for name in self._tables if name not in dropped_names]
+        self._table_rows = [
+            row for row in self._table_rows if row.get("name") not in dropped_names
+        ]
+        self._render_table_list()
+        self._update_action_state()
+
     async def action_show_tables(self, *, describe_selection: bool = True) -> None:
         selected_before = self._selected_table()
         self._show_table_list_message("Loading tables…", severity="dim")
@@ -195,17 +235,7 @@ class BrowserScreen(Screen[None]):
             self.notify(f"SHOW TABLE STATS failed: {exc}", severity="error")
             return
 
-        self._table_rows = []
-        for name in self._tables:
-            stats = sizes.get(name, impala.TableStats(size_bytes=None, size_display="—"))
-            self._table_rows.append(
-                {
-                    "name": name,
-                    "type": "table",
-                    "size_display": stats.size_display,
-                    "size_bytes": stats.size_bytes,
-                }
-            )
+        self._rebuild_table_rows(sizes)
 
         self._render_table_list(
             selected_before=self._tables[0] if describe_selection and self._tables else selected_before
@@ -330,23 +360,44 @@ class BrowserScreen(Screen[None]):
         return self.run_worker(self._drop_flow(), name="drop-flow", exclusive=True)
 
     async def _drop_flow(self) -> None:
-        full = self._full_table()
-        if not full:
+        targets = self._drop_targets()
+        if not targets:
             return
 
-        confirmed = await self._confirm_drop(full)
+        confirmed = await self._confirm_drop(targets)
         if not confirmed:
             return
         try:
-            result = await impala.drop_table(full)
-            self.notify(f"Dropped {full}", severity="information")
-            await self.action_show_tables(describe_selection=False)
-            self._show_detail_message(result, severity="success")
+            results = await self._drop_tables(targets)
+            if len(targets) == 1:
+                self.notify(f"Dropped {targets[0]}", severity="information")
+            else:
+                self.notify(f"Dropped {len(targets)} tables", severity="information")
+            await self._refresh_after_successful_drop(targets)
+            self._show_detail_message("\n".join(results), severity="success")
         except Exception as exc:
             self._show_detail_message(str(exc), severity="error")
             self.notify(f"DROP failed: {exc}", severity="error")
 
-    async def _confirm_drop(self, full_table: str) -> bool:
+    async def _drop_tables(self, targets: list[str]) -> list[str]:
+        results: list[str] = []
+        for full_table in targets:
+            results.append(await impala.drop_table(full_table))
+        return results
+
+    async def _refresh_after_successful_drop(self, dropped_full_names: list[str]) -> None:
+        """Refresh the Browse table list after DROP succeeds."""
+        self._remove_dropped_tables_from_list(dropped_full_names)
+        await self.action_show_tables(describe_selection=False)
+
+    async def _confirm_drop(self, targets: list[str]) -> bool:
+        if not targets:
+            return False
+        if len(targets) == 1:
+            return await self._confirm_single_drop(targets[0])
+        return await self._confirm_multi_drop(targets)
+
+    async def _confirm_single_drop(self, full_table: str) -> bool:
         loop_future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()
 
         def on_result(result: bool | None) -> None:
@@ -365,6 +416,33 @@ class BrowserScreen(Screen[None]):
                 confirm_label="Drop",
                 cancel_label="Keep Table",
                 required_confirmation_text=full_table,
+            ),
+            callback=on_result,
+        )
+        return await loop_future
+
+    async def _confirm_multi_drop(self, targets: list[str]) -> bool:
+        table_list = "\n".join(f"  [cyan]{table}[/]" for table in targets)
+        confirmation_text = ", ".join(targets)
+        loop_future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()
+
+        def on_result(result: bool | None) -> None:
+            if not loop_future.done():
+                loop_future.set_result(bool(result))
+
+        self.app.push_screen(
+            ConfirmScreen(
+                "DROP TABLES",
+                (
+                    f"Drop these {len(targets)} tables?\n\n"
+                    f"{table_list}\n\n"
+                    "[red]This cannot be undone.[/]\n"
+                    "Type all full table names, comma-separated, to confirm."
+                ),
+                danger=True,
+                confirm_label="Drop All",
+                cancel_label="Keep Tables",
+                required_confirmation_text=confirmation_text,
             ),
             callback=on_result,
         )

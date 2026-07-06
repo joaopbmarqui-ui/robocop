@@ -292,6 +292,25 @@ class TestMetadataQueryRouting:
         assert result.returncode == 0
         assert "12.60MB" in result.stdout
 
+    def test_show_tables_omits_dropped_tables(self, tmp_path: Path) -> None:
+        state_dir = str(tmp_path / "state")
+        env_overrides = {"DISPATCH_MOCK_STATE_DIR": state_dir}
+        drop = _run(
+            ["--output_delimiter=|", "-q", "DROP TABLE IF EXISTS dw.dispatch_result;"],
+            scenario="happy_path",
+            env_overrides=env_overrides,
+        )
+        assert drop.returncode == 0
+
+        show = _run(
+            ["--output_delimiter=|", "-q", "SHOW TABLES IN dw;"],
+            scenario="happy_path",
+            env_overrides=env_overrides,
+        )
+        assert show.returncode == 0
+        assert "dispatch_result" not in show.stdout.splitlines()
+        assert "dispatch_monthly_fulljoin" in show.stdout
+
 
 # ---------------------------------------------------------------------------
 # memory_exceeded retry simulation

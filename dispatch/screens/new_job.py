@@ -93,7 +93,10 @@ class NewJobScreen(Screen[None]):
                             yield Static("Source", classes="field-label")
                             with RadioSet(id="source"):
                                 yield RadioButton("SqlFile", value=True, id="src-sqlfile")
-                                yield RadioButton("SqlTemplate", id="src-sqltemplate")
+                                yield RadioButton(
+                                    manifest.source_display_label("SqlTemplate"),
+                                    id="src-sqltemplate",
+                                )
                                 yield RadioButton("ExistingTable", id="src-existingtable")
                         with Vertical(classes="radio-group"):
                             yield Static("Destination", classes="field-label")
@@ -172,7 +175,12 @@ class NewJobScreen(Screen[None]):
         matrix = self.query_one("#matrix-table", DataTable)
         matrix.add_columns("SOURCE \\ DEST", "TABLE", "CSV", "TABLE+CSV")
         matrix.add_row("SqlFile", "[green]\u2713[/]", "[green]\u2713[/]", "[green]\u2713[/]")
-        matrix.add_row("SqlTemplate", "[green]\u2713[/]", "[dim]\u2014[/]", "[dim]\u2014[/]")
+        matrix.add_row(
+            manifest.source_display_label("SqlTemplate"),
+            "[green]\u2713[/]",
+            "[dim]\u2014[/]",
+            "[dim]\u2014[/]",
+        )
         matrix.add_row("ExistingTable", "[dim]\u2014[/]", "[green]\u2713[/]", "[dim]\u2014[/]")
         matrix.show_cursor = False
 
@@ -220,7 +228,11 @@ class NewJobScreen(Screen[None]):
         picker.clear()
         for entry in self._cwd_sql_files:
             detected = entry["detected"]
-            detected_markup = f"[cyan]{detected}[/]" if detected == "SqlTemplate" else detected
+            detected_markup = (
+                f"[cyan]{manifest.source_display_label(detected)}[/]"
+                if detected == "SqlTemplate"
+                else detected
+            )
             picker.add_row(
                 entry["name"],
                 detected_markup,
@@ -350,7 +362,9 @@ class NewJobScreen(Screen[None]):
         source = self._selected_source()
         destination = self._selected_destination()
         if (source, destination) not in manifest.LEGAL_CELLS:
-            issues.append(f"Illegal combination: {source} \u2192 {destination}")
+            issues.append(
+                f"Illegal combination: {manifest.source_display_label(source)} \u2192 {destination}"
+            )
         if destination in ("Table", "Table+Csv"):
             schema_error = sql.validate_identifier(self._input_value("schema"), "Schema")
             if schema_error:
@@ -449,7 +463,9 @@ class NewJobScreen(Screen[None]):
 
         dest_hint = self.query_one("#dest-hint", Static)
         if source == "SqlTemplate":
-            dest_hint.update("[dim]SqlTemplate supports Table only[/]")
+            dest_hint.update(
+                f"[dim]{manifest.source_display_label('SqlTemplate')} supports Table only[/]"
+            )
             dest_hint.display = True
         elif source == "ExistingTable":
             dest_hint.update("[dim]ExistingTable supports Csv only[/]")
@@ -520,7 +536,8 @@ class NewJobScreen(Screen[None]):
         detected = sql.detect_source(content)
         info = self.query_one("#info-detected", Static)
         info.update(
-            f"Detected source: [b]{detected}[/] \u00b7 illegal destinations are disabled automatically"
+            f"Detected source: [b]{manifest.source_display_label(detected)}[/] "
+            "\u00b7 illegal destinations are disabled automatically"
         )
         if detected == "SqlTemplate":
             self.query_one("#src-sqltemplate", RadioButton).value = True
@@ -531,7 +548,10 @@ class NewJobScreen(Screen[None]):
         source_type = self._selected_source()
         destination_type = self._selected_destination()
         if (source_type, destination_type) not in manifest.LEGAL_CELLS:
-            return f"Illegal Source/Destination cell: {source_type}/{destination_type}"
+            return (
+                f"Illegal Source/Destination cell: "
+                f"{manifest.source_display_label(source_type)}/{destination_type}"
+            )
         if destination_type in ("Table", "Table+Csv"):
             schema_error = sql.validate_identifier(self._input_value("schema"), "Schema")
             if schema_error:
@@ -569,7 +589,10 @@ class NewJobScreen(Screen[None]):
             return "SQL contains only one of {date_inicio}/{date_fim} \u2014 likely a typo"
         if source_type == "SqlTemplate":
             if not sql.template_is_complete(sql_text):
-                return "SqlTemplate requires both {date_inicio} and {date_fim}"
+                return (
+                    f"{manifest.source_display_label('SqlTemplate')} requires both "
+                    "{date_inicio} and {date_fim}"
+                )
             date_error = sql.validate_date_range(
                 self._input_value("start-date"), self._input_value("end-date")
             )
@@ -740,7 +763,7 @@ class NewJobScreen(Screen[None]):
         table = destination.get("table_name") or "--"
         csv_path = destination.get("csv_path") or "--"
         body = (
-            f"Source: [cyan]{source_type}[/]  {source_detail}\n"
+            f"Source: [cyan]{manifest.source_display_label(source_type)}[/]  {source_detail}\n"
             f"Destination: [cyan]{dest_type}[/]\n"
             f"Target table: [cyan]{schema}.{table}[/]\n"
             f"CSV path: {csv_path}\n"

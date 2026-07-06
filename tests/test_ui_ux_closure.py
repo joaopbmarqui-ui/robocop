@@ -18,6 +18,25 @@ from dispatch.screens.new_job import NewJobScreen
 from dispatch.screens.sidebar import NavItem
 
 
+def _prepare_checked_table(
+    screen: BrowserScreen, table_name: str = "danger_table"
+) -> DataTable:
+    screen._tables = [table_name]
+    screen._checked = {table_name}
+    table = screen.query_one("#browser-table", DataTable)
+    table.clear()
+    table.add_row("[x]", table_name, "table")
+    table.cursor_coordinate = (0, 0)
+    screen._update_action_state()
+    return table
+
+
+async def _confirm_bulk_drop(pilot, app: DispatchApp) -> None:
+    app.screen.query_one("#confirm-input", Input).value = "I AM SURE"
+    app.screen.query_one("#confirm-input-secondary", Input).value = "DROP"
+    await pilot.press("enter")
+
+
 def _seed_history_job(jobs_dir: Path, index: int) -> str:
     job_id = f"20260401T10{index:04d}00Z_hist{index:02d}"
     job_dir = jobs_dir / job_id
@@ -487,19 +506,19 @@ def test_browser_sorts_by_table_size(mock_env_with_config, monkeypatch) -> None:
             await pilot.pause()
 
             table = screen.query_one("#browser-table", DataTable)
-            assert table.get_row_at(0)[0] == "dispatch_alpha"
-            assert table.get_row_at(1)[0] == "dispatch_zulu"
+            assert table.get_row_at(0)[1] == "dispatch_alpha"
+            assert table.get_row_at(1)[1] == "dispatch_zulu"
 
             screen.action_cycle_sort()
-            assert table.get_row_at(0)[0] == "dispatch_zulu"
-            assert table.get_row_at(1)[0] == "dispatch_alpha"
-            assert table.get_row_at(0)[2] == "1.2 GB"
+            assert table.get_row_at(0)[1] == "dispatch_zulu"
+            assert table.get_row_at(1)[1] == "dispatch_alpha"
+            assert table.get_row_at(0)[3] == "1.2 GB"
 
     asyncio.run(run())
 
 
-def test_browser_drop_requires_typing_full_table_name(mock_env_with_config, monkeypatch) -> None:
-    """DROP confirmation requires the fully-qualified table name, not just Y."""
+def test_browser_drop_requires_typing_i_am_sure_and_drop(mock_env_with_config, monkeypatch) -> None:
+    """DROP confirmation requires I AM SURE and DROP, not the table name."""
     calls: list[str] = []
 
     async def fake_drop_table(full_table: str) -> str:
@@ -514,9 +533,7 @@ def test_browser_drop_requires_typing_full_table_name(mock_env_with_config, monk
             screen = BrowserScreen(auto_load=False)
             app.push_screen(screen)
             await pilot.pause()
-            table = screen.query_one("#browser-table")
-            table.add_row("danger_table", "table", "12.6 MB")
-            table.cursor_coordinate = (0, 0)
+            _prepare_checked_table(screen)
 
             worker = screen.action_drop()
             await pilot.pause()
@@ -525,8 +542,8 @@ def test_browser_drop_requires_typing_full_table_name(mock_env_with_config, monk
             assert calls == []
             assert worker.is_running
 
-            confirm_input = app.screen.query_one("#confirm-input", Input)
-            confirm_input.value = "aa_enc.danger_table"
+            app.screen.query_one("#confirm-input", Input).value = "I AM SURE"
+            app.screen.query_one("#confirm-input-secondary", Input).value = "DROP"
             await pilot.press("enter")
             await worker.wait()
             assert calls == ["aa_enc.danger_table"]
@@ -537,7 +554,7 @@ def test_browser_drop_requires_typing_full_table_name(mock_env_with_config, monk
 def test_typed_drop_confirmation_button_does_not_bypass_input(
     mock_env_with_config, monkeypatch
 ) -> None:
-    """Clicking the danger button still requires the exact typed table name."""
+    """The danger button stays disabled until both confirmation phrases match."""
     calls: list[str] = []
 
     async def fake_drop_table(full_table: str) -> str:
@@ -552,19 +569,21 @@ def test_typed_drop_confirmation_button_does_not_bypass_input(
             screen = BrowserScreen(auto_load=False)
             app.push_screen(screen)
             await pilot.pause()
-            table = screen.query_one("#browser-table")
-            table.add_row("danger_table", "table", "12.6 MB")
-            table.cursor_coordinate = (0, 0)
+            _prepare_checked_table(screen)
 
             worker = screen.action_drop()
             await pilot.pause()
-            app.screen.query_one("#confirm-yes").press()
+            confirm_screen = app.screen
+            assert confirm_screen.query_one("#confirm-yes").disabled is True
+            confirm_screen.query_one("#confirm-yes").press()
             await pilot.pause()
             assert calls == []
             assert worker.is_running
 
-            app.screen.query_one("#confirm-input", Input).value = "aa_enc.danger_table"
-            app.screen.query_one("#confirm-yes").press()
+            confirm_screen.query_one("#confirm-input", Input).value = "I AM SURE"
+            confirm_screen.query_one("#confirm-input-secondary", Input).value = "DROP"
+            confirm_screen._update_confirm_enabled()
+            confirm_screen.query_one("#confirm-yes").press()
             await worker.wait()
             assert calls == ["aa_enc.danger_table"]
 
@@ -628,9 +647,7 @@ def test_browser_drop_replaces_schema_table_with_persistent_result_message(
             screen = BrowserScreen(auto_load=False)
             app.push_screen(screen)
             await pilot.pause()
-            table = screen.query_one("#browser-table", DataTable)
-            table.add_row("danger_table", "table", "12.6 MB")
-            table.cursor_coordinate = (0, 0)
+            _prepare_checked_table(screen)
 
             await screen.action_describe()
             await pilot.pause()
@@ -638,9 +655,7 @@ def test_browser_drop_replaces_schema_table_with_persistent_result_message(
 
             worker = screen.action_drop()
             await pilot.pause()
-            confirm_input = app.screen.query_one("#confirm-input", Input)
-            confirm_input.value = "aa_enc.danger_table"
-            await pilot.press("enter")
+            await _confirm_bulk_drop(pilot, app)
             await worker.wait()
             await pilot.pause()
 
@@ -648,7 +663,7 @@ def test_browser_drop_replaces_schema_table_with_persistent_result_message(
             describe_body = screen.query_one("#describe-body")
             assert describe_table.display is False
             assert describe_body.display is True
-            assert "Dropped aa_enc.danger_table" in str(describe_body.render())
+            assert "aa_enc.danger_table" in str(describe_body.render())
             assert calls == ["aa_enc.danger_table"]
 
     asyncio.run(run())
@@ -664,6 +679,9 @@ def test_browser_drop_refreshes_table_list_after_success(mock_env_with_config, m
         show_calls += 1
         return list(tables_state)
 
+    async def fake_table_sizes(schema, table_names):
+        return {}
+
     async def fake_drop_table(full_table: str) -> str:
         short_name = full_table.rsplit(".", 1)[-1]
         if short_name in tables_state:
@@ -671,6 +689,7 @@ def test_browser_drop_refreshes_table_list_after_success(mock_env_with_config, m
         return f"Dropped {full_table}"
 
     monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
+    monkeypatch.setattr("dispatch.impala.table_sizes", fake_table_sizes)
     monkeypatch.setattr("dispatch.impala.drop_table", fake_drop_table)
 
     async def run() -> None:
@@ -683,20 +702,62 @@ def test_browser_drop_refreshes_table_list_after_success(mock_env_with_config, m
             await pilot.pause()
 
             table = screen.query_one("#browser-table", DataTable)
-            table.cursor_coordinate = (0, 0)
+            screen._checked = {"table_a"}
+            screen._render_table_list(selected_before="table_a")
 
             worker = screen.action_drop()
             await pilot.pause()
-            confirm_input = app.screen.query_one("#confirm-input", Input)
-            confirm_input.value = "aa_enc.table_a"
-            await pilot.press("enter")
+            await _confirm_bulk_drop(pilot, app)
             await worker.wait()
             await pilot.pause()
 
-            rows = [table.get_row_at(i)[0] for i in range(table.row_count)]
+            rows = [table.get_row_at(i)[1] for i in range(table.row_count)]
             assert rows == ["table_b"]
             assert "1 tables" in str(screen.query_one("#browser-count").render())
             assert show_calls == 2
+
+    asyncio.run(run())
+
+
+def test_browser_bulk_drop_only_checked_tables(mock_env_with_config, monkeypatch) -> None:
+    """DROP applies only to checked tables, not merely the highlighted row."""
+    calls: list[str] = []
+
+    async def fake_drop_table(full_table: str) -> str:
+        calls.append(full_table)
+        return f"Dropped {full_table}"
+
+    async def fake_show_tables(schema: str, pattern: str = "*") -> list[str]:
+        return []
+
+    async def fake_table_sizes(schema, table_names):
+        return {}
+
+    monkeypatch.setattr("dispatch.impala.drop_table", fake_drop_table)
+    monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
+    monkeypatch.setattr("dispatch.impala.table_sizes", fake_table_sizes)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = BrowserScreen(auto_load=False)
+            app.push_screen(screen)
+            await pilot.pause()
+            screen._tables = ["keep_me", "drop_me"]
+            screen._checked = {"drop_me"}
+            table = screen.query_one("#browser-table", DataTable)
+            table.clear()
+            table.add_row("[ ]", "keep_me", "table", "—")
+            table.add_row("[x]", "drop_me", "table", "—")
+            table.cursor_coordinate = (0, 0)
+            screen._update_action_state()
+
+            worker = screen.action_drop()
+            await pilot.pause()
+            await _confirm_bulk_drop(pilot, app)
+            await worker.wait()
+
+            assert calls == ["aa_enc.drop_me"]
 
     asyncio.run(run())
 
@@ -708,11 +769,15 @@ def test_browser_drop_last_table_shows_placeholder(mock_env_with_config, monkeyp
     async def fake_show_tables(schema: str, pattern: str = "*") -> list[str]:
         return list(tables_state)
 
+    async def fake_table_sizes(schema, table_names):
+        return {}
+
     async def fake_drop_table(full_table: str) -> str:
         tables_state.clear()
         return f"Dropped {full_table}"
 
     monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
+    monkeypatch.setattr("dispatch.impala.table_sizes", fake_table_sizes)
     monkeypatch.setattr("dispatch.impala.drop_table", fake_drop_table)
 
     async def run() -> None:
@@ -725,18 +790,41 @@ def test_browser_drop_last_table_shows_placeholder(mock_env_with_config, monkeyp
             await pilot.pause()
 
             table = screen.query_one("#browser-table", DataTable)
-            table.cursor_coordinate = (0, 0)
+            screen._checked = {"only_table"}
+            screen._render_table_list(selected_before="only_table")
 
             worker = screen.action_drop()
             await pilot.pause()
-            confirm_input = app.screen.query_one("#confirm-input", Input)
-            confirm_input.value = "aa_enc.only_table"
-            await pilot.press("enter")
+            await _confirm_bulk_drop(pilot, app)
             await worker.wait()
             await pilot.pause()
 
-            rows = [table.get_row_at(i)[0] for i in range(table.row_count)]
+            rows = [table.get_row_at(i)[1] for i in range(table.row_count)]
             assert rows == ["(no tables)"]
+
+    asyncio.run(run())
+
+
+def test_browser_select_all_marks_every_loaded_table(mock_env_with_config) -> None:
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = BrowserScreen(auto_load=False)
+            app.push_screen(screen)
+            await pilot.pause()
+            screen._tables = ["alpha", "beta"]
+            screen._rebuild_table_rows()
+            screen._render_table_list()
+            screen._update_action_state()
+
+            screen.action_select_all()
+            await pilot.pause()
+            assert screen._checked == {"alpha", "beta"}
+            assert screen.query_one("#drop").disabled is False
+
+            screen.action_select_all()
+            await pilot.pause()
+            assert screen._checked == set()
             assert screen.query_one("#drop").disabled is True
 
     asyncio.run(run())
@@ -753,6 +841,9 @@ def test_browser_multi_table_drop_refreshes_list_once(mock_env_with_config, monk
         show_calls += 1
         return list(tables_state)
 
+    async def fake_table_sizes(schema, table_names):
+        return {}
+
     async def fake_drop_table(full_table: str) -> str:
         drop_calls.append(full_table)
         short_name = full_table.rsplit(".", 1)[-1]
@@ -761,6 +852,7 @@ def test_browser_multi_table_drop_refreshes_list_once(mock_env_with_config, monk
         return f"Dropped {full_table}"
 
     monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
+    monkeypatch.setattr("dispatch.impala.table_sizes", fake_table_sizes)
     monkeypatch.setattr("dispatch.impala.drop_table", fake_drop_table)
 
     async def run() -> None:
@@ -772,21 +864,60 @@ def test_browser_multi_table_drop_refreshes_list_once(mock_env_with_config, monk
             await screen.action_show_tables()
             await pilot.pause()
 
-            targets = ["aa_enc.table_a", "aa_enc.table_b"]
-            monkeypatch.setattr(screen, "_drop_targets", lambda: targets)
+            screen._checked = {"table_a", "table_b"}
+            screen._render_table_list()
 
             worker = screen.action_drop()
             await pilot.pause()
-            confirm_input = app.screen.query_one("#confirm-input", Input)
-            confirm_input.value = "aa_enc.table_a, aa_enc.table_b"
-            await pilot.press("enter")
+            await _confirm_bulk_drop(pilot, app)
             await worker.wait()
             await pilot.pause()
 
             table = screen.query_one("#browser-table", DataTable)
-            rows = [table.get_row_at(i)[0] for i in range(table.row_count)]
+            rows = [table.get_row_at(i)[1] for i in range(table.row_count)]
             assert rows == ["table_c"]
-            assert drop_calls == targets
+            assert sorted(drop_calls) == ["aa_enc.table_a", "aa_enc.table_b"]
             assert show_calls == 2
+
+    asyncio.run(run())
+
+
+def test_browser_bulk_drop_multiple_tables(mock_env_with_config, monkeypatch) -> None:
+    calls: list[str] = []
+
+    async def fake_drop_table(full_table: str) -> str:
+        calls.append(full_table)
+        return f"Dropped {full_table}"
+
+    async def fake_show_tables(schema: str, pattern: str = "*") -> list[str]:
+        return []
+
+    async def fake_table_sizes(schema, table_names):
+        return {}
+
+    monkeypatch.setattr("dispatch.impala.drop_table", fake_drop_table)
+    monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
+    monkeypatch.setattr("dispatch.impala.table_sizes", fake_table_sizes)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = BrowserScreen(auto_load=False)
+            app.push_screen(screen)
+            await pilot.pause()
+            screen._tables = ["one", "two"]
+            screen._checked = {"one", "two"}
+            table = screen.query_one("#browser-table", DataTable)
+            table.clear()
+            table.add_row("[x]", "one", "table", "—")
+            table.add_row("[x]", "two", "table", "—")
+            screen._update_action_state()
+
+            worker = screen.action_drop()
+            await pilot.pause()
+            await _confirm_bulk_drop(pilot, app)
+            await worker.wait()
+
+            assert calls == ["aa_enc.one", "aa_enc.two"]
 
     asyncio.run(run())

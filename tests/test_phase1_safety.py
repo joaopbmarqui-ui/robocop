@@ -32,9 +32,13 @@ def test_browser_drop_requires_confirmation(mock_env_with_config, monkeypatch) -
             screen = BrowserScreen(auto_load=False)
             app.push_screen(screen)
             await pilot.pause()
+            screen._tables = ["danger_table"]
+            screen._checked = {"danger_table"}
             table = screen.query_one("#browser-table")
-            table.add_row("danger_table", "table", "12.6 MB")
+            table.clear()
+            table.add_row("[x]", "danger_table", "table", "12.6 MB")
             table.cursor_coordinate = (0, 0)
+            screen._update_action_state()
 
             worker = screen.action_drop()
             await pilot.pause()
@@ -44,8 +48,8 @@ def test_browser_drop_requires_confirmation(mock_env_with_config, monkeypatch) -
 
             worker = screen.action_drop()
             await pilot.pause()
-            confirm_input = app.screen.query_one("#confirm-input", Input)
-            confirm_input.value = "aa_enc.danger_table"
+            app.screen.query_one("#confirm-input", Input).value = "I AM SURE"
+            app.screen.query_one("#confirm-input-secondary", Input).value = "DROP"
             await pilot.press("enter")
             await worker.wait()
             assert calls == ["aa_enc.danger_table"]

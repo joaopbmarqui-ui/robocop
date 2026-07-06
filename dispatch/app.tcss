@@ -345,6 +345,25 @@ RadioSet:focus-within {
     height: 3;
 }
 
+.eid-table-name-field {
+    width: 1fr;
+    height: 3;
+}
+
+.eid-table-name-field .input-prefix {
+    width: auto;
+    height: 3;
+    content-align-vertical: middle;
+    color: $text-muted;
+    text-style: bold;
+    padding: 0 1 0 0;
+}
+
+.eid-table-name-field Input {
+    width: 1fr;
+    height: 3;
+}
+
 Input:focus {
     border: tall $primary;
 }

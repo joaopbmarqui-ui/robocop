@@ -25,14 +25,20 @@ class BrowserScreen(Screen[None]):
         ("enter", "describe", "Describe"),
         ("d", "drop", "Drop"),
         ("s", "show_tables", "Load Tables"),
+        ("o", "cycle_sort", "Sort"),
         Binding("j", "cursor_down", "Down", show=False),
         Binding("k", "cursor_up", "Up", show=False),
     ]
+
+    SORT_MODES = ("name", "size")
 
     def __init__(self, *, auto_load: bool = True) -> None:
         super().__init__()
         self._auto_load = auto_load
         self._tables: list[str] = []
+        self._table_rows: list[dict[str, object]] = []
+        self._sort_mode = "name"
+        self._sort_reverse = False
         self._describe_text: str = ""
 
     def compose(self) -> ComposeResult:
@@ -63,6 +69,7 @@ class BrowserScreen(Screen[None]):
                                     id="filter",
                                 )
                             yield Button("Load Tables [S]", id="show", variant="default")
+                        yield Static("[dim]Sorted by: name \u2191[/]", id="browser-sort-indicator")
                         yield DataTable(id="browser-table")
                         with Horizontal(id="browser-status"):
                             yield Static("", id="browser-selected")
@@ -86,7 +93,7 @@ class BrowserScreen(Screen[None]):
 
     async def on_mount(self) -> None:
         table = self.query_one("#browser-table", DataTable)
-        table.add_columns("Name", "Type")
+        table.add_columns("Name", "Type", "Size")
         table.cursor_type = "row"
         describe_table = self.query_one("#describe-table", DataTable)
         describe_table.add_columns("Column", "Type", "Comment")
@@ -169,6 +176,7 @@ class BrowserScreen(Screen[None]):
             self.app.pop_screen()
 
     async def action_show_tables(self, *, describe_selection: bool = True) -> None:
+        selected_before = self._selected_table()
         self._show_table_list_message("Loading tables…", severity="dim")
         try:
             schema = self._schema()
@@ -179,18 +187,74 @@ class BrowserScreen(Screen[None]):
             self.notify(f"SHOW TABLES failed: {exc}", severity="error")
             return
 
-        table = self.query_one("#browser-table", DataTable)
-        table.clear()
+        self._show_table_list_message("Loading table sizes…", severity="dim")
+        try:
+            sizes = await impala.table_sizes(self._schema(), self._tables)
+        except Exception as exc:
+            self._show_table_list_message(str(exc), severity="error")
+            self.notify(f"SHOW TABLE STATS failed: {exc}", severity="error")
+            return
+
+        self._table_rows = []
         for name in self._tables:
-            table.add_row(name, "table")
-        self.query_one("#browser-count", Static).update(f"[dim]{len(self._tables)} tables[/]")
+            stats = sizes.get(name, impala.TableStats(size_bytes=None, size_display="—"))
+            self._table_rows.append(
+                {
+                    "name": name,
+                    "type": "table",
+                    "size_display": stats.size_display,
+                    "size_bytes": stats.size_bytes,
+                }
+            )
+
+        self._render_table_list(
+            selected_before=self._tables[0] if describe_selection and self._tables else selected_before
+        )
         if not self._tables:
-            table.add_row(NO_TABLES_PLACEHOLDER, "")
             self._show_detail_placeholder()
         elif describe_selection:
-            table.cursor_coordinate = (0, 0)
             await self.action_describe()
         self._update_action_state()
+
+    def _render_table_list(self, *, selected_before: str = "") -> None:
+        rows = list(self._table_rows)
+        rows.sort(key=self._sort_key, reverse=self._sort_reverse)
+
+        table = self.query_one("#browser-table", DataTable)
+        table.clear()
+        selected_row = 0
+        for index, row in enumerate(rows):
+            table.add_row(row["name"], row["type"], row["size_display"], key=str(row["name"]))
+            if selected_before and row["name"] == selected_before:
+                selected_row = index
+
+        self.query_one("#browser-count", Static).update(f"[dim]{len(self._tables)} tables[/]")
+        arrow = "\u2193" if self._sort_reverse else "\u2191"
+        self.query_one("#browser-sort-indicator", Static).update(
+            f"[dim]Sorted by: {self._sort_mode} {arrow}[/]"
+        )
+
+        if not self._tables:
+            table.add_row(NO_TABLES_PLACEHOLDER, "", "—")
+        else:
+            table.cursor_coordinate = (selected_row, 0)
+
+    def _sort_key(self, row: dict[str, object]) -> tuple[object, ...]:
+        if self._sort_mode == "size":
+            size_bytes = row.get("size_bytes")
+            missing = size_bytes is None
+            return (missing, -(size_bytes or 0), str(row.get("name", "")).lower())
+        return (str(row.get("name", "")).lower(),)
+
+    def action_cycle_sort(self) -> None:
+        idx = self.SORT_MODES.index(self._sort_mode)
+        next_idx = (idx + 1) % len(self.SORT_MODES)
+        if next_idx == 0:
+            self._sort_reverse = not self._sort_reverse
+        self._sort_mode = self.SORT_MODES[next_idx]
+        if self._table_rows:
+            self._render_table_list(selected_before=self._selected_table())
+            self._update_action_state()
 
     async def action_describe(self) -> None:
         full = self._full_table()

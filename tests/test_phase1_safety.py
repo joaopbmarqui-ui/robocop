@@ -33,7 +33,7 @@ def test_browser_drop_requires_confirmation(mock_env_with_config, monkeypatch) -
             app.push_screen(screen)
             await pilot.pause()
             table = screen.query_one("#browser-table")
-            table.add_row("danger_table", "table")
+            table.add_row("danger_table", "table", "12.6 MB")
             table.cursor_coordinate = (0, 0)
 
             worker = screen.action_drop()

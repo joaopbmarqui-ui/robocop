@@ -20,7 +20,10 @@ inside `dispatch/`. Pin down that data file:
 - **Content shape** — schema/table key, recommended strategy
   (broadcast/shuffle), and whatever the rule catalog's known-table rule needs
   (severity override? manual section reference for the finding text?). Note
-  the manual lists some tables by bare name and some per-database.
+  the manual keys every row by database, some rows cover name variants
+  (`_hsh`/`_enc`), and the same table name can carry different
+  recommendations per database (`aggregate_merchant`: BROADCAST in CORE,
+  Shuffle in MRS), so keys must be schema-qualified.
 - **Update procedure** — the Code Optimization Team revises the
   recommendation list; document how a revision lands (edit the data file in a
   normal PR) and how users see which list version their findings used.

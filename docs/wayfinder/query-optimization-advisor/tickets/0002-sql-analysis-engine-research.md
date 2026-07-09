@@ -1,8 +1,8 @@
 ---
 title: "Research: SQL analysis engine options under the air-gapped deploy path"
 labels: [wayfinder:research]
-status: open
-assignee: none
+status: closed
+assignee: cursor-agent
 blocked-by: []
 ---
 
@@ -33,3 +33,13 @@ the sponsor's fallback (rating/flagging) becomes the ceiling.
 Deliverable: a markdown comparison linked from this ticket, ending in a
 recommendation (which engine, and the confidence level it supports:
 flag-only vs flag+rewrite).
+
+## Resolution
+
+[The engine comparison](../assets/sql-analysis-engine-research.md) recommends
+SQLGlot's Hive dialect behind a position-preserving adapter for Impala-only
+tokens. Its pure-Python universal wheel fits the offline deploy path, and its
+AST supports the candidate structural checks. Neither SQLGlot nor SQLFluff
+faithfully handles the manual's hint syntax, so v1's confidence ceiling is
+flag-only: the original SQL remains the sole launch input, with no parser
+round-trip or automatic rewrite.

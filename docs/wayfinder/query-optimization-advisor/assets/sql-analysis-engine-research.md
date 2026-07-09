@@ -7,7 +7,9 @@ Research date: 2026-07-09
 Use **SQLGlot behind a small in-tree Impala compatibility adapter** for the
 advisor's static analysis. Parse with SQLGlot's Hive dialect after replacing
 recognized Impala-only tokens with equal-length whitespace in a parse copy.
-Keep the original SQL immutable and use the copy only to build the AST.
+Keep the original SQL immutable and use the copy only to build the AST. Equal
+lengths keep lexical coordinates aligned; they do not make source spans
+available on every SQLGlot AST node.
 
 The v1 confidence ceiling is **flag-only**. Do not serialize SQLGlot's AST and
 do not launch or write back parser-generated SQL. The parser does not have a
@@ -29,7 +31,7 @@ The comparison prioritizes:
    projections, and set operations.
 3. Preservation or explicit handling of the manual's Impala syntax:
    `[BROADCAST]`, `[SHUFFLE]`, `STRAIGHT_JOIN`, backtick identifiers, and
-   quoted `{date_inicio}` / `{date_fim}` tokens.
+   quoted or unquoted `{date_inicio}` / `{date_fim}` tokens.
 4. Safe failure. An unsupported query must produce no structural findings
    rather than partial or misleading analysis.
 5. Rewrite fidelity. A parser used to rewrite must preserve all syntax and
@@ -43,9 +45,9 @@ the manual. It also tested a query combining `DISTINCT`, a comma join, a
 
 | Option | Deployment | Impala fidelity observed | Analysis capability | Rewrite confidence | Result |
 |---|---|---|---|---|---|
-| SQLGlot 30.12.0, Hive dialect | 708 KB universal wheel; no runtime dependencies; Python >=3.9; MIT | Parses normal joins, backticks, quoted template tokens, and common rule shapes. Fails on bracket hints and `STRAIGHT_JOIN`. Parses comment hints but renders them before `JOIN`, not immediately after it. | Semantic AST with query scopes, tables, joins, expressions, and set operations | Unsafe for full-query rendering | **Choose with adapter, flag-only** |
+| SQLGlot 30.12.0, Hive dialect | 708 KB universal wheel; no runtime dependencies; Python >=3.9; MIT | Parses normal joins, backticks, quoted template tokens, and common rule shapes. Misparses unquoted template tokens as named structs. Fails on bracket hints and `STRAIGHT_JOIN`. Parses comment hints but renders them before `JOIN`, not immediately after it. | Semantic AST with query scopes, tables, joins, expressions, and set operations | Unsafe for full-query rendering | **Choose with adapter, flag-only** |
 | sqlparse 0.5.5 | 46 KB universal wheel; no runtime dependencies; Python >=3.8; BSD-3-Clause | Tokenizes every probe, including the Impala-only tokens | Non-validating token groups, not a dialect-aware semantic AST; scope and lineage logic would be ours to build | No semantic basis for rewrite | Reject as primary engine |
-| SQLFluff 4.2.2, Impala dialect | 1.0 MB main wheel plus a multi-package transitive closure; Python >=3.10; MIT | Explicit Impala dialect inherits Hive, but still fails bracket hints and `STRAIGHT_JOIN`; other probes parse | Rich concrete syntax tree and lint framework, but a larger dependency surface and a less stable Python API | Same syntax gaps; formatter is not an advisor rewrite engine | Reject |
+| SQLFluff 4.2.2, Impala dialect | Pure-Python 1.0 MB universal main wheel, but its transitive closure includes platform-specific compiled wheels; Python >=3.10; MIT | Explicit Impala dialect inherits Hive, but still fails bracket hints and `STRAIGHT_JOIN`; other probes parse | Rich concrete syntax tree and lint framework, but a larger dependency surface and a less stable Python API | Same syntax gaps; formatter is not an advisor rewrite engine | Reject |
 | Existing regex heuristics | No dependency | Can search the raw spelling of every construct | Cannot reliably exclude comments/strings or associate predicates and hints with the correct query block/table | Unsafe | Retain only for trivial preflight checks |
 | New in-tree tokenizer/parser | No dependency | Could recognize exactly the local syntax corpus | A tokenizer can protect comments, strings, and source spans, but query scopes and expression semantics would recreate a SQL parser | Unsafe until a substantial parser exists | Use only as a narrow adapter |
 
@@ -61,6 +63,7 @@ the syntax that distinguishes this workload.
 | Basic Impala-like `SELECT` | Pass | Pass | Tokenized | Pass |
 | Backtick identifiers | Pass and preserved | Pass | Tokenized | Pass |
 | Quoted template tokens | Pass and preserved | Pass | String tokens | Pass |
+| Unquoted template tokens | Silently become `STRUCT(...)` expressions | Same; adapter must reject before parse | Punctuation/name tokens | Parse violation |
 | `JOIN [BROADCAST] table` | Parse error | Pass; both tables found | `[BROADCAST]` is a name token | Parse violation |
 | `JOIN [SHUFFLE] table` | Parse error | Pass; both tables found | `[SHUFFLE]` is a name token | Parse violation |
 | `SELECT STRAIGHT_JOIN ...` | Parse error | Pass; join AST found | Keyword token | Parse violation |
@@ -68,10 +71,17 @@ the syntax that distinguishes this workload.
 | Combined candidate-rule shapes | Pass; comma join becomes an explicit `CROSS JOIN` in the AST | Pass | Tokenized | Pass |
 
 The equal-length masking experiment replaced only `[BROADCAST]`, `[SHUFFLE]`,
-and `STRAIGHT_JOIN` in a copy. SQLGlot then parsed all probe cases and recovered
-the expected joined tables. Equal lengths preserve source offsets, but this
-experiment is evidence for analysis only: the masked SQL must never be
-rendered or executed.
+and `STRAIGHT_JOIN` in a copy. SQLGlot then parsed those probe cases and
+recovered the expected joined tables. Equal lengths preserve lexical offsets,
+but this experiment is evidence for analysis only: the masked SQL must never
+be rendered or executed.
+
+Dispatch currently recognizes template tokens by textual presence, so an
+unquoted token is accepted as a `SqlTemplate`. SQLGlot does not reject that
+form: it silently interprets `{date_inicio}` as `STRUCT(date_inicio)`. The
+adapter must classify placeholders before parsing. Tokens inside strings or
+comments are safe for static parsing; a token in executable SQL outside a
+string or comment makes structural analysis unavailable.
 
 The official Impala documentation confirms that square-bracket hints are
 deprecated but still supported for backward compatibility. Dispatch cannot
@@ -87,13 +97,14 @@ engine boundary is:
 ### Raw regex ceiling
 
 No candidate catalog rule is reliable enough for warning or error severity
-when matched against raw SQL with regex alone. Comments and string literals can
-contain every relevant keyword, and regex cannot associate a filter, hint, or
-join condition with the correct table and query block.
+when matched against raw SQL with regex alone. Comments and unrelated string
+literals can contain every relevant keyword, and regex cannot associate a
+filter, hint, or join condition with the correct table and query block.
 
-After a tokenizer excludes comments and strings, lexical checks can safely
-locate `SELECT DISTINCT`, `COUNT(DISTINCT ...)`, `REGEXP`, leading-wildcard
-`LIKE`, `UNION` without `ALL`, and the spelling of join hints. That is the
+After a tokenizer classifies comments, strings, and executable tokens, lexical
+checks can safely locate `SELECT DISTINCT`, `COUNT(DISTINCT ...)`, `REGEXP`,
+`UNION` without `ALL`, and the spelling of join hints. It can also inspect the
+string-literal operand of a `LIKE` token for a leading wildcard. That is the
 hybrid option, not regex-only analysis, and these findings still cannot claim
 that a semantically different replacement is safe.
 
@@ -132,10 +143,15 @@ The implementation spec should require an adapter with these properties:
 - Recognize hints only in their documented syntactic positions, and record
   bracket-form and comment-form hints plus `STRAIGHT_JOIN` with their original
   source ranges.
+- Reject structural analysis when a template token occurs in executable SQL
+  outside a string or comment; never accept SQLGlot's named-struct
+  interpretation.
 - Replace only those ranges with equal-length whitespace in a parse copy.
 - Parse the copy with `read="hive"` and treat any parser error as analysis
   unavailable; do not run AST rules against a partial tree.
-- Report findings against locations in the original SQL.
+- Report a source location only when it comes from an adapter-recorded token
+  span or a separately tested token-to-AST mapping. SQLGlot AST nodes do not
+  consistently expose source spans.
 - Preserve the original SQL as the sole launch and preview input.
 - Pin SQLGlot in both `pyproject.toml` and `requirements.txt`, and include its
   universal wheel in the edge-deploy-core offline bundle.

@@ -37,7 +37,7 @@ flag-only vs flag+rewrite).
 ## Resolution
 
 [The engine comparison](../assets/sql-analysis-engine-research.md) recommends
-SQLGlot's Hive dialect behind a position-preserving adapter for Impala-only
+SQLGlot's Hive dialect behind a length-preserving adapter for Impala-only
 tokens. Its pure-Python universal wheel fits the offline deploy path, and its
 AST supports the candidate structural checks. Neither SQLGlot nor SQLFluff
 faithfully handles the manual's hint syntax, so v1's confidence ceiling is

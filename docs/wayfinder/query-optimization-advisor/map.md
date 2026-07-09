@@ -62,7 +62,7 @@ nothing is left to decide before implementation starts.
 <!-- one line per closed ticket: gist + link -->
 
 - [Research: SQL analysis engine options under the air-gapped deploy path](tickets/0002-sql-analysis-engine-research.md)
-  — use SQLGlot with a position-preserving Impala adapter for flag-only v1
+  — use SQLGlot with a length-preserving Impala adapter for flag-only v1
   analysis; never render or launch parser-generated SQL.
 
 ## Not yet specified

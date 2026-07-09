@@ -1,5 +1,5 @@
 ---
-title: "Decide: auto-rewrite the query, or rate/flag only"
+title: "Decide: remediation guidance for flag-only findings"
 labels: [wayfinder:grilling]
 status: open
 assignee: none
@@ -8,39 +8,31 @@ blocked-by: [0001-rule-catalog, 0002-sql-analysis-engine-research]
 
 ## Question
 
-The sponsor's ideal is that the advisor **automatically updates the query**;
-the acceptable fallback is a **rating or flagging system**. Which does v1
-ship — and if rewrite, under what consent model?
+The
+[engine research](../assets/sql-analysis-engine-research.md) makes v1
+flag-only: Dispatch never mutates the user's `.sql` file, never launches SQL
+that differs from it, and never renders parser-generated SQL. Query rewriting
+and auto-fix mechanics have moved out of this map.
 
-The engine research now caps v1 at flag-only: no evaluated parser faithfully
-round-trips the Impala syntax in the manual, and parser-generated SQL must
-never become the launch input. This ticket asks the sponsor to confirm that
-boundary and decide whether narrow, source-range suggested edits remain a
-future goal or leave this map entirely.
+How much remediation guidance should each Finding provide while the user edits
+the file themselves?
 
-This is the map's central decision. It hangs on two feeders:
+Grill the sponsor through:
 
-- The engine research supports AST-backed findings but rules out full-query
-  serialization and silent rewrite.
-- The rule catalog says whether any finding has a semantics-independent,
-  source-range edit. Replacing `UNION` with `UNION ALL`, choosing columns for
-  `SELECT *`, and choosing a `dw_process_date` range all require author intent.
+1. **Finding + manual excerpt** — identify the rule, severity, evidence, and
+   relevant guideline, but leave the correction entirely to the author.
+2. **Finding + textual remediation steps** — add deterministic prose such as
+   "filter this query block on `dw_process_date`" or "review the join strategy
+   for `core.product_hierarchy`". This is guidance, not generated SQL or a
+   diff.
+3. **Rule-specific mix** — include steps only when the rule catalog can state
+   them without guessing business intent; explanation-only for `SELECT *`,
+   date bounds, `UNION` semantics, and similar author decisions.
 
-Grill the sponsor through the options:
+Also settle whether the UI should use imperative wording ("Add...") or
+diagnostic wording ("No ... was found"), given that static analysis can be
+wrong.
 
-1. **Flag-only v1** — findings listed with severity and manual excerpts;
-   the user edits the `.sql` file themselves. Least risk, no consent problem.
-2. **Flag-only v1, preserve a future suggested-edit path** — a later effort
-   may evaluate narrow source-range edits for rules the catalog proves
-   semantics-independent. Each edit requires a visible diff and explicit user
-   confirmation.
-3. **Parser-generated or silent auto-rewrite** — ruled out by the engine
-   research; retain only as a recorded non-option.
-
-For v1, Dispatch never mutates the user's `.sql` file and never launches SQL
-that differs from it. If the sponsor preserves option 2 as a future goal,
-settle whether an accepted edit would write back to that file or create a
-separate copy; do not leave the ownership rule implicit.
-
-The answer locks option 1 or 2, permanently rejects option 3, and records the
-corresponding future-scope and file-ownership rules.
+The answer is a rule-level remediation-content policy and a wording standard.
+The file-ownership rule is already locked: v1 is read-only with respect to Job
+SQL.

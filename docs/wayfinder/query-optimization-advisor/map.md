@@ -10,8 +10,8 @@ status: open
 A locked, hand-off-ready spec for a pre-launch **Query Optimization Advisor**
 in Dispatch: which guidelines from the
 [Impala optimization manual](assets/impala-optimization-manual.md) are checked
-against a Job's SQL, whether findings automatically rewrite the query or only
-rate/flag it, and where the analysis surfaces in the TUI. The map is done when
+against a Job's SQL, how flag-only findings guide the user without mutating
+that SQL, and where the analysis surfaces in the TUI. The map is done when
 nothing is left to decide before implementation starts.
 
 ## Notes
@@ -22,9 +22,9 @@ nothing is left to decide before implementation starts.
 - The source guidelines live at
   [assets/impala-optimization-manual.md](assets/impala-optimization-manual.md)
   (uploaded "Hadoop Usage Guidelines: SQL Query Optimization Manual", v2.0).
-- Standing preference from the sponsor: **automatic query update is the ideal;
-  a rating/flagging system is the acceptable fallback** if auto-rewrite is not
-  feasible or safe.
+- Initial preference from the sponsor: **automatic query update was the ideal;
+  a rating/flagging system was the acceptable fallback**. The engine research
+  established flag-only analysis as the safe v1 ceiling.
 - Hard constraints every session must respect:
   - `scr/` orchestrators are effectively frozen
     ([ADR-0005](../../adr/0005-scr-modification-policy.md)); the advisor lives
@@ -69,10 +69,7 @@ nothing is left to decide before implementation starts.
 
 - **Scoring/aggregation model** — how individual findings roll up into a
   rating (A–F? 0–100? worst-severity?). Can't be pinned until the rule catalog
-  and the advisory-vs-rewrite decision land.
-- **Auto-fix mechanics** — which rules are safely auto-fixable, and whether
-  fixes apply as an in-TUI diff the user confirms or a rewritten copy of the
-  SQL. Only graduates if the rewrite path is chosen.
+  and remediation-guidance decision land.
 - **Testing plan and mock scenarios** — what new `mocks/scenarios/` entries
   and pytest coverage the advisor needs. Depends on whether analysis calls
   EXPLAIN/metadata or is purely static.
@@ -85,6 +82,10 @@ nothing is left to decide before implementation starts.
 
 ## Out of scope
 
+- **Query rewriting and auto-fix mechanics** — the
+  [SQL analysis engine research](tickets/0002-sql-analysis-engine-research.md)
+  found no faithful Impala parse/render path. V1 never mutates or substitutes
+  Job SQL; any future source-editing capability requires a fresh effort.
 - **Resource/environment hygiene guidelines** (shut down kernels, max 3
   PySpark ports, quarterly file cleanup, JupyterHub process management) — they
   are not properties of a Job's SQL text and cannot be checked at launch time.

@@ -18,8 +18,8 @@ Candidate surfaces, from least to most invasive:
    runs `_validation_issues()` live and shows "Ready to launch"; findings
    append there with severity coloring.
 2. **In the Preview SQL screen** (`dispatch/screens/preview.py`) — findings
-   as a panel beside the highlighted SQL, close to the code they criticise;
-   natural home for a diff view if rewrite was chosen.
+   as a panel beside the highlighted SQL, close to the evidence and manual
+   remediation guidance. This remains read-only; it is not a diff or editor.
 3. **A dedicated Analyze screen/action** — explicit `a`-keybinding step
    between compose and launch; the only sane home for slow metadata-backed
    checks (worker + spinner).

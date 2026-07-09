@@ -168,8 +168,8 @@ Source-range edits could eventually support a very small reviewed subset, but
 that is a separate capability requiring its own corpus and equivalence checks.
 It must not be inferred from choosing SQLGlot for findings.
 
-For the downstream advisory-versus-rewrite decision, this research therefore
-supports **flag-only for v1** and rules out silent auto-rewrite.
+For the downstream remediation-guidance decision, this research therefore
+locks **flag-only for v1** and rules out silent auto-rewrite.
 
 ## Sources
 

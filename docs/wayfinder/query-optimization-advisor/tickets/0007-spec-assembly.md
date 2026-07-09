@@ -18,15 +18,16 @@ blocked-by:
 
 Fold every decision on this map into one implementation-ready spec document
 (proposed home: `docs/query-optimization-advisor-spec.md`), plus the ADR for
-whichever choices are architectural (analysis engine dependency, rewrite
-consent model). This is the map's destination.
+the analysis engine dependency and Impala adapter boundary. This is the map's
+destination.
 
 The spec must cover, with nothing left open:
 
-- the rule catalog (ids, detection conditions, severities, fix templates for
-  auto-fixable rules)
+- the rule catalog (ids, detection conditions, severities, and manual
+  remediation guidance)
 - the analysis engine and any new dependency, with its vendored-wheel story
-- advisory vs rewrite behavior and the consent/file-mutation rules
+- flag-only behavior and the invariant that source and launched SQL remain
+  unchanged
 - launch enforcement policy and override paths
 - the TUI surface and interaction flow, referencing the accepted prototype
 - scoring/aggregation model, SqlTemplate/ExistingTable handling, config and

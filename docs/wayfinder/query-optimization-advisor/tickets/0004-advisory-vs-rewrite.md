@@ -1,5 +1,5 @@
 ---
-title: "Decide: auto-rewrite the query, or rate/flag only"
+title: "Decide: remediation guidance for flag-only findings"
 labels: [wayfinder:grilling]
 status: open
 assignee: none
@@ -8,33 +8,31 @@ blocked-by: [0001-rule-catalog, 0002-sql-analysis-engine-research]
 
 ## Question
 
-The sponsor's ideal is that the advisor **automatically updates the query**;
-the acceptable fallback is a **rating or flagging system**. Which does v1
-ship — and if rewrite, under what consent model?
+The
+[engine research](../assets/sql-analysis-engine-research.md) makes v1
+flag-only: Dispatch never mutates the user's `.sql` file, never launches SQL
+that differs from it, and never renders parser-generated SQL. Query rewriting
+and auto-fix mechanics have moved out of this map.
 
-This is the map's central decision. It hangs on two feeders:
+How much remediation guidance should each Finding provide while the user edits
+the file themselves?
 
-- The engine research says how trustworthy a rewrite can be (regex-mangled
-  SQL that silently changes results is worse than no advisor).
-- The rule catalog says how many rules even have a mechanical fix. Some do
-  (insert a `[BROADCAST]` hint, swap `UNION` for `UNION ALL`); some don't
-  (only the author knows which columns replace `SELECT *`, or the right
-  `dw_process_date` range).
+Grill the sponsor through:
 
-Grill the sponsor through the options:
+1. **Finding + manual excerpt** — identify the rule, severity, evidence, and
+   relevant guideline, but leave the correction entirely to the author.
+2. **Finding + textual remediation steps** — add deterministic prose such as
+   "filter this query block on `dw_process_date`" or "review the join strategy
+   for `core.product_hierarchy`". This is guidance, not generated SQL or a
+   diff.
+3. **Rule-specific mix** — include steps only when the rule catalog can state
+   them without guessing business intent; explanation-only for `SELECT *`,
+   date bounds, `UNION` semantics, and similar author decisions.
 
-1. **Flag-only** — findings listed with severity and manual excerpts;
-   the user edits the `.sql` file themselves. Least risk, no consent problem.
-2. **Flag + suggested rewrite, user confirms** — advisor shows a diff
-   (original vs proposed SQL) for the auto-fixable subset; the user accepts
-   per-finding or wholesale before launch. Dispatch never silently launches
-   SQL that differs from the file on disk.
-3. **Silent auto-rewrite** — advisor applies fixes and launches the result.
+Also settle whether the UI should use imperative wording ("Add...") or
+diagnostic wording ("No ... was found"), given that static analysis can be
+wrong.
 
-Also settle: if a rewrite is accepted, does Dispatch write it back to the
-user's `.sql` file, launch a modified copy while leaving the file untouched,
-or both (user choice)? A Job's SQL comes from a file the user owns in their
-launch CWD, so mutating it has consequences outside Dispatch.
-
-The answer locks one option (possibly "2 now, 3 never") and its consent and
-file-mutation rules.
+The answer is a rule-level remediation-content policy and a wording standard.
+The file-ownership rule is already locked: v1 is read-only with respect to Job
+SQL.

@@ -77,16 +77,13 @@ nothing is left to decide before implementation starts.
 - **Testing plan and mock scenarios** — pytest coverage for the analyzer and
   its Impala syntax corpus. Analysis is static-only, so no new `impala-shell`
   mock routing is needed; scope follows the rule catalog.
-- **Embedded join-strategy data file** — location, format, and update
-  procedure for the manual's recommended broadcast/shuffle table that v1
-  embeds as data. Pins down once the rule catalog fixes which rules consume
-  it.
 - **SqlTemplate handling** — a `SqlTemplate` Source expands to one query per
   month; analyze the template once, or each expansion? Depends on the engine
   and rule catalog.
-- **Configuration and suppression UX** — per-user opt-out, per-rule
-  suppression, updating the recommended join-strategy table when the Code
-  Optimization Team revises it. Depends on catalog and surface decisions.
+- **Configuration and suppression UX** — per-user opt-out and per-rule
+  suppression. Depends on catalog and surface decisions. (The join-strategy
+  data file and its update procedure are now the
+  [embedded join-strategy data file ticket](tickets/0008-join-strategy-data-file.md).)
 
 ## Out of scope
 

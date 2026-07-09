@@ -64,15 +64,23 @@ nothing is left to decide before implementation starts.
 - [Research: SQL analysis engine options under the air-gapped deploy path](tickets/0002-sql-analysis-engine-research.md)
   — use SQLGlot with a length-preserving Impala adapter for flag-only v1
   analysis; never render or launch parser-generated SQL.
+- [Research: what Impala metadata is available at pre-launch analysis time](tickets/0003-metadata-availability-research.md)
+  — v1 analysis is static-only; embed the manual's join-strategy table as
+  data, park needs-metadata rules, and defer EXPLAIN verification to a future
+  Analyze action.
 
 ## Not yet specified
 
 - **Scoring/aggregation model** — how individual findings roll up into a
   rating (A–F? 0–100? worst-severity?). Can't be pinned until the rule catalog
   and remediation-guidance decision land.
-- **Testing plan and mock scenarios** — what new `mocks/scenarios/` entries
-  and pytest coverage the advisor needs. Depends on whether analysis calls
-  EXPLAIN/metadata or is purely static.
+- **Testing plan and mock scenarios** — pytest coverage for the analyzer and
+  its Impala syntax corpus. Analysis is static-only, so no new `impala-shell`
+  mock routing is needed; scope follows the rule catalog.
+- **Embedded join-strategy data file** — location, format, and update
+  procedure for the manual's recommended broadcast/shuffle table that v1
+  embeds as data. Pins down once the rule catalog fixes which rules consume
+  it.
 - **SqlTemplate handling** — a `SqlTemplate` Source expands to one query per
   month; analyze the template once, or each expansion? Depends on the engine
   and rule catalog.
@@ -82,6 +90,12 @@ nothing is left to decide before implementation starts.
 
 ## Out of scope
 
+- **Live metadata checks (EXPLAIN, SHOW TABLE STATS) during composition** —
+  the
+  [metadata availability research](tickets/0003-metadata-availability-research.md)
+  found no mock routing, unacceptable latency in live validation, and
+  composition-blocking failure modes. A future effort may add them behind an
+  explicit Analyze action with worker/spinner/cancel treatment.
 - **Query rewriting and auto-fix mechanics** — the
   [SQL analysis engine research](tickets/0002-sql-analysis-engine-research.md)
   found no faithful Impala parse/render path. V1 never mutates or substitutes

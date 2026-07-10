@@ -356,6 +356,29 @@ class TestRunnerQueueSelection:
         assert "Attempting export with queue: adhoc_fast" in log, log
         assert "[runner] pinning request_pool" not in log, log
 
+    def test_multiple_selected_queues_are_cycled_in_order(self, mock_env, monkeypatch, tmp_path):
+        """Several selected queues are tried in order until one succeeds.
+
+        ``memory_exceeded`` fails the first two attempts and succeeds on the
+        third. With three pinned pools the third attempt (``adhoc``) succeeds
+        within the first cycle, so all three pools appear in the log in order
+        and no 30s retry-cycle sleep is incurred.
+        """
+        monkeypatch.setenv("DISPATCH_MOCK_SCENARIO", "memory_exceeded")
+        job_dir, _ = _create_csv_job_with_queue(tmp_path, queue="acs_small,acs_large,adhoc")
+        result = _spawn_runner(job_dir)
+        assert result.returncode == 0, result.stderr or result.stdout or _read_log(job_dir)
+
+        log = _read_log(job_dir)
+        assert "[runner] pinning request_pool=acs_small,acs_large,adhoc" in log, log
+        first = log.index("Attempting export with queue: acs_small")
+        second = log.index("Attempting export with queue: acs_large")
+        third = log.index("Attempting export with queue: adhoc")
+        assert first < second < third, log
+        # The default list must not leak in when queues are pinned.
+        assert "Attempting export with queue: adhoc_fast" not in log, log
+        assert manifest.load(job_dir / "manifest.json")["state"] == "Succeeded"
+
 
 # =============================================================================
 # Manifest state guard (prevents double-spawn)

@@ -345,17 +345,36 @@ RadioSet:focus-within {
     height: 3;
 }
 
-.form-row Select {
-    width: 1fr;
-    height: 3;
+#queue-panel {
+    height: auto;
+    margin: 0 1 1 1;
+    padding: 0 1 1 1;
+    border: round $primary-background-darken-2;
 }
 
-Select:focus > SelectCurrent {
-    border: tall $primary;
+#queue-panel .field-label {
+    color: $text-muted;
+    text-style: bold;
+    height: 1;
+    margin: 0 0 1 0;
+}
+
+#queue-panel:focus-within {
+    border: round $primary;
+}
+
+#queue {
+    height: auto;
+    max-height: 7;
+    border: none;
+    padding: 0;
+    background: $surface;
 }
 
 #queue-hint {
-    padding: 0 0 0 22;
+    color: $text-muted;
+    height: auto;
+    padding: 0;
 }
 
 Input:focus {

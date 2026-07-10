@@ -80,8 +80,9 @@ nothing is left to decide before implementation starts.
   waits only on the remediation-guidance decision.
 - **Testing plan and mock scenarios** — pytest coverage for the analyzer and
   its Impala syntax corpus. Analysis is static-only, so no new `impala-shell`
-  mock routing is needed; the corpus must cover the locked catalog's fifteen
-  rules.
+  mock routing is needed; the corpus must cover the locked catalog's
+  SQL-analysis rules (R01–R15, plus DDL entries for R17/R18 — R16 is a
+  form-field check needing no SQL corpus).
 - **Configuration and suppression UX** — per-user opt-out and per-rule
   suppression. Depends on catalog and surface decisions. (The join-strategy
   data file and its update procedure are now the

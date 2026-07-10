@@ -42,6 +42,10 @@ not this catalog's.
 
 ## Rules
 
+The quoted finding wordings under each rule are **provisional drafts**: the
+[remediation guidance ticket](../tickets/0004-advisory-vs-rewrite.md) decides
+final remediation content and imperative-versus-diagnostic phrasing.
+
 | Id | Rule | Guideline | Severity |
 |---|---|---|---|
 | R01 | `select-star-unfiltered` | §3, G#10 | error |
@@ -59,12 +63,18 @@ not this catalog's.
 | R13 | `union-distinct` | §8 | info |
 | R14 | `select-distinct` | §8 | info |
 | R15 | `count-distinct-on-monitored-table` | §8 aggregates | info |
+| R16 | `destination-table-naming` | G#5 | warning |
+| R17 | `ddl-missing-drop` | G#6 | warning |
+| R18 | `ddl-location-outside-user-dir` | G#2 | warning |
 
 ### R01 `select-star-unfiltered` (error)
 
-Fires when a query block's projection is bare `*` (or `t.*` where `t` is a
-monitored-schema table) **and** the block's `WHERE` contains no predicate
-referencing that table. `JOIN ... ON` conditions do not count as filters.
+Fires only for monitored-schema tables, evaluated per table: the query
+block's projection is bare `*` (or `t.*` where `t` is a monitored-schema
+table) **and** the block's `WHERE` contains no predicate referencing that
+monitored table. A bare `*` over only unmonitored tables (e.g. the user's
+own temp tables) never fires. `JOIN ... ON` conditions do not count as
+filters.
 `LIMIT` never suppresses the finding (the manual explicitly shows `LIMIT 10`
 as bad). `SELECT *` over an already-filtered subquery or CTE does not fire —
 that is the manual's own recommended pattern.
@@ -98,9 +108,11 @@ present → neither.
 ### R04 `date-range-over-13-months` (error)
 
 Fires when a predicate on a recognized partition column has two literal
-`YYYY-MM-DD` bounds — `BETWEEN 'a' AND 'b'`, or a `>=`/`<=` pair on the same
-column in the same block — and the end date is later than the start date plus
-13 calendar months. Non-literal or one-sided bounds produce no finding.
+`YYYY-MM-DD` bounds — `BETWEEN 'a' AND 'b'`, or a lower/upper bound pair on
+the same column in the same block using `>=`/`>` and `<=`/`<` (the manual's
+own recommended idiom is `>= '2023-12-01' AND < '2024-01-01'`) — and the
+bounded span exceeds 13 calendar months. Non-literal or one-sided bounds
+produce no finding.
 `SqlTemplate` Jobs naturally pass: each monthly expansion spans one month,
 which *is* the manual's prescribed "break into sub parts".
 
@@ -124,17 +136,23 @@ is total: the hint is explicit and the table is explicitly listed.
 
 ### R08 `large-table-joined-directly` (info)
 
-Fires when a shuffle-recommended table appears as a bare table reference in a
-`JOIN` (not wrapped in a subquery/CTE). Worded as a "consider pre-filtering
-in a subquery/CTE" nudge (G#9). Info because Impala's predicate pushdown and
+Fires when a shuffle-recommended table appears as a bare table reference on
+**either side** of a join — the `FROM` base position counts, since the
+manual's G#9 examples filter the big table wherever it sits — rather than
+wrapped in a subquery/CTE. Worded as a "consider pre-filtering in a
+subquery/CTE" nudge (G#9). Info because Impala's predicate pushdown and
 runtime filters often make the direct join fine — the manual's own §4
 Scenario 1 joins `CORE.auth_dtl_enc` directly.
 
 ### R09 `cartesian-product` (error)
 
-Fires on a `CROSS JOIN` node — comma-style, explicit keyword, or `JOIN`
-without `ON`/`USING` (the AST normalizes all three) — when the block's
-`WHERE` contains no equality predicate linking columns from both sides.
+Fires on either of two AST shapes (verified against SQLGlot 30.12.0, which
+does **not** normalize them into one): (a) a `CROSS` join node — comma-style
+and the explicit keyword both produce it — or (b) a join node whose `ON`
+condition is absent or a dialect-synthesized constant `TRUE` (how the Hive
+dialect parses `JOIN b` with no `ON`/`USING`). Either shape fires only when
+the block's `WHERE` contains no equality predicate linking columns from both
+sides.
 Old-style `FROM a, b WHERE a.id = b.id` stays silent. Deliberate tiny cross
 joins will occasionally be flagged; loud-but-ignorable is the right trade in
 a flag-only advisor.
@@ -171,10 +189,35 @@ Fires when `COUNT(DISTINCT ...)` appears in a block referencing a
 monitored-schema table. "Use two-step aggregation on large tables." Scoped to
 monitored schemas to avoid nagging about small temp tables.
 
+### R16 `destination-table-naming` (warning)
+
+Fires when a Job's destination table name (the New Job form field, not the
+SQL text) does not start with `<user>_`, where `<user>` is the launching
+user's id. Applies to every Job whose destination creates a table (`Table` /
+`Table+Csv`), on all Sources. `table_wrapper` does **not** enforce G#5's
+employee-ID prefix — the name is user-supplied and only validated as a plain
+identifier — so this is a genuine check, not construction. Warning because
+team or shared naming conventions legitimately differ.
+
+### R17 `ddl-missing-drop` (warning)
+
+Scope: self-contained DDL `SqlFile` Jobs only (files `table_wrapper` does not
+wrap — on the wrapped path G#6 is satisfied by construction). Fires when a
+`CREATE TABLE` statement has no preceding `DROP TABLE IF EXISTS` for the same
+table earlier in the file.
+
+### R18 `ddl-location-outside-user-dir` (warning)
+
+Scope: self-contained DDL `SqlFile` Jobs only (same reasoning as R17 — the
+wrapped path generates the employee-ID `LOCATION` by construction). Fires
+when a `CREATE TABLE` statement's `LOCATION` clause is absent, or its path
+does not contain the launching user's id as a segment.
+
 ## Per-Source applicability
 
 - **`ExistingTable`** — no SELECT exists; the advisor does not run. (Any UI
-  treatment is the surface prototype's decision.)
+  treatment is the surface prototype's decision.) R16 cannot apply either:
+  `ExistingTable` legally pairs only with `Csv`, which creates no table.
 - **`SqlTemplate`** — analyze the template text **once**, pre-render: the
   tokens sit inside string literals, so the AST is identical across monthly
   expansions. R04 auto-passes (one month per expansion). A token outside a
@@ -189,7 +232,7 @@ monitored schemas to avoid nagging about small temp tables.
 
 | Guideline | Reason |
 |---|---|
-| G#2 employee-ID `LOCATION`, G#5 table naming, G#6 `DROP TABLE IF EXISTS` | Satisfied by construction — `dispatch/sql.py: table_wrapper` generates all three for every Table destination |
+| G#2 `LOCATION` and G#6 `DROP TABLE IF EXISTS` on the wrapped path | Satisfied by construction — `dispatch/sql.py: table_wrapper` generates both when it wraps a `SqlFile -> Table` SELECT. On the self-contained-DDL path they are **not** guaranteed and are checked by R17/R18; G#5 naming is never generated and is checked by R16 |
 | G#7 quarterly file cleanup; G#11–#15 ports/kernels/processes/environment | Out of scope on the map — not properties of the Job's SQL |
 | G#9 as a shape requirement | Softened to R08 (info); its enforceable core is R02 + R06/R07, and a hard subquery-shape rule would contradict §4's runtime-filter guidance |
 | GROUP BY cardinality ordering | Needs row counts (metadata) |
@@ -212,4 +255,5 @@ behind an explicit Analyze action may revisit them.
 
 The embedded data file must carry, per entry: `schema.table`, recommended
 join strategy (broadcast/shuffle), and partition column(s). Plus the
-monitored-schema list. Consumed by R01–R08 and R15.
+monitored-schema list. Consumed by R01–R08 and R15. (R16–R18 need only the
+launching user's id, which Dispatch already has — no data-file input.)

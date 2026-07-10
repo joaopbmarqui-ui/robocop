@@ -48,16 +48,20 @@ detection condition, severity, and whether it needs metadata.
 ## Resolution
 
 Grilled with the sponsor on 2026-07-10; the locked catalog is
-[the rule catalog asset](../assets/rule-catalog.md). Fifteen rules ship in
+[the rule catalog asset](../assets/rule-catalog.md). Eighteen rules ship in
 v1: four error (`SELECT *` unfiltered on a monitored table, >13-month
 literal ranges, `BROADCAST` on a shuffle-recommended table, Cartesian
-products), three warning (missing partition filter, function-wrapped
-partition column, `SHUFFLE` on a broadcast-recommended table), and eight
-info (missing hint, direct large-table join, `CAST` in join conditions, and
-the string/set-operation/aggregation style rules). Severity encodes
+products), six warning (missing partition filter, function-wrapped partition
+column, `SHUFFLE` on a broadcast-recommended table, destination-table
+naming, and the two self-contained-DDL checks for `DROP TABLE IF EXISTS`
+and employee-ID `LOCATION`), and eight info (missing hint, direct
+large-table join, `CAST` in join conditions, and the
+string/set-operation/aggregation style rules). Severity encodes
 confidence × impact. Monitored schemas, per-table partition columns (with a
 `dw_process_date` default for unlisted tables), and join-strategy
-recommendations all live in the embedded data file. Guidelines satisfied by
-`table_wrapper`, environment-hygiene items, and needs-metadata checks are
-recorded as not-a-rule or parked. `SqlTemplate` Jobs are analyzed once on
-the template text; `ExistingTable` Jobs are not analyzed.
+recommendations all live in the embedded data file. `table_wrapper`
+guarantees G#2/G#6 only on the wrapped path — the self-contained-DDL path
+and G#5 naming get real rules (R16–R18). Environment-hygiene items and
+needs-metadata checks are recorded as not-a-rule or parked. `SqlTemplate`
+Jobs are analyzed once on the template text; `ExistingTable` Jobs are not
+analyzed.

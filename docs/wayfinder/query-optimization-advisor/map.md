@@ -69,15 +69,15 @@ nothing is left to decide before implementation starts.
   data, park needs-metadata rules, and defer EXPLAIN verification to a future
   Analyze action.
 - [Rule catalog: which manual guidelines become machine-checkable rules](tickets/0001-rule-catalog.md)
-  — fifteen rules locked (4 error / 3 warning / 8 info) with exact detection
+  — eighteen rules locked (4 error / 6 warning / 8 info) with exact detection
   conditions; schemas, partition columns, and join strategies ship as data;
   SqlTemplate analyzed once, ExistingTable not analyzed.
 
 ## Not yet specified
 
 - **Scoring/aggregation model** — how individual findings roll up into a
-  rating (A–F? 0–100? worst-severity?). Can't be pinned until the rule catalog
-  and remediation-guidance decision land.
+  rating (A–F? 0–100? worst-severity?). The rule catalog is locked; this now
+  waits only on the remediation-guidance decision.
 - **Testing plan and mock scenarios** — pytest coverage for the analyzer and
   its Impala syntax corpus. Analysis is static-only, so no new `impala-shell`
   mock routing is needed; the corpus must cover the locked catalog's fifteen

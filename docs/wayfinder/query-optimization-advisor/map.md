@@ -68,6 +68,10 @@ nothing is left to decide before implementation starts.
   — v1 analysis is static-only; embed the manual's join-strategy table as
   data, park needs-metadata rules, and defer EXPLAIN verification to a future
   Analyze action.
+- [Rule catalog: which manual guidelines become machine-checkable rules](tickets/0001-rule-catalog.md)
+  — fifteen rules locked (4 error / 3 warning / 8 info) with exact detection
+  conditions; schemas, partition columns, and join strategies ship as data;
+  SqlTemplate analyzed once, ExistingTable not analyzed.
 
 ## Not yet specified
 
@@ -76,10 +80,8 @@ nothing is left to decide before implementation starts.
   and remediation-guidance decision land.
 - **Testing plan and mock scenarios** — pytest coverage for the analyzer and
   its Impala syntax corpus. Analysis is static-only, so no new `impala-shell`
-  mock routing is needed; scope follows the rule catalog.
-- **SqlTemplate handling** — a `SqlTemplate` Source expands to one query per
-  month; analyze the template once, or each expansion? Depends on the engine
-  and rule catalog.
+  mock routing is needed; the corpus must cover the locked catalog's fifteen
+  rules.
 - **Configuration and suppression UX** — per-user opt-out and per-rule
   suppression. Depends on catalog and surface decisions. (The join-strategy
   data file and its update procedure are now the

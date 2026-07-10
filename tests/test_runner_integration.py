@@ -48,6 +48,22 @@ def _create_csv_job(tmp_path: Path, user: str = "testuser") -> tuple[Path, manif
     )
 
 
+def _create_csv_job_with_queue(
+    tmp_path: Path, queue: str, user: str = "testuser"
+) -> tuple[Path, manifest.JobManifest]:
+    """Create a SqlFile → Csv job that requests a specific execution queue."""
+    sql_file = tmp_path / "queued.sql"
+    sql_file.write_text("SELECT 1;", encoding="utf-8")
+    return manifest.create_job(
+        source={"type": "SqlFile", "sql_path_at_launch": str(sql_file)},
+        destination={"type": "Csv", "table_name": "queued_export", "schema": "", "csv_path": ""},
+        params={"to_email": "test@example.com", "subject": "Test", "queue": queue},
+        launch_cwd=tmp_path,
+        sql_text="SELECT 1;",
+        user=user,
+    )
+
+
 def _create_sqlfile_table_job(
     tmp_path: Path, user: str = "testuser"
 ) -> tuple[Path, manifest.JobManifest]:
@@ -288,6 +304,57 @@ class TestRunnerLifecycle:
 
         final = manifest.load(job_dir / "manifest.json")
         assert final["state"] == "Succeeded", _read_log(job_dir)
+
+
+# =============================================================================
+# Execution-queue selection (DISPATCH_REQUEST_POOL wiring)
+# =============================================================================
+
+
+class TestRunnerQueueSelection:
+    """The queue chosen in New Job must be the pool the orchestrator runs on.
+
+    ``download_to_csv`` logs ``Attempting export with queue: <fila>`` at INFO
+    for every pool it tries, so the run log is a faithful record of which queue
+    actually executed the query.
+    """
+
+    def test_selected_queue_pins_request_pool(self, mock_env, tmp_path):
+        """A specific queue selection runs the query on exactly that pool."""
+        job_dir, _ = _create_csv_job_with_queue(tmp_path, queue="acs_large")
+        result = _spawn_runner(job_dir)
+        assert result.returncode == 0, result.stderr or result.stdout or _read_log(job_dir)
+
+        log = _read_log(job_dir)
+        assert "[runner] pinning request_pool=acs_large" in log, log
+        assert "Attempting export with queue: acs_large" in log, log
+        # No other pool from the download_to_csv default list should run.
+        assert "Attempting export with queue: adhoc_fast" not in log, log
+        assert manifest.load(job_dir / "manifest.json")["state"] == "Succeeded"
+
+    def test_auto_queue_uses_orchestrator_default_first_pool(self, mock_env, tmp_path):
+        """``auto`` inherits the environment: the orchestrator's default list runs.
+
+        download_to_csv's default list starts with ``adhoc_fast``, and the happy
+        path succeeds on the first pool, so that is the pool that must appear.
+        """
+        job_dir, _ = _create_csv_job_with_queue(tmp_path, queue="auto")
+        result = _spawn_runner(job_dir)
+        assert result.returncode == 0, result.stderr or result.stdout or _read_log(job_dir)
+
+        log = _read_log(job_dir)
+        assert "Attempting export with queue: adhoc_fast" in log, log
+        assert "[runner] pinning request_pool" not in log, log
+
+    def test_missing_queue_param_preserves_default_behavior(self, mock_env, tmp_path):
+        """A job manifest without a ``queue`` param behaves exactly as before."""
+        job_dir, _ = _create_csv_job(tmp_path)
+        result = _spawn_runner(job_dir)
+        assert result.returncode == 0, result.stderr or result.stdout or _read_log(job_dir)
+
+        log = _read_log(job_dir)
+        assert "Attempting export with queue: adhoc_fast" in log, log
+        assert "[runner] pinning request_pool" not in log, log
 
 
 # =============================================================================

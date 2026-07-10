@@ -22,6 +22,7 @@ from textual.widgets import (
     Input,
     RadioButton,
     RadioSet,
+    Select,
     Static,
 )
 from textual.worker import Worker
@@ -39,6 +40,29 @@ _SOURCE_IDS = {
     "src-existingtable": "ExistingTable",
 }
 _DEST_IDS = {"dst-table": "Table", "dst-csv": "Csv", "dst-table-csv": "Table+Csv"}
+
+# Execution-queue (Impala request pool) selection. ``auto`` preserves the
+# original behaviour: the orchestrators cycle their own hardcoded queue list.
+# Selecting a specific queue pins the job to that pool via DISPATCH_REQUEST_POOL
+# (see scr/_common.resolve_pools and dispatch/runner._orchestrator_env).
+_QUEUE_AUTO = "auto"
+_QUEUE_OPTIONS: list[tuple[str, str]] = [
+    ("Auto \u00b7 cycle all queues (default)", _QUEUE_AUTO),
+    ("adhoc_fast \u00b7 fastest, short / simple queries", "adhoc_fast"),
+    ("adhoc_small \u00b7 small queries", "adhoc_small"),
+    ("acs_small \u00b7 ACS small pool", "acs_small"),
+    ("acs_large \u00b7 large / heavy queries", "acs_large"),
+    ("adhoc \u00b7 general, long-running queries", "adhoc"),
+]
+_QUEUE_VALUES = {value for _label, value in _QUEUE_OPTIONS}
+_QUEUE_HINTS = {
+    _QUEUE_AUTO: "Cycles every queue until one accepts the query (original behavior).",
+    "adhoc_fast": "Fast pool \u2014 best for short or simple queries.",
+    "adhoc_small": "Small pool \u2014 light queries with a modest footprint.",
+    "acs_small": "ACS small pool \u2014 light ACS workloads.",
+    "acs_large": "Large pool \u2014 heavy or long-running queries.",
+    "adhoc": "General pool \u2014 long-running or resource-heavy queries.",
+}
 
 
 class NewJobScreen(Screen[None]):
@@ -102,6 +126,18 @@ class NewJobScreen(Screen[None]):
                                 yield RadioButton("Csv", value=True, id="dst-csv")
                                 yield RadioButton("Table+Csv", id="dst-table-csv")
                     yield Static("", id="dest-hint")
+
+                with Horizontal(classes="form-row", id="row-queue"):
+                    yield Static("Execution Queue", classes="field-label", id="lbl-queue")
+                    yield Select(
+                        _QUEUE_OPTIONS,
+                        value=_QUEUE_AUTO,
+                        allow_blank=False,
+                        id="queue",
+                    )
+                yield Static(
+                    _QUEUE_HINTS[_QUEUE_AUTO], id="queue-hint", classes="input-caption"
+                )
 
                 yield Static("", id="picker-caption", classes="input-caption")
                 yield DataTable(id="sql-file-picker")
@@ -292,10 +328,23 @@ class NewJobScreen(Screen[None]):
             return _DEST_IDS.get(radio_set.pressed_button.id or "", "Csv")
         return "Csv"
 
+    def _selected_queue(self) -> str:
+        select = self.query_one("#queue", Select)
+        value = select.value
+        if value in _QUEUE_VALUES:
+            return str(value)
+        return _QUEUE_AUTO
+
     def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
         self._update_field_visibility()
         self._inline_validate()
         self._update_validation_summary()
+
+    def on_select_changed(self, event: Select.Changed) -> None:
+        if event.select.id != "queue":
+            return
+        queue = self._selected_queue()
+        self.query_one("#queue-hint", Static).update(_QUEUE_HINTS.get(queue, ""))
 
     def on_input_changed(self, event: Input.Changed) -> None:
         self._inline_validate()
@@ -599,7 +648,11 @@ class NewJobScreen(Screen[None]):
         return source, destination
 
     def _params(self) -> dict[str, str]:
-        params = {"to_email": self._input_value("email"), "subject": self._input_value("subject")}
+        params = {
+            "to_email": self._input_value("email"),
+            "subject": self._input_value("subject"),
+            "queue": self._selected_queue(),
+        }
         if self._selected_source() == "SqlTemplate":
             params["start_date"] = sql.to_orchestrator_date(self._input_value("start-date"))
             params["end_date"] = sql.to_orchestrator_date(self._input_value("end-date"))
@@ -739,10 +792,13 @@ class NewJobScreen(Screen[None]):
         schema = destination.get("schema") or "--"
         table = destination.get("table_name") or "--"
         csv_path = destination.get("csv_path") or "--"
+        queue = self._selected_queue()
+        queue_label = "Auto (cycle all queues)" if queue == _QUEUE_AUTO else queue
         body = (
             f"Source: [cyan]{source_type}[/]  {source_detail}\n"
             f"Destination: [cyan]{dest_type}[/]\n"
             f"Target table: [cyan]{schema}.{table}[/]\n"
+            f"Queue: [cyan]{queue_label}[/]\n"
             f"CSV path: {csv_path}\n"
             f"Email: {self._input_value('email') or '--'}"
         )
@@ -798,6 +854,7 @@ class NewJobScreen(Screen[None]):
             value = self.prefill.get(key, "")
             if value:
                 self.query_one(f"#{widget_id}", Input).value = str(value)
+        self._apply_queue_value(self.prefill.get("queue", ""))
         source_type = self.prefill.get("source_type")
         source_btn = {
             "SqlFile": "src-sqlfile",
@@ -861,6 +918,20 @@ class NewJobScreen(Screen[None]):
                 row.scroll_visible(animate=False)
                 return
 
+    def _apply_queue_value(self, value: str) -> None:
+        """Set the queue Select to ``value`` when it names a known queue."""
+        if not value or value not in _QUEUE_VALUES:
+            return
+        try:
+            select = self.query_one("#queue", Select)
+        except Exception:  # noqa: BLE001
+            return
+        select.value = value
+        try:
+            self.query_one("#queue-hint", Static).update(_QUEUE_HINTS.get(value, ""))
+        except Exception:  # noqa: BLE001
+            pass
+
     def _apply_saved_defaults(self) -> None:
         defaults = config.read_form_defaults()
         if not defaults:
@@ -876,6 +947,7 @@ class NewJobScreen(Screen[None]):
                     self.query_one(f"#{widget_id}", Input).value = defaults[key]
                 except Exception:
                     pass
+        self._apply_queue_value(defaults.get("queue", ""))
 
     def _save_form_defaults(self) -> None:
         values = {
@@ -883,6 +955,7 @@ class NewJobScreen(Screen[None]):
             "email": self._input_value("email"),
             "subject": self._input_value("subject"),
             "destination_type": self._selected_destination(),
+            "queue": self._selected_queue(),
         }
         try:
             config.save_form_defaults(values)

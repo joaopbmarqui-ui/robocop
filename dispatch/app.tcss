@@ -345,6 +345,19 @@ RadioSet:focus-within {
     height: 3;
 }
 
+.form-row Select {
+    width: 1fr;
+    height: 3;
+}
+
+Select:focus > SelectCurrent {
+    border: tall $primary;
+}
+
+#queue-hint {
+    padding: 0 0 0 22;
+}
+
 Input:focus {
     border: tall $primary;
 }

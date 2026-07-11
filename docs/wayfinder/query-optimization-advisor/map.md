@@ -98,6 +98,7 @@ _Nothing. The testing plan graduated into the
 [spec draft](../../query-optimization-advisor-spec.md)'s Testing
 expectations; the map closes when the sponsor signs off on the spec
 ([Assemble and lock the Query Optimization Advisor spec](tickets/0007-spec-assembly.md))._
+
 ## Out of scope
 
 - **Per-rule suppression and config opt-outs** — the

@@ -24,12 +24,16 @@ All advisor code lives in `dispatch/`; `scr/` is untouched (ADR-0005).
 Locked by the
 [engine research](wayfinder/query-optimization-advisor/assets/sql-analysis-engine-research.md):
 
-- New runtime dependency: **SQLGlot** (pure-Python universal wheel, MIT,
-  no transitive dependencies), pinned in `pyproject.toml` and
+- New runtime dependency: **SQLGlot 30.12.0** as the initial pin — the
+  researched, deploy-verified release whose join-shape behavior the
+  catalog's R09 detection is specified against — in `pyproject.toml` and
   `requirements.txt`. The edge-deploy-core offline bundle picks it up from
-  `requirements.txt`; no other packaging work.
-- Parse with `read="hive"` behind an in-tree **Impala adapter**
-  (`dispatch/advisor/` proposed) implementing the research's contract:
+  `requirements.txt`; no other packaging work. Pin bumps re-run the syntax
+  corpus.
+- Parse with `read="hive"` behind an in-tree **Impala adapter** in a new
+  `dispatch/advisor/` package (the data file stays at
+  `dispatch/advisor_data.py` per its ticket) implementing the research's
+  contract:
   scan the original SQL respecting strings/identifiers/comments; record
   bracket-form and comment-form join hints plus `STRAIGHT_JOIN` with source
   spans; replace only those ranges with equal-length whitespace in a parse
@@ -79,7 +83,8 @@ Locked by the
 [data file ticket](wayfinder/query-optimization-advisor/tickets/0008-join-strategy-data-file.md):
 `dispatch/advisor_data.py`, plain Python literals — `MONITORED_SCHEMAS`
 (`core`, `gco`, `mrs`), `DEFAULT_PARTITION_COLUMN = "dw_process_date"`,
-`DATA_VERSION` (date string, plus the manual version transcribed from), and
+`DATA_VERSION` (date string) plus the manual version transcribed from
+(v2.0), and
 per-table records keyed by exact lowercase `schema.table` (expanded verbatim
 from Guideline #3; slash variants and multi-database rows become separate
 entries) carrying `join_strategy` and optional `partition_columns`.
@@ -118,9 +123,10 @@ out of scope.
   SQL fixtures covering every catalog rule firing and not firing — R01–R15
   plus DDL entries for R17/R18 (R16 is a form-field check needing no SQL
   corpus) — nested queries, CTEs, comments, strings, template tokens, both
-  hint spellings, and analysis-unavailable inputs (bracket hints unmasked,
-  templates outside strings, unparseable SQL). Adapter tests assert masking
-  is length-preserving and never leaks into launch/preview text.
+  hint spellings, and analysis-unavailable inputs (bracket hints in
+  unrecognized positions left unmasked, template tokens outside strings,
+  unparseable SQL). Adapter tests assert masking is length-preserving and
+  never leaks into launch/preview text.
 - **Textual pilot tests**: badge in the New Job action bar per finding set;
   findings panel rendering in Preview; launch gate appearing only for
   errors, proceeding on confirm, cancelling on escape; no gating when
@@ -135,15 +141,16 @@ out of scope.
 
 ## Glossary additions (`CONTEXT.md`)
 
-To be added when implementation starts:
+Added to `CONTEXT.md` when this spec locks:
 
 - **Advisor**: The pre-launch static analysis feature that checks a Job's
   SQL against the Impala optimization manual and reports **Findings**.
   Flag-only: it never modifies or gates what SQL is launched beyond the
   error-confirm modal. _Avoid_: linter, optimizer, rewriter.
-- **Finding**: One Advisor detection — a rule id, severity (`error` /
-  `warning` / `info`), diagnostic detection line, and typed remediation
-  line. _Avoid_: violation, issue, error (reserved for the severity tier).
+- **Finding**: One Advisor detection — a rule id, guideline reference,
+  severity (`error` / `warning` / `info`), diagnostic detection line, and
+  typed remediation line. _Avoid_: violation, issue, error (reserved for
+  the severity tier).
 
 ## Out of scope (fresh efforts if ever)
 

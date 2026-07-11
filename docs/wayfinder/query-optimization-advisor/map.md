@@ -94,11 +94,10 @@ nothing is left to decide before implementation starts.
 
 ## Not yet specified
 
-- **Testing plan and mock scenarios** — pytest coverage for the analyzer and
-  its Impala syntax corpus. Analysis is static-only, so no new `impala-shell`
-  mock routing is needed; the corpus must cover the locked catalog's
-  SQL-analysis rules (R01–R15, plus DDL entries for R17/R18 — R16 is a
-  form-field check needing no SQL corpus).
+_Nothing. The testing plan graduated into the
+[spec draft](../../query-optimization-advisor-spec.md)'s Testing
+expectations; the map closes when the sponsor signs off on the spec
+([Assemble and lock the Query Optimization Advisor spec](tickets/0007-spec-assembly.md))._
 ## Out of scope
 
 - **Per-rule suppression and config opt-outs** — the

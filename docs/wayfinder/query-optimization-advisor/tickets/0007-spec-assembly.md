@@ -2,7 +2,7 @@
 title: "Assemble and lock the Query Optimization Advisor spec"
 labels: [wayfinder:task]
 status: open
-assignee: none
+assignee: cursor-agent
 blocked-by:
   [
     0001-rule-catalog,

@@ -34,7 +34,7 @@ answer fleet-wide “who”.
 Simple and private. Operators cannot see other users without elevated read
 access across `/ads_storage/*/`. Weak for “who is using it” fleet-wide.
 
-### B. Dual-write JSONL (private + shared rollup) + CLI summaries (chosen)
+### B. Bounded local queue + dual-write JSONL + CLI summaries (chosen)
 
 Emit the same events to:
 
@@ -56,15 +56,23 @@ could hang the TUI.
 TUI / jobs / screens
         │
         ▼
- dispatch.telemetry.emit(event, props)
+ typed telemetry event helpers
+        │
+        ▼
+ bounded in-memory queue
+        │
+        ▼
+ daemon writer thread
         │
         ├─► private JSONL  (best-effort, flock)
         └─► shared JSONL   (best-effort, flock; skip if not writable)
 ```
 
-`emit` is synchronous, bounded, and swallows all I/O errors after a debug log.
-No workers, no background flush queue in v1 — event volume is low (sessions and
-Job actions, not per-keystroke).
+Event helpers validate catalog values, construct one record, and enqueue it
+without filesystem I/O. The bounded queue drops new events with a debug log if
+full. One daemon writer drains records in order; normal interpreter shutdown
+waits briefly for queued records but never waits indefinitely. Event volume is
+low (sessions and Job actions, not per-keystroke).
 
 ### Event schema
 
@@ -132,18 +140,24 @@ dispatch telemetry summary [--days N] [--dir PATH] [--user NAME]
 
 ### Testing seams
 
-1. `telemetry.emit` / path helpers — file content and opt-out (unit).
+1. Event helpers / path helpers — file content, catalog validation, and opt-out
+   (unit).
 2. `telemetry.summarize` / `who` — pure aggregation over fixtures (unit).
 3. CLI argparse routing — `telemetry` subcommands do not start the TUI.
-4. Light App mount test — `session_start` written when enabled under a temp
-   data root (optional if expensive; prefer unit coverage of emit + hooks that
-   call it).
+4. App and screen tests — mount records `session_start`; History → Job Detail
+   records a view; a created Job records `job_launched` even if runner startup
+   fails.
 
 ## Failure and safety
 
 - Telemetry must not raise into callers.
-- Use `fcntl.flock` around appends (same pattern as launch locking).
-- Cap props to known keys; never dump arbitrary form dicts.
+- Event helpers expose only known properties and reject catalog values outside
+  the documented screen and refusal sets.
+- Use nonblocking `fcntl.flock`; skip an append when another writer owns the
+  lock.
+- Open shared files with `O_NOFOLLOW`, require a regular file owned by the
+  current effective user, and enforce mode `0644` independently of `umask`.
+- The shared writer accepts one username path component only.
 - Do not change `scr/` or Job durability.
 
 ## Success criteria
@@ -153,4 +167,8 @@ dispatch telemetry summary [--days N] [--dir PATH] [--user NAME]
 - `dispatch telemetry who` lists the user after those events.
 - `DISPATCH_TELEMETRY=0` produces no files.
 - Unwritable shared dir does not affect the TUI or private logging.
+- Lock contention does not delay the TUI or Job lifecycle.
+- Shared symlinks and files owned by another user are skipped without modifying
+  their targets.
+- Shared files remain analyst-readable under a restrictive user `umask`.
 - `pytest` passes for new tests; no new package dependencies.

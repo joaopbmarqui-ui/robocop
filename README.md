@@ -54,7 +54,8 @@ Dispatch records offline usage events (sessions, screens, Job launches, refusals
 so operators can see who is using it and how. Events are JSONL under each user's
 `~/.dispatch/telemetry/` and, when writable, the shared rollup at
 `/ads_storage/dispatch/telemetry/users/<user>.jsonl`. No network calls; opt out
-with `DISPATCH_TELEMETRY=0`.
+with `DISPATCH_TELEMETRY=0`. Writes use a bounded background queue so telemetry
+storage delays never block the TUI or Job lifecycle.
 
 ```bash
 dispatch telemetry who --days 30

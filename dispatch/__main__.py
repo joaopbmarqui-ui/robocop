@@ -32,6 +32,11 @@ def main() -> None:
         help="Summarize screens, launch mix, and refusals.",
     )
     _add_telemetry_common_args(summary_parser)
+    summary_parser.add_argument(
+        "--user",
+        default=None,
+        help="Limit to one username.",
+    )
 
     args = parser.parse_args()
     if args.command == "telemetry":
@@ -53,11 +58,6 @@ def _add_telemetry_common_args(parser: argparse.ArgumentParser) -> None:
         default=None,
         help="Telemetry root to read (default: shared dir, else private).",
     )
-    parser.add_argument(
-        "--user",
-        default=None,
-        help="Limit to one username.",
-    )
 
 
 def _run_telemetry(args: argparse.Namespace) -> None:
@@ -70,7 +70,7 @@ def _run_telemetry(args: argparse.Namespace) -> None:
             root = telemetry.private_telemetry_dir()
 
     if args.telemetry_command == "who":
-        report = telemetry.who(days=args.days, root=root, user=args.user)
+        report = telemetry.who(days=args.days, root=root)
         print(telemetry.format_who(report), end="")
         return
     if args.telemetry_command == "summary":

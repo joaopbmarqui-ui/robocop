@@ -158,6 +158,20 @@ def test_cli_telemetry_who_prints_users(telemetry_env, capsys, monkeypatch):
     assert "sessions" in out.lower() or "1" in out
 
 
+def test_cli_telemetry_who_rejects_summary_only_user_filter(telemetry_env, monkeypatch):
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["dispatch", "telemetry", "who", "--user", "telemetry_user"],
+    )
+    from dispatch.__main__ import main
+
+    with pytest.raises(SystemExit) as exc_info:
+        main()
+
+    assert exc_info.value.code == 2
+
+
 def test_note_screen_view_returns_without_waiting_for_file_io(telemetry_env, monkeypatch):
     release_writer = threading.Event()
 

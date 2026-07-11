@@ -715,6 +715,11 @@ class NewJobScreen(Screen[None]):
             self._show_message(error, "error")
             self.notify(error, severity="error")
             return
+        telemetry.note_job_launched(
+            job_id=job_dir.name,
+            source=source["type"],
+            destination=destination["type"],
+        )
         try:
             await process.launch_runner(job_dir)
         except OSError as exc:
@@ -729,11 +734,6 @@ class NewJobScreen(Screen[None]):
             self._show_message(error, "error")
             self.notify(error, severity="error")
             return
-        telemetry.note_job_launched(
-            job_id=job_dir.name,
-            source=source["type"],
-            destination=destination["type"],
-        )
         logger.info(
             "Launched Job %s source=%s dest=%s", job_dir.name, source["type"], destination["type"]
         )

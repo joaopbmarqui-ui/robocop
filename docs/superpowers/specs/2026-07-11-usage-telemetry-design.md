@@ -151,7 +151,7 @@ dispatch telemetry summary [--days N] [--dir PATH] [--user NAME]
 ## Failure and safety
 
 - Telemetry must not raise into callers.
-- Event helpers expose only known properties and reject catalog values outside
+- Event helpers expose only known properties and drop catalog values outside
   the documented screen and refusal sets.
 - Use nonblocking `fcntl.flock`; skip an append when another writer owns the
   lock.

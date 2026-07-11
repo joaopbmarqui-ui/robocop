@@ -15,6 +15,7 @@ import os
 import queue
 import stat
 import threading
+import time
 import uuid
 from collections import Counter
 from dataclasses import dataclass
@@ -148,7 +149,8 @@ def note_session_end() -> None:
 
 def note_screen_view(screen: ScreenName) -> None:
     if screen not in _SCREEN_NAMES:
-        raise ValueError(f"unknown telemetry screen: {screen}")
+        logger.debug("dropping unknown telemetry screen: %s", screen)
+        return
     _enqueue("screen_view", {"screen": screen})
 
 
@@ -165,7 +167,8 @@ def note_job_launched(*, job_id: str, source: str, destination: str) -> None:
 
 def note_launch_refused(reason: RefusalReason) -> None:
     if reason not in _REFUSAL_REASONS:
-        raise ValueError(f"unknown telemetry refusal reason: {reason}")
+        logger.debug("dropping unknown telemetry refusal reason: %s", reason)
+        return
     _enqueue("launch_refused", {"reason": reason})
 
 
@@ -178,12 +181,14 @@ def flush(*, timeout: float = 1.0) -> bool:
     thread = _writer_thread
     if thread is None or not thread.is_alive():
         return True
+    timeout = max(timeout, 0.0)
+    deadline = time.monotonic() + timeout
     request = _FlushRequest(threading.Event())
     try:
-        _write_queue.put_nowait(request)
+        _write_queue.put(request, timeout=timeout)
     except queue.Full:
         return False
-    return request.done.wait(timeout)
+    return request.done.wait(max(deadline - time.monotonic(), 0.0))
 
 
 def _ensure_writer() -> None:
@@ -394,7 +399,7 @@ def _open_append(path: Path, *, private: bool) -> TextIO:
         path.chmod(0o600)
         return handle
 
-    flags = os.O_APPEND | os.O_CREAT | os.O_WRONLY | os.O_CLOEXEC
+    flags = os.O_APPEND | os.O_CREAT | os.O_WRONLY | os.O_CLOEXEC | os.O_NONBLOCK
     flags |= getattr(os, "O_NOFOLLOW", 0)
     fd = os.open(path, flags, 0o644)
     try:
@@ -457,24 +462,14 @@ def _event_files(*, root: Path | None, user: str | None) -> list[Path]:
     if root is None:
         shared = shared_telemetry_dir()
         private = private_events_path()
-        paths: list[Path] = []
+        shared_paths: list[Path] = []
         if shared.exists():
-            paths.extend(_files_under_shared(shared, user))
+            shared_paths = _files_under_shared(shared, user)
+        if shared_paths:
+            return shared_paths
         if private.exists() and (user is None or user == config.current_user()):
-            paths.append(private)
-        # Deduplicate by resolved path while preserving order.
-        seen: set[Path] = set()
-        unique: list[Path] = []
-        for path in paths:
-            try:
-                key = path.resolve()
-            except OSError:
-                key = path
-            if key in seen:
-                continue
-            seen.add(key)
-            unique.append(path)
-        return unique
+            return [private]
+        return []
 
     return _files_under_shared(root, user)
 

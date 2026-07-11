@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fcntl
 import json
 import os
 import stat
@@ -121,6 +122,50 @@ def test_emit_skips_shared_file_not_owned_by_current_user(telemetry_env, monkeyp
     assert len(_read_jsonl(telemetry.private_events_path())) == 1
 
 
+def test_emit_drops_username_that_is_not_one_path_component(telemetry_env, monkeypatch):
+    monkeypatch.setenv("USER", "../escape")
+
+    telemetry.note_screen_view("overview")
+
+    assert telemetry.flush(timeout=1)
+    assert not list(telemetry_env["shared"].rglob("*.jsonl"))
+    assert not telemetry.private_events_path().exists()
+
+
+def test_emit_skips_fifo_without_stalling_writer(telemetry_env):
+    users_dir = telemetry_env["shared"] / "users"
+    users_dir.mkdir()
+    shared_path = telemetry.shared_user_events_path()
+    os.mkfifo(shared_path)
+
+    telemetry.note_screen_view("overview")
+    started = time.monotonic()
+    flushed = telemetry.flush(timeout=0.1)
+    elapsed = time.monotonic() - started
+
+    reader_fd = os.open(shared_path, os.O_RDONLY | os.O_NONBLOCK)
+    try:
+        assert telemetry.flush(timeout=1)
+    finally:
+        os.close(reader_fd)
+
+    assert flushed is True
+    assert elapsed < 0.1
+
+
+def test_emit_skips_contended_private_lock_and_writes_shared_copy(telemetry_env):
+    private_path = telemetry.private_events_path()
+    private_path.parent.mkdir(parents=True)
+    with private_path.open("a", encoding="utf-8") as locked_file:
+        fcntl.flock(locked_file.fileno(), fcntl.LOCK_EX)
+        telemetry.note_screen_view("overview")
+        assert telemetry.flush(timeout=1)
+
+    assert _read_jsonl(private_path) == []
+    shared_events = _read_jsonl(telemetry.shared_user_events_path())
+    assert [event["event"] for event in shared_events] == ["screen_view"]
+
+
 def test_who_and_summary_aggregate_events(telemetry_env):
     telemetry.note_session_start(cwd=Path("a"))
     telemetry.note_screen_view("overview")
@@ -144,6 +189,13 @@ def test_who_and_summary_aggregate_events(telemetry_env):
     assert summary["screens"]["new_job"] == 1
     assert summary["launches"]["SqlFile|Csv"] == 1
     assert summary["refusals"]["slot_cap"] == 1
+
+
+def test_default_summary_does_not_count_private_and_shared_copies_twice(telemetry_env):
+    telemetry.note_session_start()
+    assert telemetry.flush(timeout=1)
+
+    assert telemetry.summary(days=30)["sessions"] == 1
 
 
 def test_cli_telemetry_who_prints_users(telemetry_env, capsys, monkeypatch):
@@ -195,11 +247,10 @@ def test_note_screen_view_returns_without_waiting_for_file_io(telemetry_env, mon
         ("note_launch_refused", "raw error text"),
     ],
 )
-def test_event_helpers_reject_values_outside_the_catalog(telemetry_env, function_name, value):
+def test_event_helpers_drop_values_outside_the_catalog(telemetry_env, function_name, value):
     event_helper = getattr(telemetry, function_name)
 
-    with pytest.raises(ValueError):
-        event_helper(value)
+    event_helper(value)
 
     assert telemetry.flush(timeout=1)
     assert not telemetry.private_events_path().exists()
@@ -220,3 +271,27 @@ def test_job_launched_helper_emits_only_catalogued_properties(telemetry_env):
         "source": "SqlFile",
         "destination": "Csv",
     }
+
+
+def test_flush_waits_up_to_timeout_when_queue_is_full(telemetry_env, monkeypatch):
+    writer_entered = threading.Event()
+    release_writer = threading.Event()
+
+    def blocking_append(*_args, **_kwargs):
+        writer_entered.set()
+        release_writer.wait(timeout=1)
+
+    monkeypatch.setattr(telemetry, "_append_line", blocking_append)
+    telemetry.note_screen_view("overview")
+    assert writer_entered.wait(timeout=1)
+    for _ in range(telemetry._QUEUE_CAPACITY):
+        telemetry.note_screen_view("overview")
+
+    started = time.monotonic()
+    flushed = telemetry.flush(timeout=0.1)
+    elapsed = time.monotonic() - started
+    release_writer.set()
+    assert telemetry.flush(timeout=1)
+
+    assert flushed is False
+    assert elapsed >= 0.08

@@ -1,7 +1,8 @@
 # Query Optimization Advisor — implementation spec
 
-Status: awaiting sponsor sign-off. Assembled 2026-07-11 from the decisions of
-the [Query Optimization Advisor map](wayfinder/query-optimization-advisor/map.md);
+Status: **signed off by the sponsor 2026-07-11**; merge of the PR chain
+rests with a Maintainer. Assembled from the decisions of the
+[Query Optimization Advisor map](wayfinder/query-optimization-advisor/map.md);
 every section links the ticket that locked it. Disagreements found during
 implementation reopen the relevant ticket, not this document.
 

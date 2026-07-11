@@ -1,6 +1,6 @@
 ---
 label: wayfinder:map
-status: open
+status: closed
 ---
 
 # Map: Query Optimization Advisor
@@ -91,13 +91,16 @@ nothing is left to decide before implementation starts.
   — three composed surfaces approved: badge in the New Job validation
   summary, findings panel in Preview SQL, error-only launch gate; analysis
   runs inline, no worker needed.
+- [Assemble and lock the Query Optimization Advisor spec](tickets/0007-spec-assembly.md)
+  — the destination: [the spec](../../query-optimization-advisor-spec.md)
+  and [ADR-0006](../../adr/0006-sqlglot-for-advisor-analysis.md) signed off
+  2026-07-11; glossary entries added; the map is complete.
 
 ## Not yet specified
 
-_Nothing. The testing plan graduated into the
-[spec draft](../../query-optimization-advisor-spec.md)'s Testing
-expectations; the map closes when the sponsor signs off on the spec
-([Assemble and lock the Query Optimization Advisor spec](tickets/0007-spec-assembly.md))._
+_Nothing — the map is complete. Every ticket is closed and the
+[spec](../../query-optimization-advisor-spec.md) is signed off;
+implementation starts from the merged spec._
 
 ## Out of scope
 

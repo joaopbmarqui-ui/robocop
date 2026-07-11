@@ -34,7 +34,7 @@ from .sidebar import Sidebar
 logger = logging.getLogger("dispatch.new_job")
 
 
-def _refusal_reason(error: str) -> str:
+def _refusal_reason(error: str) -> telemetry.RefusalReason:
     lowered = error.lower()
     if "concurrency cap" in lowered:
         return "slot_cap"
@@ -677,7 +677,7 @@ class NewJobScreen(Screen[None]):
     async def _launch_flow(self) -> None:
         error = self._validate()
         if error:
-            telemetry.emit("launch_refused", {"reason": _refusal_reason(error)})
+            telemetry.note_launch_refused(_refusal_reason(error))
             self._show_message(error, "error")
             self.notify(error, severity="error")
             return
@@ -687,7 +687,7 @@ class NewJobScreen(Screen[None]):
         else:
             sql_text = self._read_sql()
             if sql_text is None:
-                telemetry.emit("launch_refused", {"reason": "validation"})
+                telemetry.note_launch_refused("validation")
                 return
         source, destination = self._source_destination()
         confirmed = await self._confirm_launch(source, destination)
@@ -697,7 +697,7 @@ class NewJobScreen(Screen[None]):
             await self.app.refresh_kerberos()
         error = self._validate()
         if error:
-            telemetry.emit("launch_refused", {"reason": _refusal_reason(error)})
+            telemetry.note_launch_refused(_refusal_reason(error))
             self._show_message(error, "error")
             self.notify(error, severity="error")
             return
@@ -711,7 +711,7 @@ class NewJobScreen(Screen[None]):
             )
         except jobs.LaunchSlotUnavailable as exc:
             error = str(exc)
-            telemetry.emit("launch_refused", {"reason": "slot_cap"})
+            telemetry.note_launch_refused("slot_cap")
             self._show_message(error, "error")
             self.notify(error, severity="error")
             return
@@ -729,13 +729,10 @@ class NewJobScreen(Screen[None]):
             self._show_message(error, "error")
             self.notify(error, severity="error")
             return
-        telemetry.emit(
-            "job_launched",
-            {
-                "job_id": job_dir.name,
-                "source": source["type"],
-                "destination": destination["type"],
-            },
+        telemetry.note_job_launched(
+            job_id=job_dir.name,
+            source=source["type"],
+            destination=destination["type"],
         )
         logger.info(
             "Launched Job %s source=%s dest=%s", job_dir.name, source["type"], destination["type"]

@@ -7,16 +7,20 @@ into product paths. Opt out with ``DISPATCH_TELEMETRY=0``.
 
 from __future__ import annotations
 
+import atexit
 import fcntl
 import json
 import logging
 import os
+import queue
 import stat
+import threading
 import uuid
 from collections import Counter
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, TextIO
+from typing import Any, Literal, TextIO
 
 from . import config
 from .version import __version__
@@ -28,11 +32,36 @@ _session_id: str | None = None
 _session_started_at: datetime | None = None
 
 DEFAULT_SHARED_DIR = Path("/ads_storage/dispatch/telemetry")
+ScreenName = Literal["overview", "new_job", "history", "browser", "help", "job_detail"]
+RefusalReason = Literal["slot_cap", "kerberos", "validation"]
+_SCREEN_NAMES = frozenset({"overview", "new_job", "history", "browser", "help", "job_detail"})
+_REFUSAL_REASONS = frozenset({"slot_cap", "kerberos", "validation"})
+_QUEUE_CAPACITY = 256
+_STOP_WRITER = object()
+
+
+@dataclass(frozen=True)
+class _WriteRequest:
+    private_path: Path
+    shared_path: Path
+    line: str
+
+
+@dataclass(frozen=True)
+class _FlushRequest:
+    done: threading.Event
+
+
+_write_queue: queue.Queue[object] = queue.Queue(maxsize=_QUEUE_CAPACITY)
+_writer_thread: threading.Thread | None = None
+_writer_guard = threading.Lock()
 
 
 def reset_session_for_tests() -> None:
     """Clear process-local session state (tests only)."""
     global _session_id, _session_started_at
+    flush(timeout=1)
+    _stop_writer_for_tests()
     _session_id = None
     _session_started_at = None
 
@@ -66,25 +95,35 @@ def shared_telemetry_dir() -> Path:
 
 def shared_user_events_path(user: str | None = None) -> Path:
     name = user or config.current_user()
+    if not name or Path(name).name != name or name in {".", ".."}:
+        raise ValueError("telemetry username must be one path component")
     return shared_telemetry_dir() / "users" / f"{name}.jsonl"
 
 
-def emit(event: str, props: dict[str, Any] | None = None, *, user: str | None = None) -> None:
-    """Append one telemetry event. Best-effort; never raises to callers."""
+def _enqueue(event: str, props: dict[str, Any]) -> None:
+    """Queue one validated event without performing filesystem I/O."""
     if not enabled():
         return
     try:
+        user = config.current_user()
         record = {
             "ts": _now_utc(),
             "event": event,
-            "user": user or config.current_user(),
+            "user": user,
             "session_id": session_id(),
             "version": __version__,
-            "props": dict(props or {}),
+            "props": props,
         }
         line = json.dumps(record, sort_keys=True, separators=(",", ":")) + "\n"
-        _append_line(private_events_path(user), line, create_parents=True, private=True)
-        _append_line(shared_user_events_path(user), line, create_parents=True, private=False)
+        request = _WriteRequest(
+            private_path=private_events_path(user),
+            shared_path=shared_user_events_path(user),
+            line=line,
+        )
+        _ensure_writer()
+        _write_queue.put_nowait(request)
+    except queue.Full:
+        logger.debug("telemetry queue full; dropping %s", event)
     except Exception:
         logger.debug("telemetry emit failed for %s", event, exc_info=True)
 
@@ -94,8 +133,8 @@ def note_session_start(*, cwd: Path | None = None) -> None:
     _session_started_at = datetime.now(timezone.utc)
     props: dict[str, Any] = {}
     if cwd is not None:
-        props["cwd_basename"] = cwd.name or str(cwd)
-    emit("session_start", props)
+        props["cwd_basename"] = cwd.name or "<root>"
+    _enqueue("session_start", props)
 
 
 def note_session_end() -> None:
@@ -104,7 +143,104 @@ def note_session_end() -> None:
         props["duration_s"] = int(
             (datetime.now(timezone.utc) - _session_started_at).total_seconds()
         )
-    emit("session_end", props)
+    _enqueue("session_end", props)
+
+
+def note_screen_view(screen: ScreenName) -> None:
+    if screen not in _SCREEN_NAMES:
+        raise ValueError(f"unknown telemetry screen: {screen}")
+    _enqueue("screen_view", {"screen": screen})
+
+
+def note_job_launched(*, job_id: str, source: str, destination: str) -> None:
+    _enqueue(
+        "job_launched",
+        {
+            "job_id": job_id,
+            "source": source,
+            "destination": destination,
+        },
+    )
+
+
+def note_launch_refused(reason: RefusalReason) -> None:
+    if reason not in _REFUSAL_REASONS:
+        raise ValueError(f"unknown telemetry refusal reason: {reason}")
+    _enqueue("launch_refused", {"reason": reason})
+
+
+def note_job_cancelled(job_id: str) -> None:
+    _enqueue("job_cancelled", {"job_id": job_id})
+
+
+def flush(*, timeout: float = 1.0) -> bool:
+    """Wait for events queued before this call; intended for tests and shutdown."""
+    thread = _writer_thread
+    if thread is None or not thread.is_alive():
+        return True
+    request = _FlushRequest(threading.Event())
+    try:
+        _write_queue.put_nowait(request)
+    except queue.Full:
+        return False
+    return request.done.wait(timeout)
+
+
+def _ensure_writer() -> None:
+    global _writer_thread
+    with _writer_guard:
+        if _writer_thread is not None and _writer_thread.is_alive():
+            return
+        event_queue = _write_queue
+        _writer_thread = threading.Thread(
+            target=_writer_loop,
+            args=(event_queue,),
+            name="dispatch-telemetry",
+            daemon=True,
+        )
+        _writer_thread.start()
+
+
+def _writer_loop(event_queue: queue.Queue[object]) -> None:
+    while True:
+        item = event_queue.get()
+        if item is _STOP_WRITER:
+            return
+        if isinstance(item, _FlushRequest):
+            item.done.set()
+            continue
+        if not isinstance(item, _WriteRequest):
+            continue
+        try:
+            _append_line(item.private_path, item.line, create_parents=True, private=True)
+            _append_line(item.shared_path, item.line, create_parents=True, private=False)
+        except Exception:
+            logger.debug("telemetry writer failed", exc_info=True)
+
+
+def _stop_writer_for_tests() -> None:
+    global _write_queue, _writer_thread
+    with _writer_guard:
+        thread = _writer_thread
+        event_queue = _write_queue
+        if thread is None:
+            return
+        try:
+            event_queue.put_nowait(_STOP_WRITER)
+        except queue.Full:
+            return
+    thread.join(timeout=1)
+    with _writer_guard:
+        if _writer_thread is thread:
+            _writer_thread = None
+            _write_queue = queue.Queue(maxsize=_QUEUE_CAPACITY)
+
+
+def _flush_at_exit() -> None:
+    flush(timeout=0.25)
+
+
+atexit.register(_flush_at_exit)
 
 
 def who(

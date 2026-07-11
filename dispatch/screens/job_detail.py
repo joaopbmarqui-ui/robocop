@@ -475,7 +475,7 @@ class JobDetailScreen(Screen[None]):
                 exit_code=0,
                 finished_at=manifest.now_utc(),
             )
-            telemetry.emit("job_cancelled", {"job_id": item["id"]})
+            telemetry.note_job_cancelled(item["id"])
             self.notify(f"Pending Job {item['id']} removed", severity="warning")
             self._set_static("#job-status-line", "[yellow]Pending Job cancelled[/]")
             return
@@ -501,7 +501,7 @@ class JobDetailScreen(Screen[None]):
                 )
                 self._set_static("#job-status-line", "[red]Process missing; marked Failed[/]")
                 return
-            telemetry.emit("job_cancelled", {"job_id": item["id"]})
+            telemetry.note_job_cancelled(item["id"])
             self.notify(f"Cancellation requested for Job {item['id']}", severity="warning")
             self._set_static("#job-status-line", "[yellow]Cancellation requested\u2026[/]")
             return

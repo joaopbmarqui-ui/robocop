@@ -9,7 +9,7 @@ tailing, large job sets, responsive behavior, or SSH performance.
 launch → watch → diagnose loop as:
 
 1. a compact status strip
-2. one jobs table with active jobs first
+2. one jobs table with Running jobs first
 3. a live detail pane for the selected job's bounded log tail
 4. a docked action bar
 
@@ -53,7 +53,8 @@ Preserve the existing bounded pipeline:
 - `_static_cache` avoids repainting identical markup over SSH.
 - `_tail_cache` avoids rereading unchanged detail logs.
 - `_refresh_in_flight` prevents overlapping refresh ticks.
-- Hidden screens return before listing jobs or reading logs.
+- Overview returns before listing jobs or reading logs while another screen is
+  active. Job Detail currently keeps its one-second interval while mounted.
 - Visible job IDs constrain View Logs and Cancel after filtering.
 
 Prefer a small invalidation rule over unconditional rebuilding. Test cache

@@ -7,7 +7,7 @@ module and its closest tests together.
 
 | Concern | Production owner | Primary tests |
 |---|---|---|
-| Startup, launch CWD, global bindings, routing, command palette, version warning, minimum-size warning | `dispatch/app.py` | `tests/test_cockpit.py`, `tests/test_phase1_safety.py`, `tests/test_ui_ux_audit_implementation.py` |
+| Startup, launch CWD, global bindings, routing, command palette, version warning, minimum-size warning | `dispatch/app.py` | `tests/test_cockpit.py`, `tests/test_ui_ux_audit_implementation.py` |
 | Shared stylesheet and `.action-bar` layout | `dispatch/app.tcss` | `tests/test_ui_snapshots.py`, `tests/test_ui_ux_closure.py` |
 | Sidebar, Kerberos chip, collapse below width 100 | `dispatch/screens/sidebar.py` | `tests/test_qa_fixes.py`, `tests/test_ui_ux_closure.py` |
 | Global help modal | `dispatch/screens/help.py` | `tests/test_ui_ux_closure.py`, `tools/dev/ui_captures.py` |

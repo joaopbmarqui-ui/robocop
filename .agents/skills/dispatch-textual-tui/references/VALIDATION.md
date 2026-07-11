@@ -10,20 +10,23 @@ Use bash and the project virtualenv. Start from the repository root:
 ```bash
 repo=$PWD
 source "$repo/mocks/dev-env.sh"
-DISPATCH_EMAIL=test@example.com \
-  DISPATCH_PYTHON_BIN="$repo/.venv/bin/python" \
-  "$repo/install.sh"
+dispatch_home="$DISPATCH_DATA_ROOT/.dispatch"
+mkdir -p "$dispatch_home/jobs"
+printf '{"form_defaults":{"email":"test@example.com"}}\n' > "$dispatch_home/config.json"
+cp "$repo/VERSION" "$dispatch_home/installed_version"
+chmod 700 "$dispatch_home" "$dispatch_home/jobs"
+chmod 600 "$dispatch_home/config.json" "$dispatch_home/installed_version"
 launch_dir=$(mktemp -d)
 printf 'SELECT 1 AS smoke_check;\n' > "$launch_dir/smoke.sql"
 cd "$launch_dir"
 DISPATCH_MOCK_SCENARIO=happy_path "$repo/.venv/bin/python" -m dispatch
 ```
 
-`install.sh` supplies the local config and `installed_version`; rerun it when
-the app reports either missing. The launch directory must contain at least one
-`.sql` file or the New Job picker is empty. `mocks/dev-env.sh` supplies fake
-`kinit`, `klist`, and `impala-shell`, starts mock SMTP, and redirects the data
-root away from `/ads_storage/`.
+The local setup writes only development config/version metadata; `install.sh`
+is the deployment path and requires a verified Edge dependency bundle. The
+launch directory must contain at least one `.sql` file or the New Job picker is
+empty. `mocks/dev-env.sh` supplies fake `kinit`, `klist`, and `impala-shell`,
+starts mock SMTP, and redirects the data root away from `/ads_storage/`.
 
 Useful seams:
 
@@ -69,6 +72,9 @@ Run the smallest focused test first, then the full suite:
 .venv/bin/python -m pytest -n 4 --dist loadfile
 ```
 
+The parallel command is the contributor workflow from `CONTRIBUTING.md`; CI
+runs the same suite serially.
+
 Consult `AGENTS.md` before interpreting a known repository-level failure.
 
 ## Mock scenario matrix
@@ -98,7 +104,7 @@ Use `.venv` in Cursor Cloud:
 .venv/bin/ruff format --check dispatch tests
 .venv/bin/mypy dispatch/sql.py dispatch/jobs.py dispatch/manifest.py
 .venv/bin/python -m dispatch --help
-.venv/bin/python -m pytest -n 4 --dist loadfile
+.venv/bin/python -m pytest
 ```
 
 ## Visual and terminal evidence

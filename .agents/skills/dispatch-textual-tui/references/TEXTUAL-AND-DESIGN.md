@@ -1,7 +1,8 @@
 # Textual and design rules
 
-Dispatch pins Textual in `pyproject.toml`. Check that pin and the current code
-before relying on remembered framework APIs.
+Dispatch currently pins Textual 8.2.5 in `pyproject.toml`. Treat
+`pyproject.toml` as the authority and check the current code before relying on
+remembered framework APIs.
 
 ## Ownership and data flow
 

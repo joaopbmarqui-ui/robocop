@@ -7,14 +7,16 @@ into product paths. Opt out with ``DISPATCH_TELEMETRY=0``.
 
 from __future__ import annotations
 
+import fcntl
 import json
 import logging
 import os
+import stat
 import uuid
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, TextIO
 
 from . import config
 from .version import __version__
@@ -238,26 +240,44 @@ def _append_line(path: Path, line: str, *, create_parents: bool, private: bool) 
                 config.ensure_private_dir(path.parent)
             else:
                 path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("a", encoding="utf-8") as handle:
+        with _open_append(path, private=private) as handle:
+            if not _try_lock(handle):
+                return
             try:
-                import fcntl
-
-                fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
-                try:
-                    handle.write(line)
-                    handle.flush()
-                finally:
-                    fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
-            except ImportError:
                 handle.write(line)
                 handle.flush()
-        if private:
-            try:
-                path.chmod(0o600)
-            except OSError:
-                pass
+            finally:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
     except OSError:
         logger.debug("telemetry append failed for %s", path, exc_info=True)
+
+
+def _open_append(path: Path, *, private: bool) -> TextIO:
+    if private:
+        handle = path.open("a", encoding="utf-8")
+        path.chmod(0o600)
+        return handle
+
+    flags = os.O_APPEND | os.O_CREAT | os.O_WRONLY | os.O_CLOEXEC
+    flags |= getattr(os, "O_NOFOLLOW", 0)
+    fd = os.open(path, flags, 0o644)
+    try:
+        metadata = os.fstat(fd)
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != os.geteuid():
+            raise PermissionError(f"unsafe shared telemetry target: {path}")
+        os.fchmod(fd, 0o644)
+        return os.fdopen(fd, "a", encoding="utf-8")
+    except Exception:
+        os.close(fd)
+        raise
+
+
+def _try_lock(handle: TextIO) -> bool:
+    try:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        return False
+    return True
 
 
 def _parse_ts(value: str) -> datetime | None:

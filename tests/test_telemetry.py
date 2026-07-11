@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import stat
 import sys
 from pathlib import Path
 
@@ -65,6 +67,47 @@ def test_emit_still_writes_private_when_shared_unwritable(telemetry_env, monkeyp
     blocker.write_text("x", encoding="utf-8")
     monkeypatch.setenv("DISPATCH_TELEMETRY_DIR", str(blocker))
     telemetry.emit("screen_view", {"screen": "overview"})
+    assert len(_read_jsonl(telemetry.private_events_path())) == 1
+
+
+def test_emit_does_not_follow_shared_user_symlink(telemetry_env):
+    users_dir = telemetry_env["shared"] / "users"
+    users_dir.mkdir()
+    target = telemetry_env["shared"] / "not-telemetry.txt"
+    target.write_text("unchanged\n", encoding="utf-8")
+    telemetry.shared_user_events_path().symlink_to(target)
+
+    telemetry.emit("screen_view", {"screen": "overview"})
+
+    assert target.read_text(encoding="utf-8") == "unchanged\n"
+    assert len(_read_jsonl(telemetry.private_events_path())) == 1
+
+
+def test_emit_makes_shared_file_analyst_readable_under_restrictive_umask(telemetry_env):
+    users_dir = telemetry_env["shared"] / "users"
+    users_dir.mkdir()
+    users_dir.chmod(0o1777)
+    previous_umask = os.umask(0o077)
+    try:
+        telemetry.emit("session_start", {})
+    finally:
+        os.umask(previous_umask)
+
+    mode = stat.S_IMODE(telemetry.shared_user_events_path().stat().st_mode)
+    assert mode == 0o644
+
+
+def test_emit_skips_shared_file_not_owned_by_current_user(telemetry_env, monkeypatch):
+    users_dir = telemetry_env["shared"] / "users"
+    users_dir.mkdir()
+    shared_path = telemetry.shared_user_events_path()
+    shared_path.write_text("preexisting\n", encoding="utf-8")
+    expected_euid = os.geteuid() + 1
+    monkeypatch.setattr(telemetry.os, "geteuid", lambda: expected_euid)
+
+    telemetry.emit("screen_view", {"screen": "overview"})
+
+    assert shared_path.read_text(encoding="utf-8") == "preexisting\n"
     assert len(_read_jsonl(telemetry.private_events_path())) == 1
 
 

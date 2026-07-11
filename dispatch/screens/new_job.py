@@ -42,6 +42,7 @@ def _refusal_reason(error: str) -> str:
         return "kerberos"
     return "validation"
 
+
 _SOURCE_IDS = {
     "src-sqlfile": "SqlFile",
     "src-sqltemplate": "SqlTemplate",

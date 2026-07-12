@@ -15,6 +15,7 @@ from .models import Finding
 
 _DATE_LITERAL_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _MAX_MONTHS = 13
+_DateInterval = tuple[date | None, date | None, frozenset[int]]
 
 RULE_META: dict[str, tuple[str, str, str]] = {
     # rule_id: (rule_name, guideline, severity)
@@ -624,9 +625,13 @@ def _wide_date_ranges(
                 column_name=col_name,
                 table_alias=alias,
             ),
-            key=lambda interval: (interval[0] or date.min, interval[1] or date.max),
+            key=lambda interval: (
+                interval[0] or date.min,
+                interval[1] or date.max,
+                tuple(sorted(interval[2])),
+            ),
         )
-        for branch_number, (low, high) in enumerate(intervals, start=1):
+        for branch_number, (low, high, _origins) in enumerate(intervals, start=1):
             branch_location = (
                 f"{location}, predicate branch {branch_number}" if len(intervals) > 1 else location
             )
@@ -648,7 +653,7 @@ def _date_intervals(
     *,
     column_name: str,
     table_alias: str,
-) -> set[tuple[date | None, date | None]]:
+) -> set[_DateInterval]:
     """Evaluate possible date intervals without expanding unrelated predicates."""
     if isinstance(condition, exp.Paren):
         return _date_intervals(
@@ -687,7 +692,7 @@ def _date_intervals(
         column_name=column_name,
         table_alias=table_alias,
     )
-    return {interval or (None, None)}
+    return {interval or (None, None, frozenset())}
 
 
 def _date_interval_for_predicate(
@@ -695,7 +700,7 @@ def _date_interval_for_predicate(
     *,
     column_name: str,
     table_alias: str,
-) -> tuple[date | None, date | None] | None:
+) -> _DateInterval | None:
     if isinstance(predicate, exp.Between):
         col = predicate.this
         if not isinstance(col, exp.Column):
@@ -716,18 +721,20 @@ def _date_interval_for_predicate(
         return None
     if col.table and col.table.lower() != table_alias:
         return None
-    return low, high
+    start = col.this.meta.get("start")
+    origin = start if isinstance(start, int) else id(predicate)
+    return low, high, frozenset({origin})
 
 
 def _intersect_intervals(
-    left: tuple[date | None, date | None],
-    right: tuple[date | None, date | None],
-) -> tuple[date | None, date | None]:
+    left: _DateInterval,
+    right: _DateInterval,
+) -> _DateInterval:
     lower_bounds = [bound for bound in (left[0], right[0]) if bound is not None]
     upper_bounds = [bound for bound in (left[1], right[1]) if bound is not None]
     low = max(lower_bounds) if lower_bounds else None
     high = min(upper_bounds) if upper_bounds else None
-    return low, high
+    return low, high, left[2] | right[2]
 
 
 def _bound_predicate(

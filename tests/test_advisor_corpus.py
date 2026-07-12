@@ -255,6 +255,22 @@ def test_r04_keeps_broad_range_from_separate_or_branch() -> None:
     assert "R04" in _ids(r)
 
 
+def test_r04_reports_duplicate_ranges_from_distinct_or_branches() -> None:
+    r = _analyze(
+        """
+        SELECT id FROM core.cut_clear_dtl_enc
+        WHERE (
+          dw_process_date BETWEEN '2020-01-01' AND '2025-01-01'
+          AND country = 'US'
+        ) OR (
+          dw_process_date BETWEEN '2020-01-01' AND '2025-01-01'
+          AND country = 'CA'
+        )
+        """
+    )
+    assert sum(f.rule_id == "R04" for f in r.findings) == 2
+
+
 def test_r04_ignores_unrelated_or_branch_count() -> None:
     merchant_predicates = " OR ".join(f"merchant_id = {index}" for index in range(257))
     r = _analyze(

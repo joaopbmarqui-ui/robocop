@@ -38,6 +38,15 @@ def test_hint_table_span_allows_whitespace_around_qualifier_dot() -> None:
     assert sql[hint.table_start : hint.table_end] == "core . cut_clear_dtl_enc"
 
 
+def test_hint_table_span_allows_comment_around_qualifier_dot() -> None:
+    sql = "SELECT * FROM a JOIN [BROADCAST] core /* note */ . cut_clear_dtl_enc c ON a.id = c.id"
+    result = adapt(sql)
+    assert result.available
+    hint = next(h for h in result.hints if h.kind == "BROADCAST")
+    assert hint.table_sql == "core.cut_clear_dtl_enc"
+    assert sql[hint.table_start : hint.table_end] == "core /* note */ . cut_clear_dtl_enc"
+
+
 def test_straight_join_masked() -> None:
     sql = "SELECT STRAIGHT_JOIN * FROM a JOIN b ON a.id = b.id"
     result = adapt(sql)

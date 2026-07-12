@@ -164,9 +164,7 @@ def _read_table_ref(
     sql_text: str, start: int, limit: int
 ) -> tuple[str | None, int | None, int | None]:
     """Read ``schema.table`` / ``table`` / backtick form after a join hint."""
-    cursor = start
-    while cursor < limit and sql_text[cursor].isspace():
-        cursor += 1
+    cursor = _skip_sql_trivia(sql_text, start, limit)
     if cursor >= limit:
         return None, None, None
     # Optional catalog/schema qualifiers and backticks.
@@ -187,18 +185,33 @@ def _read_table_ref(
             parts.append(ident.group(0))
             cursor = ident.end()
         table_end = cursor
-        separator = cursor
-        while separator < limit and sql_text[separator].isspace():
-            separator += 1
+        separator = _skip_sql_trivia(sql_text, cursor, limit)
         if separator < limit and sql_text[separator] == ".":
-            cursor = separator + 1
-            while cursor < limit and sql_text[cursor].isspace():
-                cursor += 1
+            cursor = _skip_sql_trivia(sql_text, separator + 1, limit)
             continue
         break
     if not parts:
         return None, None, None
     return ".".join(parts), table_start, table_end
+
+
+def _skip_sql_trivia(sql_text: str, start: int, limit: int) -> int:
+    """Skip whitespace and comments between qualified identifier parts."""
+    cursor = start
+    while cursor < limit:
+        if sql_text[cursor].isspace():
+            cursor += 1
+            continue
+        if sql_text.startswith("--", cursor):
+            newline = sql_text.find("\n", cursor + 2, limit)
+            cursor = limit if newline < 0 else newline + 1
+            continue
+        if sql_text.startswith("/*", cursor):
+            close = sql_text.find("*/", cursor + 2, limit)
+            cursor = limit if close < 0 else close + 2
+            continue
+        break
+    return cursor
 
 
 def _apply_masks(sql_text: str, masks: list[tuple[int, int]]) -> str:

@@ -15,6 +15,7 @@ from .models import Finding
 
 _DATE_LITERAL_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _MAX_MONTHS = 13
+_MAX_PREDICATE_PATHS = 256
 
 RULE_META: dict[str, tuple[str, str, str]] = {
     # rule_id: (rule_name, guideline, severity)
@@ -616,57 +617,81 @@ def _wide_date_ranges(
         return []
     findings: list[Finding] = []
     alias = table.alias_or_name.lower()
-    lowers: dict[str, date] = {}
-    uppers: dict[str, date] = {}
+    condition = where.this
+    paths = _conjunctive_paths(condition)
+    if paths is None:
+        return []
 
-    for between in where.find_all(exp.Between):
-        if not _owned_by_select(between, select):
-            continue
-        col = between.this
-        if not isinstance(col, exp.Column):
-            continue
-        if col.name.lower() not in part_cols:
-            continue
-        if col.table and col.table.lower() != alias:
-            continue
-        low = _date_literal(between.args.get("low"))
-        high = _date_literal(between.args.get("high"))
-        if low and high:
+    for branch_number, predicates in enumerate(paths, start=1):
+        lowers: dict[str, date] = {}
+        uppers: dict[str, date] = {}
+        for predicate in predicates:
+            if not _owned_by_select(predicate, select):
+                continue
+            if isinstance(predicate, exp.Between):
+                col = predicate.this
+                if not isinstance(col, exp.Column):
+                    continue
+                low = _date_literal(predicate.args.get("low"))
+                high = _date_literal(predicate.args.get("high"))
+                if low is None or high is None:
+                    continue
+                is_lower = True
+            elif isinstance(predicate, (exp.GTE, exp.GT, exp.LTE, exp.LT)):
+                col, bound, is_lower = _bound_predicate(predicate)
+                if col is None or bound is None:
+                    continue
+                low = bound if is_lower else None
+                high = None if is_lower else bound
+            else:
+                continue
+            if col.name.lower() not in part_cols:
+                continue
+            if col.table and col.table.lower() != alias:
+                continue
             key = col.name.lower()
-            lowers[key] = max(low, lowers.get(key, low))
-            uppers[key] = min(high, uppers.get(key, high))
+            if low is not None:
+                lowers[key] = max(low, lowers.get(key, low))
+            if high is not None:
+                uppers[key] = min(high, uppers.get(key, high))
 
-    # Combine BETWEEN and paired >=/> / <=/< constraints so the effective
-    # intersection, rather than any one syntactic pair, determines the span.
-    pred: exp.Expression
-    for pred in where.find_all(exp.GTE, exp.GT, exp.LTE, exp.LT):
-        if not _owned_by_select(pred, select):
-            continue
-        col, lit, is_lower = _bound_predicate(pred)
-        if col is None or lit is None:
-            continue
-        if col.name.lower() not in part_cols:
-            continue
-        if col.table and col.table.lower() != alias:
-            continue
-        key = col.name.lower()
-        if is_lower:
-            lowers[key] = max(lit, lowers.get(key, lit))
-        else:
-            uppers[key] = min(lit, uppers.get(key, lit))
-    for col_name, low in lowers.items():
-        high = uppers.get(col_name)
-        if high and _exceeds_month_limit(low, high, _MAX_MONTHS):
-            findings.append(
-                _finding(
-                    "R04",
-                    f"Partition filter on {col_name} for {table_key} spans more than 13 calendar months "
-                    f"({low.isoformat()} .. {high.isoformat()})",
-                    "Narrow the date range to at most 13 calendar months, or split into sub-queries.",
-                    location=location,
+        branch_location = (
+            f"{location}, predicate branch {branch_number}" if len(paths) > 1 else location
+        )
+        for col_name, low in lowers.items():
+            high = uppers.get(col_name)
+            if high and _exceeds_month_limit(low, high, _MAX_MONTHS):
+                findings.append(
+                    _finding(
+                        "R04",
+                        f"Partition filter on {col_name} for {table_key} spans more than 13 calendar months "
+                        f"({low.isoformat()} .. {high.isoformat()})",
+                        "Narrow the date range to at most 13 calendar months, or split into sub-queries.",
+                        location=branch_location,
+                    )
                 )
-            )
     return findings
+
+
+def _conjunctive_paths(
+    condition: exp.Expression,
+) -> list[list[exp.Expression]] | None:
+    """Expand boolean predicates into bounded conjunctive paths."""
+    if isinstance(condition, exp.Paren):
+        return _conjunctive_paths(condition.this)
+    if isinstance(condition, exp.Or):
+        left = _conjunctive_paths(condition.this)
+        right = _conjunctive_paths(condition.expression)
+        if left is None or right is None or len(left) + len(right) > _MAX_PREDICATE_PATHS:
+            return None
+        return left + right
+    if isinstance(condition, exp.And):
+        left = _conjunctive_paths(condition.this)
+        right = _conjunctive_paths(condition.expression)
+        if left is None or right is None or len(left) * len(right) > _MAX_PREDICATE_PATHS:
+            return None
+        return [left_path + right_path for left_path in left for right_path in right]
+    return [[condition]]
 
 
 def _bound_predicate(
@@ -705,7 +730,7 @@ def _exceeds_month_limit(start: date, end: date, months: int) -> bool:
     (limit lands on 2024-02-15), while 2023-01-01 .. 2024-02-01 does not.
     """
     if end < start:
-        start, end = end, start
+        return False
     total = start.month - 1 + months
     year = start.year + total // 12
     month = total % 12 + 1

@@ -244,6 +244,27 @@ def test_r04_combines_between_with_tighter_inequality_bounds() -> None:
     assert "R04" not in _ids(r)
 
 
+def test_r04_keeps_broad_range_from_separate_or_branch() -> None:
+    r = _analyze(
+        """
+        SELECT id FROM core.cut_clear_dtl_enc
+        WHERE dw_process_date BETWEEN '2020-01-01' AND '2025-01-01'
+           OR dw_process_date BETWEEN '2024-01-01' AND '2024-06-01'
+        """
+    )
+    assert "R04" in _ids(r)
+
+
+def test_r04_silent_on_reversed_empty_range() -> None:
+    r = _analyze(
+        """
+        SELECT id FROM core.cut_clear_dtl_enc
+        WHERE dw_process_date BETWEEN '2025-01-01' AND '2020-01-01'
+        """
+    )
+    assert "R04" not in _ids(r)
+
+
 def test_r04_ignores_date_range_in_nested_query() -> None:
     r = _analyze(
         """
@@ -316,6 +337,17 @@ def test_r07_spaced_qualified_table_keeps_dangerous_hint() -> None:
         """
         SELECT a.id FROM my_temp a
         JOIN [BROADCAST] core . cut_clear_dtl_enc c ON a.id = c.dw_acct_id
+        """
+    )
+    assert "R07" in _ids(r)
+    assert "R05" not in _ids(r)
+
+
+def test_r07_commented_qualified_table_keeps_dangerous_hint() -> None:
+    r = _analyze(
+        """
+        SELECT a.id FROM my_temp a
+        JOIN [BROADCAST] core /* note */ . cut_clear_dtl_enc c ON a.id = c.dw_acct_id
         """
     )
     assert "R07" in _ids(r)

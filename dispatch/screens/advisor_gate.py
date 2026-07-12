@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import ModalScreen
 from textual.widgets import Button, Static
 
@@ -41,7 +41,8 @@ class AdvisorLaunchGate(ModalScreen[bool]):
             parts.append(
                 "[dim]The SQL launches exactly as written — Dispatch never rewrites it.[/]"
             )
-            yield Static("\n\n".join(parts), id="confirm-body")
+            with VerticalScroll(id="confirm-body-scroll"):
+                yield Static("\n\n".join(parts), id="confirm-body")
             yield Static(
                 "[bold]Y[/] launches anyway; [bold]N[/] or [bold]Esc[/] cancels.",
                 id="confirm-help",

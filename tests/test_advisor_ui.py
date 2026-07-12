@@ -6,8 +6,12 @@ import asyncio
 import os
 from pathlib import Path
 
-from textual.widgets import Static
+import sqlglot
+from textual.containers import VerticalScroll
+from textual.widgets import Input, Static
 
+from dispatch import process
+from dispatch.advisor.models import Finding
 from dispatch.app import DispatchApp
 from dispatch.screens.advisor_gate import AdvisorLaunchGate
 from dispatch.screens.confirm import ConfirmScreen
@@ -67,6 +71,42 @@ def test_new_job_badge_shows_error_counts(mock_env_with_config, tmp_path, monkey
             summary = str(app.screen.query_one("#validation-summary", Static).render())
             assert "Advisor: error" in summary
             assert "error" in summary.lower()
+
+    asyncio.run(run())
+
+
+def test_table_name_edit_reuses_sql_analysis(mock_env_with_config, tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("USER", "alice")
+    sql_path = tmp_path / "cached.sql"
+    sql_path.write_text(
+        "SELECT id FROM my_temp WHERE dw_process_date = '2024-01-01'\n",
+        encoding="utf-8",
+    )
+    parse_calls = 0
+    real_parse = sqlglot.parse
+
+    def counting_parse(*args, **kwargs):
+        nonlocal parse_calls
+        parse_calls += 1
+        return real_parse(*args, **kwargs)
+
+    monkeypatch.setattr(sqlglot, "parse", counting_parse)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = NewJobScreen(tmp_path, prefill=_prefill(sql_path))
+            app.push_screen(screen)
+            await pilot.pause(0.8)
+            initial_parse_calls = parse_calls
+            assert initial_parse_calls > 0
+
+            screen.query_one("#table-name", Input).value = "shared_result"
+            await pilot.pause(0.4)
+
+            assert parse_calls == initial_parse_calls
+            summary = str(screen.query_one("#validation-summary", Static).render())
+            assert "Advisor: warning" in summary
 
     asyncio.run(run())
 
@@ -131,6 +171,48 @@ def test_launch_gate_appears_only_for_errors(mock_env_with_config, tmp_path, mon
     asyncio.run(run())
 
 
+def test_launch_gate_keeps_controls_visible_at_80x24(mock_env_with_config) -> None:
+    errors = tuple(
+        Finding(
+            rule_id=f"R0{index}",
+            rule_name="test-rule",
+            guideline="G#1",
+            severity="error",
+            detection=f"Diagnostic {index}: " + ("x" * 70),
+            remediation="Remediation: " + ("y" * 70),
+            location=f"statement 1, query block {index}",
+        )
+        for index in range(1, 5)
+    )
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(80, 24)) as pilot:
+            app.push_screen(
+                AdvisorLaunchGate(
+                    errors,
+                    job_summary=(
+                        "Source: SqlFile\nDestination: Table\n"
+                        "Target table: aa_enc.alice_result\n"
+                        "CSV path: --\nEmail: test@example.com"
+                    ),
+                )
+            )
+            await pilot.pause()
+
+            screen = app.screen
+            dialog = screen.query_one("#confirm-dialog")
+            buttons = screen.query_one("#confirm-buttons")
+            body_scroll = screen.query_one("#confirm-body-scroll", VerticalScroll)
+            assert dialog.region.y >= 0
+            assert dialog.region.bottom <= screen.size.height
+            assert buttons.region.y >= 0
+            assert buttons.region.bottom <= screen.size.height
+            assert body_scroll.max_scroll_y > 0
+
+    asyncio.run(run())
+
+
 def test_launch_gate_cancel_on_escape(mock_env_with_config, tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("USER", "alice")
     sql_path = tmp_path / "gate_cancel.sql"
@@ -169,8 +251,6 @@ def test_launch_gate_proceed_on_confirm(mock_env_with_config, tmp_path, monkeypa
         launched.append(job_dir)
 
     async def run() -> None:
-        from dispatch import process
-
         monkeypatch.setattr(process, "launch_runner", fake_launch)
         app = DispatchApp()
         async with app.run_test(size=(120, 40)) as pilot:

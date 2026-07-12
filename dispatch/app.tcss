@@ -653,7 +653,8 @@ Input:focus {
 
 /* ── Confirmation modal ─────────────────────────────────────────────── */
 
-ConfirmScreen {
+ConfirmScreen,
+AdvisorLaunchGate {
     align: center middle;
 }
 
@@ -667,6 +668,16 @@ ConfirmScreen {
 
 #confirm-dialog.danger {
     border: double $error;
+}
+
+AdvisorLaunchGate #confirm-dialog {
+    height: 22;
+    max-height: 90%;
+}
+
+#confirm-body-scroll {
+    height: 1fr;
+    scrollbar-size-vertical: 1;
 }
 
 #confirm-title {

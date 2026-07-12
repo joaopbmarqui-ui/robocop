@@ -27,7 +27,7 @@ from textual.widgets import (
 from textual.worker import Worker
 
 from .. import config, jobs, manifest, process, sql, telemetry
-from ..advisor import analyze
+from ..advisor import analyze, analyze_form, analyze_sql, combine_analysis
 from ..advisor.models import AnalysisResult, badge_markup
 from .advisor_gate import AdvisorLaunchGate
 from .confirm import ConfirmScreen
@@ -77,7 +77,7 @@ class NewJobScreen(Screen[None]):
         # (path, exists) memo so keystrokes in unrelated fields do not stat()
         # the SQL path (potentially a slow network mount) on every change.
         self._sql_exists_cache: tuple[str, bool] | None = None
-        self._analysis_cache: tuple[tuple[str, str, str, str, str], AnalysisResult] | None = None
+        self._sql_analysis_cache: tuple[tuple[str, str, str], AnalysisResult] | None = None
         self._validation_summary_timer: Timer | None = None
 
     def compose(self) -> ComposeResult:
@@ -423,39 +423,49 @@ class NewJobScreen(Screen[None]):
     def _current_analysis(self) -> AnalysisResult:
         """Inline static analysis for the live form (no worker).
 
-        Memoized on the form fields + SQL path so debounced summary refreshes
-        (keystrokes in unrelated fields, the Kerberos tick) never re-read the
-        SQL file — it may sit on a slow network mount, and this runs on the
-        event loop. The cache is invalidated when any key field changes and
-        when the in-TUI editor returns; launch and preview always analyze
-        fresh, so a stale badge after an external edit never affects gating.
+        SQL analysis is memoized separately from cheap form rules so destination
+        table edits update R16 without rereading or reparsing a file on the
+        Textual event loop. The cache is invalidated when the in-TUI editor
+        returns; launch and preview always analyze fresh, so a stale badge after
+        an external edit never affects gating.
         """
         source_type = self._selected_source()
         destination_type = self._selected_destination()
         table = self._input_value("table-name")
         user_id = config.current_user()
         sql_path = "" if source_type == "ExistingTable" else self._input_value("sql-file")
-        cache_key = (source_type, destination_type, table, user_id, sql_path)
-        if self._analysis_cache is not None and self._analysis_cache[0] == cache_key:
-            return self._analysis_cache[1]
-        result = self._compute_analysis(source_type, destination_type, table, user_id, sql_path)
-        self._analysis_cache = (cache_key, result)
-        return result
+        form_result = analyze_form(
+            source_type=source_type,
+            destination_type=destination_type,
+            destination_table=table,
+            user_id=user_id,
+        )
+        sql_result = self._current_sql_analysis(source_type, user_id, sql_path)
+        return combine_analysis(sql_result, form_result)
 
-    def _compute_analysis(
+    def _current_sql_analysis(
         self,
         source_type: str,
-        destination_type: str,
-        table: str,
+        user_id: str,
+        sql_path: str,
+    ) -> AnalysisResult:
+        cache_key = (source_type, user_id, sql_path)
+        if self._sql_analysis_cache is not None and self._sql_analysis_cache[0] == cache_key:
+            return self._sql_analysis_cache[1]
+        result = self._compute_sql_analysis(source_type, user_id, sql_path)
+        self._sql_analysis_cache = (cache_key, result)
+        return result
+
+    def _compute_sql_analysis(
+        self,
+        source_type: str,
         user_id: str,
         sql_path: str,
     ) -> AnalysisResult:
         if source_type == "ExistingTable":
-            return analyze(
+            return analyze_sql(
                 "",
                 source_type=source_type,
-                destination_type=destination_type,
-                destination_table=table,
                 user_id=user_id,
             )
         if not sql_path or not self._sql_file_exists():
@@ -464,11 +474,9 @@ class NewJobScreen(Screen[None]):
             sql_text = Path(sql_path).read_text(encoding="utf-8")
         except OSError:
             return AnalysisResult(available=True, findings=())
-        return analyze(
+        return analyze_sql(
             sql_text,
             source_type=source_type,
-            destination_type=destination_type,
-            destination_table=table,
             user_id=user_id,
         )
 
@@ -892,7 +900,7 @@ class NewJobScreen(Screen[None]):
         with self.app.suspend():
             process.run_interactive(editor, self._input_value("sql-file"))
         self._sql_exists_cache = None  # the editor may have created the file
-        self._analysis_cache = None  # or changed the SQL under the same path
+        self._sql_analysis_cache = None  # or changed the SQL under the same path
         self._detect_sql()
 
     async def action_kinit(self) -> None:

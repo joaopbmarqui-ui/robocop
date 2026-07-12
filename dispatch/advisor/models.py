@@ -5,8 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from rich.markup import escape
-
 Severity = Literal["error", "warning", "info"]
 BadgeSeverity = Literal["error", "warning", "info", "clean"]
 
@@ -90,14 +88,26 @@ def counts_label(result: AnalysisResult) -> str:
     return ", ".join(f"{count} {nouns[severity]}" for severity, count in counts.items() if count)
 
 
+def _escape(text: str) -> str:
+    """Escape square brackets for both Rich and Textual content markup.
+
+    ``rich.markup.escape`` leaves uppercase-only tags like ``[BROADCAST]``
+    alone (Rich would render them literally), but Textual's content markup
+    still consumes them, so escape every opening bracket unconditionally.
+    """
+    return text.replace("[", "\\[")
+
+
 def finding_markup(finding: Finding) -> str:
     """Three-line finding block: identity, detection, remediation.
 
     Finding text is escaped because detections quote SQL fragments such as
-    ``[BROADCAST]`` that Rich would otherwise swallow as markup tags.
+    ``[BROADCAST]`` that markup parsing would otherwise swallow as tags.
     """
     meta = finding.ref
     if finding.location:
         meta += f" · {finding.location}"
-    head = f"{SEVERITY_MARKUP[finding.severity]} [bold]{finding.rule_id}[/]  [dim]{escape(meta)}[/]"
-    return f"{head}\n{escape(finding.detection)}\n[dim]→ {escape(finding.remediation)}[/]"
+    head = (
+        f"{SEVERITY_MARKUP[finding.severity]} [bold]{finding.rule_id}[/]  [dim]{_escape(meta)}[/]"
+    )
+    return f"{head}\n{_escape(finding.detection)}\n[dim]→ {_escape(finding.remediation)}[/]"

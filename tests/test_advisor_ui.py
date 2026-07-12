@@ -25,8 +25,9 @@ def _user() -> str:
 
 
 def test_finding_markup_preserves_bracketed_sql_fragments() -> None:
-    """Detections quoting hints like [BROADCAST] must survive Rich markup."""
+    """Detections quoting hints like [BROADCAST] must survive markup parsing."""
     from rich.text import Text
+    from textual.content import Content
 
     from dispatch.advisor.models import finding_markup
 
@@ -38,9 +39,10 @@ def test_finding_markup_preserves_bracketed_sql_fragments() -> None:
         detection="[BROADCAST] hint found on shuffle-recommended core.big_table",
         remediation="Use [SHUFFLE] per the recommended join-strategy list.",
     )
-    rendered = Text.from_markup(finding_markup(finding)).plain
-    assert "[BROADCAST] hint found" in rendered
-    assert "Use [SHUFFLE]" in rendered
+    markup = finding_markup(finding)
+    for plain in (Text.from_markup(markup).plain, Content.from_markup(markup).plain):
+        assert "[BROADCAST] hint found" in plain
+        assert "Use [SHUFFLE]" in plain
 
 
 def _prefill(sql_path: Path, table_name: str | None = None) -> dict:

@@ -72,6 +72,46 @@ def test_download_table_mode_rejects_unsafe_full_table_before_retry(monkeypatch,
     assert retry_calls == []
 
 
+def test_download_csv_main_passes_optional_email_args_to_retry(monkeypatch, tmp_path) -> None:
+    query_file = tmp_path / "query.sql"
+    query_file.write_text("select 1", encoding="utf-8")
+    retry_calls: list[tuple[str, str, list[str], str, str]] = []
+    monkeypatch.setattr(
+        download_to_csv,
+        "retry_loop",
+        lambda query, output, queues, *, to_email="", subject="": retry_calls.append(
+            (query, output, queues, to_email, subject)
+        ),
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "download_to_csv.py",
+            "--query-file",
+            str(query_file),
+            "--output-file",
+            "output.csv",
+            "--to-email",
+            "test@example.com",
+            "--subject",
+            "Dispatch Export",
+        ],
+    )
+
+    download_to_csv.main()
+
+    assert retry_calls == [
+        (
+            "select 1",
+            "output.csv",
+            ["adhoc_fast", "adhoc_small", "adhoc"],
+            "test@example.com",
+            "Dispatch Export",
+        )
+    ]
+
+
 @pytest.mark.parametrize(
     ("flag", "unsafe_value"),
     [
@@ -240,6 +280,107 @@ def test_cycle_through_pools_keeps_retry_interval_between_retryable_cycles(
     assert attempts == ["adhoc_fast", "adhoc_fast"]
     assert failures == [1]
     assert sleeps == [30]
+
+
+def test_download_csv_retry_loop_sends_start_notification(monkeypatch) -> None:
+    sent_emails: list[tuple[str, str, str]] = []
+    attempts: list[str] = []
+
+    def fake_run_export(
+        query: str, output_file: str, *, to_email: str, subject: str, queue: str
+    ) -> bool:
+        attempts.append(queue)
+        return queue == "adhoc_small"
+
+    monkeypatch.setattr(
+        download_to_csv,
+        "send_email",
+        lambda body, subject, to_email: sent_emails.append((subject, body, to_email)),
+    )
+    monkeypatch.setattr(download_to_csv, "run_export_on_impala", fake_run_export)
+
+    download_to_csv.retry_loop(
+        "select 1",
+        "output.csv",
+        ["adhoc_fast", "adhoc_small"],
+        to_email="test@example.com",
+        subject="Dispatch Export",
+    )
+
+    assert attempts == ["adhoc_fast", "adhoc_small"]
+    assert [item[0] for item in sent_emails] == [
+        "Dispatch Export - PROCESSO INICIADO",
+    ]
+    assert all(item[2] == "test@example.com" for item in sent_emails)
+
+
+def test_download_csv_run_export_sends_success_notification(monkeypatch, tmp_path) -> None:
+    output_file = tmp_path / "export.csv"
+    sent_emails: list[tuple[str, str, str]] = []
+
+    class FakeProcess:
+        returncode = 0
+
+        def __init__(self, command: list[str], stdout, stderr) -> None:
+            target = Path(command[command.index("-o") + 1])
+            target.write_text("csv\n", encoding="utf-8")
+
+        def communicate(self) -> tuple[bytes, bytes]:
+            return b"ok", b""
+
+    monkeypatch.setattr(download_to_csv.subprocess, "Popen", FakeProcess)
+    monkeypatch.setattr(
+        download_to_csv,
+        "send_email",
+        lambda body, subject, to_email: sent_emails.append((subject, body, to_email)),
+    )
+
+    assert download_to_csv.run_export_on_impala(
+        "select 1",
+        str(output_file),
+        to_email="test@example.com",
+        subject="Dispatch Export",
+        queue="adhoc_fast",
+    )
+
+    assert sent_emails[0][0] == "Dispatch Export - PROCESSO FINALIZADO"
+    assert "Status: SUCCESS" in sent_emails[0][1]
+    assert sent_emails[0][2] == "test@example.com"
+
+
+def test_download_csv_run_export_sends_fatal_error_notification(monkeypatch, tmp_path) -> None:
+    output_file = tmp_path / "export.csv"
+    sent_emails: list[tuple[str, str, str]] = []
+
+    class FakeProcess:
+        returncode = 1
+
+        def __init__(self, command: list[str], stdout, stderr) -> None:
+            pass
+
+        def communicate(self) -> tuple[bytes, bytes]:
+            return b"", b"ParseException: syntax error at line 1"
+
+    monkeypatch.setattr(download_to_csv.subprocess, "Popen", FakeProcess)
+    monkeypatch.setattr(
+        download_to_csv,
+        "send_email",
+        lambda body, subject, to_email: sent_emails.append((subject, body, to_email)),
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        download_to_csv.run_export_on_impala(
+            "select",
+            str(output_file),
+            to_email="test@example.com",
+            subject="Dispatch Export",
+            queue="adhoc_fast",
+        )
+
+    assert exc_info.value.code == 1
+    assert sent_emails[0][0] == "Dispatch Export - ERRO (SYNTAX_ERROR)"
+    assert "FATAL ERROR" in sent_emails[0][1]
+    assert sent_emails[0][2] == "test@example.com"
 
 
 def test_send_email_uses_finite_timeout_and_closes_connection(monkeypatch) -> None:

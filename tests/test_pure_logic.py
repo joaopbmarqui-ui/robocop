@@ -431,7 +431,10 @@ class TestBuildOrchestratorCalls:
         calls = self._build("SqlFile", "Csv", tmp_path)
         assert len(calls) == 1
         assert calls[0]["script"] == "download_to_csv.py"
-        assert "--query-file" in calls[0]["argv"]
+        argv = calls[0]["argv"]
+        assert "--query-file" in argv
+        assert argv[argv.index("--to-email") + 1] == "x@y.com"
+        assert argv[argv.index("--subject") + 1] == "S"
 
     def test_sqlfile_table_single_query_impala_call(self, tmp_path: Path) -> None:
         calls = self._build("SqlFile", "Table", tmp_path)
@@ -444,8 +447,11 @@ class TestBuildOrchestratorCalls:
         assert calls[0]["script"] == "Query_Impala_Parametrized.py"
         assert calls[1]["script"] == "download_to_csv.py"
         # second call must use --table-name, not --query-file
-        assert "--table-name" in calls[1]["argv"]
-        assert "--query-file" not in calls[1]["argv"]
+        argv = calls[1]["argv"]
+        assert "--table-name" in argv
+        assert "--query-file" not in argv
+        assert argv[argv.index("--to-email") + 1] == "x@y.com"
+        assert argv[argv.index("--subject") + 1] == "S"
 
     def test_sqltemplate_table_monthly_processor(self, tmp_path: Path) -> None:
         calls = self._build("SqlTemplate", "Table", tmp_path)
@@ -456,8 +462,11 @@ class TestBuildOrchestratorCalls:
         calls = self._build("ExistingTable", "Csv", tmp_path)
         assert len(calls) == 1
         assert calls[0]["script"] == "download_to_csv.py"
-        assert "--table-name" in calls[0]["argv"]
-        assert "--query-file" not in calls[0]["argv"]
+        argv = calls[0]["argv"]
+        assert "--table-name" in argv
+        assert "--query-file" not in argv
+        assert argv[argv.index("--to-email") + 1] == "x@y.com"
+        assert argv[argv.index("--subject") + 1] == "S"
 
     def test_existingtable_rejects_unsafe_full_table_before_argv(self, tmp_path: Path) -> None:
         job_dir = tmp_path / "job"

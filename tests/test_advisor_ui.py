@@ -24,6 +24,25 @@ def _user() -> str:
     return os.environ.get("USER") or "testuser"
 
 
+def test_finding_markup_preserves_bracketed_sql_fragments() -> None:
+    """Detections quoting hints like [BROADCAST] must survive Rich markup."""
+    from rich.text import Text
+
+    from dispatch.advisor.models import finding_markup
+
+    finding = Finding(
+        rule_id="R07",
+        rule_name="dangerous-broadcast-hint",
+        guideline="G#3/#4",
+        severity="error",
+        detection="[BROADCAST] hint found on shuffle-recommended core.big_table",
+        remediation="Use [SHUFFLE] per the recommended join-strategy list.",
+    )
+    rendered = Text.from_markup(finding_markup(finding)).plain
+    assert "[BROADCAST] hint found" in rendered
+    assert "Use [SHUFFLE]" in rendered
+
+
 def _prefill(sql_path: Path, table_name: str | None = None) -> dict:
     user = _user()
     return {

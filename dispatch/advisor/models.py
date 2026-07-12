@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
+from rich.markup import escape
+
 Severity = Literal["error", "warning", "info"]
 BadgeSeverity = Literal["error", "warning", "info", "clean"]
 
@@ -89,9 +91,13 @@ def counts_label(result: AnalysisResult) -> str:
 
 
 def finding_markup(finding: Finding) -> str:
-    """Three-line finding block: identity, detection, remediation."""
+    """Three-line finding block: identity, detection, remediation.
+
+    Finding text is escaped because detections quote SQL fragments such as
+    ``[BROADCAST]`` that Rich would otherwise swallow as markup tags.
+    """
     meta = finding.ref
     if finding.location:
         meta += f" · {finding.location}"
-    head = f"{SEVERITY_MARKUP[finding.severity]} [bold]{finding.rule_id}[/]  [dim]{meta}[/]"
-    return f"{head}\n{finding.detection}\n[dim]→ {finding.remediation}[/]"
+    head = f"{SEVERITY_MARKUP[finding.severity]} [bold]{finding.rule_id}[/]  [dim]{escape(meta)}[/]"
+    return f"{head}\n{escape(finding.detection)}\n[dim]→ {escape(finding.remediation)}[/]"

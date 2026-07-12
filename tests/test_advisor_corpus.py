@@ -232,6 +232,18 @@ def test_r04_uses_effective_bounds_when_predicates_repeat() -> None:
     assert "R04" not in _ids(r)
 
 
+def test_r04_combines_between_with_tighter_inequality_bounds() -> None:
+    r = _analyze(
+        """
+        SELECT id FROM core.cut_clear_dtl_enc
+        WHERE dw_process_date BETWEEN '2020-01-01' AND '2025-01-01'
+          AND dw_process_date >= '2024-01-01'
+          AND dw_process_date <= '2024-06-01'
+        """
+    )
+    assert "R04" not in _ids(r)
+
+
 def test_r04_ignores_date_range_in_nested_query() -> None:
     r = _analyze(
         """
@@ -299,6 +311,17 @@ def test_r07_comment_form_hint() -> None:
     assert "R07" in _ids(r)
 
 
+def test_r07_spaced_qualified_table_keeps_dangerous_hint() -> None:
+    r = _analyze(
+        """
+        SELECT a.id FROM my_temp a
+        JOIN [BROADCAST] core . cut_clear_dtl_enc c ON a.id = c.dw_acct_id
+        """
+    )
+    assert "R07" in _ids(r)
+    assert "R05" not in _ids(r)
+
+
 def test_r08_direct_join_of_large_table() -> None:
     r = _analyze(
         """
@@ -334,6 +357,17 @@ def test_join_hint_does_not_leak_to_later_statement() -> None:
         """
     )
     assert sum(f.rule_id == "R05" for f in r.findings) == 1
+
+
+def test_r05_reports_each_unhinted_join_in_same_block() -> None:
+    r = _analyze(
+        """
+        SELECT a.id FROM my_temp a
+        JOIN core.product_hierarchy p1 ON a.id = p1.product_code
+        JOIN core.product_hierarchy p2 ON a.id = p2.product_code
+        """
+    )
+    assert sum(f.rule_id == "R05" for f in r.findings) == 2
 
 
 # ── R09 cartesian-product ───────────────────────────────────────────────

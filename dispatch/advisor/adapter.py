@@ -172,6 +172,7 @@ def _read_table_ref(
     # Optional catalog/schema qualifiers and backticks.
     parts: list[str] = []
     table_start = cursor
+    table_end = cursor
     while cursor < limit:
         if sql_text[cursor] == "`":
             close = sql_text.find("`", cursor + 1, limit)
@@ -185,13 +186,19 @@ def _read_table_ref(
                 break
             parts.append(ident.group(0))
             cursor = ident.end()
-        if cursor < limit and sql_text[cursor] == ".":
-            cursor += 1
+        table_end = cursor
+        separator = cursor
+        while separator < limit and sql_text[separator].isspace():
+            separator += 1
+        if separator < limit and sql_text[separator] == ".":
+            cursor = separator + 1
+            while cursor < limit and sql_text[cursor].isspace():
+                cursor += 1
             continue
         break
     if not parts:
         return None, None, None
-    return ".".join(parts), table_start, cursor
+    return ".".join(parts), table_start, table_end
 
 
 def _apply_masks(sql_text: str, masks: list[tuple[int, int]]) -> str:

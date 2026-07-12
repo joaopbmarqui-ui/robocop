@@ -47,7 +47,7 @@ def run_sql_rules(adapted: AdapterResult) -> list[Finding]:
         findings.extend(
             _rules_for_expression(expression, adapted.hints, statement_number=statement_number)
         )
-    return _dedupe(findings)
+    return findings
 
 
 def run_form_rules(
@@ -472,18 +472,6 @@ def _finding(
     )
 
 
-def _dedupe(findings: list[Finding]) -> list[Finding]:
-    seen: set[tuple[str, str, str, str]] = set()
-    out: list[Finding] = []
-    for finding in findings:
-        key = (finding.rule_id, finding.detection, finding.remediation, finding.location)
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append(finding)
-    return out
-
-
 def _select_blocks(expression: exp.Expression) -> list[exp.Select]:
     return [node for node in expression.find_all(exp.Select)]
 
@@ -628,6 +616,8 @@ def _wide_date_ranges(
         return []
     findings: list[Finding] = []
     alias = table.alias_or_name.lower()
+    lowers: dict[str, date] = {}
+    uppers: dict[str, date] = {}
 
     for between in where.find_all(exp.Between):
         if not _owned_by_select(between, select):
@@ -641,20 +631,13 @@ def _wide_date_ranges(
             continue
         low = _date_literal(between.args.get("low"))
         high = _date_literal(between.args.get("high"))
-        if low and high and _exceeds_month_limit(low, high, _MAX_MONTHS):
-            findings.append(
-                _finding(
-                    "R04",
-                    f"Partition filter on {col.name.lower()} for {table_key} spans more than 13 calendar months "
-                    f"({low.isoformat()} .. {high.isoformat()})",
-                    "Narrow the date range to at most 13 calendar months, or split into sub-queries.",
-                    location=location,
-                )
-            )
+        if low and high:
+            key = col.name.lower()
+            lowers[key] = max(low, lowers.get(key, low))
+            uppers[key] = min(high, uppers.get(key, high))
 
-    # Paired >=/> and <=/< bounds on the same column.
-    lowers: dict[str, date] = {}
-    uppers: dict[str, date] = {}
+    # Combine BETWEEN and paired >=/> / <=/< constraints so the effective
+    # intersection, rather than any one syntactic pair, determines the span.
     pred: exp.Expression
     for pred in where.find_all(exp.GTE, exp.GT, exp.LTE, exp.LT):
         if not _owned_by_select(pred, select):

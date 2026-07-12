@@ -11,9 +11,9 @@ BadgeSeverity = Literal["error", "warning", "info", "clean"]
 SEVERITY_ORDER: tuple[Severity, ...] = ("error", "warning", "info")
 
 SEVERITY_MARKUP = {
-    "error": "[bold red]error[/]",
-    "warning": "[yellow]warning[/]",
-    "info": "[cyan]info[/]",
+    "error": "[bold red]ERROR[/]",
+    "warning": "[bold yellow]WARN[/]",
+    "info": "[bold cyan]INFO[/]",
 }
 
 
@@ -75,26 +75,23 @@ def badge_markup(result: AnalysisResult) -> str:
             return "[dim]Advisor: unavailable[/]"
         return "[green]Advisor: clean[/]"
     counts = result.severity_counts()
-    parts = " · ".join(_count_label(severity, count) for severity, count in counts.items() if count)
     worst = next(sev for sev in SEVERITY_ORDER if counts[sev])
     color = {"error": "red", "warning": "yellow", "info": "cyan"}[worst]
     suffix = " [dim]· SQL analysis unavailable[/]" if not result.available else ""
-    return f"[{color}]Advisor: {worst}[/] [dim]({parts})[/]{suffix}"
+    return f"[{color}]Advisor: {worst}[/] [dim]({counts_label(result)})[/]{suffix}"
 
 
-def _count_label(severity: Severity, count: int) -> str:
-    if severity == "info":
-        noun = "info" if count == 1 else "infos"
-    else:
-        noun = severity if count == 1 else f"{severity}s"
-    return f"{count} {noun}"
+def counts_label(result: AnalysisResult) -> str:
+    """Compact severity tally, e.g. ``2 err, 1 warn, 3 info``."""
+    counts = result.severity_counts()
+    nouns = {"error": "err", "warning": "warn", "info": "info"}
+    return ", ".join(f"{count} {nouns[severity]}" for severity, count in counts.items() if count)
 
 
 def finding_markup(finding: Finding) -> str:
-    """Two-part finding line for Preview and the launch-gate modal."""
-    location = f" [dim]({finding.location})[/]" if finding.location else ""
-    head = (
-        f"{SEVERITY_MARKUP[finding.severity]} [bold]{finding.rule_id}[/]"
-        f" [dim]· {finding.ref}[/]  {finding.detection}{location}"
-    )
-    return f"{head}\n      [dim]-> {finding.remediation}[/]"
+    """Three-line finding block: identity, detection, remediation."""
+    meta = finding.ref
+    if finding.location:
+        meta += f" · {finding.location}"
+    head = f"{SEVERITY_MARKUP[finding.severity]} [bold]{finding.rule_id}[/]  [dim]{meta}[/]"
+    return f"{head}\n{finding.detection}\n[dim]→ {finding.remediation}[/]"

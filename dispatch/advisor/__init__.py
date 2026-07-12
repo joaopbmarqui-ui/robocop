@@ -8,7 +8,7 @@ and ADR-0006.
 from __future__ import annotations
 
 from .analyze import analyze, analyze_form, analyze_sql, combine_analysis
-from .models import AnalysisResult, Finding, badge_markup, finding_markup
+from .models import AnalysisResult, Finding, badge_markup, counts_label, finding_markup
 
 __all__ = [
     "AnalysisResult",
@@ -18,5 +18,6 @@ __all__ = [
     "analyze_sql",
     "badge_markup",
     "combine_analysis",
+    "counts_label",
     "finding_markup",
 ]

@@ -420,9 +420,30 @@ Input:focus {
     overflow-y: auto;
 }
 
-#findings-body {
+/* ── Advisor finding blocks (Preview panel + launch gate) ───────────── */
+
+.finding-block {
     height: auto;
-    padding: 0 0 1 0;
+    margin: 0 0 1 0;
+    padding: 0 1;
+    border-left: thick $primary-background-darken-1;
+}
+
+.finding-block.severity-error {
+    border-left: thick $error;
+}
+
+.finding-block.severity-warning {
+    border-left: thick $warning;
+}
+
+.finding-block.severity-info {
+    border-left: thick $accent;
+}
+
+.findings-note {
+    height: auto;
+    padding: 0 1;
 }
 
 /* ── Job Detail ─────────────────────────────────────────────────────── */
@@ -671,13 +692,30 @@ AdvisorLaunchGate {
 }
 
 AdvisorLaunchGate #confirm-dialog {
-    height: 22;
-    max-height: 90%;
+    width: 76;
+    max-width: 95%;
+    height: 90%;
+    max-height: 26;
+}
+
+AdvisorLaunchGate #confirm-body {
+    background: $surface-darken-1;
+    padding: 0 1;
+    margin: 0 0 1 0;
 }
 
 #confirm-body-scroll {
     height: 1fr;
     scrollbar-size-vertical: 1;
+}
+
+#confirm-note {
+    height: auto;
+    color: $text-muted;
+}
+
+AdvisorLaunchGate #confirm-help {
+    padding: 0;
 }
 
 #confirm-title {

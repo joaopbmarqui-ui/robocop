@@ -9,8 +9,9 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, RichLog, Static
 
 from dispatch import advisor_data
-from dispatch.advisor.models import AnalysisResult, badge_markup, finding_markup
+from dispatch.advisor.models import AnalysisResult, badge_markup, counts_label
 
+from .findings import FindingBlock
 from .sidebar import Sidebar
 
 
@@ -63,7 +64,8 @@ class PreviewScreen(Screen[None]):
         with Vertical(id="main-content"):
             with Vertical(id="preview-content"):
                 yield Static(
-                    "[dim]\u2039 New Job /[/] [bold]" + self._title + "[/]",
+                    "[dim]\u2039 New Job /[/] [bold]" + self._title + "[/]"
+                    " [dim]— review before launching[/]",
                     classes="section-title",
                 )
 
@@ -76,16 +78,33 @@ class PreviewScreen(Screen[None]):
                     )
 
                 with Vertical(id="sql-display"):
-                    yield RichLog(id="preview-body", highlight=False, markup=False)
+                    yield RichLog(
+                        id="preview-body", highlight=False, markup=False, auto_scroll=False
+                    )
 
+                counts = counts_label(self.analysis)
+                counts_part = f"{counts} · " if counts else ""
                 yield Static(
-                    "[bold]Advisor findings[/] [dim]· static analysis · manual "
-                    f"{advisor_data.MANUAL_VERSION}[/]",
+                    "[bold]Advisor findings[/] "
+                    f"[dim]· {counts_part}manual {advisor_data.MANUAL_VERSION}[/]",
                     classes="section-title",
                     id="findings-heading",
                 )
                 with VerticalScroll(id="findings-panel"):
-                    yield Static(self._findings_markup(), id="findings-body")
+                    if not self.analysis.available:
+                        yield Static(
+                            "[dim]SQL analysis unavailable — SQL findings cannot be "
+                            "computed; launch is not gated.[/]",
+                            classes="findings-note",
+                        )
+                    for finding in self.analysis.findings:
+                        yield FindingBlock(finding)
+                    if self.analysis.available and not self.analysis.findings:
+                        yield Static(
+                            "[green]✓ No findings[/] [dim]— nothing in the manual's "
+                            "checklist fired.[/]",
+                            classes="findings-note",
+                        )
 
             with Horizontal(classes="action-bar"):
                 yield Static("", id="preview-status", classes="action-status")
@@ -93,23 +112,13 @@ class PreviewScreen(Screen[None]):
                 yield Button("Back [Esc]", id="back", variant="primary")
         yield Footer()
 
-    def _findings_markup(self) -> str:
-        lines: list[str] = []
-        if not self.analysis.available:
-            lines.append(
-                "[dim]SQL analysis unavailable — SQL findings cannot be computed; "
-                "launch is not gated.[/]"
-            )
-        if self.analysis.findings:
-            lines.extend(finding_markup(f) for f in self.analysis.findings)
-        elif self.analysis.available:
-            lines.append("[green]No findings — nothing in the manual's checklist fired.[/]")
-        return "\n".join(lines)
-
     def on_mount(self) -> None:
         log = self.query_one("#preview-body", RichLog)
         log.write(sql_syntax(self.body))
-        self.query_one("#preview-status", Static).update(badge_markup(self.analysis))
+        line_count = len(self.body.splitlines())
+        self.query_one("#preview-status", Static).update(
+            f"{badge_markup(self.analysis)} [dim]· {line_count} lines[/]"
+        )
 
     def action_accept(self) -> None:
         self.app.pop_screen()

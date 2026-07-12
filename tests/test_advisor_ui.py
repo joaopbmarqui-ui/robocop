@@ -15,6 +15,7 @@ from dispatch.advisor.models import Finding
 from dispatch.app import DispatchApp
 from dispatch.screens.advisor_gate import AdvisorLaunchGate
 from dispatch.screens.confirm import ConfirmScreen
+from dispatch.screens.findings import FindingBlock
 from dispatch.screens.new_job import NewJobScreen
 from dispatch.screens.preview import PreviewScreen
 
@@ -131,7 +132,8 @@ def test_preview_findings_panel(mock_env_with_config, tmp_path, monkeypatch) -> 
             await pilot.press("p")
             await pilot.pause(0.5)
             assert isinstance(app.screen, PreviewScreen)
-            body = str(app.screen.query_one("#findings-body", Static).render())
+            blocks = app.screen.query(FindingBlock)
+            body = " ".join(str(block.render()) for block in blocks)
             assert "R07" in body
             status = str(app.screen.query_one("#preview-status", Static).render())
             assert "Advisor:" in status
@@ -161,7 +163,7 @@ def test_launch_gate_appears_only_for_errors(mock_env_with_config, tmp_path, mon
             await pilot.pause(0.5)
             assert isinstance(app.screen, AdvisorLaunchGate)
             title = str(app.screen.query_one("#confirm-title", Static).render())
-            assert "error findings" in title.lower()
+            assert "error finding" in title.lower()
             # The gate replaces the standard confirm, so it must carry the
             # Launch Job summary (target table, destination) itself.
             body = str(app.screen.query_one("#confirm-body", Static).render())

@@ -27,6 +27,9 @@ from textual.widgets import (
 from textual.worker import Worker
 
 from .. import config, jobs, manifest, process, sql, telemetry
+from ..advisor import analyze
+from ..advisor.models import AnalysisResult, badge_markup
+from .advisor_gate import AdvisorLaunchGate
 from .confirm import ConfirmScreen
 from .preview import PreviewScreen
 from .sidebar import Sidebar
@@ -407,12 +410,43 @@ class NewJobScreen(Screen[None]):
     def _update_validation_summary(self) -> None:
         issues = self._validation_issues()
         summary = self.query_one("#validation-summary", Static)
+        analysis = self._current_analysis()
+        badge = badge_markup(analysis)
         if issues:
             first = issues[0]
             extra = f" (+{len(issues) - 1} more)" if len(issues) > 1 else ""
-            summary.update(f"[red]\u2717 {len(issues)} issue(s): {first}{extra}[/]")
+            summary.update(f"[red]\u2717 {len(issues)} issue(s): {first}{extra}[/]  ·  {badge}")
         else:
-            summary.update("[green]\u2713 Ready to launch (checks passing)[/]")
+            summary.update(f"[green]\u2713 Ready to launch[/]  ·  {badge}")
+
+    def _current_analysis(self) -> AnalysisResult:
+        """Inline static analysis for the live form (no worker)."""
+        source_type = self._selected_source()
+        destination_type = self._selected_destination()
+        table = self._input_value("table-name")
+        user_id = config.current_user()
+        if source_type == "ExistingTable":
+            return analyze(
+                "",
+                source_type=source_type,
+                destination_type=destination_type,
+                destination_table=table,
+                user_id=user_id,
+            )
+        sql_path = self._input_value("sql-file")
+        if not sql_path or not self._sql_file_exists():
+            return AnalysisResult(available=True, findings=())
+        try:
+            sql_text = Path(sql_path).read_text(encoding="utf-8")
+        except OSError:
+            return AnalysisResult(available=True, findings=())
+        return analyze(
+            sql_text,
+            source_type=source_type,
+            destination_type=destination_type,
+            destination_table=table,
+            user_id=user_id,
+        )
 
     def _schedule_validation_summary(self) -> None:
         if self._validation_summary_timer is not None:
@@ -655,6 +689,14 @@ class NewJobScreen(Screen[None]):
             # Csv destination, or a SqlFile that already carries its own DDL:
             # show the SQL verbatim (no double-wrapping).
             preview = sql_text
+        # Analyze the on-disk / template SQL — never the wrapper or monthly expand.
+        analysis = analyze(
+            sql_text,
+            source_type=source_type,
+            destination_type=destination_type,
+            destination_table=table,
+            user_id=config.current_user(),
+        )
         self.app.push_screen(
             PreviewScreen(
                 "SQL Preview",
@@ -663,6 +705,7 @@ class NewJobScreen(Screen[None]):
                 table=table,
                 source_type=source_type,
                 dest_type=self._selected_destination(),
+                analysis=analysis,
             )
         )
 
@@ -690,9 +733,25 @@ class NewJobScreen(Screen[None]):
                 telemetry.note_launch_refused("validation")
                 return
         source, destination = self._source_destination()
-        confirmed = await self._confirm_launch(source, destination)
-        if not confirmed:
-            return
+        # Advisor error gate (confirm ceiling). Warnings/info never gate;
+        # analysis-unavailable never gates. When errors exist, the gate is the
+        # launch confirm; otherwise the existing Launch Job confirm applies.
+        analysis = analyze(
+            sql_text,
+            source_type=source_type,
+            destination_type=destination["type"],
+            destination_table=destination.get("table_name") or "",
+            user_id=config.current_user(),
+        )
+        errors = analysis.errors()
+        if errors:
+            gated = await self._confirm_advisor_gate(errors)
+            if not gated:
+                return
+        else:
+            confirmed = await self._confirm_launch(source, destination)
+            if not confirmed:
+                return
         if hasattr(self.app, "refresh_kerberos"):
             await self.app.refresh_kerberos()
         error = self._validate()
@@ -740,6 +799,16 @@ class NewJobScreen(Screen[None]):
         self._save_form_defaults()
         self.notify(f"\u2713 Launched Job {job_dir.name}", severity="information")
         self._show_message(f"\u2713 Launched Job {job_dir.name}", "success")
+
+    async def _confirm_advisor_gate(self, errors: tuple) -> bool:
+        loop_future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()
+
+        def on_result(result: bool | None) -> None:
+            if not loop_future.done():
+                loop_future.set_result(bool(result))
+
+        self.app.push_screen(AdvisorLaunchGate(errors), callback=on_result)
+        return await loop_future
 
     async def _confirm_launch(
         self,

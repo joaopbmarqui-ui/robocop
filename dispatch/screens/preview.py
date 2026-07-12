@@ -4,9 +4,12 @@ from __future__ import annotations
 
 from rich.syntax import Syntax
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, RichLog, Static
+
+from dispatch import advisor_data
+from dispatch.advisor.models import AnalysisResult, badge_markup, finding_markup
 
 from .sidebar import Sidebar
 
@@ -41,6 +44,7 @@ class PreviewScreen(Screen[None]):
         table: str = "",
         source_type: str = "",
         dest_type: str = "",
+        analysis: AnalysisResult | None = None,
     ) -> None:
         super().__init__()
         self._title = title
@@ -49,6 +53,7 @@ class PreviewScreen(Screen[None]):
         self.table = table
         self.source_type = source_type or "SqlFile"
         self.dest_type = dest_type or "Table"
+        self.analysis = analysis or AnalysisResult(available=True, findings=())
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
@@ -73,19 +78,32 @@ class PreviewScreen(Screen[None]):
                 with Vertical(id="sql-display"):
                     yield RichLog(id="preview-body", highlight=False, markup=False)
 
+                yield Static(
+                    "[bold]Advisor findings[/] [dim]· static analysis · manual "
+                    f"{advisor_data.MANUAL_VERSION}[/]",
+                    classes="section-title",
+                    id="findings-heading",
+                )
+                with VerticalScroll(id="findings-panel"):
+                    yield Static(self._findings_markup(), id="findings-body")
+
             with Horizontal(classes="action-bar"):
                 yield Static("", id="preview-status", classes="action-status")
                 yield Button("Copy SQL [Y]", id="copy", variant="default")
                 yield Button("Back [Esc]", id="back", variant="primary")
         yield Footer()
 
+    def _findings_markup(self) -> str:
+        if not self.analysis.available:
+            return "[dim]Advisor analysis unavailable — no findings; launch is not gated.[/]"
+        if not self.analysis.findings:
+            return "[green]No findings — nothing in the manual's checklist fired.[/]"
+        return "\n".join(finding_markup(f) for f in self.analysis.findings)
+
     def on_mount(self) -> None:
         log = self.query_one("#preview-body", RichLog)
         log.write(sql_syntax(self.body))
-        line_count = len(self.body.splitlines())
-        self.query_one("#preview-status", Static).update(
-            f"{line_count} lines \u00b7 review before launching"
-        )
+        self.query_one("#preview-status", Static).update(badge_markup(self.analysis))
 
     def action_accept(self) -> None:
         self.app.pop_screen()

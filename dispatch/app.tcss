@@ -394,7 +394,7 @@ Input:focus {
 
 #sql-display {
     height: 1fr;
-    min-height: 6;
+    min-height: 4;
     margin: 0 1;
     border: round $primary-background-darken-1;
     overflow-y: auto;
@@ -404,6 +404,25 @@ Input:focus {
     height: 1fr;
     padding: 0 1;
     background: $surface;
+}
+
+#findings-heading {
+    padding: 0 1;
+}
+
+#findings-panel {
+    height: auto;
+    max-height: 10;
+    min-height: 3;
+    margin: 0 1 1 1;
+    border: round $primary-background-darken-1;
+    padding: 0 1;
+    overflow-y: auto;
+}
+
+#findings-body {
+    height: auto;
+    padding: 0 0 1 0;
 }
 
 /* ── Job Detail ─────────────────────────────────────────────────────── */

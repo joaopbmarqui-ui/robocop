@@ -10,6 +10,7 @@ from __future__ import annotations
 import pytest
 
 from dispatch.advisor import analyze
+from dispatch.advisor.models import badge_markup
 
 
 def _ids(result) -> set[str]:
@@ -69,6 +70,16 @@ def test_r01_suppresses_r02_same_block() -> None:
     assert "R02" not in _ids(r)
 
 
+def test_r01_ignores_shadowed_alias_in_nested_query() -> None:
+    r = _analyze(
+        """
+        SELECT * FROM core.cut_clear_dtl_enc c
+        WHERE EXISTS (SELECT 1 FROM other c WHERE c.x = 1)
+        """
+    )
+    assert "R01" in _ids(r)
+
+
 # ── R02 / R03 partition filters ─────────────────────────────────────────
 
 
@@ -115,6 +126,39 @@ def test_r03_function_on_literal_side_ok() -> None:
     )
     assert "R03" not in _ids(r)
     assert "R02" not in _ids(r)
+
+
+def test_r02_ignores_partition_column_in_nested_query() -> None:
+    r = _analyze(
+        """
+        SELECT id FROM core.cut_clear_dtl_enc c
+        WHERE EXISTS (
+          SELECT 1 FROM other c
+          WHERE c.dw_process_date = '2024-01-01'
+        )
+        """
+    )
+    assert "R02" in _ids(r)
+
+
+def test_r03_silent_on_arithmetic_partition_expression() -> None:
+    r = _analyze(
+        """
+        SELECT id FROM core.cut_clear_dtl_enc
+        WHERE dw_process_date + 0 = '2024-01-01'
+        """
+    )
+    assert "R03" not in _ids(r)
+
+
+def test_r03_fires_when_arithmetic_is_nested_in_function() -> None:
+    r = _analyze(
+        """
+        SELECT id FROM core.cut_clear_dtl_enc
+        WHERE year(dw_process_date + 0) = 2024
+        """
+    )
+    assert "R03" in _ids(r)
 
 
 # ── R04 date-range-over-13-months ───────────────────────────────────────
@@ -171,6 +215,31 @@ def test_r04_exactly_13_months_passes() -> None:
         """
         SELECT id FROM core.cut_clear_dtl_enc
         WHERE dw_process_date BETWEEN '2023-01-15' AND '2024-02-15'
+        """
+    )
+    assert "R04" not in _ids(r)
+
+
+def test_r04_uses_effective_bounds_when_predicates_repeat() -> None:
+    r = _analyze(
+        """
+        SELECT id FROM core.cut_clear_dtl_enc
+        WHERE dw_process_date >= '2024-01-01'
+          AND dw_process_date >= '2020-01-01'
+          AND dw_process_date < '2024-06-01'
+        """
+    )
+    assert "R04" not in _ids(r)
+
+
+def test_r04_ignores_date_range_in_nested_query() -> None:
+    r = _analyze(
+        """
+        SELECT id FROM core.cut_clear_dtl_enc c
+        WHERE EXISTS (
+          SELECT 1 FROM other c
+          WHERE c.dw_process_date BETWEEN '2020-01-01' AND '2024-01-01'
+        )
         """
     )
     assert "R04" not in _ids(r)
@@ -254,6 +323,19 @@ def test_r08_silent_when_prefiltered_subquery() -> None:
     assert "R08" not in _ids(r)
 
 
+def test_join_hint_does_not_leak_to_later_statement() -> None:
+    r = _analyze(
+        """
+        SELECT a.id FROM first_input a
+        JOIN [BROADCAST] core.product_hierarchy p ON a.id = p.product_code;
+
+        SELECT b.id FROM second_input b
+        JOIN core.product_hierarchy p ON b.id = p.product_code
+        """
+    )
+    assert sum(f.rule_id == "R05" for f in r.findings) == 1
+
+
 # ── R09 cartesian-product ───────────────────────────────────────────────
 
 
@@ -277,11 +359,32 @@ def test_r09_silent_with_on() -> None:
     assert "R09" not in _ids(r)
 
 
+def test_r09_silent_with_using() -> None:
+    r = _analyze("SELECT * FROM a JOIN b USING (id)")
+    assert "R09" not in _ids(r)
+
+
+def test_r09_fires_when_derived_cross_join_equality_uses_one_side() -> None:
+    r = _analyze(
+        """
+        SELECT * FROM (SELECT * FROM a) x
+        CROSS JOIN b
+        WHERE x.id = x.other_id
+        """
+    )
+    assert "R09" in _ids(r)
+
+
 # ── R10–R15 style / heuristic ───────────────────────────────────────────
 
 
 def test_r10_cast_in_join() -> None:
     r = _analyze("SELECT * FROM a JOIN b ON CAST(a.id AS STRING) = b.id")
+    assert "R10" in _ids(r)
+
+
+def test_r10_nested_cast_in_join() -> None:
+    r = _analyze("SELECT * FROM a JOIN b ON COALESCE(CAST(a.id AS STRING), '') = b.id")
     assert "R10" in _ids(r)
 
 
@@ -313,6 +416,14 @@ def test_r13_silent_union_all() -> None:
 def test_r14_select_distinct() -> None:
     r = _analyze("SELECT DISTINCT a FROM t")
     assert "R14" in _ids(r)
+
+
+def test_r14_reports_each_query_block_with_distinct_location() -> None:
+    r = _analyze("SELECT DISTINCT a FROM t; SELECT DISTINCT b FROM u")
+    findings = [f for f in r.findings if f.rule_id == "R14"]
+    assert len(findings) == 2
+    assert all(f.location for f in findings)
+    assert len({f.location for f in findings}) == 2
 
 
 def test_r15_count_distinct_monitored() -> None:
@@ -446,8 +557,6 @@ def test_unavailable_unquoted_template() -> None:
 
 
 def test_unavailable_keeps_form_findings_visible() -> None:
-    from dispatch.advisor.models import badge_markup
-
     r = _analyze(
         "SELECT * FROM t WHERE d = {date_inicio}",
         destination_table="wrong_name",

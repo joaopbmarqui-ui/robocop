@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from dispatch.advisor.adapter import adapt
 
 
@@ -70,6 +72,20 @@ def test_unparseable_sql_unavailable() -> None:
     result = adapt(sql)
     assert not result.available
     assert "parse" in result.reason.lower()
+
+
+@pytest.mark.parametrize(
+    "sql",
+    [
+        "SELECT 'unterminated",
+        'SELECT "unterminated',
+        "SELECT /* unterminated",
+    ],
+)
+def test_tokenization_failure_unavailable(sql: str) -> None:
+    result = adapt(sql)
+    assert not result.available
+    assert "token" in result.reason.lower()
 
 
 def test_bracket_hint_not_after_join_left_unmasked_may_fail() -> None:

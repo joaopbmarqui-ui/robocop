@@ -27,6 +27,7 @@ class Finding:
     severity: Severity
     detection: str
     remediation: str
+    location: str = ""
 
     @property
     def ref(self) -> str:
@@ -91,8 +92,9 @@ def _count_label(severity: Severity, count: int) -> str:
 
 def finding_markup(finding: Finding) -> str:
     """Two-part finding line for Preview and the launch-gate modal."""
+    location = f" [dim]({finding.location})[/]" if finding.location else ""
     head = (
         f"{SEVERITY_MARKUP[finding.severity]} [bold]{finding.rule_id}[/]"
-        f" [dim]· {finding.ref}[/]  {finding.detection}"
+        f" [dim]· {finding.ref}[/]  {finding.detection}{location}"
     )
     return f"{head}\n      [dim]-> {finding.remediation}[/]"

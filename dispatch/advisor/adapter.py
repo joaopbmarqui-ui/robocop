@@ -73,14 +73,14 @@ def adapt(sql_text: str) -> AdapterResult:
         expressions = tuple(
             node for node in sqlglot.parse(parse_sql, read="hive") if node is not None
         )
-    except sqlglot.errors.ParseError as exc:
+    except sqlglot.errors.SqlglotError as exc:
         return AdapterResult(
             available=False,
             original_sql=sql_text,
             parse_sql=parse_sql,
             hints=tuple(hints),
             expressions=(),
-            reason=f"parse error: {exc}",
+            reason=f"token/parse error: {exc}",
         )
     return AdapterResult(
         available=True,

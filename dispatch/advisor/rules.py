@@ -43,8 +43,10 @@ def run_sql_rules(adapted: AdapterResult) -> list[Finding]:
     """Evaluate AST rules R01–R15 against a successful adapter result."""
     assert adapted.available
     findings: list[Finding] = []
-    for expression in adapted.expressions:
-        findings.extend(_rules_for_expression(expression, adapted.hints))
+    for statement_number, expression in enumerate(adapted.expressions, start=1):
+        findings.extend(
+            _rules_for_expression(expression, adapted.hints, statement_number=statement_number)
+        )
     return _dedupe(findings)
 
 
@@ -138,30 +140,39 @@ def _report_location(
 
 
 def _rules_for_expression(
-    expression: exp.Expression, hints: tuple[HintRecord, ...]
+    expression: exp.Expression,
+    hints: tuple[HintRecord, ...],
+    *,
+    statement_number: int,
 ) -> list[Finding]:
     findings: list[Finding] = []
     # Walk every SELECT query block (including CTEs and subqueries).
-    for select in _select_blocks(expression):
-        findings.extend(_rules_for_select(select, hints))
+    for block_number, select in enumerate(_select_blocks(expression), start=1):
+        location = f"statement {statement_number}, query block {block_number}"
+        findings.extend(_rules_for_select(select, hints, location=location))
     # UNION DISTINCT can sit above SELECT nodes.
-    for union in expression.find_all(exp.Union):
+    for union_number, union in enumerate(expression.find_all(exp.Union), start=1):
         if union.args.get("distinct") is True:
             findings.append(
                 _finding(
                     "R13",
                     "UNION without ALL found",
                     "UNION ALL avoids the deduplication overhead if duplicates are acceptable.",
+                    location=f"statement {statement_number}, UNION {union_number}",
                 )
             )
     return findings
 
 
-def _rules_for_select(select: exp.Select, hints: tuple[HintRecord, ...]) -> list[Finding]:
+def _rules_for_select(
+    select: exp.Select,
+    hints: tuple[HintRecord, ...],
+    *,
+    location: str,
+) -> list[Finding]:
     findings: list[Finding] = []
     tables = _direct_tables(select)
     where = select.args.get("where")
-    where_sql_cols = _columns_in(where) if where else set()
 
     r01_keys: set[str] = set()
     monitored_keys: list[str] = []
@@ -173,7 +184,7 @@ def _rules_for_select(select: exp.Select, hints: tuple[HintRecord, ...]) -> list
             continue
         key = advisor_data.table_key(schema, name)
         monitored_keys.append(key)
-        refs_table = _where_references_table(where, table, where_sql_cols)
+        refs_table = _where_references_table(where, table, select)
 
         # R01: bare * (or t.*) with no WHERE predicate on the monitored table.
         if _projects_star_for(select, table) and not refs_table:
@@ -181,14 +192,15 @@ def _rules_for_select(select: exp.Select, hints: tuple[HintRecord, ...]) -> list
                 _finding(
                     "R01",
                     f"SELECT * over monitored table {key} with no WHERE predicate on that table",
-                    "Project needed columns, or filter the monitored table "
-                    "(for example via a filtered subquery/CTE) before selecting *.",
+                    "Explicit columns reduce scan and serialization work; a filtered "
+                    "subquery/CTE preserves a star projection while constraining input.",
+                    location=location,
                 )
             )
             r01_keys.add(key)
 
         part_cols = {c.lower() for c in advisor_data.partition_columns_for(schema, name)}
-        part_refs = _partition_refs_in_where(where, table, part_cols)
+        part_refs = _partition_refs_in_where(where, table, part_cols, select)
 
         # R02: no recognized partition column referenced in WHERE.
         # Suppressed when R01 already fired for this table/block.
@@ -198,6 +210,7 @@ def _rules_for_select(select: exp.Select, hints: tuple[HintRecord, ...]) -> list
                     "R02",
                     f"No {next(iter(part_cols))} predicate found for {key} in this query block",
                     f"Add a {next(iter(part_cols))} filter to this query block.",
+                    location=location,
                 )
             )
         # R03: partition column appears only wrapped in a function/CAST.
@@ -209,11 +222,19 @@ def _rules_for_select(select: exp.Select, hints: tuple[HintRecord, ...]) -> list
                     f"Partition column {col} for {key} appears only inside a function or CAST in WHERE",
                     f"Compare {col} directly (put functions on the literal side) so "
                     "partition pruning can apply.",
+                    location=location,
                 )
             )
 
         # R04: literal date range on a partition column exceeding 13 months.
-        for detection in _wide_date_ranges(where, table, part_cols, key):
+        for detection in _wide_date_ranges(
+            where,
+            table,
+            part_cols,
+            key,
+            select,
+            location=location,
+        ):
             findings.append(detection)
 
     # R15: one finding per block that references any monitored table.
@@ -224,14 +245,15 @@ def _rules_for_select(select: exp.Select, hints: tuple[HintRecord, ...]) -> list
                 "COUNT(DISTINCT ...) found in a query block referencing monitored "
                 f"table(s) {', '.join(sorted(set(monitored_keys)))}",
                 "Use two-step aggregation on large tables.",
+                location=location,
             )
         )
 
     # R05–R08 join-strategy rules.
-    findings.extend(_join_strategy_findings(select, hints))
+    findings.extend(_join_strategy_findings(select, hints, location=location))
 
     # R09 cartesian product.
-    findings.extend(_cartesian_findings(select))
+    findings.extend(_cartesian_findings(select, location=location))
 
     # R10 CAST in join ON equality.
     for join in select.args.get("joins") or []:
@@ -245,6 +267,7 @@ def _rules_for_select(select: exp.Select, hints: tuple[HintRecord, ...]) -> list
                         "R10",
                         "CAST wraps a column reference inside a JOIN ... ON equality",
                         "CAST can block runtime-filter pushdown; align source types where possible.",
+                        location=location,
                     )
                 )
                 break
@@ -263,6 +286,7 @@ def _rules_for_select(select: exp.Select, hints: tuple[HintRecord, ...]) -> list
                         "R11",
                         f"LIKE pattern {text!r} starts with a leading wildcard",
                         "Forces a full scan; anchor the pattern or use IN.",
+                        location=location,
                     )
                 )
 
@@ -274,6 +298,7 @@ def _rules_for_select(select: exp.Select, hints: tuple[HintRecord, ...]) -> list
                     "R12",
                     "REGEXP/RLIKE operator found in a predicate",
                     "LIKE may suffice and avoids the regex engine.",
+                    location=location,
                 )
             )
 
@@ -284,13 +309,19 @@ def _rules_for_select(select: exp.Select, hints: tuple[HintRecord, ...]) -> list
                 "R14",
                 "DISTINCT projection found",
                 "The manual prefers GROUP BY.",
+                location=location,
             )
         )
 
     return findings
 
 
-def _join_strategy_findings(select: exp.Select, hints: tuple[HintRecord, ...]) -> list[Finding]:
+def _join_strategy_findings(
+    select: exp.Select,
+    hints: tuple[HintRecord, ...],
+    *,
+    location: str,
+) -> list[Finding]:
     findings: list[Finding] = []
     joins = list(select.args.get("joins") or [])
     if not joins:
@@ -299,18 +330,13 @@ def _join_strategy_findings(select: exp.Select, hints: tuple[HintRecord, ...]) -
     from_tables = [t for t in [_from_table(select)] if t is not None]
     joined_tables = [t for t in (_join_table(j) for j in joins) if t is not None]
 
-    # Each recorded hint binds to exactly one join: consume on match so two
-    # joins of the same table name cannot share one hint.
-    unconsumed = [h for h in hints if h.kind in ("BROADCAST", "SHUFFLE") and h.table_sql]
-
     def hint_for(table: exp.Table) -> HintRecord | None:
-        schema = (table.db or "").lower()
-        name = table.name.lower()
-        key = advisor_data.table_key(schema, name) if schema else name
-        for hint in unconsumed:
-            hint_key = (hint.table_sql or "").lower()
-            if hint_key == key or hint_key == name:
-                unconsumed.remove(hint)
+        table_span = _table_span(table)
+        if table_span is None:
+            return None
+        for hint in hints:
+            hint_span = (hint.table_start, hint.table_end)
+            if hint.kind in ("BROADCAST", "SHUFFLE") and hint_span == table_span:
                 return hint
         return None
 
@@ -330,8 +356,9 @@ def _join_strategy_findings(select: exp.Select, hints: tuple[HintRecord, ...]) -
                 _finding(
                     "R05",
                     f"Known table {key} is joined with no join hint",
-                    f"Consider [{strategy.upper()}] per the recommended join-strategy list "
+                    f"[{strategy.upper()}] is the catalog-recommended strategy for {key} "
                     f"({advisor_data.DATA_VERSION}).",
+                    location=location,
                 )
             )
         elif strategy == "broadcast" and hint.kind == "SHUFFLE":
@@ -341,6 +368,7 @@ def _join_strategy_findings(select: exp.Select, hints: tuple[HintRecord, ...]) -
                     f"[SHUFFLE] hint found on broadcast-recommended {key}",
                     f"Use [BROADCAST] per the recommended join-strategy list "
                     f"({advisor_data.DATA_VERSION}).",
+                    location=location,
                 )
             )
         elif strategy == "shuffle" and hint.kind == "BROADCAST":
@@ -350,6 +378,7 @@ def _join_strategy_findings(select: exp.Select, hints: tuple[HintRecord, ...]) -
                     f"[BROADCAST] hint found on shuffle-recommended {key}",
                     f"Use [SHUFFLE] per the recommended join-strategy list "
                     f"({advisor_data.DATA_VERSION}).",
+                    location=location,
                 )
             )
 
@@ -366,7 +395,8 @@ def _join_strategy_findings(select: exp.Select, hints: tuple[HintRecord, ...]) -
             _finding(
                 "R08",
                 f"Shuffle-recommended table {key} is joined directly (not via subquery/CTE)",
-                "Consider pre-filtering in a subquery/CTE before the join.",
+                "A pre-filtered subquery/CTE can reduce the large table before the join.",
+                location=location,
             )
         )
 
@@ -380,49 +410,41 @@ def _from_table(select: exp.Select) -> exp.Table | None:
     return None
 
 
-def _cartesian_findings(select: exp.Select) -> list[Finding]:
+def _cartesian_findings(select: exp.Select, *, location: str) -> list[Finding]:
     findings: list[Finding] = []
     where = select.args.get("where")
-    from_table = None
     from_ = select.args.get("from_")
-    if from_ is not None:
-        from_table = from_.this if isinstance(from_.this, exp.Table) else None
+    from_relation = from_.this if from_ is not None else None
 
     for join in select.args.get("joins") or []:
         kind = (join.args.get("kind") or "").upper()
         on = join.args.get("on")
+        using = join.args.get("using")
         is_cross = kind == "CROSS"
-        is_true_on = on is None or (isinstance(on, exp.Boolean) and on.this is True)
+        is_true_on = (on is None and not using) or (isinstance(on, exp.Boolean) and on.this is True)
         if not (is_cross or is_true_on):
             continue
-        right = _join_table(join)
-        if from_table is None or right is None:
-            # Still flag structural cartesian when we can't name sides.
-            if not _where_links_any(where):
-                findings.append(
-                    _finding(
-                        "R09",
-                        "Cartesian join shape found with no equality predicate linking both sides in WHERE",
-                        "Add an explicit join condition, or keep a deliberate cross join only for tiny inputs.",
-                    )
-                )
-            continue
-        left_aliases = {_table_aliases(from_table)}
+        left_aliases = {_relation_alias(from_relation)}
         # Include earlier join tables as left side for multi-way.
         for prior in select.args.get("joins") or []:
             if prior is join:
                 break
-            pt = _join_table(prior)
-            if pt is not None:
-                left_aliases.add(_table_aliases(pt))
-        right_alias = _table_aliases(right)
-        if _where_links_sides(where, left_aliases, {right_alias}):
+            left_aliases.add(_relation_alias(prior.this))
+        right_alias = _relation_alias(join.this)
+        if right_alias and _where_links_sides(
+            where,
+            left_aliases,
+            {right_alias},
+            select,
+        ):
             continue
         findings.append(
             _finding(
                 "R09",
                 "Cartesian join shape found with no equality predicate linking both sides in WHERE",
-                "Add an explicit join condition, or keep a deliberate cross join only for tiny inputs.",
+                "An explicit join condition links both sides; a deliberate cross join "
+                "is appropriate only for tiny inputs.",
+                location=location,
             )
         )
     return findings
@@ -431,7 +453,13 @@ def _cartesian_findings(select: exp.Select) -> list[Finding]:
 # ── helpers ──────────────────────────────────────────────────────────────
 
 
-def _finding(rule_id: str, detection: str, remediation: str) -> Finding:
+def _finding(
+    rule_id: str,
+    detection: str,
+    remediation: str,
+    *,
+    location: str = "",
+) -> Finding:
     name, guideline, severity = RULE_META[rule_id]
     return Finding(
         rule_id=rule_id,
@@ -440,14 +468,15 @@ def _finding(rule_id: str, detection: str, remediation: str) -> Finding:
         severity=severity,  # type: ignore[arg-type]
         detection=detection,
         remediation=remediation,
+        location=location,
     )
 
 
 def _dedupe(findings: list[Finding]) -> list[Finding]:
-    seen: set[tuple[str, str, str]] = set()
+    seen: set[tuple[str, str, str, str]] = set()
     out: list[Finding] = []
     for finding in findings:
-        key = (finding.rule_id, finding.detection, finding.remediation)
+        key = (finding.rule_id, finding.detection, finding.remediation, finding.location)
         if key in seen:
             continue
         seen.add(key)
@@ -479,6 +508,31 @@ def _join_table(join: exp.Join) -> exp.Table | None:
     return None
 
 
+def _table_span(table: exp.Table) -> tuple[int | None, int | None] | None:
+    """Return the original source span for a parsed table reference."""
+    starts: list[int] = []
+    ends: list[int] = []
+    for part_name in ("catalog", "db", "this"):
+        part = table.args.get(part_name)
+        if not isinstance(part, exp.Expression):
+            continue
+        start = part.meta.get("start")
+        end = part.meta.get("end")
+        if isinstance(start, int) and isinstance(end, int):
+            starts.append(start)
+            ends.append(end + 1)
+    if not starts:
+        return None
+    return min(starts), max(ends)
+
+
+def _relation_alias(relation: exp.Expression | None) -> str:
+    if relation is None:
+        return ""
+    alias = relation.alias_or_name
+    return alias.lower() if alias else ""
+
+
 def _projects_star_for(select: exp.Select, table: exp.Table) -> bool:
     alias = table.alias_or_name
     for projected in select.expressions:
@@ -491,21 +545,10 @@ def _projects_star_for(select: exp.Select, table: exp.Table) -> bool:
     return False
 
 
-def _columns_in(node: exp.Expression | None) -> set[str]:
-    if node is None:
-        return set()
-    cols: set[str] = set()
-    for col in node.find_all(exp.Column):
-        cols.add(col.name.lower())
-        if col.table:
-            cols.add(f"{col.table.lower()}.{col.name.lower()}")
-    return cols
-
-
 def _where_references_table(
     where: exp.Expression | None,
     table: exp.Table,
-    cols: set[str],
+    select: exp.Select,
 ) -> bool:
     if where is None:
         return False
@@ -513,6 +556,8 @@ def _where_references_table(
     # Any column qualified with this alias, or unqualified column when this is
     # the sole table (conservative: require alias match or bare column name use).
     for col in where.find_all(exp.Column):
+        if not _owned_by_select(col, select):
+            continue
         if col.table and col.table.lower() == alias:
             return True
         if not col.table:
@@ -525,6 +570,7 @@ def _partition_refs_in_where(
     where: exp.Expression | None,
     table: exp.Table,
     part_cols: set[str],
+    select: exp.Select,
 ) -> dict[str, set[str] | bool]:
     """Classify partition-column references in WHERE.
 
@@ -537,6 +583,8 @@ def _partition_refs_in_where(
     bare_cols: set[str] = set()
     wrapped_cols: set[str] = set()
     for col in where.find_all(exp.Column):
+        if not _owned_by_select(col, select):
+            continue
         name = col.name.lower()
         if name not in part_cols:
             continue
@@ -552,21 +600,17 @@ def _partition_refs_in_where(
 
 
 def _column_is_wrapped(col: exp.Column) -> bool:
-    """True when the column is inside a function/CAST/arithmetic wrapper.
+    """True when the column is inside a function or CAST wrapper.
 
-    Only genuine value transformations count: they are what defeats partition
-    pruning. Predicate operands (comparisons, BETWEEN, IN, IS NULL, ...) are
-    bare, so oddities like ``dw_process_date IS NOT NULL`` never false-fire
-    R03.
+    Predicate operands and arithmetic expressions are outside R03's catalog
+    condition, so only explicit function and CAST ancestry counts.
     """
     parent = col.parent
-    while isinstance(parent, exp.Paren):
+    while parent is not None and not isinstance(parent, exp.Select):
+        if isinstance(parent, (exp.Cast, exp.TryCast, exp.Anonymous, exp.Func)):
+            return True
         parent = parent.parent
-    if parent is None:
-        return False
-    if isinstance(parent, (exp.Cast, exp.TryCast, exp.Anonymous, exp.Func)):
-        return True
-    return isinstance(parent, (exp.Add, exp.Sub, exp.Mul, exp.Div))
+    return False
 
 
 def _wide_date_ranges(
@@ -574,6 +618,9 @@ def _wide_date_ranges(
     table: exp.Table,
     part_cols: set[str],
     table_key: str,
+    select: exp.Select,
+    *,
+    location: str,
 ) -> list[Finding]:
     if where is None or not part_cols:
         return []
@@ -581,6 +628,8 @@ def _wide_date_ranges(
     alias = table.alias_or_name.lower()
 
     for between in where.find_all(exp.Between):
+        if not _owned_by_select(between, select):
+            continue
         col = between.this
         if not isinstance(col, exp.Column):
             continue
@@ -597,6 +646,7 @@ def _wide_date_ranges(
                     f"Partition filter on {col.name.lower()} for {table_key} spans more than 13 calendar months "
                     f"({low.isoformat()} .. {high.isoformat()})",
                     "Narrow the date range to at most 13 calendar months, or split into sub-queries.",
+                    location=location,
                 )
             )
 
@@ -605,6 +655,8 @@ def _wide_date_ranges(
     uppers: dict[str, date] = {}
     pred: exp.Expression
     for pred in where.find_all(exp.GTE, exp.GT, exp.LTE, exp.LT):
+        if not _owned_by_select(pred, select):
+            continue
         col, lit, is_lower = _bound_predicate(pred)
         if col is None or lit is None:
             continue
@@ -614,9 +666,9 @@ def _wide_date_ranges(
             continue
         key = col.name.lower()
         if is_lower:
-            lowers[key] = lit
+            lowers[key] = max(lit, lowers.get(key, lit))
         else:
-            uppers[key] = lit
+            uppers[key] = min(lit, uppers.get(key, lit))
     for col_name, low in lowers.items():
         high = uppers.get(col_name)
         if high and _exceeds_month_limit(low, high, _MAX_MONTHS):
@@ -626,6 +678,7 @@ def _wide_date_ranges(
                     f"Partition filter on {col_name} for {table_key} spans more than 13 calendar months "
                     f"({low.isoformat()} .. {high.isoformat()})",
                     "Narrow the date range to at most 13 calendar months, or split into sub-queries.",
+                    location=location,
                 )
             )
     return findings
@@ -697,21 +750,22 @@ def _owned_by_select(node: exp.Expression, select: exp.Select) -> bool:
 def _cast_wraps_column(node: exp.Expression | None) -> bool:
     if node is None:
         return False
-    if isinstance(node, (exp.Cast, exp.TryCast)):
-        return node.find(exp.Column) is not None
-    return False
+    return any(cast.find(exp.Column) is not None for cast in node.find_all(exp.Cast, exp.TryCast))
 
 
 def _where_links_sides(
     where: exp.Expression | None,
     left_aliases: set[str],
     right_aliases: set[str],
+    select: exp.Select,
 ) -> bool:
     if where is None:
         return False
     left_aliases = {a.lower() for a in left_aliases if a}
     right_aliases = {a.lower() for a in right_aliases if a}
     for eq in where.find_all(exp.EQ):
+        if not _owned_by_select(eq, select):
+            continue
         lcols = [c for c in eq.this.find_all(exp.Column)] if eq.this else []
         rcols = [c for c in eq.expression.find_all(exp.Column)] if eq.expression else []
         if not lcols or not rcols:
@@ -723,21 +777,6 @@ def _where_links_sides(
         ):
             return True
     return False
-
-
-def _where_links_any(where: exp.Expression | None) -> bool:
-    if where is None:
-        return False
-    for eq in where.find_all(exp.EQ):
-        lcols = list(eq.this.find_all(exp.Column)) if eq.this else []
-        rcols = list(eq.expression.find_all(exp.Column)) if eq.expression else []
-        if lcols and rcols:
-            return True
-    return False
-
-
-def _table_aliases(table: exp.Table) -> str:
-    return table.alias_or_name.lower()
 
 
 def _table_key_from_node(node: exp.Expression | None) -> str | None:

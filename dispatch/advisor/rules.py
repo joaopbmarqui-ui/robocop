@@ -607,6 +607,8 @@ def _column_is_wrapped(col: exp.Column) -> bool:
     """
     parent = col.parent
     while parent is not None and not isinstance(parent, exp.Select):
+        if isinstance(parent, (exp.Predicate, exp.Connector)):
+            return False
         if isinstance(parent, (exp.Cast, exp.TryCast, exp.Anonymous, exp.Func)):
             return True
         parent = parent.parent

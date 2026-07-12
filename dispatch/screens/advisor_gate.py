@@ -19,19 +19,29 @@ class AdvisorLaunchGate(ModalScreen[bool]):
         ("escape", "cancel", "Cancel"),
     ]
 
-    def __init__(self, errors: tuple[Finding, ...] | list[Finding]) -> None:
+    def __init__(
+        self,
+        errors: tuple[Finding, ...] | list[Finding],
+        *,
+        job_summary: str = "",
+    ) -> None:
         super().__init__()
         self.errors = tuple(errors)
+        self.job_summary = job_summary
 
     def compose(self) -> ComposeResult:
         with Vertical(id="confirm-dialog", classes="danger"):
-            yield Static("[bold red]Advisor found error findings[/]", id="confirm-title")
-            body = "\n\n".join(finding_markup(f) for f in self.errors)
             yield Static(
-                body
-                + "\n\n[dim]The SQL launches exactly as written — Dispatch never rewrites it.[/]",
-                id="confirm-body",
+                "[bold red]Launch Job — Advisor found error findings[/]", id="confirm-title"
             )
+            parts: list[str] = []
+            if self.job_summary:
+                parts.append(self.job_summary)
+            parts.append("\n\n".join(finding_markup(f) for f in self.errors))
+            parts.append(
+                "[dim]The SQL launches exactly as written — Dispatch never rewrites it.[/]"
+            )
+            yield Static("\n\n".join(parts), id="confirm-body")
             yield Static(
                 "[bold]Y[/] launches anyway; [bold]N[/] or [bold]Esc[/] cancels.",
                 id="confirm-help",

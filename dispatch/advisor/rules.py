@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import calendar
 import re
 from datetime import date, datetime
 
@@ -86,9 +87,12 @@ def run_ddl_rules(
     dropped: set[str] = set()
     for expression in adapted.expressions:
         if isinstance(expression, exp.Drop) and expression.args.get("kind") == "TABLE":
-            key = _table_key_from_node(expression.this)
-            if key:
-                dropped.add(key)
+            # Only DROP TABLE IF EXISTS satisfies G#6: a plain DROP fails the
+            # Job when the table does not exist yet.
+            if expression.args.get("exists"):
+                key = _table_key_from_node(expression.this)
+                if key:
+                    dropped.add(key)
             continue
         if not isinstance(expression, exp.Create):
             continue
@@ -104,28 +108,33 @@ def run_ddl_rules(
                     f"Add DROP TABLE IF EXISTS {table_label} before the CREATE.",
                 )
             )
-        location = _create_location(expression)
-        if location is None:
-            findings.append(
-                _finding(
-                    "R18",
-                    f"CREATE TABLE for {table_label} has no LOCATION clause",
-                    f"Add a LOCATION under the launching user's directory (segment {user_id!r}).",
-                )
-            )
-        elif user_id and f"/{user_id}/" not in f"/{location.strip('/')}/":
-            findings.append(
-                _finding(
-                    "R18",
-                    f"LOCATION {location!r} for {table_label} does not contain user id {user_id!r} as a path segment",
-                    f"Point LOCATION at a path under the launching user's directory (segment {user_id!r}).",
-                )
-            )
-        if key:
-            # A later CREATE for the same name still needs its own preceding DROP;
-            # do not treat this CREATE as satisfying DROP for subsequent twins.
-            pass
+        _report_location(findings, expression, table_label, user_id)
     return findings
+
+
+def _report_location(
+    findings: list[Finding],
+    expression: exp.Create,
+    table_label: str,
+    user_id: str,
+) -> None:
+    location = _create_location(expression)
+    if location is None:
+        findings.append(
+            _finding(
+                "R18",
+                f"CREATE TABLE for {table_label} has no LOCATION clause",
+                f"Add a LOCATION under the launching user's directory (segment {user_id!r}).",
+            )
+        )
+    elif user_id and f"/{user_id}/" not in f"/{location.strip('/')}/":
+        findings.append(
+            _finding(
+                "R18",
+                f"LOCATION {location!r} for {table_label} does not contain user id {user_id!r} as a path segment",
+                f"Point LOCATION at a path under the launching user's directory (segment {user_id!r}).",
+            )
+        )
 
 
 def _rules_for_expression(
@@ -155,13 +164,15 @@ def _rules_for_select(select: exp.Select, hints: tuple[HintRecord, ...]) -> list
     where_sql_cols = _columns_in(where) if where else set()
 
     r01_keys: set[str] = set()
-    # R01 / R02 / R03 / R04 / R15 per monitored table in this block.
+    monitored_keys: list[str] = []
+    # R01 / R02 / R03 / R04 per monitored table in this block.
     for table in tables:
         schema = (table.db or "").lower()
         name = table.name.lower()
         if not schema or not advisor_data.is_monitored_schema(schema):
             continue
         key = advisor_data.table_key(schema, name)
+        monitored_keys.append(key)
         refs_table = _where_references_table(where, table, where_sql_cols)
 
         # R01: bare * (or t.*) with no WHERE predicate on the monitored table.
@@ -205,15 +216,16 @@ def _rules_for_select(select: exp.Select, hints: tuple[HintRecord, ...]) -> list
         for detection in _wide_date_ranges(where, table, part_cols, key):
             findings.append(detection)
 
-        # R15: COUNT(DISTINCT ...) in a block referencing a monitored table.
-        if _has_count_distinct(select):
-            findings.append(
-                _finding(
-                    "R15",
-                    f"COUNT(DISTINCT ...) found in a query block referencing monitored table {key}",
-                    "Use two-step aggregation on large tables.",
-                )
+    # R15: one finding per block that references any monitored table.
+    if monitored_keys and _has_count_distinct(select):
+        findings.append(
+            _finding(
+                "R15",
+                "COUNT(DISTINCT ...) found in a query block referencing monitored "
+                f"table(s) {', '.join(sorted(set(monitored_keys)))}",
+                "Use two-step aggregation on large tables.",
             )
+        )
 
     # R05–R08 join-strategy rules.
     findings.extend(_join_strategy_findings(select, hints))
@@ -287,17 +299,18 @@ def _join_strategy_findings(select: exp.Select, hints: tuple[HintRecord, ...]) -
     from_tables = [t for t in [_from_table(select)] if t is not None]
     joined_tables = [t for t in (_join_table(j) for j in joins) if t is not None]
 
+    # Each recorded hint binds to exactly one join: consume on match so two
+    # joins of the same table name cannot share one hint.
+    unconsumed = [h for h in hints if h.kind in ("BROADCAST", "SHUFFLE") and h.table_sql]
+
     def hint_for(table: exp.Table) -> HintRecord | None:
         schema = (table.db or "").lower()
         name = table.name.lower()
         key = advisor_data.table_key(schema, name) if schema else name
-        for hint in hints:
-            if hint.kind not in ("BROADCAST", "SHUFFLE") or not hint.table_sql:
-                continue
-            hint_key = hint.table_sql.lower()
+        for hint in unconsumed:
+            hint_key = (hint.table_sql or "").lower()
             if hint_key == key or hint_key == name:
-                return hint
-            if "." not in hint_key and hint_key == name:
+                unconsumed.remove(hint)
                 return hint
         return None
 
@@ -475,10 +488,6 @@ def _projects_star_for(select: exp.Select, table: exp.Table) -> bool:
             table_qual = projected.table
             if not table_qual or table_qual.lower() == alias.lower():
                 return True
-        # SQLGlot may represent t.* as Column with Star
-        if isinstance(projected, exp.Star) and projected.table:
-            if projected.table.lower() == alias.lower():
-                return True
     return False
 
 
@@ -543,36 +552,21 @@ def _partition_refs_in_where(
 
 
 def _column_is_wrapped(col: exp.Column) -> bool:
-    """True when the column is the argument of a function or CAST (not bare)."""
+    """True when the column is inside a function/CAST/arithmetic wrapper.
+
+    Only genuine value transformations count: they are what defeats partition
+    pruning. Predicate operands (comparisons, BETWEEN, IN, IS NULL, ...) are
+    bare, so oddities like ``dw_process_date IS NOT NULL`` never false-fire
+    R03.
+    """
     parent = col.parent
     while isinstance(parent, exp.Paren):
         parent = parent.parent
     if parent is None:
         return False
-    # Bare predicate operand: comparison / BETWEEN / IN / LIKE side.
-    if isinstance(
-        parent,
-        (
-            exp.EQ,
-            exp.NEQ,
-            exp.GT,
-            exp.GTE,
-            exp.LT,
-            exp.LTE,
-            exp.Between,
-            exp.In,
-            exp.Like,
-            exp.Where,
-            exp.And,
-            exp.Or,
-            exp.Not,
-        ),
-    ):
-        return False
     if isinstance(parent, (exp.Cast, exp.TryCast, exp.Anonymous, exp.Func)):
         return True
-    # Arithmetic or other expression wrappers also block pruning.
-    return isinstance(parent, exp.Expression)
+    return isinstance(parent, (exp.Add, exp.Sub, exp.Mul, exp.Div))
 
 
 def _wide_date_ranges(
@@ -596,7 +590,7 @@ def _wide_date_ranges(
             continue
         low = _date_literal(between.args.get("low"))
         high = _date_literal(between.args.get("high"))
-        if low and high and _months_between(low, high) > _MAX_MONTHS:
+        if low and high and _exceeds_month_limit(low, high, _MAX_MONTHS):
             findings.append(
                 _finding(
                     "R04",
@@ -609,7 +603,8 @@ def _wide_date_ranges(
     # Paired >=/> and <=/< bounds on the same column.
     lowers: dict[str, date] = {}
     uppers: dict[str, date] = {}
-    for pred in where.find_all((exp.GTE, exp.GT, exp.LTE, exp.LT)):
+    pred: exp.Expression
+    for pred in where.find_all(exp.GTE, exp.GT, exp.LTE, exp.LT):
         col, lit, is_lower = _bound_predicate(pred)
         if col is None or lit is None:
             continue
@@ -624,7 +619,7 @@ def _wide_date_ranges(
             uppers[key] = lit
     for col_name, low in lowers.items():
         high = uppers.get(col_name)
-        if high and _months_between(low, high) > _MAX_MONTHS:
+        if high and _exceeds_month_limit(low, high, _MAX_MONTHS):
             findings.append(
                 _finding(
                     "R04",
@@ -665,10 +660,19 @@ def _date_literal(node: exp.Expression | None) -> date | None:
         return None
 
 
-def _months_between(start: date, end: date) -> int:
+def _exceeds_month_limit(start: date, end: date, months: int) -> bool:
+    """True when ``end`` is later than ``start`` plus ``months`` calendar months.
+
+    Day-precise per the catalog: 2023-01-15 .. 2024-02-20 exceeds 13 months
+    (limit lands on 2024-02-15), while 2023-01-01 .. 2024-02-01 does not.
+    """
     if end < start:
         start, end = end, start
-    return (end.year - start.year) * 12 + (end.month - start.month)
+    total = start.month - 1 + months
+    year = start.year + total // 12
+    month = total % 12 + 1
+    day = min(start.day, calendar.monthrange(year, month)[1])
+    return end > date(year, month, day)
 
 
 def _has_count_distinct(select: exp.Select) -> bool:

@@ -77,6 +77,7 @@ class NewJobScreen(Screen[None]):
         # (path, exists) memo so keystrokes in unrelated fields do not stat()
         # the SQL path (potentially a slow network mount) on every change.
         self._sql_exists_cache: tuple[str, bool] | None = None
+        self._analysis_cache: tuple[tuple[str, str, str, str, str], AnalysisResult] | None = None
         self._validation_summary_timer: Timer | None = None
 
     def compose(self) -> ComposeResult:
@@ -420,11 +421,35 @@ class NewJobScreen(Screen[None]):
             summary.update(f"[green]\u2713 Ready to launch[/]  ·  {badge}")
 
     def _current_analysis(self) -> AnalysisResult:
-        """Inline static analysis for the live form (no worker)."""
+        """Inline static analysis for the live form (no worker).
+
+        Memoized on the form fields + SQL path so debounced summary refreshes
+        (keystrokes in unrelated fields, the Kerberos tick) never re-read the
+        SQL file — it may sit on a slow network mount, and this runs on the
+        event loop. The cache is invalidated when any key field changes and
+        when the in-TUI editor returns; launch and preview always analyze
+        fresh, so a stale badge after an external edit never affects gating.
+        """
         source_type = self._selected_source()
         destination_type = self._selected_destination()
         table = self._input_value("table-name")
         user_id = config.current_user()
+        sql_path = "" if source_type == "ExistingTable" else self._input_value("sql-file")
+        cache_key = (source_type, destination_type, table, user_id, sql_path)
+        if self._analysis_cache is not None and self._analysis_cache[0] == cache_key:
+            return self._analysis_cache[1]
+        result = self._compute_analysis(source_type, destination_type, table, user_id, sql_path)
+        self._analysis_cache = (cache_key, result)
+        return result
+
+    def _compute_analysis(
+        self,
+        source_type: str,
+        destination_type: str,
+        table: str,
+        user_id: str,
+        sql_path: str,
+    ) -> AnalysisResult:
         if source_type == "ExistingTable":
             return analyze(
                 "",
@@ -433,7 +458,6 @@ class NewJobScreen(Screen[None]):
                 destination_table=table,
                 user_id=user_id,
             )
-        sql_path = self._input_value("sql-file")
         if not sql_path or not self._sql_file_exists():
             return AnalysisResult(available=True, findings=())
         try:
@@ -745,7 +769,9 @@ class NewJobScreen(Screen[None]):
         )
         errors = analysis.errors()
         if errors:
-            gated = await self._confirm_advisor_gate(errors)
+            # Single modal: the gate carries the Launch Job summary, so no
+            # information from the standard confirm is lost.
+            gated = await self._confirm_advisor_gate(errors, source, destination)
             if not gated:
                 return
         else:
@@ -800,14 +826,41 @@ class NewJobScreen(Screen[None]):
         self.notify(f"\u2713 Launched Job {job_dir.name}", severity="information")
         self._show_message(f"\u2713 Launched Job {job_dir.name}", "success")
 
-    async def _confirm_advisor_gate(self, errors: tuple) -> bool:
+    def _launch_summary(
+        self,
+        source: manifest.Source,
+        destination: manifest.Destination,
+    ) -> str:
+        source_type = source["type"]
+        source_detail = source.get("table_name") or source.get("sql_path_at_launch") or "--"
+        dest_type = destination["type"]
+        schema = destination.get("schema") or "--"
+        table = destination.get("table_name") or "--"
+        csv_path = destination.get("csv_path") or "--"
+        return (
+            f"Source: [cyan]{source_type}[/]  {source_detail}\n"
+            f"Destination: [cyan]{dest_type}[/]\n"
+            f"Target table: [cyan]{schema}.{table}[/]\n"
+            f"CSV path: {csv_path}\n"
+            f"Email: {self._input_value('email') or '--'}"
+        )
+
+    async def _confirm_advisor_gate(
+        self,
+        errors: tuple,
+        source: manifest.Source,
+        destination: manifest.Destination,
+    ) -> bool:
         loop_future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()
 
         def on_result(result: bool | None) -> None:
             if not loop_future.done():
                 loop_future.set_result(bool(result))
 
-        self.app.push_screen(AdvisorLaunchGate(errors), callback=on_result)
+        self.app.push_screen(
+            AdvisorLaunchGate(errors, job_summary=self._launch_summary(source, destination)),
+            callback=on_result,
+        )
         return await loop_future
 
     async def _confirm_launch(
@@ -821,19 +874,7 @@ class NewJobScreen(Screen[None]):
             if not loop_future.done():
                 loop_future.set_result(bool(result))
 
-        source_type = source["type"]
-        source_detail = source.get("table_name") or source.get("sql_path_at_launch") or "--"
-        dest_type = destination["type"]
-        schema = destination.get("schema") or "--"
-        table = destination.get("table_name") or "--"
-        csv_path = destination.get("csv_path") or "--"
-        body = (
-            f"Source: [cyan]{source_type}[/]  {source_detail}\n"
-            f"Destination: [cyan]{dest_type}[/]\n"
-            f"Target table: [cyan]{schema}.{table}[/]\n"
-            f"CSV path: {csv_path}\n"
-            f"Email: {self._input_value('email') or '--'}"
-        )
+        body = self._launch_summary(source, destination)
         self.app.push_screen(
             ConfirmScreen(
                 "Launch Job",
@@ -851,6 +892,7 @@ class NewJobScreen(Screen[None]):
         with self.app.suspend():
             process.run_interactive(editor, self._input_value("sql-file"))
         self._sql_exists_cache = None  # the editor may have created the file
+        self._analysis_cache = None  # or changed the SQL under the same path
         self._detect_sql()
 
     async def action_kinit(self) -> None:

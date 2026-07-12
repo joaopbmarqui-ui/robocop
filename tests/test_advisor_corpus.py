@@ -41,9 +41,7 @@ def test_r01_fires_with_limit() -> None:
 
 
 def test_r01_silent_when_where_present() -> None:
-    r = _analyze(
-        "SELECT * FROM core.cut_clear_dtl_enc WHERE merchant_name = 'x'"
-    )
+    r = _analyze("SELECT * FROM core.cut_clear_dtl_enc WHERE merchant_name = 'x'")
     assert "R01" not in _ids(r)
     assert "R02" in _ids(r)  # missing partition filter
 
@@ -75,16 +73,12 @@ def test_r01_suppresses_r02_same_block() -> None:
 
 
 def test_r02_fires_without_partition_predicate() -> None:
-    r = _analyze(
-        "SELECT id FROM core.cut_clear_dtl_enc WHERE merchant_name = 'x'"
-    )
+    r = _analyze("SELECT id FROM core.cut_clear_dtl_enc WHERE merchant_name = 'x'")
     assert "R02" in _ids(r)
 
 
 def test_r02_silent_with_partition_predicate() -> None:
-    r = _analyze(
-        "SELECT id FROM core.cut_clear_dtl_enc WHERE dw_process_date = '2024-01-01'"
-    )
+    r = _analyze("SELECT id FROM core.cut_clear_dtl_enc WHERE dw_process_date = '2024-01-01'")
     assert "R02" not in _ids(r)
     assert "R03" not in _ids(r)
 
@@ -99,9 +93,7 @@ def test_r02_template_predicate_counts() -> None:
 
 
 def test_r03_fires_when_partition_only_wrapped() -> None:
-    r = _analyze(
-        "SELECT id FROM core.cut_clear_dtl_enc WHERE year(dw_process_date) = 2024"
-    )
+    r = _analyze("SELECT id FROM core.cut_clear_dtl_enc WHERE year(dw_process_date) = 2024")
     assert "R03" in _ids(r)
     assert "R02" not in _ids(r)
 
@@ -159,8 +151,27 @@ def test_r04_fires_on_paired_bounds() -> None:
 
 
 def test_r04_silent_one_sided() -> None:
+    r = _analyze("SELECT id FROM core.cut_clear_dtl_enc WHERE dw_process_date >= '2020-01-01'")
+    assert "R04" not in _ids(r)
+
+
+def test_r04_day_component_exceeds_limit() -> None:
+    # 13 calendar months land on 2024-02-15; five more days exceed the limit.
     r = _analyze(
-        "SELECT id FROM core.cut_clear_dtl_enc WHERE dw_process_date >= '2020-01-01'"
+        """
+        SELECT id FROM core.cut_clear_dtl_enc
+        WHERE dw_process_date BETWEEN '2023-01-15' AND '2024-02-20'
+        """
+    )
+    assert "R04" in _ids(r)
+
+
+def test_r04_exactly_13_months_passes() -> None:
+    r = _analyze(
+        """
+        SELECT id FROM core.cut_clear_dtl_enc
+        WHERE dw_process_date BETWEEN '2023-01-15' AND '2024-02-15'
+        """
     )
     assert "R04" not in _ids(r)
 
@@ -270,9 +281,7 @@ def test_r09_silent_with_on() -> None:
 
 
 def test_r10_cast_in_join() -> None:
-    r = _analyze(
-        "SELECT * FROM a JOIN b ON CAST(a.id AS STRING) = b.id"
-    )
+    r = _analyze("SELECT * FROM a JOIN b ON CAST(a.id AS STRING) = b.id")
     assert "R10" in _ids(r)
 
 
@@ -365,9 +374,7 @@ def test_r16_silent_for_existing_table() -> None:
 
 
 def test_r17_missing_drop() -> None:
-    r = _analyze(
-        "CREATE TABLE alice.t LOCATION '/ads_storage/alice/t' AS SELECT 1"
-    )
+    r = _analyze("CREATE TABLE alice.t LOCATION '/ads_storage/alice/t' AS SELECT 1")
     assert "R17" in _ids(r)
 
 
@@ -411,6 +418,17 @@ def test_r18_silent_with_user_segment() -> None:
     assert "R18" not in _ids(r)
 
 
+def test_r17_plain_drop_does_not_satisfy() -> None:
+    # G#6 requires DROP TABLE IF EXISTS; a plain DROP fails when absent.
+    r = _analyze(
+        """
+        DROP TABLE alice.t;
+        CREATE TABLE alice.t LOCATION '/ads_storage/alice/t' AS SELECT 1
+        """
+    )
+    assert "R17" in _ids(r)
+
+
 def test_ddl_rules_skip_wrapped_select_path() -> None:
     # Bare SELECT is wrapped by table_wrapper — not self-contained DDL.
     r = _analyze("SELECT 1 AS x")
@@ -425,6 +443,31 @@ def test_unavailable_unquoted_template() -> None:
     r = _analyze("SELECT * FROM t WHERE d = {date_inicio}")
     assert not r.available
     assert r.findings == () or _ids(r) <= {"R16"}  # form findings only
+
+
+def test_unavailable_keeps_form_findings_visible() -> None:
+    from dispatch.advisor.models import badge_markup
+
+    r = _analyze(
+        "SELECT * FROM t WHERE d = {date_inicio}",
+        destination_table="wrong_name",
+    )
+    assert not r.available
+    assert _ids(r) == {"R16"}
+    badge = badge_markup(r)
+    assert "warning" in badge
+    assert "unavailable" in badge
+
+
+def test_r03_silent_on_is_not_null() -> None:
+    # Predicate operands are bare: IS NOT NULL must not count as wrapped.
+    r = _analyze(
+        """
+        SELECT id FROM core.cut_clear_dtl_enc
+        WHERE dw_process_date IS NOT NULL
+        """
+    )
+    assert "R03" not in _ids(r)
 
 
 def test_unavailable_unparseable() -> None:

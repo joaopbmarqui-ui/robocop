@@ -47,7 +47,9 @@ class AnalysisResult:
 
     @property
     def badge(self) -> BadgeSeverity:
-        if not self.available or not self.findings:
+        # Form-field findings (R16) survive SQL-analysis unavailability, so
+        # the badge reflects findings whenever any exist.
+        if not self.findings:
             return "clean"
         counts = self.severity_counts()
         for severity in SEVERITY_ORDER:
@@ -67,15 +69,16 @@ class AnalysisResult:
 
 def badge_markup(result: AnalysisResult) -> str:
     """Worst-severity badge with counts; label-first so color is never the only cue."""
-    if not result.available:
-        return "[dim]Advisor: unavailable[/]"
     if not result.findings:
+        if not result.available:
+            return "[dim]Advisor: unavailable[/]"
         return "[green]Advisor: clean[/]"
     counts = result.severity_counts()
     parts = " · ".join(_count_label(severity, count) for severity, count in counts.items() if count)
     worst = next(sev for sev in SEVERITY_ORDER if counts[sev])
     color = {"error": "red", "warning": "yellow", "info": "cyan"}[worst]
-    return f"[{color}]Advisor: {worst}[/] [dim]({parts})[/]"
+    suffix = " [dim]· SQL analysis unavailable[/]" if not result.available else ""
+    return f"[{color}]Advisor: {worst}[/] [dim]({parts})[/]{suffix}"
 
 
 def _count_label(severity: Severity, count: int) -> str:

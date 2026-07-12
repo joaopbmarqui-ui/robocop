@@ -94,11 +94,17 @@ class PreviewScreen(Screen[None]):
         yield Footer()
 
     def _findings_markup(self) -> str:
+        lines: list[str] = []
         if not self.analysis.available:
-            return "[dim]Advisor analysis unavailable — no findings; launch is not gated.[/]"
-        if not self.analysis.findings:
-            return "[green]No findings — nothing in the manual's checklist fired.[/]"
-        return "\n".join(finding_markup(f) for f in self.analysis.findings)
+            lines.append(
+                "[dim]SQL analysis unavailable — SQL findings cannot be computed; "
+                "launch is not gated.[/]"
+            )
+        if self.analysis.findings:
+            lines.extend(finding_markup(f) for f in self.analysis.findings)
+        elif self.analysis.available:
+            lines.append("[green]No findings — nothing in the manual's checklist fired.[/]")
+        return "\n".join(lines)
 
     def on_mount(self) -> None:
         log = self.query_one("#preview-body", RichLog)

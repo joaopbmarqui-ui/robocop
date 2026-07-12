@@ -39,9 +39,7 @@ def test_keys_are_lowercase() -> None:
 
 def test_partition_default_for_monitored_unlisted() -> None:
     # Monitored schema, table not in Guideline #3 list → default partition col.
-    assert advisor_data.partition_columns_for("core", "some_other_table") == (
-        "dw_process_date",
-    )
+    assert advisor_data.partition_columns_for("core", "some_other_table") == ("dw_process_date",)
     assert advisor_data.partition_columns_for("temp", "my_table") == ()
 
 

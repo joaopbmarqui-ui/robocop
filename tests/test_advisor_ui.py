@@ -99,9 +99,7 @@ def test_preview_findings_panel(mock_env_with_config, tmp_path, monkeypatch) -> 
     asyncio.run(run())
 
 
-def test_launch_gate_appears_only_for_errors(
-    mock_env_with_config, tmp_path, monkeypatch
-) -> None:
+def test_launch_gate_appears_only_for_errors(mock_env_with_config, tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("USER", "alice")
     monkeypatch.setenv("DISPATCH_MOCK_KLIST_TTL", "3600")
     sql_path = tmp_path / "gate.sql"
@@ -124,6 +122,11 @@ def test_launch_gate_appears_only_for_errors(
             assert isinstance(app.screen, AdvisorLaunchGate)
             title = str(app.screen.query_one("#confirm-title", Static).render())
             assert "error findings" in title.lower()
+            # The gate replaces the standard confirm, so it must carry the
+            # Launch Job summary (target table, destination) itself.
+            body = str(app.screen.query_one("#confirm-body", Static).render())
+            assert "Target table:" in body
+            assert "aa_enc" in body
 
     asyncio.run(run())
 
@@ -185,9 +188,7 @@ def test_launch_gate_proceed_on_confirm(mock_env_with_config, tmp_path, monkeypa
     asyncio.run(run())
 
 
-def test_no_gate_when_analysis_unavailable(
-    mock_env_with_config, tmp_path, monkeypatch
-) -> None:
+def test_no_gate_when_analysis_unavailable(mock_env_with_config, tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("USER", "alice")
     sql_path = tmp_path / "bad.sql"
     sql_path.write_text("SELECT FROM WHERE\n", encoding="utf-8")
@@ -210,9 +211,7 @@ def test_no_gate_when_analysis_unavailable(
     asyncio.run(run())
 
 
-def test_advisory_only_uses_normal_confirm(
-    mock_env_with_config, tmp_path, monkeypatch
-) -> None:
+def test_advisory_only_uses_normal_confirm(mock_env_with_config, tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("USER", "alice")
     sql_path = tmp_path / "warn.sql"
     sql_path.write_text(

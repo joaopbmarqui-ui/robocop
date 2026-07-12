@@ -44,6 +44,19 @@ _Avoid_: queue, fila.
 The gateway server providing access to the Hadoop cluster. Hosts the
 orchestrator scripts and (in the new design) the TUI itself.
 
+**Advisor**:
+The pre-launch static analysis feature that checks a **Job's** SQL against
+the Impala optimization manual and reports **Findings**. Flag-only: it never
+modifies or gates what SQL is launched beyond the error-confirm modal. See
+[docs/query-optimization-advisor-spec.md](docs/query-optimization-advisor-spec.md).
+_Avoid_: linter, optimizer, rewriter.
+
+**Finding**:
+One **Advisor** detection — a rule id, guideline reference, severity
+(`error` / `warning` / `info`), diagnostic detection line, and typed
+remediation line.
+_Avoid_: violation, issue, error (reserved for the severity tier).
+
 **Job state**:
 The lifecycle stage of a **Job**. One of `Running` (orchestrator process is
 alive), `Succeeded` (orchestrator exited 0), `Failed` (orchestrator exited

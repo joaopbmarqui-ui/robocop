@@ -1,8 +1,8 @@
 ---
 title: "Assemble and lock the Query Optimization Advisor spec"
 labels: [wayfinder:task]
-status: open
-assignee: none
+status: closed
+assignee: cursor-agent
 blocked-by:
   [
     0001-rule-catalog,
@@ -45,3 +45,15 @@ The spec must cover, with nothing left open:
 Resolved when the sponsor signs off on the document and it is merged. Any
 disagreement discovered during assembly reopens the relevant ticket rather
 than being settled ad hoc here.
+
+## Resolution
+
+The spec was assembled at
+[docs/query-optimization-advisor-spec.md](../../../query-optimization-advisor-spec.md)
+with
+[ADR-0006](../../../adr/0006-sqlglot-for-advisor-analysis.md) recording the
+analysis-engine choice, audited against every ticket resolution, and
+**signed off by the sponsor on 2026-07-11**. The `CONTEXT.md` glossary
+gained the **Advisor** and **Finding** entries. Merging the stacked PR
+chain (#30 through #40) is the Maintainer's step per `CONTRIBUTING.md`;
+implementation starts from the merged spec.

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from datetime import date, datetime
+
 from sqlglot import exp
 
 from dispatch import advisor_data
@@ -127,7 +128,9 @@ def run_ddl_rules(
     return findings
 
 
-def _rules_for_expression(expression: exp.Expression, hints: tuple[HintRecord, ...]) -> list[Finding]:
+def _rules_for_expression(
+    expression: exp.Expression, hints: tuple[HintRecord, ...]
+) -> list[Finding]:
     findings: list[Finding] = []
     # Walk every SELECT query block (including CTEs and subqueries).
     for select in _select_blocks(expression):
@@ -281,9 +284,7 @@ def _join_strategy_findings(select: exp.Select, hints: tuple[HintRecord, ...]) -
     if not joins:
         return findings
 
-    from_tables = [
-        t for t in [_from_table(select)] if t is not None
-    ]
+    from_tables = [t for t in [_from_table(select)] if t is not None]
     joined_tables = [t for t in (_join_table(j) for j in joins) if t is not None]
 
     def hint_for(table: exp.Table) -> HintRecord | None:

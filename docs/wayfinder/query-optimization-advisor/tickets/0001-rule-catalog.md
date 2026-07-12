@@ -1,8 +1,8 @@
 ---
 title: "Rule catalog: which manual guidelines become machine-checkable rules"
 labels: [wayfinder:grilling]
-status: open
-assignee: none
+status: closed
+assignee: cursor-agent
 blocked-by: []
 ---
 
@@ -14,10 +14,13 @@ rules the advisor actually checks, and at what severity?
 
 Grill through the manual's checklist with the sponsor, sorting each guideline
 into: **rule** (statically checkable against the SQL text of a Job),
-**needs-metadata rule** (checkable only with table stats / EXPLAIN — park
-until the metadata-availability research resolves), or **not a rule** (already
-out of scope on the map, or unverifiable). For each accepted rule, record
-severity (error / warning / info) and the exact detection condition.
+**needs-metadata rule** (checkable only with table stats / EXPLAIN — the
+metadata-availability research resolved these to **out of v1**; record them
+as parked, not as catalog entries), or **not a rule** (already out of scope
+on the map, or unverifiable). For each accepted rule, record severity
+(error / warning / info) and the exact detection condition. The known-table
+join-strategy rule stays static: it reads the manual's recommended table,
+embedded as data per the metadata research.
 
 Candidate rules visible from a first read, to seed the grilling:
 
@@ -41,3 +44,24 @@ Candidate rules visible from a first read, to seed the grilling:
 
 The answer is the locked rule catalog: rule id, guideline reference,
 detection condition, severity, and whether it needs metadata.
+
+## Resolution
+
+Grilled with the sponsor on 2026-07-10; the locked catalog is
+[the rule catalog asset](../assets/rule-catalog.md). Eighteen rules ship in
+v1: four error (`SELECT *` unfiltered on a monitored table, >13-month
+literal ranges, `BROADCAST` on a shuffle-recommended table, Cartesian
+products), six warning (missing partition filter, function-wrapped partition
+column, `SHUFFLE` on a broadcast-recommended table, destination-table
+naming, and the two self-contained-DDL checks for `DROP TABLE IF EXISTS`
+and employee-ID `LOCATION`), and eight info (missing hint, direct
+large-table join, `CAST` in join conditions, and the
+string/set-operation/aggregation style rules). Severity encodes
+confidence × impact. Monitored schemas, per-table partition columns (with a
+`dw_process_date` default for unlisted tables), and join-strategy
+recommendations all live in the embedded data file. `table_wrapper`
+guarantees G#2/G#6 only on the wrapped path — the self-contained-DDL path
+and G#5 naming get real rules (R16–R18). Environment-hygiene items and
+needs-metadata checks are recorded as not-a-rule or parked. `SqlTemplate`
+Jobs are analyzed once on the template text; `ExistingTable` Jobs are not
+analyzed.

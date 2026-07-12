@@ -1,6 +1,6 @@
 ---
 label: wayfinder:map
-status: open
+status: closed
 ---
 
 # Map: Query Optimization Advisor
@@ -64,24 +64,59 @@ nothing is left to decide before implementation starts.
 - [Research: SQL analysis engine options under the air-gapped deploy path](tickets/0002-sql-analysis-engine-research.md)
   — use SQLGlot with a length-preserving Impala adapter for flag-only v1
   analysis; never render or launch parser-generated SQL.
+- [Research: what Impala metadata is available at pre-launch analysis time](tickets/0003-metadata-availability-research.md)
+  — v1 analysis is static-only; embed the manual's join-strategy table as
+  data, park needs-metadata rules, and defer EXPLAIN verification to a future
+  Analyze action.
+- [Rule catalog: which manual guidelines become machine-checkable rules](tickets/0001-rule-catalog.md)
+  — eighteen rules locked (4 error / 6 warning / 8 info) with exact detection
+  conditions; schemas, partition columns, and join strategies ship as data;
+  SqlTemplate analyzed once, ExistingTable not analyzed.
+- [Decide: remediation guidance for flag-only findings](tickets/0004-advisory-vs-rewrite.md)
+  — rule-specific mix: diagnostic detection line always, imperative step only
+  where deterministic, alternative-naming for author's-call rules; rule id +
+  guideline reference on every finding.
+- [Decide: can findings block a launch, or only inform](tickets/0005-enforcement-policy.md)
+  — confirm is the ceiling: errors pause on an explicit proceed/cancel modal,
+  warnings and info never gate, a broken analyzer never breaks launching;
+  per-launch confirm is the only override in v1.
+- [Decide: the embedded join-strategy data file](tickets/0008-join-strategy-data-file.md)
+  — a Python module (`dispatch/advisor_data.py`) of plain literals keyed by
+  exact lowercase `schema.table`, expanded verbatim from Guideline #3, with
+  monitored schemas, partition-column overrides, and a dated version string.
+- [Decide: scoring/aggregation model for findings](tickets/0009-scoring-model.md)
+  — worst-severity badge (`error`/`warning`/`info`/`clean`), pure display; no
+  letter grades or numeric scores.
+- [Prototype: where the advisor lives in the TUI](tickets/0006-tui-surface-prototype.md)
+  — three composed surfaces approved: badge in the New Job validation
+  summary, findings panel in Preview SQL, error-only launch gate; analysis
+  runs inline, no worker needed.
+- [Assemble and lock the Query Optimization Advisor spec](tickets/0007-spec-assembly.md)
+  — the destination: [the spec](../../query-optimization-advisor-spec.md)
+  and [ADR-0006](../../adr/0006-sqlglot-for-advisor-analysis.md) signed off
+  2026-07-11; glossary entries added; the map is complete.
 
 ## Not yet specified
 
-- **Scoring/aggregation model** — how individual findings roll up into a
-  rating (A–F? 0–100? worst-severity?). Can't be pinned until the rule catalog
-  and remediation-guidance decision land.
-- **Testing plan and mock scenarios** — what new `mocks/scenarios/` entries
-  and pytest coverage the advisor needs. Depends on whether analysis calls
-  EXPLAIN/metadata or is purely static.
-- **SqlTemplate handling** — a `SqlTemplate` Source expands to one query per
-  month; analyze the template once, or each expansion? Depends on the engine
-  and rule catalog.
-- **Configuration and suppression UX** — per-user opt-out, per-rule
-  suppression, updating the recommended join-strategy table when the Code
-  Optimization Team revises it. Depends on catalog and surface decisions.
+_Nothing — the map is complete. Every ticket is closed and the
+[spec](../../query-optimization-advisor-spec.md) is signed off;
+implementation starts from the merged spec._
 
 ## Out of scope
 
+- **Per-rule suppression and config opt-outs** — the
+  [enforcement policy](tickets/0005-enforcement-policy.md) locked the
+  per-launch confirm as v1's only override; suppression returns as its own
+  designed feature in a fresh effort only if real false-positive data
+  demands it. (The join-strategy data file and its update procedure are the
+  [embedded join-strategy data file ticket](tickets/0008-join-strategy-data-file.md).)
+
+- **Live metadata checks (EXPLAIN, SHOW TABLE STATS) during composition** —
+  the
+  [metadata availability research](tickets/0003-metadata-availability-research.md)
+  found no mock routing, unacceptable latency in live validation, and
+  composition-blocking failure modes. A future effort may add them behind an
+  explicit Analyze action with worker/spinner/cancel treatment.
 - **Query rewriting and auto-fix mechanics** — the
   [SQL analysis engine research](tickets/0002-sql-analysis-engine-research.md)
   found no faithful Impala parse/render path. V1 never mutates or substitutes

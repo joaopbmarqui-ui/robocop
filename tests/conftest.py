@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from dispatch import telemetry
+
 WORKSPACE = Path(__file__).resolve().parents[1]
 MOCKS_BIN = WORKSPACE / "mocks" / "bin"
 SCR_DIR = WORKSPACE / "scr"
@@ -29,6 +31,7 @@ def mock_env(tmp_path, monkeypatch):
     """
     state_dir = tmp_path / "mock_state"
     data_root = tmp_path / "data"
+    telemetry_dir = tmp_path / "telemetry"
     state_dir.mkdir()
     data_root.mkdir()
 
@@ -39,14 +42,22 @@ def mock_env(tmp_path, monkeypatch):
     )
     monkeypatch.setenv("DISPATCH_MOCK_STATE_DIR", str(state_dir))
     monkeypatch.setenv("DISPATCH_DATA_ROOT", str(data_root))
+    monkeypatch.setenv("DISPATCH_TELEMETRY_DIR", str(telemetry_dir))
     monkeypatch.setenv("DISPATCH_SCR_DIR", str(SCR_DIR))
     monkeypatch.setenv("DISPATCH_MOCK_SCENARIO", "happy_path")
     monkeypatch.setenv("DISPATCH_MOCK_DELAY", "0")
     # Port 9 (Discard) is virtually never bound; connection is refused instantly,
     # so orchestrator email attempts fail fast without hanging the test.
     monkeypatch.setenv("MAILHOST", "127.0.0.1:9")
+    telemetry.reset_session_for_tests()
 
-    return {"state_dir": state_dir, "data_root": data_root}
+    yield {
+        "state_dir": state_dir,
+        "data_root": data_root,
+        "telemetry_dir": telemetry_dir,
+    }
+    assert telemetry.flush(timeout=1)
+    telemetry.reset_session_for_tests()
 
 
 @pytest.fixture()

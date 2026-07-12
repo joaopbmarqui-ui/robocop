@@ -7,7 +7,7 @@ import contextlib
 import json
 from pathlib import Path
 
-from dispatch import config, manifest
+from dispatch import config, manifest, telemetry
 from dispatch.app import DispatchApp
 from dispatch.screens.browser import BrowserScreen
 from dispatch.screens.help import HelpScreen
@@ -526,6 +526,15 @@ class TestNewJobInlineValidation:
         assert final["state"] == "Failed"
         assert final["exit_code"] == -1
         assert final["finished_at"] is not None
+        assert telemetry.flush(timeout=1)
+        events = [
+            json.loads(line)
+            for line in telemetry.private_events_path().read_text(encoding="utf-8").splitlines()
+        ]
+        assert any(
+            event["event"] == "job_launched" and event["props"]["job_id"] == final["id"]
+            for event in events
+        )
 
 
 # =============================================================================

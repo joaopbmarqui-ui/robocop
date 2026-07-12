@@ -255,6 +255,18 @@ def test_r04_keeps_broad_range_from_separate_or_branch() -> None:
     assert "R04" in _ids(r)
 
 
+def test_r04_ignores_unrelated_or_branch_count() -> None:
+    merchant_predicates = " OR ".join(f"merchant_id = {index}" for index in range(257))
+    r = _analyze(
+        f"""
+        SELECT id FROM core.cut_clear_dtl_enc
+        WHERE dw_process_date BETWEEN '2020-01-01' AND '2025-01-01'
+          AND ({merchant_predicates})
+        """
+    )
+    assert "R04" in _ids(r)
+
+
 def test_r04_silent_on_reversed_empty_range() -> None:
     r = _analyze(
         """

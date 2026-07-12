@@ -15,7 +15,6 @@ from .models import Finding
 
 _DATE_LITERAL_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _MAX_MONTHS = 13
-_MAX_PREDICATE_PATHS = 256
 
 RULE_META: dict[str, tuple[str, str, str]] = {
     # rule_id: (rule_name, guideline, severity)
@@ -618,49 +617,20 @@ def _wide_date_ranges(
     findings: list[Finding] = []
     alias = table.alias_or_name.lower()
     condition = where.this
-    paths = _conjunctive_paths(condition)
-    if paths is None:
-        return []
-
-    for branch_number, predicates in enumerate(paths, start=1):
-        lowers: dict[str, date] = {}
-        uppers: dict[str, date] = {}
-        for predicate in predicates:
-            if not _owned_by_select(predicate, select):
-                continue
-            if isinstance(predicate, exp.Between):
-                col = predicate.this
-                if not isinstance(col, exp.Column):
-                    continue
-                low = _date_literal(predicate.args.get("low"))
-                high = _date_literal(predicate.args.get("high"))
-                if low is None or high is None:
-                    continue
-                is_lower = True
-            elif isinstance(predicate, (exp.GTE, exp.GT, exp.LTE, exp.LT)):
-                col, bound, is_lower = _bound_predicate(predicate)
-                if col is None or bound is None:
-                    continue
-                low = bound if is_lower else None
-                high = None if is_lower else bound
-            else:
-                continue
-            if col.name.lower() not in part_cols:
-                continue
-            if col.table and col.table.lower() != alias:
-                continue
-            key = col.name.lower()
-            if low is not None:
-                lowers[key] = max(low, lowers.get(key, low))
-            if high is not None:
-                uppers[key] = min(high, uppers.get(key, high))
-
-        branch_location = (
-            f"{location}, predicate branch {branch_number}" if len(paths) > 1 else location
+    for col_name in sorted(part_cols):
+        intervals = sorted(
+            _date_intervals(
+                condition,
+                column_name=col_name,
+                table_alias=alias,
+            ),
+            key=lambda interval: (interval[0] or date.min, interval[1] or date.max),
         )
-        for col_name, low in lowers.items():
-            high = uppers.get(col_name)
-            if high and _exceeds_month_limit(low, high, _MAX_MONTHS):
+        for branch_number, (low, high) in enumerate(intervals, start=1):
+            branch_location = (
+                f"{location}, predicate branch {branch_number}" if len(intervals) > 1 else location
+            )
+            if low and high and _exceeds_month_limit(low, high, _MAX_MONTHS):
                 findings.append(
                     _finding(
                         "R04",
@@ -673,25 +643,91 @@ def _wide_date_ranges(
     return findings
 
 
-def _conjunctive_paths(
+def _date_intervals(
     condition: exp.Expression,
-) -> list[list[exp.Expression]] | None:
-    """Expand boolean predicates into bounded conjunctive paths."""
+    *,
+    column_name: str,
+    table_alias: str,
+) -> set[tuple[date | None, date | None]]:
+    """Evaluate possible date intervals without expanding unrelated predicates."""
     if isinstance(condition, exp.Paren):
-        return _conjunctive_paths(condition.this)
+        return _date_intervals(
+            condition.this,
+            column_name=column_name,
+            table_alias=table_alias,
+        )
     if isinstance(condition, exp.Or):
-        left = _conjunctive_paths(condition.this)
-        right = _conjunctive_paths(condition.expression)
-        if left is None or right is None or len(left) + len(right) > _MAX_PREDICATE_PATHS:
-            return None
-        return left + right
+        return _date_intervals(
+            condition.this,
+            column_name=column_name,
+            table_alias=table_alias,
+        ) | _date_intervals(
+            condition.expression,
+            column_name=column_name,
+            table_alias=table_alias,
+        )
     if isinstance(condition, exp.And):
-        left = _conjunctive_paths(condition.this)
-        right = _conjunctive_paths(condition.expression)
-        if left is None or right is None or len(left) * len(right) > _MAX_PREDICATE_PATHS:
+        left = _date_intervals(
+            condition.this,
+            column_name=column_name,
+            table_alias=table_alias,
+        )
+        right = _date_intervals(
+            condition.expression,
+            column_name=column_name,
+            table_alias=table_alias,
+        )
+        return {
+            _intersect_intervals(left_interval, right_interval)
+            for left_interval in left
+            for right_interval in right
+        }
+    interval = _date_interval_for_predicate(
+        condition,
+        column_name=column_name,
+        table_alias=table_alias,
+    )
+    return {interval or (None, None)}
+
+
+def _date_interval_for_predicate(
+    predicate: exp.Expression,
+    *,
+    column_name: str,
+    table_alias: str,
+) -> tuple[date | None, date | None] | None:
+    if isinstance(predicate, exp.Between):
+        col = predicate.this
+        if not isinstance(col, exp.Column):
             return None
-        return [left_path + right_path for left_path in left for right_path in right]
-    return [[condition]]
+        low = _date_literal(predicate.args.get("low"))
+        high = _date_literal(predicate.args.get("high"))
+        if low is None or high is None:
+            return None
+    elif isinstance(predicate, (exp.GTE, exp.GT, exp.LTE, exp.LT)):
+        col, bound, is_lower = _bound_predicate(predicate)
+        if col is None or bound is None:
+            return None
+        low = bound if is_lower else None
+        high = None if is_lower else bound
+    else:
+        return None
+    if col.name.lower() != column_name:
+        return None
+    if col.table and col.table.lower() != table_alias:
+        return None
+    return low, high
+
+
+def _intersect_intervals(
+    left: tuple[date | None, date | None],
+    right: tuple[date | None, date | None],
+) -> tuple[date | None, date | None]:
+    lower_bounds = [bound for bound in (left[0], right[0]) if bound is not None]
+    upper_bounds = [bound for bound in (left[1], right[1]) if bound is not None]
+    low = max(lower_bounds) if lower_bounds else None
+    high = min(upper_bounds) if upper_bounds else None
+    return low, high
 
 
 def _bound_predicate(

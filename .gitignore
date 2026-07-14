@@ -21,3 +21,5 @@ build/
 *.egg-info/
 vendor/
 .edge-deploy-bundles/
+edge-deploy/runs/run-20260714T132118Z-0efb705/events.jsonl
+edge-deploy/runs/run-20260714T132118Z-0efb705/state.json

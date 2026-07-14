@@ -40,14 +40,15 @@ fi
 command -v klist >/dev/null 2>&1 || { echo "klist not found on PATH" >&2; exit 1; }
 command -v impala-shell >/dev/null 2>&1 || { echo "impala-shell not found on PATH" >&2; exit 1; }
 
-"$PYTHON_BIN" -m venv "$DISPATCH_HOME/venv"
 if [ ! -f "$BUNDLE_DIR/manifest.json" ] || [ ! -f "$REQUIREMENTS_FILE" ]; then
   echo "Verified dependency bundle not found: $BUNDLE_DIR" >&2
   echo "Run the edge-deploy dependency delivery phase before installing." >&2
   exit 1
 fi
-"$DISPATCH_HOME/venv/bin/pip" install --no-index --find-links="$WHEEL_DIR" -r "$REQUIREMENTS_FILE"
-# "$DISPATCH_HOME/venv/bin/pip" install --no-deps -e "$ROOT_DIR"
+"$PYTHON_BIN" -m venv --clear "$DISPATCH_HOME/venv"
+"$DISPATCH_HOME/venv/bin/python" -m pip install --no-index --find-links="$WHEEL_DIR" -r "$REQUIREMENTS_FILE"
+"$DISPATCH_HOME/venv/bin/python" -m pip check
+# "$DISPATCH_HOME/venv/bin/python" -m pip install --no-deps -e "$ROOT_DIR"
 
 LOCAL_BIN="$HOME/.local/bin"
 mkdir -p "$LOCAL_BIN"

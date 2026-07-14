@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -12,8 +13,14 @@ from typing import Literal
 
 
 async def run_exec(*argv: str, timeout: float | None = None) -> tuple[int, str, str]:
+    # Resolve bare names against PATH ourselves: Windows CreateProcess searches
+    # System32 before PATH, so e.g. `klist` would hit the OS tool instead of a
+    # PATH-injected mock. shutil.which honors PATH order on every platform; an
+    # unresolvable name keeps its FileNotFoundError from create_subprocess_exec.
+    executable = shutil.which(argv[0]) or argv[0]
     proc = await asyncio.create_subprocess_exec(
-        *argv,
+        executable,
+        *argv[1:],
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )

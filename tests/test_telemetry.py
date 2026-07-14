@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import fcntl
 import json
 import os
 import stat
@@ -14,6 +13,16 @@ from pathlib import Path
 import pytest
 
 from dispatch import telemetry
+
+try:
+    import fcntl
+except ImportError:  # Windows: every test that needs it carries _posix_only
+    fcntl = None  # type: ignore[assignment]
+
+_posix_only = pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="POSIX file semantics (Edge Node behavior: flock/umask/euid/fifo/symlink)",
+)
 
 
 @pytest.fixture()
@@ -78,6 +87,7 @@ def test_emit_still_writes_private_when_shared_unwritable(telemetry_env, monkeyp
     assert len(_read_jsonl(telemetry.private_events_path())) == 1
 
 
+@_posix_only
 def test_emit_does_not_follow_shared_user_symlink(telemetry_env):
     users_dir = telemetry_env["shared"] / "users"
     users_dir.mkdir()
@@ -92,6 +102,7 @@ def test_emit_does_not_follow_shared_user_symlink(telemetry_env):
     assert len(_read_jsonl(telemetry.private_events_path())) == 1
 
 
+@_posix_only
 def test_emit_makes_shared_file_analyst_readable_under_restrictive_umask(telemetry_env):
     users_dir = telemetry_env["shared"] / "users"
     users_dir.mkdir()
@@ -107,6 +118,7 @@ def test_emit_makes_shared_file_analyst_readable_under_restrictive_umask(telemet
     assert mode == 0o644
 
 
+@_posix_only
 def test_emit_skips_shared_file_not_owned_by_current_user(telemetry_env, monkeypatch):
     users_dir = telemetry_env["shared"] / "users"
     users_dir.mkdir()
@@ -132,6 +144,7 @@ def test_emit_drops_username_that_is_not_one_path_component(telemetry_env, monke
     assert not telemetry.private_events_path().exists()
 
 
+@_posix_only
 def test_emit_skips_fifo_without_stalling_writer(telemetry_env):
     users_dir = telemetry_env["shared"] / "users"
     users_dir.mkdir()
@@ -153,6 +166,7 @@ def test_emit_skips_fifo_without_stalling_writer(telemetry_env):
     assert elapsed < 0.1
 
 
+@_posix_only
 def test_emit_skips_contended_private_lock_and_writes_shared_copy(telemetry_env):
     private_path = telemetry.private_events_path()
     private_path.parent.mkdir(parents=True)

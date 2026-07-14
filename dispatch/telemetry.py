@@ -8,7 +8,6 @@ into product paths. Opt out with ``DISPATCH_TELEMETRY=0``.
 from __future__ import annotations
 
 import atexit
-import fcntl
 import json
 import logging
 import os
@@ -25,6 +24,15 @@ from typing import Any, Literal, TextIO
 
 from . import config
 from .version import __version__
+
+# Edge Nodes are POSIX, so flock is the real locking path. Windows only runs
+# this module during operator test runs (release verify); there msvcrt takes
+# over, same as dispatch.jobs._launch_lock.
+try:
+    import fcntl
+except ImportError:  # Windows
+    fcntl = None  # type: ignore[assignment]
+    import msvcrt
 
 logger = logging.getLogger("dispatch.telemetry")
 
@@ -388,7 +396,7 @@ def _append_line(path: Path, line: str, *, create_parents: bool, private: bool) 
                 handle.write(line)
                 handle.flush()
             finally:
-                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+                _unlock(handle)
     except OSError:
         logger.debug("telemetry append failed for %s", path, exc_info=True)
 
@@ -399,14 +407,21 @@ def _open_append(path: Path, *, private: bool) -> TextIO:
         path.chmod(0o600)
         return handle
 
-    flags = os.O_APPEND | os.O_CREAT | os.O_WRONLY | os.O_CLOEXEC | os.O_NONBLOCK
-    flags |= getattr(os, "O_NOFOLLOW", 0)
+    # O_CLOEXEC/O_NONBLOCK/O_NOFOLLOW and the euid ownership check are POSIX
+    # hardening for the shared Edge Node rollup; on Windows (operator test
+    # runs) those APIs do not exist and the shared dir is a per-test tmp path.
+    flags = os.O_APPEND | os.O_CREAT | os.O_WRONLY
+    for flag_name in ("O_CLOEXEC", "O_NONBLOCK", "O_NOFOLLOW"):
+        flags |= getattr(os, flag_name, 0)
     fd = os.open(path, flags, 0o644)
     try:
         metadata = os.fstat(fd)
-        if not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != os.geteuid():
+        if not stat.S_ISREG(metadata.st_mode):
             raise PermissionError(f"unsafe shared telemetry target: {path}")
-        os.fchmod(fd, 0o644)
+        if hasattr(os, "geteuid") and metadata.st_uid != os.geteuid():
+            raise PermissionError(f"unsafe shared telemetry target: {path}")
+        if hasattr(os, "fchmod"):
+            os.fchmod(fd, 0o644)
         return os.fdopen(fd, "a", encoding="utf-8")
     except Exception:
         os.close(fd)
@@ -414,11 +429,29 @@ def _open_append(path: Path, *, private: bool) -> TextIO:
 
 
 def _try_lock(handle: TextIO) -> bool:
+    if fcntl is not None:
+        try:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return False
+        return True
+    handle.seek(0)
     try:
-        fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except BlockingIOError:
+        msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+    except OSError:
         return False
     return True
+
+
+def _unlock(handle: TextIO) -> None:
+    if fcntl is not None:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        return
+    handle.seek(0)
+    try:
+        msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+    except OSError:  # already released; unlock must never raise into emit paths
+        pass
 
 
 def _parse_ts(value: str) -> datetime | None:

@@ -63,8 +63,7 @@ class ConfirmScreen(ModalScreen[bool]):
                     id="confirm-yes",
                     variant=variant,
                     disabled=bool(
-                        self.required_confirmation_text
-                        or self.secondary_confirmation_text
+                        self.required_confirmation_text or self.secondary_confirmation_text
                     ),
                 )
                 yield Button(self.cancel_label, id="confirm-no", variant="default")

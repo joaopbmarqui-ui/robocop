@@ -12,9 +12,7 @@ from pathlib import Path
 from typing import Literal
 
 
-def _resolve_exec_argv(
-    argv: tuple[str, ...], *, windows: bool | None = None
-) -> tuple[str, ...]:
+def _resolve_exec_argv(argv: tuple[str, ...], *, windows: bool | None = None) -> tuple[str, ...]:
     """Resolve a command without letting Windows bypass PATH-injected Python mocks."""
     is_windows = os.name == "nt" if windows is None else windows
     if is_windows and not Path(argv[0]).parent.name:

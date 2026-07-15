@@ -117,9 +117,7 @@ class NewJobScreen(Screen[None]):
         )
         prefill_destination = str(self.prefill.get("dest_type") or "Csv")
         self._prefill_destination = (
-            prefill_destination
-            if prefill_destination in {"Table", "Csv", "Table+Csv"}
-            else "Csv"
+            prefill_destination if prefill_destination in {"Table", "Csv", "Table+Csv"} else "Csv"
         )
         existing_table = str(self.prefill.get("existing_table") or "")
         self._prefill_existing_schema = (

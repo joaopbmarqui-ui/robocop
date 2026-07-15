@@ -1,3 +1,6 @@
-# Intermediate recorder artifacts (final PNG frames are committed).
-_*.svg
+# Recorder outputs are generated artifacts and stay untracked (AGENTS.md).
+*.svg
+*.png
+*.mp4
+*.gif
 concat.txt

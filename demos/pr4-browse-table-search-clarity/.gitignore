@@ -1,1 +1,7 @@
+# Recorder outputs are generated artifacts and stay untracked (AGENTS.md).
 clips/
+frames/
+*.svg
+*.png
+*.mp4
+*.gif

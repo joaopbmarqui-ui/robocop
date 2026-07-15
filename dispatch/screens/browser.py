@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
-
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
@@ -173,12 +171,6 @@ class BrowserScreen(Screen[None]):
 
     def _check_marker(self, name: str) -> str:
         return CHECKED_MARKER if name in self._checked else UNCHECKED_MARKER
-
-    def _short_name_for_full(self, full: str) -> str | None:
-        for name in self._tables:
-            if self._qualify_table(name) == full:
-                return name
-        return None
 
     def _update_selection_status(self) -> None:
         count = len(self._checked)
@@ -483,13 +475,14 @@ class BrowserScreen(Screen[None]):
         if not confirmed:
             return
 
+        short_names_by_full = {self._qualify_table(name): name for name in self._tables}
         dropped: list[str] = []
         errors: list[str] = []
         for full in tables:
             try:
                 await impala.drop_table(full)
                 dropped.append(full)
-                short_name = self._short_name_for_full(full)
+                short_name = short_names_by_full.get(full)
                 if short_name:
                     self._checked.discard(short_name)
             except Exception as exc:
@@ -525,12 +518,6 @@ class BrowserScreen(Screen[None]):
         await self.action_show_tables(describe_selection=False)
 
     async def _confirm_drop(self, full_tables: list[str]) -> bool:
-        loop_future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()
-
-        def on_result(result: bool | None) -> None:
-            if not loop_future.done():
-                loop_future.set_result(bool(result))
-
         table_lines = "\n".join(f"  • [cyan]{name}[/]" for name in full_tables)
         count = len(full_tables)
         title = "DROP TABLE" if count == 1 else f"DROP {count} TABLES"
@@ -540,7 +527,7 @@ class BrowserScreen(Screen[None]):
             "[red]This cannot be undone.[/]\n"
             "Type I AM SURE, then DROP to confirm."
         )
-        self.app.push_screen(
+        result = await self.app.push_screen_wait(
             ConfirmScreen(
                 title,
                 body,
@@ -549,7 +536,6 @@ class BrowserScreen(Screen[None]):
                 cancel_label="Keep Table" if count == 1 else "Keep Tables",
                 required_confirmation_text="I AM SURE",
                 secondary_confirmation_text="DROP",
-            ),
-            callback=on_result,
+            )
         )
-        return await loop_future
+        return bool(result)

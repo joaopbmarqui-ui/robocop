@@ -328,8 +328,8 @@ class TestNewJobKerberosGating:
                 warning = str(screen.query_one("#warning-text").render())
                 summary = str(screen.query_one("#validation-summary").render())
                 assert launch_btn.disabled is True
-                assert "Kerberos TTL low" in warning
-                assert "Kerberos TTL under 5 min" in summary
+            assert "Kerberos TTL low" in warning
+            assert "Kerberos ticket TTL is under 5 minutes" in summary
 
         asyncio.run(run())
 

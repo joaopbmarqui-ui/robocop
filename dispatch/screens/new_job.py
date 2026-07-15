@@ -521,7 +521,15 @@ class NewJobScreen(Screen[None]):
             msgs.append("[green]\u2713[/] Kerberos")
         self.query_one("#warning-text", Static).update("  ".join(msgs))
 
-    def _validation_issues(self) -> list[str]:
+    def _validation_issues(self, *, deep: bool = False) -> list[str]:
+        """Collect every current form problem, in launch-refusal order.
+
+        This is the single validation cascade: the live summary renders the
+        whole list on each form change, and ``_validate`` takes the first
+        entry as the launch refusal. ``deep=True`` additionally reads and
+        checks the SQL file contents, which touches disk (potentially a slow
+        network mount) and is therefore reserved for the launch path.
+        """
         issues: list[str] = []
         source = self._selected_source()
         destination = self._selected_destination()
@@ -571,12 +579,29 @@ class NewJobScreen(Screen[None]):
         if email and ("@" not in email or "." not in email.split("@")[-1]):
             issues.append("Invalid email format")
         if not jobs.can_launch():
-            issues.append(f"At the {jobs.RUNNING_CAP}-Job concurrency cap")
+            issues.append(
+                f"At the {jobs.RUNNING_CAP}-Job concurrency cap \u2014 wait for one to finish"
+            )
         if self.kerberos_ttl is None:
-            issues.append("Kerberos missing \u2014 press K to kinit")
+            issues.append("Kerberos ticket missing \u2014 press K to kinit")
         elif self.kerberos_ttl < kerberos.MIN_LAUNCH_TTL_SECONDS:
-            issues.append("Kerberos TTL under 5 min \u2014 press K to renew")
+            issues.append("Kerberos ticket TTL is under 5 minutes \u2014 press K to renew")
+        if deep and source != "ExistingTable":
+            issues.extend(self._sql_content_issues(source))
         return issues
+
+    def _sql_content_issues(self, source: str) -> list[str]:
+        sql_text = self._read_sql()
+        if sql_text is None:
+            return ["SQL file is unreadable"]
+        if sql.is_malformed_template(sql_text):
+            return ["SQL contains only one of {date_inicio}/{date_fim} \u2014 likely a typo"]
+        if source == "SqlTemplate" and not sql.template_is_complete(sql_text):
+            return [
+                f"{manifest.source_display_label('SqlTemplate')} requires both "
+                "{date_inicio} and {date_fim}"
+            ]
+        return []
 
     def _update_validation_summary(self) -> None:
         issues = self._validation_issues()
@@ -785,66 +810,9 @@ class NewJobScreen(Screen[None]):
             self.query_one("#src-existingtable", RadioButton).value = True
 
     def _validate(self) -> str | None:
-        source_type = self._selected_source()
-        destination_type = self._selected_destination()
-        if (source_type, destination_type) not in manifest.LEGAL_CELLS:
-            return (
-                f"Illegal Source/Destination cell: "
-                f"{manifest.source_display_label(source_type)}/{destination_type}"
-            )
-        if destination_type in ("Table", "Table+Csv"):
-            schema_error = sql.validate_identifier(self._input_value("schema"), "Schema")
-            if schema_error:
-                return schema_error
-            table_error = sql.validate_eid_table_name(self._table_name_value(), self._eid)
-            if table_error:
-                return table_error
-        csv_table = self._table_name_value()
-        if source_type == "ExistingTable":
-            if self._selected_existing_schema_choice() == "other":
-                schema_error = sql.validate_identifier(
-                    self._input_value("existing-schema-custom"), "Schema"
-                )
-                if schema_error:
-                    return schema_error
-            existing = self._existing_full_table()
-            existing_error = sql.validate_full_table(existing, "Existing table")
-            if existing_error:
-                return existing_error
-            _schema, csv_table = existing.split(".", 1)
-        if destination_type in ("Csv", "Table+Csv"):
-            try:
-                sql.safe_csv_path(self.launch_cwd, csv_table)
-            except ValueError as exc:
-                return str(exc)
-        email = self._input_value("email")
-        if email and ("@" not in email or "." not in email.split("@")[-1]):
-            return "Invalid email format"
-        if not jobs.can_launch():
-            return f"Already at the {jobs.RUNNING_CAP}-Job concurrency cap; wait for one to finish"
-        if self.kerberos_ttl is None:
-            return "Kerberos ticket missing"
-        if self.kerberos_ttl < kerberos.MIN_LAUNCH_TTL_SECONDS:
-            return "Kerberos ticket TTL is under 5 minutes"
-        if source_type == "ExistingTable":
-            return None
-        sql_text = self._read_sql()
-        if sql_text is None:
-            return "SQL file is unreadable"
-        if sql.is_malformed_template(sql_text):
-            return "SQL contains only one of {date_inicio}/{date_fim} \u2014 likely a typo"
-        if source_type == "SqlTemplate":
-            if not sql.template_is_complete(sql_text):
-                return (
-                    f"{manifest.source_display_label('SqlTemplate')} requires both "
-                    "{date_inicio} and {date_fim}"
-                )
-            date_error = sql.validate_date_range(
-                self._input_value("start-date"), self._input_value("end-date")
-            )
-            if date_error:
-                return date_error
-        return None
+        """Launch-blocking validation: the first issue from the shared cascade."""
+        issues = self._validation_issues(deep=True)
+        return issues[0] if issues else None
 
     def _source_destination(self) -> tuple[manifest.Source, manifest.Destination]:
         source_type = self._selected_source()
@@ -1059,41 +1027,26 @@ class NewJobScreen(Screen[None]):
         source: manifest.Source,
         destination: manifest.Destination,
     ) -> bool:
-        loop_future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()
-
-        def on_result(result: bool | None) -> None:
-            if not loop_future.done():
-                loop_future.set_result(bool(result))
-
-        self.app.push_screen(
-            AdvisorLaunchGate(errors, job_summary=self._launch_summary(source, destination)),
-            callback=on_result,
+        result = await self.app.push_screen_wait(
+            AdvisorLaunchGate(errors, job_summary=self._launch_summary(source, destination))
         )
-        return await loop_future
+        return bool(result)
 
     async def _confirm_launch(
         self,
         source: manifest.Source,
         destination: manifest.Destination,
     ) -> bool:
-        loop_future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()
-
-        def on_result(result: bool | None) -> None:
-            if not loop_future.done():
-                loop_future.set_result(bool(result))
-
-        body = self._launch_summary(source, destination)
-        self.app.push_screen(
+        result = await self.app.push_screen_wait(
             ConfirmScreen(
                 "Launch Job",
-                body,
+                self._launch_summary(source, destination),
                 danger=True,
                 confirm_label="Launch",
                 cancel_label="Review",
-            ),
-            callback=on_result,
+            )
         )
-        return await loop_future
+        return bool(result)
 
     def action_edit_sql(self) -> None:
         editor = os.environ.get("EDITOR", "vi")

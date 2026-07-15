@@ -88,9 +88,7 @@ def _setup_env(launch_dir: Path, data_root: Path, state_dir: Path) -> None:
     sql_path = launch_dir / "query.sql"
     if not sql_path.exists():
         sql_path.write_text(
-            "SELECT id, amount\n"
-            "FROM payments\n"
-            "WHERE ds BETWEEN '2026-05-01' AND '2026-05-31';\n",
+            "SELECT id, amount\nFROM payments\nWHERE ds BETWEEN '2026-05-01' AND '2026-05-31';\n",
             encoding="utf-8",
         )
 
@@ -122,7 +120,9 @@ def _render_before_slide(path: Path) -> None:
     )
 
     box_x, box_y, box_w, box_h = 70, 300, 1140, 90
-    draw.rounded_rectangle((box_x, box_y, box_x + box_w, box_y + box_h), radius=12, outline=(90, 90, 110), width=2)
+    draw.rounded_rectangle(
+        (box_x, box_y, box_x + box_w, box_y + box_h), radius=12, outline=(90, 90, 110), width=2
+    )
     draw.text((box_x + 24, box_y + 16), "Table Name", fill=(150, 150, 170), font=body_font)
     draw.text((box_x + 260, box_y + 28), "dispatch_result", fill=(255, 255, 255), font=mono_font)
 

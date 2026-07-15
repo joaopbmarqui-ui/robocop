@@ -26,9 +26,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from dispatch import config
-from dispatch.app import DispatchApp
-from dispatch.screens.new_job import NewJobScreen
+from dispatch import config  # noqa: E402
+from dispatch.app import DispatchApp  # noqa: E402
+from dispatch.screens.new_job import NewJobScreen  # noqa: E402
 
 OLD_PLACEHOLDER = "user@example.com"
 NEW_PLACEHOLDER = "name.surname@mastercard.com,name2.surname2@mastercard.com"
@@ -42,8 +42,7 @@ def _require_deps() -> None:
         from PIL import Image, ImageDraw, ImageFont
     except ImportError as exc:  # pragma: no cover - demo helper
         raise SystemExit(
-            "Demo requires cairosvg and pillow:\n"
-            "  /workspace/.venv/bin/pip install cairosvg pillow"
+            "Demo requires cairosvg and pillow:\n  /workspace/.venv/bin/pip install cairosvg pillow"
         ) from exc
     globals()["Image"] = Image
     globals()["ImageDraw"] = ImageDraw
@@ -67,7 +66,9 @@ def _title_slide(title: str, subtitle: str, accent: str) -> Path:
 
     draw.text((64, 120), title, fill=accent, font=title_font)
     draw.text((64, 220), subtitle, fill="#e0e0e0", font=sub_font)
-    draw.text((64, 320), "Dispatch · New Job · Email (notifications)", fill="#9e9e9e", font=mono_font)
+    draw.text(
+        (64, 320), "Dispatch · New Job · Email (notifications)", fill="#9e9e9e", font=mono_font
+    )
     draw.text((64, 380), "PR: email placeholder update", fill="#656565", font=mono_font)
 
     out = Path(tempfile.mkstemp(suffix=".png")[1])

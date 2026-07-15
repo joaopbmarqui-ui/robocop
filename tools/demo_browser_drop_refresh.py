@@ -29,10 +29,10 @@ WORKSPACE = Path(__file__).resolve().parents[1]
 if str(WORKSPACE) not in sys.path:
     sys.path.insert(0, str(WORKSPACE))
 
-from textual.widgets import DataTable, Input
+from textual.widgets import DataTable, Input  # noqa: E402
 
-from dispatch.app import DispatchApp
-from dispatch.screens.browser import BrowserScreen
+from dispatch.app import DispatchApp  # noqa: E402
+from dispatch.screens.browser import BrowserScreen  # noqa: E402
 
 MOCKS_BIN = WORKSPACE / "mocks" / "bin"
 OUT_DIR = WORKSPACE / "docs" / "videos" / "browse-drop-refresh-pr9"

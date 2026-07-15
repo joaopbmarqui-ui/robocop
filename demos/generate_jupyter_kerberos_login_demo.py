@@ -67,13 +67,11 @@ def _label_png(src: Path, dst: Path, title: str, subtitle: str = "") -> None:
     text = title.replace(":", "\\:").replace("'", "\\'")
     sub = subtitle.replace(":", "\\:").replace("'", "\\'")
     filters = [
-        f"drawbox=x=0:y=0:w=iw:h=72:color=black@0.75:t=fill",
+        "drawbox=x=0:y=0:w=iw:h=72:color=black@0.75:t=fill",
         f"drawtext=text='{text}':x=(w-text_w)/2:y=20:fontsize=28:fontcolor=white",
     ]
     if subtitle:
-        filters.append(
-            f"drawtext=text='{sub}':x=(w-text_w)/2:y=48:fontsize=18:fontcolor=0xCCCCCC"
-        )
+        filters.append(f"drawtext=text='{sub}':x=(w-text_w)/2:y=48:fontsize=18:fontcolor=0xCCCCCC")
     cmd = [
         "ffmpeg",
         "-y",
@@ -105,10 +103,11 @@ async def _capture_before_dashboard(frames_dir: Path) -> None:
 
 async def _capture_jupyter_login_flow(frames_dir: Path) -> None:
     """Jupyter startup with no ticket — login modal, then dashboard after kinit."""
+    from textual.widgets import Input
+
     from dispatch.app import DispatchApp
     from dispatch.screens.dashboard import DashboardScreen
     from dispatch.screens.kerberos_login import KerberosLoginScreen
-    from textual.widgets import Input
 
     os.environ["DISPATCH_JUPYTER_MODE"] = "1"
     os.environ["DISPATCH_MOCK_KLIST_TTL"] = "0"
@@ -141,12 +140,28 @@ def _build_video(frames_dir: Path, out_path: Path) -> None:
     labeled_dir = frames_dir / "labeled"
     labeled_dir.mkdir(exist_ok=True)
     sequence = [
-        ("01-before-dashboard.svg", "Before (terminal / non-Jupyter)", "No ticket → dashboard opens with Kerberos missing"),
-        ("02-after-login-modal.svg", "After (Jupyter Notebook)", "No ticket → Kerberos sign-in modal blocks startup"),
+        (
+            "01-before-dashboard.svg",
+            "Before (terminal / non-Jupyter)",
+            "No ticket → dashboard opens with Kerberos missing",
+        ),
+        (
+            "02-after-login-modal.svg",
+            "After (Jupyter Notebook)",
+            "No ticket → Kerberos sign-in modal blocks startup",
+        ),
         ("03-after-eid-filled.svg", "Jupyter login", "EID field"),
         ("04-after-password-filled.svg", "Jupyter login", "Windows password (masked)"),
-        ("05-signing-in.svg", "Running kinit in background", "Password sent on stdin only — never logged"),
-        ("06-after-success-dashboard.svg", "Authenticated", "Dashboard loads with active Kerberos ticket"),
+        (
+            "05-signing-in.svg",
+            "Running kinit in background",
+            "Password sent on stdin only — never logged",
+        ),
+        (
+            "06-after-success-dashboard.svg",
+            "Authenticated",
+            "Dashboard loads with active Kerberos ticket",
+        ),
     ]
     durations = [3.5, 3.5, 2.0, 2.0, 2.0, 3.5]
 
@@ -159,7 +174,7 @@ def _build_video(frames_dir: Path, out_path: Path) -> None:
         concat_lines.append(f"file '{labeled_png}'")
         concat_lines.append(f"duration {durations[index]}")
 
-    concat_lines.append(f"file '{labeled_dir / f'frame-{len(sequence)-1:02d}.png'}'")
+    concat_lines.append(f"file '{labeled_dir / f'frame-{len(sequence) - 1:02d}.png'}'")
     concat_file = labeled_dir / "concat.txt"
     concat_file.write_text("\n".join(concat_lines) + "\n", encoding="utf-8")
 

@@ -267,8 +267,8 @@ async def main() -> int:
     _install_demo_impala()
     os.chdir(launch_cwd)
 
-    from dispatch.version import __version__
     from dispatch import config
+    from dispatch.version import __version__
 
     config.installed_version_path().write_text(__version__, encoding="utf-8")
 

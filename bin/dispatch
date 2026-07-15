@@ -16,6 +16,19 @@ if [ -z "$RUNTIME" ] || [ ! -d "$RUNTIME" ] || [ ! -f "$RUNTIME/.complete.json" 
   echo "Ask the Release Operator to reactivate a completed runtime." >&2
   exit 1
 fi
+case "$RUNTIME" in
+  "$ROOT_DIR/.venv/releases/"*) ;;
+  *)
+    echo "Dispatch shared runtime resolves outside the release root: $RUNTIME." >&2
+    exit 1
+    ;;
+esac
+DIGEST=$(basename "$RUNTIME")
+if ! grep -Eq '"bundle_digest"[[:space:]]*:[[:space:]]*"'"$DIGEST"'"' "$RUNTIME/.complete.json" ||
+   ! grep -Eq '"pip_check"[[:space:]]*:[[:space:]]*"passed"' "$RUNTIME/.complete.json"; then
+  echo "Dispatch shared runtime completion metadata is corrupt: $RUNTIME/.complete.json." >&2
+  exit 1
+fi
 if [ ! -x "$RUNTIME/bin/python" ]; then
   echo "Dispatch shared runtime has no executable Python at $RUNTIME/bin/python." >&2
   exit 1
@@ -25,4 +38,3 @@ export PYTHONPATH="$ROOT_DIR"
 export DISPATCH_SCR_DIR="$ROOT_DIR/scr"
 export DISPATCH_RUNTIME="$RUNTIME"
 exec "$RUNTIME/bin/python" -m dispatch "$@"
-

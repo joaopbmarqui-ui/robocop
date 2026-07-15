@@ -40,6 +40,10 @@ def _load_manifest(bundle_dir: Path) -> tuple[dict[str, object], str]:
         raise RuntimeInstallError(f"Invalid dependency bundle manifest: {exc}") from exc
     if not isinstance(manifest, dict):
         raise RuntimeInstallError("Dependency bundle manifest must be a JSON object")
+    if manifest.get("schema") != "edge-deploy/dependency-bundle/1":
+        raise RuntimeInstallError("Dependency bundle manifest has an unsupported schema")
+    if manifest.get("tool") != "robocop":
+        raise RuntimeInstallError("Dependency bundle manifest is for a different tool")
     digest = manifest.get("bundle_digest")
     if not isinstance(digest, str) or DIGEST_RE.fullmatch(digest) is None:
         raise RuntimeInstallError("Dependency bundle manifest has an invalid bundle_digest")
@@ -72,6 +76,10 @@ def _load_manifest(bundle_dir: Path) -> tuple[dict[str, object], str]:
         if not isinstance(expected_size, int) or expected_size < 0:
             raise RuntimeInstallError(f"Dependency bundle has an invalid size for {raw_path}")
         path = bundle_dir.joinpath(*relative.parts)
+        if path.is_symlink() or path.resolve() in declared:
+            raise RuntimeInstallError(
+                f"Dependency bundle has a duplicate or linked path: {raw_path}"
+            )
         try:
             content = path.read_bytes()
         except OSError as exc:
@@ -96,7 +104,12 @@ def _complete_metadata(runtime: Path, digest: str) -> dict[str, object] | None:
         metadata = json.loads(marker.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
-    if not isinstance(metadata, dict) or metadata.get("bundle_digest") != digest:
+    if (
+        not isinstance(metadata, dict)
+        or metadata.get("bundle_digest") != digest
+        or metadata.get("pip_check") != "passed"
+        or metadata.get("required_imports") != list(REQUIRED_IMPORTS)
+    ):
         return None
     if not (runtime / "bin" / "python").is_file():
         return None
@@ -168,6 +181,11 @@ def _write_metadata(runtime: Path, digest: str, approved_python: Path) -> None:
 
 def _make_owner_writable_only(runtime: Path) -> None:
     for path in [runtime, *runtime.rglob("*")]:
+        # Virtual environments commonly symlink their interpreter to the
+        # approved system Python. chmod follows symlinks, so changing one here
+        # could mutate that interpreter outside the runtime boundary.
+        if path.is_symlink():
+            continue
         mode = stat.S_IMODE(path.stat().st_mode)
         if path.is_dir():
             readable = (
@@ -229,7 +247,11 @@ def install(bundle_dir: Path, approved_python: Path, root: Path) -> tuple[str, b
     with _install_lock(runtime_root / "install.lock"):
         reused = _complete_metadata(runtime, digest) is not None
         if not reused:
-            _build_runtime(runtime, bundle_dir, digest, approved_python)
+            try:
+                _build_runtime(runtime, bundle_dir, digest, approved_python)
+            except Exception:
+                shutil.rmtree(runtime, ignore_errors=True)
+                raise
         _activate(runtime_root, runtime)
         (runtime_root / "install.lock").chmod(0o600)
     return digest, reused

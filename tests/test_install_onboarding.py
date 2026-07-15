@@ -183,7 +183,16 @@ def prepare_onboarding_root(tmp_path: Path) -> tuple[Path, Path]:
     (root / "onboard.sh").chmod(0o755)
     runtime = root / ".venv" / "releases" / ("b" * 64)
     (runtime / "bin").mkdir(parents=True)
-    (runtime / ".complete.json").write_text("{}\n", encoding="utf-8")
+    (runtime / ".complete.json").write_text(
+        json.dumps(
+            {
+                "bundle_digest": runtime.name,
+                "pip_check": "passed",
+                "required_imports": ["textual", "sqlglot"],
+            }
+        ),
+        encoding="utf-8",
+    )
     runtime_python = runtime / "bin" / "python"
     runtime_python.write_text(
         '#!/usr/bin/env sh\nprintf \'%s\\n\' "$*" >> "${ONBOARD_CALLS:?}"\nexec "__REAL_PYTHON__" "$@"\n'.replace(

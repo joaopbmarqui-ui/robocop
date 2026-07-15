@@ -18,6 +18,19 @@ if [ -z "$RUNTIME" ] || [ ! -f "$RUNTIME/.complete.json" ] || [ ! -x "$RUNTIME/b
   echo "Ask the Release Operator to reactivate a completed runtime." >&2
   exit 1
 fi
+case "$RUNTIME" in
+  "$ROOT_DIR/.venv/releases/"*) ;;
+  *)
+    echo "Dispatch shared runtime resolves outside the release root: $RUNTIME." >&2
+    exit 1
+    ;;
+esac
+DIGEST=$(basename "$RUNTIME")
+if ! grep -Eq '"bundle_digest"[[:space:]]*:[[:space:]]*"'"$DIGEST"'"' "$RUNTIME/.complete.json" ||
+   ! grep -Eq '"pip_check"[[:space:]]*:[[:space:]]*"passed"' "$RUNTIME/.complete.json"; then
+  echo "Dispatch shared runtime completion metadata is corrupt: $RUNTIME/.complete.json." >&2
+  exit 1
+fi
 if [ ! -x "$ROOT_DIR/bin/dispatch" ]; then
   echo "Shared Dispatch launcher is missing: $ROOT_DIR/bin/dispatch" >&2
   exit 1
@@ -91,4 +104,3 @@ case ":$PATH:" in
     ;;
 esac
 echo "Then cd to your SQL files and run: dispatch"
-

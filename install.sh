@@ -3,7 +3,7 @@ set -eu
 
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" && pwd)
 USER_NAME=${USER:-$(id -un)}
-BUNDLE_DIR=${EDGE_DEPLOY_BUNDLE_DIR:-/ads_storage/$USER/.edge-deploy/bundles/robocop/current}
+BUNDLE_DIR=${EDGE_DEPLOY_BUNDLE_DIR:-/ads_storage/$USER_NAME/.edge-deploy/bundles/robocop/current}
 PYTHON_BIN=${EDGE_DEPLOY_PYTHON_BIN:-${DISPATCH_PYTHON_BIN:-}}
 if [ -z "$PYTHON_BIN" ]; then
   if command -v python3.11 >/dev/null 2>&1; then

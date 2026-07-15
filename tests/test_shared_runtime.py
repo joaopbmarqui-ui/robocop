@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import shutil
+import stat
 import subprocess
 import threading
 from pathlib import Path
@@ -15,6 +16,14 @@ import pytest
 import shared_runtime
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def completion_metadata(digest: str) -> dict[str, object]:
+    return {
+        "bundle_digest": digest,
+        "pip_check": "passed",
+        "required_imports": ["textual", "sqlglot"],
+    }
 
 
 def make_bundle(
@@ -61,11 +70,11 @@ def test_manifest_digest_drives_release_path_and_completed_reuse(tmp_path: Path)
     (runtime / "bin").mkdir(parents=True)
     (runtime / "bin" / "python").write_text("", encoding="utf-8")
     (runtime / shared_runtime.COMPLETE_MARKER).write_text(
-        json.dumps({"bundle_digest": digest}), encoding="utf-8"
+        json.dumps(completion_metadata(digest)), encoding="utf-8"
     )
 
     assert loaded_digest == digest
-    assert shared_runtime._complete_metadata(runtime, digest) == {"bundle_digest": digest}
+    assert shared_runtime._complete_metadata(runtime, digest) == completion_metadata(digest)
 
 
 @pytest.mark.parametrize("unsafe_path", ["../escape", "/absolute", "other/file.txt"])
@@ -91,6 +100,22 @@ def test_manifest_rejects_tampered_bundle_file(tmp_path: Path) -> None:
         shared_runtime._load_manifest(bundle)
 
 
+def test_manifest_rejects_malformed_digest(tmp_path: Path) -> None:
+    bundle, _digest = make_bundle(tmp_path)
+    manifest_path = bundle / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["bundle_digest"] = "not-a-digest"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(shared_runtime.RuntimeInstallError, match="invalid bundle_digest"):
+        shared_runtime._load_manifest(bundle)
+
+
+def test_manifest_requires_verified_bundle_layout(tmp_path: Path) -> None:
+    with pytest.raises(shared_runtime.RuntimeInstallError, match="bundle is incomplete"):
+        shared_runtime._load_manifest(tmp_path / "missing")
+
+
 def test_shared_launcher_forwards_arguments_and_preserves_cwd(tmp_path: Path) -> None:
     if shutil.which("sh") is None:
         pytest.skip("shared launcher smoke requires sh")
@@ -101,7 +126,9 @@ def test_shared_launcher_forwards_arguments_and_preserves_cwd(tmp_path: Path) ->
     launcher.chmod(0o755)
     runtime = root / ".venv" / "releases" / ("a" * 64)
     (runtime / "bin").mkdir(parents=True)
-    (runtime / shared_runtime.COMPLETE_MARKER).write_text("{}\n", encoding="utf-8")
+    (runtime / shared_runtime.COMPLETE_MARKER).write_text(
+        json.dumps(completion_metadata(runtime.name)), encoding="utf-8"
+    )
     capture = tmp_path / "capture.txt"
     fake_python = runtime / "bin" / "python"
     fake_python.write_text(
@@ -156,11 +183,39 @@ def test_shared_launcher_fails_clearly_without_active_runtime(tmp_path: Path) ->
     assert "shared runtime is not active" in result.stderr
 
 
+def test_shared_launcher_rejects_corrupt_completion_metadata(tmp_path: Path) -> None:
+    if shutil.which("sh") is None:
+        pytest.skip("shared launcher smoke requires sh")
+    root = tmp_path / "dispatch-root"
+    (root / "bin").mkdir(parents=True)
+    shutil.copy2(ROOT / "bin" / "dispatch", root / "bin" / "dispatch")
+    runtime = root / ".venv" / "releases" / ("c" * 64)
+    (runtime / "bin").mkdir(parents=True)
+    (runtime / "bin" / "python").write_text("", encoding="utf-8")
+    (runtime / shared_runtime.COMPLETE_MARKER).write_text("{}\n", encoding="utf-8")
+    try:
+        (root / ".venv" / "current").symlink_to(
+            Path("releases") / runtime.name, target_is_directory=True
+        )
+    except OSError as exc:
+        pytest.skip(f"symlink creation is unavailable: {exc}")
+
+    result = subprocess.run(
+        ["sh", (root / "bin" / "dispatch").resolve().as_posix()],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode != 0
+    assert "completion metadata is corrupt" in result.stderr
+
+
 def fake_completed_build(runtime: Path, _bundle: Path, digest: str, _python: Path) -> None:
     (runtime / "bin").mkdir(parents=True)
     (runtime / "bin" / "python").write_text("", encoding="utf-8")
     (runtime / shared_runtime.COMPLETE_MARKER).write_text(
-        json.dumps({"bundle_digest": digest}), encoding="utf-8"
+        json.dumps(completion_metadata(digest)), encoding="utf-8"
     )
 
 
@@ -197,7 +252,9 @@ def test_failed_candidate_does_not_change_current(tmp_path: Path, monkeypatch) -
     monkeypatch.setattr(shared_runtime, "_build_runtime", fake_completed_build)
     shared_runtime.install(first_bundle, Path("/python"), root)
 
-    def fail_build(*_args) -> None:
+    def fail_build(runtime: Path, *_args) -> None:
+        runtime.mkdir(parents=True)
+        (runtime / "partial").write_text("incomplete", encoding="utf-8")
         raise shared_runtime.RuntimeInstallError("simulated failure")
 
     monkeypatch.setattr(shared_runtime, "_build_runtime", fail_build)
@@ -205,6 +262,7 @@ def test_failed_candidate_does_not_change_current(tmp_path: Path, monkeypatch) -
         shared_runtime.install(second_bundle, Path("/python"), root)
 
     assert (root / ".venv" / "current").resolve().name == first_digest
+    assert not (root / ".venv" / "releases" / _second_digest).exists()
 
 
 def test_install_lock_excludes_concurrent_installer(tmp_path: Path) -> None:
@@ -250,6 +308,11 @@ def test_completed_runtime_permissions_are_not_publicly_writable(tmp_path: Path)
     package.write_text("", encoding="utf-8")
     executable.write_text("", encoding="utf-8")
     executable.chmod(0o755)
+    approved_python = tmp_path / "approved-python"
+    approved_python.write_text("", encoding="utf-8")
+    approved_python.chmod(0o755)
+    interpreter_link = runtime / "bin" / "python3"
+    interpreter_link.symlink_to(approved_python)
 
     shared_runtime._make_owner_writable_only(runtime)
 
@@ -257,3 +320,4 @@ def test_completed_runtime_permissions_are_not_publicly_writable(tmp_path: Path)
     assert package.stat().st_mode & 0o022 == 0
     assert package.stat().st_mode & 0o044 == 0o044
     assert executable.stat().st_mode & 0o055 == 0o055
+    assert stat.S_IMODE(approved_python.stat().st_mode) == 0o755

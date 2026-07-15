@@ -28,6 +28,16 @@ def test_install_decision_auto_runs_for_runtime_changes() -> None:
     assert "requirements.txt" in decision.reason
 
 
+def test_install_decision_auto_runs_for_shared_runtime_changes() -> None:
+    decision = deploy.decide_install_action(
+        mode="auto",
+        changed_paths=["shared_runtime.py", "bin/dispatch"],
+    )
+
+    assert decision.action == "run"
+    assert "shared_runtime.py" in decision.reason
+
+
 def test_install_decision_auto_skips_for_docs_only_changes() -> None:
     decision = deploy.decide_install_action(
         mode="auto",

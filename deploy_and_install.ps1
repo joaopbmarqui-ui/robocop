@@ -60,7 +60,7 @@ $PyScript = @"
 import zipfile, os
 
 zip_name = '$ZipName'
-items = ['dispatch', 'scr', 'vendor', 'install.sh', 'update.sh', 'pyproject.toml', 'requirements.txt', 'VERSION', 'README.md', 'docs']
+items = ['dispatch', 'scr', 'bin', 'vendor', 'install.sh', 'onboard.sh', 'shared_runtime.py', 'update.sh', 'pyproject.toml', 'requirements.txt', 'VERSION', 'README.md', 'docs']
 
 print(f'Creating {zip_name}...')
 with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zf:
@@ -123,7 +123,7 @@ $RemoteCommand = "cd $RemotePath && " +
                  "echo '--- Verifying extraction ---' && " +
                  "ls -F && " +
                  "echo '--- Running Setup ---' && " +
-                 "chmod +x $SetupScript $UpdateScript && " +
+                 "chmod +x $SetupScript $UpdateScript onboard.sh bin/dispatch && " +
                  "DISPATCH_PYTHON_BIN=`$(command -v python3.11 || command -v python3.10) ./$SetupScript"
 
 Write-Host "Executing setup on remote server..."
@@ -131,8 +131,9 @@ ssh -p $RemotePort "${RemoteUser}@${RemoteServer}" "$RemoteCommand"
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "`n=== SUCCESS! ===" -ForegroundColor Green
-    Write-Host "Dispatch is deployed and installed."
-    Write-Host "You can verify by running: ssh -p $RemotePort ${RemoteUser}@${RemoteServer} 'source ~/.bashrc && dispatch --help'"
+    Write-Host "Dispatch is deployed and the shared runtime is active."
+    Write-Host "Verify with: ssh -p $RemotePort ${RemoteUser}@${RemoteServer} '/ads_storage/dispatch/bin/dispatch --help'"
+    Write-Host "Then each analyst runs: /ads_storage/dispatch/onboard.sh"
 } else {
     Write-Error "Remote installation failed."
 }

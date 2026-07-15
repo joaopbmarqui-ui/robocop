@@ -4,10 +4,10 @@ repo_path: /ads_storage/dispatch
 github_url: https://github.com/pedrochagasmaster/robocop.git
 bitbucket_url: https://scm.mastercard.int/stash/scm/~e176097/dispatch.git
 release_branch: main
-runtime_paths: ["dispatch/**/*.py", "dispatch/**/*.tcss", "scr/**/*.py"]
+runtime_paths: ["dispatch/**/*.py", "dispatch/**/*.tcss", "scr/**/*.py", "bin/dispatch", "shared_runtime.py", "onboard.sh"]
 compile_targets: "dispatch scr"
 version_files: [VERSION, dispatch/version.py, pyproject.toml]
-install_trigger_paths: [install.sh, requirements.txt, pyproject.toml, VERSION, "dispatch/**"]
+install_trigger_paths: [install.sh, shared_runtime.py, bin/dispatch, requirements.txt, pyproject.toml, VERSION, "dispatch/**"]
 dependency_paths: [requirements.txt]
 dependency_bundle:
   requirements_file: requirements.txt
@@ -17,7 +17,7 @@ dependency_bundle:
   abi: cp310
   platform: manylinux2014_x86_64
 smoke:
-  standard: ["dispatch --help"]
+  standard: ["/ads_storage/dispatch/bin/dispatch --help"]
   deep: ["<controlled Impala job>"]    # needs Kerberos
 sensitive_paths: ["scr/"]
 tui_chrome_regex: "Dispatch — Impala|Active Jobs|esc Back|n New Job"

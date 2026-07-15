@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import sys
 from collections.abc import Iterable
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -80,6 +81,11 @@ class DispatchApp(App[None]):
         return f"\u2026{text[-max_len:]}"
 
     async def on_mount(self) -> None:
+        stale_launcher_warning = self._build_stale_launcher_warning()
+        if stale_launcher_warning:
+            logger.warning(stale_launcher_warning)
+            self.notify(stale_launcher_warning, severity="warning", timeout=0)
+
         if not config.dispatch_home().exists():
             logger.error("Dispatch home %s does not exist", config.dispatch_home())
             self.notify(
@@ -175,6 +181,22 @@ class DispatchApp(App[None]):
             self.notify(f"Kerberos refreshed: {self.kerberos_ttl // 60}m", severity="information")
         else:
             self.notify("Kerberos ticket still missing", severity="warning")
+
+    def _build_stale_launcher_warning(self) -> str:
+        """Detect a launcher that predates the shared runtime (ADR-0007).
+
+        Launchers written before the shared runtime execute Dispatch through
+        the retired personal venv at ``<dispatch_home>/venv``; current ones
+        delegate to the shared launcher. Rerunning ``onboard.sh`` replaces the
+        stale launcher without touching the user's configuration or jobs.
+        """
+        personal_venv = config.dispatch_home() / "venv"
+        if Path(sys.prefix).resolve() != personal_venv.resolve():
+            return ""
+        return (
+            "Your dispatch launcher predates the shared runtime. "
+            "Rerun onboard.sh to switch to it; your jobs and settings are kept."
+        )
 
     def on_nav_item_selected(self, event: NavItem.Selected) -> None:
         item_id = event.item_id

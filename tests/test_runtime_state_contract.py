@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 from dispatch import config
@@ -34,3 +35,18 @@ def test_app_captures_caller_working_directory_without_personal_venv(
 
     assert app.launch_cwd == tmp_path
     assert not (dispatch_home / "venv").exists()
+
+
+def test_stale_personal_venv_launcher_is_diagnosed(tmp_path: Path, monkeypatch) -> None:
+    data_root = tmp_path / "data"
+    dispatch_home = data_root / ".dispatch"
+    dispatch_home.mkdir(parents=True)
+    monkeypatch.setenv("DISPATCH_DATA_ROOT", str(data_root))
+    app = DispatchApp()
+
+    monkeypatch.setattr(sys, "prefix", str(dispatch_home / "venv"))
+    warning = app._build_stale_launcher_warning()
+    assert "onboard.sh" in warning
+
+    monkeypatch.setattr(sys, "prefix", str(tmp_path / "shared" / "releases" / ("a" * 8)))
+    assert app._build_stale_launcher_warning() == ""

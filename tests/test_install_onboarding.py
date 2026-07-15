@@ -1,7 +1,8 @@
-"""Installer onboarding should give users a short path to running dispatch."""
+"""Release installation and per-user onboarding integration contracts."""
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -16,221 +17,315 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_version_sources_agree() -> None:
-    """Version metadata must match the edge-node deploy artifact."""
-
     import re
 
     from dispatch.version import __version__
 
     version_file = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
     assert version_file == __version__
-
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     match = re.search(r'^version\s*=\s*"([^"]+)"', pyproject, re.MULTILINE)
-    assert match is not None, "pyproject.toml has no version field"
+    assert match is not None
     assert match.group(1) == __version__
 
 
-def test_install_updates_path_instead_of_alias_only() -> None:
-    install_script = (ROOT / "install.sh").read_text(encoding="utf-8")
-
-    assert 'export PATH="$HOME/.local/bin:$PATH"' in install_script
-    assert "alias dispatch=" not in install_script
-
-
-def test_install_prints_current_session_next_step() -> None:
-    install_script = (ROOT / "install.sh").read_text(encoding="utf-8")
-
-    assert "To use dispatch in this shell now:" in install_script
-    assert "export PATH=" in install_script
+def make_install_root(tmp_path: Path) -> Path:
+    root = tmp_path / "dispatch-root"
+    (root / "bin").mkdir(parents=True)
+    for relative in ("install.sh", "shared_runtime.py", "bin/dispatch"):
+        source = ROOT / relative
+        target = root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+        target.chmod(0o755)
+    return root
 
 
-def test_update_permissions_do_not_recurse_through_runtime_directories() -> None:
-    update_script = (ROOT / "update.sh").read_text(encoding="utf-8")
+def make_bundle(tmp_path: Path, requirements: bytes = b"demo==1.0\n") -> tuple[Path, str]:
+    bundle = tmp_path / f"bundle-{hashlib.sha256(requirements).hexdigest()[:8]}"
+    (bundle / "requirements").mkdir(parents=True)
+    (bundle / "wheels").mkdir()
+    wheel = b"offline-wheel"
+    (bundle / "requirements" / "requirements.txt").write_bytes(requirements)
+    (bundle / "wheels" / "demo.whl").write_bytes(wheel)
+    files = []
+    for relative, content, kind in (
+        ("requirements/requirements.txt", requirements, "dependency"),
+        ("wheels/demo.whl", wheel, "wheel"),
+    ):
+        files.append(
+            {
+                "path": relative,
+                "sha256": hashlib.sha256(content).hexdigest(),
+                "size": len(content),
+                "kind": kind,
+            }
+        )
+    identity = {
+        "schema": "edge-deploy/dependency-bundle/1",
+        "tool": "robocop",
+        "source_sha": "a" * 40,
+        "target": {
+            "python": "3.10",
+            "implementation": "cp",
+            "abi": "cp310",
+            "platform": "manylinux2014_x86_64",
+        },
+        "files": files,
+    }
+    canonical = (json.dumps(identity, sort_keys=True, separators=(",", ":")) + "\n").encode()
+    digest = hashlib.sha256(canonical).hexdigest()
+    (bundle / "manifest.json").write_text(
+        json.dumps({**identity, "bundle_digest": digest}), encoding="utf-8"
+    )
+    return bundle, digest
 
-    assert "chmod -R" not in update_script
-    assert "$CHANGED_FILES" in update_script
 
-
-def test_install_fails_when_verified_bundle_is_missing(
-    tmp_path: Path,
-) -> None:
-    if shutil.which("sh") is None:
-        pytest.skip("install.sh smoke requires sh")
-
-    install_root = tmp_path / "install-root"
-    vendor = install_root / "vendor"
-    home = tmp_path / "home"
-    data_root = tmp_path / "ads_storage" / "testuser"
-    fake_bin = tmp_path / "bin"
-    vendor.mkdir(parents=True)
-    home.mkdir()
-    data_root.mkdir(parents=True)
-    fake_bin.mkdir()
-    shutil.copy2(ROOT / "install.sh", install_root / "install.sh")
-
-    for name in ("klist", "impala-shell"):
-        tool = fake_bin / name
-        tool.write_text("#!/usr/bin/env sh\nexit 0\n", encoding="utf-8")
-        tool.chmod(0o755)
-
-    fake_python = fake_bin / "python3.11"
-    fake_python.write_text(
+def make_approved_python(tmp_path: Path) -> Path:
+    fake = tmp_path / "approved-python"
+    fake.write_text(
         """#!/usr/bin/env sh
 set -eu
-mkdir -p "$3/bin"
-cat > "$3/bin/pip" <<'EOF'
-#!/usr/bin/env sh
-exit 0
-EOF
-chmod +x "$3/bin/pip"
-""",
-        encoding="utf-8",
-    )
-    fake_python.chmod(0o755)
-
-    env = os.environ.copy()
-    env.pop("DISPATCH_ALLOW_ONLINE_PIP", None)
-    env.update(
-        {
-            "HOME": fake_path(home),
-            "USER": "testuser",
-            "DISPATCH_DATA_ROOT": fake_path(data_root),
-            "DISPATCH_EMAIL": "dispatch-smoke@example.com",
-            "DISPATCH_PYTHON_BIN": fake_path(fake_python),
-            "PATH": f"{fake_path(fake_bin)}{os.pathsep}{env['PATH']}",
-        }
-    )
-
-    result = subprocess.run(
-        ["sh", "install.sh"],
-        cwd=install_root,
-        env=env,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-
-    assert result.returncode != 0
-    assert "Verified dependency bundle not found" in result.stderr
-
-
-@pytest.mark.parametrize(
-    "email",
-    [
-        pytest.param("dispatch-smoke@example.com", id="simple"),
-        pytest.param(
-            'dispatch"team\\north\tline\nnext@example.com',
-            id="json-special-characters",
-        ),
-    ],
-)
-def test_install_creates_runtime_artifacts_with_mocked_edge_tools(
-    tmp_path: Path,
-    email: str,
-) -> None:
-    if shutil.which("sh") is None:
-        pytest.skip("install.sh smoke requires sh")
-
-    home = tmp_path / "home"
-    data_root = tmp_path / "ads_storage" / "testuser"
-    fake_bin = tmp_path / "bin"
-    home.mkdir()
-    data_root.mkdir(parents=True)
-    fake_bin.mkdir()
-    stale_venv_file = data_root / ".dispatch" / "venv" / "stale-interpreter"
-    stale_venv_file.parent.mkdir(parents=True)
-    stale_venv_file.write_text("python3.11\n", encoding="utf-8")
-    bundle = tmp_path / "bundle"
-    (bundle / "wheels").mkdir(parents=True)
-    (bundle / "requirements").mkdir()
-    (bundle / "manifest.json").write_text("{}\n", encoding="utf-8")
-    (bundle / "requirements" / "requirements.txt").write_text("demo==1.0\n", encoding="utf-8")
-    (bundle / "wheels" / "demo-1.0-py3-none-any.whl").write_bytes(b"wheel")
-
-    for name in ("klist", "impala-shell"):
-        tool = fake_bin / name
-        tool.write_text("#!/usr/bin/env sh\nexit 0\n", encoding="utf-8")
-        tool.chmod(0o755)
-
-    fake_python = fake_bin / "python3.11"
-    fake_python.write_text(
-        """#!/usr/bin/env sh
-set -eu
+case "${1:-}" in
+  *shared_runtime.py) exec "__REAL_PYTHON__" "$@" ;;
+esac
 if [ "${1:-}" = "-m" ] && [ "${2:-}" = "venv" ]; then
-  if [ "${3:-}" = "--clear" ]; then
-    target=$4
-    rm -rf "$target"
-  else
-    target=$3
-  fi
+  target=$3
   mkdir -p "$target/bin"
-  cat > "$target/bin/pip" <<'EOF'
-#!/usr/bin/env sh
-exit 0
-EOF
-  chmod +x "$target/bin/pip"
   cat > "$target/bin/python" <<'EOF'
 #!/usr/bin/env sh
-if [ "${1:-}" = "-m" ] && [ "${2:-}" = "pip" ]; then
-  touch "$0.pip-invoked"
+set -eu
+printf '%s\n' "$*" >> "${RUNTIME_CALLS:?}"
+if [ "${1:-}" = "-c" ]; then
+  case "${2:-}" in
+    *platform.python_version*) printf '3.10.99\n' ;;
+  esac
 fi
 exit 0
 EOF
-  chmod +x "$target/bin/python"
+  chmod 755 "$target/bin/python"
   exit 0
 fi
-if [ "${1:-}" = "-" ]; then
-  exec "__REAL_PYTHON__" "$@"
-fi
-exit 0
+exit 2
 """.replace("__REAL_PYTHON__", fake_path(Path(sys.executable))),
         encoding="utf-8",
     )
-    fake_python.chmod(0o755)
+    fake.chmod(0o755)
+    return fake
 
+
+def install_runtime(
+    root: Path, bundle: Path, approved_python: Path, calls: Path
+) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     env.update(
         {
             "EDGE_DEPLOY_BUNDLE_DIR": fake_path(bundle),
-            "HOME": fake_path(home),
-            "USER": "testuser",
-            "DISPATCH_DATA_ROOT": fake_path(data_root),
-            "DISPATCH_EMAIL": email,
-            "DISPATCH_PYTHON_BIN": fake_path(fake_python),
-            "PATH": f"{fake_path(fake_bin)}{os.pathsep}{env['PATH']}",
+            "DISPATCH_PYTHON_BIN": fake_path(approved_python),
+            "RUNTIME_CALLS": fake_path(calls),
         }
     )
-
-    result = subprocess.run(
+    return subprocess.run(
         ["sh", "install.sh"],
-        cwd=ROOT,
+        cwd=root,
         env=env,
         text=True,
         capture_output=True,
         check=False,
     )
 
+
+def test_release_install_builds_offline_runtime_without_user_state(tmp_path: Path) -> None:
+    if shutil.which("sh") is None or os.name == "nt":
+        pytest.skip("Linux install smoke requires POSIX executables and symlinks")
+    root = make_install_root(tmp_path)
+    bundle, digest = make_bundle(tmp_path)
+    calls = tmp_path / "runtime-calls"
+    calls.touch()
+    result = install_runtime(root, bundle, make_approved_python(tmp_path), calls)
+
     assert result.returncode == 0, result.stderr
+    runtime = root / ".venv" / "releases" / digest
+    assert (runtime / ".complete.json").is_file()
+    assert (root / ".venv" / "current").resolve() == runtime.resolve()
+    commands = calls.read_text(encoding="utf-8")
+    assert "pip install --no-index" in commands
+    assert "pip check" in commands
+    assert "import textual; import sqlglot" in commands
+    assert not (tmp_path / "home" / ".local" / "bin" / "dispatch").exists()
+    metadata = json.loads((runtime / ".complete.json").read_text(encoding="utf-8"))
+    assert metadata["bundle_digest"] == digest
+    assert metadata["pip_check"] == "passed"
+
+
+def test_failed_release_install_preserves_active_runtime(tmp_path: Path) -> None:
+    if shutil.which("sh") is None or os.name == "nt":
+        pytest.skip("Linux install smoke requires POSIX executables and symlinks")
+    root = make_install_root(tmp_path)
+    first_bundle, first_digest = make_bundle(tmp_path, b"demo==1.0\n")
+    calls = tmp_path / "runtime-calls"
+    calls.touch()
+    approved = make_approved_python(tmp_path)
+    assert install_runtime(root, first_bundle, approved, calls).returncode == 0
+    second_bundle, second_digest = make_bundle(tmp_path, b"demo==2.0\n")
+    (second_bundle / "wheels" / "demo.whl").write_bytes(b"tampered")
+
+    result = install_runtime(root, second_bundle, approved, calls)
+
+    assert result.returncode != 0
+    assert (root / ".venv" / "current").resolve().name == first_digest
+    assert not (root / ".venv" / "releases" / second_digest / ".complete.json").exists()
+
+
+def prepare_onboarding_root(tmp_path: Path) -> tuple[Path, Path]:
+    root = make_install_root(tmp_path)
+    shutil.copy2(ROOT / "onboard.sh", root / "onboard.sh")
+    (root / "onboard.sh").chmod(0o755)
+    runtime = root / ".venv" / "releases" / ("b" * 64)
+    (runtime / "bin").mkdir(parents=True)
+    (runtime / ".complete.json").write_text("{}\n", encoding="utf-8")
+    runtime_python = runtime / "bin" / "python"
+    runtime_python.write_text(
+        '#!/usr/bin/env sh\nprintf \'%s\\n\' "$*" >> "${ONBOARD_CALLS:?}"\nexec "__REAL_PYTHON__" "$@"\n'.replace(
+            "__REAL_PYTHON__", fake_path(Path(sys.executable))
+        ),
+        encoding="utf-8",
+    )
+    runtime_python.chmod(0o755)
+    current = root / ".venv" / "current"
+    try:
+        current.symlink_to(Path("releases") / runtime.name, target_is_directory=True)
+    except OSError as exc:
+        pytest.skip(f"symlink creation is unavailable: {exc}")
+    return root, runtime
+
+
+def run_onboarding(
+    root: Path, *, home: Path, data_root: Path, email: str, calls: Path
+) -> subprocess.CompletedProcess[str]:
+    home.mkdir(exist_ok=True)
+    data_root.mkdir(parents=True, exist_ok=True)
+    calls.touch(exist_ok=True)
+    env = os.environ.copy()
+    env.update(
+        {
+            "HOME": fake_path(home),
+            "USER": data_root.parent.name,
+            "DISPATCH_DATA_ROOT": fake_path(data_root),
+            "DISPATCH_EMAIL": email,
+            "ONBOARD_CALLS": fake_path(calls),
+        }
+    )
+    return subprocess.run(
+        ["sh", "onboard.sh"],
+        cwd=root,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
+def test_existing_user_migrates_launcher_without_touching_state_or_personal_venv(
+    tmp_path: Path,
+) -> None:
+    if shutil.which("sh") is None:
+        pytest.skip("onboarding smoke requires sh")
+    root, _runtime = prepare_onboarding_root(tmp_path)
+    home = tmp_path / "home"
+    data_root = tmp_path / "ads_storage" / "alice"
     dispatch_home = data_root / ".dispatch"
-    assert (dispatch_home / "jobs").is_dir()
-    if os.name != "nt":
-        assert stat.S_IMODE(dispatch_home.stat().st_mode) == 0o700
-        assert stat.S_IMODE((dispatch_home / "jobs").stat().st_mode) == 0o700
-    assert (dispatch_home / "venv" / "bin" / "python").is_file()
-    assert not stale_venv_file.exists()
-    assert (dispatch_home / "venv" / "bin" / "python.pip-invoked").is_file()
-    data = json.loads((dispatch_home / "config.json").read_text(encoding="utf-8"))
-    assert data == {"form_defaults": {"email": email}}
-    assert (dispatch_home / "installed_version").read_text(encoding="utf-8") == (
-        ROOT / "VERSION"
-    ).read_text(encoding="utf-8")
-    launcher = home / ".local" / "bin" / "dispatch"
-    assert launcher.is_file()
-    launcher_text = launcher.read_text(encoding="utf-8")
-    assert 'export PYTHONPATH="' in launcher_text
-    assert "robocop" in launcher_text
-    assert 'exec "' in launcher_text
+    (dispatch_home / "jobs").mkdir(parents=True)
+    config = dispatch_home / "config.json"
+    config.write_text('{"form_defaults":{"email":"kept@example.com"}}\n', encoding="utf-8")
+    job = dispatch_home / "jobs" / "kept.json"
+    job.write_text("{}\n", encoding="utf-8")
+    personal_venv = dispatch_home / "venv" / "bin" / "python"
+    personal_venv.parent.mkdir(parents=True)
+    personal_venv.write_text("old\n", encoding="utf-8")
+    old_launcher = home / ".local" / "bin" / "dispatch"
+    old_launcher.parent.mkdir(parents=True)
+    old_launcher.write_text(
+        f'exec "{fake_path(personal_venv)}" -m dispatch "$@"\n', encoding="utf-8"
+    )
+    calls = tmp_path / "onboard-calls"
+
+    result = run_onboarding(
+        root,
+        home=home,
+        data_root=data_root,
+        email="ignored@example.com",
+        calls=calls,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert (
+        json.loads(config.read_text(encoding="utf-8"))["form_defaults"]["email"]
+        == "kept@example.com"
+    )
+    assert job.read_text(encoding="utf-8") == "{}\n"
+    assert personal_venv.read_text(encoding="utf-8") == "old\n"
+    launcher = old_launcher.read_text(encoding="utf-8")
+    assert fake_path(root / "bin" / "dispatch") in launcher
+    assert ".dispatch/venv" not in launcher
+    assert calls.read_text(encoding="utf-8") == ""
+    assert not (dispatch_home / "installed_version").exists()
+
+
+def test_two_users_share_launcher_runtime_but_keep_private_state(tmp_path: Path) -> None:
+    if shutil.which("sh") is None:
+        pytest.skip("onboarding smoke requires sh")
+    root, runtime = prepare_onboarding_root(tmp_path)
+    launchers = []
+    for user in ("alice", "bob"):
+        home = tmp_path / f"home-{user}"
+        data_root = tmp_path / "ads_storage" / user
+        result = run_onboarding(
+            root,
+            home=home,
+            data_root=data_root,
+            email=f"{user}@example.com",
+            calls=tmp_path / f"calls-{user}",
+        )
+        assert result.returncode == 0, result.stderr
+        launchers.append((home / ".local" / "bin" / "dispatch").read_text(encoding="utf-8"))
+        assert (
+            json.loads((data_root / ".dispatch" / "config.json").read_text(encoding="utf-8"))[
+                "form_defaults"
+            ]["email"]
+            == f"{user}@example.com"
+        )
+        if os.name != "nt":
+            assert stat.S_IMODE((data_root / ".dispatch").stat().st_mode) == 0o700
+
+    assert launchers[0] == launchers[1]
+    assert fake_path(root / "bin" / "dispatch") in launchers[0]
+    assert (root / ".venv" / "current").resolve() == runtime.resolve()
+
+
+def test_onboarding_fails_before_changing_state_when_runtime_is_missing(tmp_path: Path) -> None:
+    if shutil.which("sh") is None:
+        pytest.skip("onboarding smoke requires sh")
+    root = make_install_root(tmp_path)
+    shutil.copy2(ROOT / "onboard.sh", root / "onboard.sh")
+    data_root = tmp_path / "ads_storage" / "alice"
+    data_root.mkdir(parents=True)
+    env = os.environ.copy()
+    env.update({"HOME": fake_path(tmp_path / "home"), "DISPATCH_DATA_ROOT": fake_path(data_root)})
+
+    result = subprocess.run(
+        ["sh", "onboard.sh"], cwd=root, env=env, text=True, capture_output=True, check=False
+    )
+
+    assert result.returncode != 0
+    assert "shared runtime is not active" in result.stderr
+    assert not (data_root / ".dispatch").exists()
+
+
+def test_update_permissions_do_not_recurse_through_runtime_directories() -> None:
+    update_script = (ROOT / "update.sh").read_text(encoding="utf-8")
+    assert "chmod -R" not in update_script
+    assert "$CHANGED_FILES" in update_script
 
 
 def fake_path(path: Path) -> str:

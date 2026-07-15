@@ -80,14 +80,10 @@ class DispatchApp(App[None]):
         return f"\u2026{text[-max_len:]}"
 
     async def on_mount(self) -> None:
-        version_warning = self._build_version_warning()
-        if version_warning:
-            self.notify(version_warning, severity="warning", timeout=0)
-
         if not config.dispatch_home().exists():
             logger.error("Dispatch home %s does not exist", config.dispatch_home())
             self.notify(
-                "Dispatch is not installed for this user. Run install.sh to set up.",
+                "Dispatch is not set up for this user. Run onboard.sh.",
                 severity="error",
                 timeout=0,
             )
@@ -179,19 +175,6 @@ class DispatchApp(App[None]):
             self.notify(f"Kerberos refreshed: {self.kerberos_ttl // 60}m", severity="information")
         else:
             self.notify("Kerberos ticket still missing", severity="warning")
-
-    def _build_version_warning(self) -> str:
-        try:
-            installed = config.installed_version_path().read_text(encoding="utf-8").strip()
-        except OSError:
-            return (
-                f"Install incomplete: version file missing. Run install.sh. (running {__version__})"
-            )
-        if installed != __version__:
-            return (
-                f"Version mismatch: installed {installed}, running {__version__}. Run install.sh."
-            )
-        return ""
 
     def on_nav_item_selected(self, event: NavItem.Selected) -> None:
         item_id = event.item_id

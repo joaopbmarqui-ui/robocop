@@ -54,7 +54,7 @@ def _load_manifest(bundle_dir: Path) -> tuple[dict[str, object], str]:
     files = manifest.get("files")
     if not isinstance(files, list) or not files:
         raise RuntimeInstallError("Dependency bundle manifest has no files")
-    declared: set[Path] = set()
+    declared: set[PurePosixPath] = set()
     for item in files:
         if not isinstance(item, dict):
             raise RuntimeInstallError("Dependency bundle manifest has an invalid file entry")
@@ -76,7 +76,7 @@ def _load_manifest(bundle_dir: Path) -> tuple[dict[str, object], str]:
         if not isinstance(expected_size, int) or expected_size < 0:
             raise RuntimeInstallError(f"Dependency bundle has an invalid size for {raw_path}")
         path = bundle_dir.joinpath(*relative.parts)
-        if path.is_symlink() or path.resolve() in declared:
+        if path.is_symlink() or relative in declared:
             raise RuntimeInstallError(
                 f"Dependency bundle has a duplicate or linked path: {raw_path}"
             )
@@ -86,13 +86,16 @@ def _load_manifest(bundle_dir: Path) -> tuple[dict[str, object], str]:
             raise RuntimeInstallError(f"Dependency bundle file is missing: {raw_path}") from exc
         if len(content) != expected_size or hashlib.sha256(content).hexdigest() != expected_hash:
             raise RuntimeInstallError(f"Dependency bundle file failed verification: {raw_path}")
-        declared.add(path.resolve())
-    actual = {
-        path.resolve()
+        declared.add(relative)
+    actual_files = [
+        path
         for directory in (bundle_dir / "requirements", bundle_dir / "wheels")
         for path in directory.rglob("*")
         if path.is_file()
-    }
+    ]
+    if any(path.is_symlink() for path in actual_files):
+        raise RuntimeInstallError("Dependency bundle contains an undeclared linked file")
+    actual = {PurePosixPath(path.relative_to(bundle_dir).as_posix()) for path in actual_files}
     if actual != declared:
         raise RuntimeInstallError("Dependency bundle contents do not match the manifest")
     return manifest, digest
@@ -169,7 +172,7 @@ def _write_metadata(runtime: Path, digest: str, approved_python: Path) -> None:
     metadata = {
         "bundle_digest": digest,
         "approved_python": str(approved_python.resolve()),
-        "runtime_python": str(runtime_python.resolve()),
+        "runtime_python": str(runtime_python.absolute()),
         "python_version": version,
         "pip_check": "passed",
         "required_imports": list(REQUIRED_IMPORTS),

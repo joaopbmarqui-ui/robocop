@@ -49,4 +49,3 @@ with another user.
   download or rebuild.
 - Existing personal virtual environments are left untouched during migration.
 - Users repair stale launchers by rerunning `onboard.sh`; they never run pip.
-

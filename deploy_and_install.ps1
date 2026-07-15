@@ -17,19 +17,16 @@ $RemotePath = "/ads_storage/dispatch"
 $ZipName = "dispatch_deploy.zip"
 $SetupScript = "install.sh"
 $UpdateScript = "update.sh"
-$VendorDir = "vendor"
+$BundleDir = "dependency_bundle"
+$WheelDir = Join-Path $BundleDir "wheels"
+$BundleRequirementsDir = Join-Path $BundleDir "requirements"
 $PythonRemote = "python3" # Uses whatever python3 is on the PATH (3.10 or 3.11)
 
-# --- Step 1: Create Vendor Bundle ---
-Write-Host "`n=== Step 1: Creating Vendor Bundle ===" -ForegroundColor Cyan
+# --- Step 1: Create Verified Dependency Bundle ---
+Write-Host "`n=== Step 1: Creating Verified Dependency Bundle ===" -ForegroundColor Cyan
 
-if (!(Test-Path -Path $VendorDir)) {
-    New-Item -ItemType Directory -Path $VendorDir | Out-Null
-    Write-Host "Created directory: $VendorDir"
-}
-
-# Clean previous packages to ensure fresh download
-Remove-Item -Path "$VendorDir\*" -Force -Recurse -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath $BundleDir -Force -Recurse -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Path $WheelDir, $BundleRequirementsDir | Out-Null
 
 if (!(Test-Path requirements.txt)) {
     Write-Error "requirements.txt not found!"
@@ -37,7 +34,7 @@ if (!(Test-Path requirements.txt)) {
 }
 
 Write-Host "Downloading binary packages for Linux (Python 3.10)..."
-py -m pip download -r requirements.txt --dest $VendorDir --platform manylinux2014_x86_64 --python-version 3.10 --implementation cp --abi cp310 --only-binary=:all:
+py -m pip download -r requirements.txt --dest $WheelDir --platform manylinux2014_x86_64 --python-version 3.10 --implementation cp --abi cp310 --only-binary=:all:
 
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Download failed."
@@ -45,8 +42,41 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # Verify files exist
-if ((Get-ChildItem $VendorDir).Count -eq 0) {
-    Write-Error "Vendor directory is empty! Something went wrong with the download."
+if ((Get-ChildItem $WheelDir).Count -eq 0) {
+    Write-Error "Dependency bundle wheel directory is empty."
+    exit 1
+}
+
+$ManifestScript = @"
+import hashlib
+import json
+import subprocess
+from pathlib import Path
+
+bundle = Path(r'$BundleDir')
+requirements = Path('requirements.txt').read_bytes().replace(b'\r\n', b'\n').replace(b'\r', b'\n')
+(bundle / 'requirements' / 'requirements.txt').write_bytes(requirements)
+files = []
+for path in sorted((bundle / 'requirements').iterdir()):
+    content = path.read_bytes()
+    files.append({'path': f'requirements/{path.name}', 'sha256': hashlib.sha256(content).hexdigest(), 'size': len(content), 'kind': 'dependency'})
+for path in sorted((bundle / 'wheels').iterdir()):
+    content = path.read_bytes()
+    files.append({'path': f'wheels/{path.name}', 'sha256': hashlib.sha256(content).hexdigest(), 'size': len(content), 'kind': 'wheel'})
+identity = {
+    'schema': 'edge-deploy/dependency-bundle/1',
+    'tool': 'robocop',
+    'source_sha': subprocess.run(['git', 'rev-parse', 'HEAD'], check=True, capture_output=True, text=True).stdout.strip(),
+    'target': {'python': '3.10', 'implementation': 'cp', 'abi': 'cp310', 'platform': 'manylinux2014_x86_64'},
+    'files': sorted(files, key=lambda item: item['path']),
+}
+canonical = (json.dumps(identity, sort_keys=True, separators=(',', ':')) + '\n').encode()
+manifest = {**identity, 'bundle_digest': hashlib.sha256(canonical).hexdigest()}
+(bundle / 'manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+"@
+py -c $ManifestScript
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Dependency bundle manifest generation failed."
     exit 1
 }
 
@@ -60,7 +90,7 @@ $PyScript = @"
 import zipfile, os
 
 zip_name = '$ZipName'
-items = ['dispatch', 'scr', 'bin', 'vendor', 'install.sh', 'onboard.sh', 'shared_runtime.py', 'update.sh', 'pyproject.toml', 'requirements.txt', 'VERSION', 'README.md', 'docs']
+items = ['dispatch', 'scr', 'bin', 'dependency_bundle', 'install.sh', 'onboard.sh', 'shared_runtime.py', 'update.sh', 'pyproject.toml', 'requirements.txt', 'VERSION', 'README.md', 'docs']
 
 print(f'Creating {zip_name}...')
 with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zf:
@@ -124,7 +154,7 @@ $RemoteCommand = "cd $RemotePath && " +
                  "ls -F && " +
                  "echo '--- Running Setup ---' && " +
                  "chmod +x $SetupScript $UpdateScript onboard.sh bin/dispatch && " +
-                 "DISPATCH_PYTHON_BIN=`$(command -v python3.11 || command -v python3.10) ./$SetupScript"
+                 "EDGE_DEPLOY_BUNDLE_DIR=$RemotePath/dependency_bundle DISPATCH_PYTHON_BIN=`$(command -v python3.11 || command -v python3.10) ./$SetupScript"
 
 Write-Host "Executing setup on remote server..."
 ssh -p $RemotePort "${RemoteUser}@${RemoteServer}" "$RemoteCommand"

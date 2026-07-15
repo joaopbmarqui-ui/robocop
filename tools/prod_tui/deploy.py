@@ -212,6 +212,8 @@ import_result = subprocess.run(
 )
 publicly_writable = []
 for path in [runtime, *runtime.rglob("*")]:
+    if path.is_symlink():
+        continue
     if stat.S_IMODE(path.stat().st_mode) & 0o022:
         publicly_writable.append(str(path.relative_to(runtime)))
 payload = {{

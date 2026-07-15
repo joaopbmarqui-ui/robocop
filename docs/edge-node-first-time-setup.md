@@ -18,32 +18,35 @@ It covers:
 
 ## 1. Prepare the deployable tree locally
 
-Normal releases use content-addressed bundles managed by edge-deploy-core v1.1.0.
-The commands below are bootstrap/recovery guidance only; `vendor/` is not committed.
+Normal releases use content-addressed bundles managed by edge-deploy-core.
+The commands below are bootstrap/recovery guidance only;
+`dependency_bundle/` is generated and is not committed.
 
-Confirm a bootstrap wheelhouse exists:
+Use [`deploy_and_install.ps1`](../deploy_and_install.ps1) to download the
+Python 3.10 Linux wheels, normalize the requirements file, and create a bundle
+manifest with hashes and the same digest schema as edge-deploy-core:
 
-```bash
-ls vendor/*.whl
+```powershell
+./deploy_and_install.ps1
 ```
 
-To rebuild `vendor/` for the Linux edge node from a non-Linux development
-host, use the platform-targeted recipe also used by
-[`deploy_and_install.ps1`](../deploy_and_install.ps1):
+The platform-targeted wheel download inside that script is equivalent to:
 
 ```bash
-pip download -r requirements.txt -d vendor \
+pip download -r requirements.txt -d dependency_bundle/wheels \
   --platform manylinux2014_x86_64 --python-version 3.10 --abi cp310 --only-binary=:all:
 ```
 
-A bare `pip download -r requirements.txt -d vendor` on a non-Linux host
+A bare `pip download -r requirements.txt` on a non-Linux host
 downloads wheels for the host platform, which the Linux edge node cannot use.
+Do not omit the generated `manifest.json`; `install.sh` rejects unverified
+wheel directories.
 
 ### Recommendation: Zip for Upload
 For Windows-to-Linux transfers or unstable connections, upload a single ZIP archive to avoid `scp`/`rsync` overhead and potential file corruption.
 
 ```powershell
-Compress-Archive -Path dispatch, scr, bin, vendor, install.sh, onboard.sh, shared_runtime.py, update.sh, pyproject.toml, requirements.txt, VERSION, README.md, docs -DestinationPath dispatch_deploy.zip
+Compress-Archive -Path dispatch, scr, bin, dependency_bundle, install.sh, onboard.sh, shared_runtime.py, update.sh, pyproject.toml, requirements.txt, VERSION, README.md, docs -DestinationPath dispatch_deploy.zip
 ```
 
 ## 2. Upload the repo to the Edge Node

@@ -1255,15 +1255,16 @@ class NewJobScreen(Screen[None]):
                     self.query_one(f"#{widget_id}", Input).value = defaults[key]
                 except Exception:
                     pass
-        self._apply_queue_value(defaults.get("queue", ""))
 
     def _save_form_defaults(self) -> None:
+        # The queue is deliberately not persisted: pinning a request pool is a
+        # per-job exception, and a silently sticky queue would degrade every
+        # later job once coordinator load shifts. Each new job starts at Auto.
         values = {
             "schema": self._input_value("schema"),
             "email": self._input_value("email"),
             "subject": self._input_value("subject"),
             "destination_type": self._selected_destination(),
-            "queue": self._queue_param(),
         }
         try:
             config.save_form_defaults(values)

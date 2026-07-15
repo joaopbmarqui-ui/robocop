@@ -12,7 +12,8 @@ It covers:
 
 - preparing the deployable tree locally
 - uploading the repo and vendored dependency wheels
-- installing Dispatch for one user on the Edge Node
+- installing the shared Dispatch runtime on the Edge Node
+- onboarding analysts without personal dependency bundles
 - validating that the TUI starts correctly
 
 ## 1. Prepare the deployable tree locally
@@ -42,7 +43,7 @@ downloads wheels for the host platform, which the Linux edge node cannot use.
 For Windows-to-Linux transfers or unstable connections, upload a single ZIP archive to avoid `scp`/`rsync` overhead and potential file corruption.
 
 ```powershell
-Compress-Archive -Path dispatch, scr, vendor, install.sh, update.sh, pyproject.toml, requirements.txt, VERSION, README.md, docs -DestinationPath dispatch_deploy.zip
+Compress-Archive -Path dispatch, scr, bin, vendor, install.sh, onboard.sh, shared_runtime.py, update.sh, pyproject.toml, requirements.txt, VERSION, README.md, docs -DestinationPath dispatch_deploy.zip
 ```
 
 ## 2. Upload the repo to the Edge Node
@@ -90,7 +91,8 @@ GIT_REMOTE=bitbucket GIT_BRANCH=main ./update.sh <commit-sha>
 ```
 
 Rollback uses the same exact-SHA shape as a recovery operation: move the shared
-tree to the previous known-good commit, then run `install.sh` again. For the
+tree to the previous known-good commit, then run `install.sh` to reactivate its
+retained digest-specific runtime. For the
 repo-local harness recovery command, see
 `py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <previous-good-sha> --rollback-from <current-bad-sha>`.
 
@@ -113,9 +115,8 @@ python3.11 --version || python3.10 --version
 which impala-shell
 which klist
 
-# Ensure writable storage
-mkdir -p /ads_storage/$USER/.dispatch
-touch /ads_storage/$USER/.dispatch/.smoke_test
+# Release Operator must own the shared runtime location
+test -w /ads_storage/dispatch
 ```
 
 ## 4. Run the installer
@@ -124,8 +125,9 @@ From the deployed tree:
 
 ```bash
 cd /ads_storage/dispatch
-chmod +x update.sh install.sh
-DISPATCH_EMAIL=you@example.com DISPATCH_PYTHON_BIN=$(command -v python3.11) ./install.sh
+chmod +x update.sh install.sh onboard.sh bin/dispatch
+DISPATCH_PYTHON_BIN=$(command -v python3.11) ./install.sh
+/ads_storage/dispatch/bin/dispatch --help
 ```
 
 For the normal release workflow and recovery-only exact-SHA rollback details, see
@@ -135,9 +137,10 @@ For the normal release workflow and recovery-only exact-SHA rollback details, se
 
 ## 5. Post-install validation
 
-Launch the TUI:
+Onboard the Release Operator account only if it will also use the TUI:
 ```bash
-dispatch
+/ads_storage/dispatch/onboard.sh
+cd /path/to/sql/files && dispatch
 ```
 
 Confirm:
@@ -154,7 +157,8 @@ After the shared tree is deployed, give end users the short setup flow in
 |---|---|---|
 | `IndentationError` in dispatch script | Heredoc with spaces | Use `cat <<'EOF'` to avoid variable expansion and ensure exact spacing. |
 | SSH Disconnections | Idle timeout | Connect with `ssh -o ServerAliveInterval=30`. |
-| Permission Denied in `/ads_storage` | Sticky bits or ownership | Use `/ads_storage/$USER/` for personal data (venv, logs, jobs). |
+| Shared runtime permission denied | Wrong owner on `/ads_storage/dispatch/.venv` | Have the Release Operator repair ownership; analysts must not run pip. |
+| Private state permission denied | Wrong owner on `/ads_storage/$USER/.dispatch` | Rerun `onboard.sh` as that analyst. |
 
 ## 6. Production validation harness
 

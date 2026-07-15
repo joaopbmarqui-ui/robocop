@@ -23,20 +23,20 @@
 - [ ] Verify Python version: `python3.11 --version || python3.10 --version`
 - [ ] Verify `impala-shell` is on PATH: `which impala-shell`
 - [ ] Verify Kerberos ticket: `klist` shows a valid, non-expired ticket
-- [ ] Verify `/ads_storage/<user>/` is writable: `touch /ads_storage/$USER/.dispatch/.smoke_test`
-- [ ] Run `install.sh`: `DISPATCH_EMAIL=you@example.com DISPATCH_PYTHON_BIN=$(command -v python3.11 || command -v python3.10) ./install.sh`
-- [ ] Verify install completed: `which dispatch` → `~/.local/bin/dispatch`
-- [ ] Verify version file matches: `cat /ads_storage/$USER/.dispatch/installed_version` matches `cat VERSION`
+- [ ] As Release Operator, run `install.sh`: `DISPATCH_PYTHON_BIN=$(command -v python3.11 || command -v python3.10) ./install.sh`
+- [ ] Verify the active metadata digest matches the delivered bundle manifest under `~/.edge-deploy/bundles/robocop/current/`.
+- [ ] Verify `/ads_storage/dispatch/bin/dispatch --help` succeeds and the active runtime imports `sqlglot`.
+- [ ] As an analyst with no personal bundle or venv, run `/ads_storage/dispatch/onboard.sh`.
+- [ ] Verify onboarding completed: `which dispatch` points to `~/.local/bin/dispatch` and private state is mode `0700`.
 
 ## Level 1 — Safe Smoke (no job launch)
 
 - [ ] Set `PYTHON_BIN=$(command -v python3.11 || command -v python3.10)`
 - [ ] `$PYTHON_BIN -m compileall dispatch scr` → exit 0, no errors
-- [ ] `$PYTHON_BIN -m dispatch --help` → prints usage
+- [ ] `/ads_storage/dispatch/bin/dispatch --help` prints usage through the shared runtime
 - [ ] Launch Dispatch: `cd /path/to/sql/files && dispatch`
 - [ ] **Dashboard renders:** status strip shows Running/Finished/Failed/Kerberos summary
 - [ ] **Kerberos indicator:** header shows TTL (e.g. "Kerberos: 7h 23m"), not "MISSING"
-- [ ] **Version banner:** no mismatch warning if install is current
 - [ ] **Navigate to New Job:** press `N` → form with RadioSet source/dest appears
 - [ ] **Source × Destination matrix** visible and correct
 - [ ] **Date fields** hidden unless SqlTemplate selected

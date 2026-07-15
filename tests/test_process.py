@@ -3,11 +3,25 @@
 from __future__ import annotations
 
 import asyncio
+import sys
 from pathlib import Path
 
 import pytest
 
 from dispatch import process
+
+
+def test_windows_resolver_prefers_exact_python_script_before_pathext_wrapper(
+    tmp_path: Path, monkeypatch
+) -> None:
+    script = tmp_path / "kinit"
+    script.write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+    (tmp_path / "kinit.exe").write_bytes(b"legacy wrapper")
+    monkeypatch.setenv("PATH", str(tmp_path))
+
+    resolved = process._resolve_exec_argv(("kinit", "user@REALM"), windows=True)
+
+    assert resolved == (sys.executable, str(script), "user@REALM")
 
 
 @pytest.mark.asyncio

@@ -58,7 +58,14 @@ class ConfirmScreen(ModalScreen[bool]):
             yield Static(help_text, id="confirm-help")
             with Horizontal(id="confirm-buttons"):
                 variant = "error" if self.danger else "primary"
-                yield Button(self.confirm_label, id="confirm-yes", variant=variant)
+                yield Button(
+                    self.confirm_label,
+                    id="confirm-yes",
+                    variant=variant,
+                    disabled=bool(
+                        self.required_confirmation_text or self.secondary_confirmation_text
+                    ),
+                )
                 yield Button(self.cancel_label, id="confirm-no", variant="default")
 
     def _help_text(self) -> str:

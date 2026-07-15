@@ -109,6 +109,20 @@ class NewJobScreen(Screen[None]):
         self.kerberos_ttl: int | None = None
         self._matrix_collapsed = bool(config.read_form_defaults())
         self._prefilled = bool(self.prefill)
+        prefill_source = str(self.prefill.get("source_type") or "SqlFile")
+        self._prefill_source = (
+            prefill_source
+            if prefill_source in {"SqlFile", "SqlTemplate", "ExistingTable"}
+            else "SqlFile"
+        )
+        prefill_destination = str(self.prefill.get("dest_type") or "Csv")
+        self._prefill_destination = (
+            prefill_destination if prefill_destination in {"Table", "Csv", "Table+Csv"} else "Csv"
+        )
+        existing_table = str(self.prefill.get("existing_table") or "")
+        self._prefill_existing_schema = (
+            existing_table.split(".", 1)[0] if "." in existing_table else "aa_enc"
+        )
         self._cwd_sql_files: list[dict] = []
         self._picker_ready = False
         # (path, exists) memo so keystrokes in unrelated fields do not stat()
@@ -143,18 +157,39 @@ class NewJobScreen(Screen[None]):
                         with Vertical(classes="radio-group"):
                             yield Static("Source", classes="field-label")
                             with RadioSet(id="source"):
-                                yield RadioButton("SqlFile", value=True, id="src-sqlfile")
+                                yield RadioButton(
+                                    "SqlFile",
+                                    value=self._prefill_source == "SqlFile",
+                                    id="src-sqlfile",
+                                )
                                 yield RadioButton(
                                     manifest.source_display_label("SqlTemplate"),
+                                    value=self._prefill_source == "SqlTemplate",
                                     id="src-sqltemplate",
                                 )
-                                yield RadioButton("ExistingTable", id="src-existingtable")
+                                yield RadioButton(
+                                    "ExistingTable",
+                                    value=self._prefill_source == "ExistingTable",
+                                    id="src-existingtable",
+                                )
                         with Vertical(classes="radio-group"):
                             yield Static("Destination", classes="field-label")
                             with RadioSet(id="destination"):
-                                yield RadioButton("Table", id="dst-table")
-                                yield RadioButton("Csv", value=True, id="dst-csv")
-                                yield RadioButton("Table+Csv", id="dst-table-csv")
+                                yield RadioButton(
+                                    "Table",
+                                    value=self._prefill_destination == "Table",
+                                    id="dst-table",
+                                )
+                                yield RadioButton(
+                                    "Csv",
+                                    value=self._prefill_destination == "Csv",
+                                    id="dst-csv",
+                                )
+                                yield RadioButton(
+                                    "Table+Csv",
+                                    value=self._prefill_destination == "Table+Csv",
+                                    id="dst-table-csv",
+                                )
                     yield Static("", id="dest-hint")
 
                 with Vertical(id="queue-panel"):
@@ -180,9 +215,21 @@ class NewJobScreen(Screen[None]):
                     with Horizontal(classes="form-row", id="row-existing-schema"):
                         yield Static("Schema", classes="field-label", id="lbl-existing-schema")
                         with RadioSet(id="existing-schema"):
-                            yield RadioButton("coe_enc", id="esc-coe-enc")
-                            yield RadioButton("aa_enc", value=True, id="esc-aa-enc")
-                            yield RadioButton("other", id="esc-other")
+                            yield RadioButton(
+                                "coe_enc",
+                                value=self._prefill_existing_schema == "coe_enc",
+                                id="esc-coe-enc",
+                            )
+                            yield RadioButton(
+                                "aa_enc",
+                                value=self._prefill_existing_schema == "aa_enc",
+                                id="esc-aa-enc",
+                            )
+                            yield RadioButton(
+                                "other",
+                                value=self._prefill_existing_schema not in _KNOWN_EXISTING_SCHEMAS,
+                                id="esc-other",
+                            )
 
                     with Horizontal(classes="form-row", id="row-existing-schema-custom"):
                         yield Static(
@@ -1094,30 +1141,8 @@ class NewJobScreen(Screen[None]):
         if existing_table:
             self._apply_existing_table_prefill(str(existing_table))
         self._apply_queue_value(self.prefill.get("queue", ""))
-        source_type = self.prefill.get("source_type")
-        source_btn = {
-            "SqlFile": "src-sqlfile",
-            "SqlTemplate": "src-sqltemplate",
-            "ExistingTable": "src-existingtable",
-        }.get(source_type or "")
-        dest_type = self.prefill.get("dest_type")
-        dest_btn = {
-            "Table": "dst-table",
-            "Csv": "dst-csv",
-            "Table+Csv": "dst-table-csv",
-        }.get(dest_type or "")
-        # Select the radios after mount settles. Setting ``button.value = True``
-        # relies on an async RadioButton.Changed message that races with
-        # RadioSet._on_mount pinning the default-pressed button; on Textual
-        # 8.2.5 this intermittently leaves the default selected. We instead
-        # force the set's selection state deterministically, after refresh so
-        # the set has finished its own mount.
-        if source_btn:
-            self._schedule_force_radio("#source", source_btn)
-        if dest_btn:
-            self._schedule_force_radio("#destination", dest_btn)
-        # After the radios settle, scroll the destination-specific fields into
-        # view so a prefilled (re-run) form lands on its key inputs.
+        # The radio values are selected during composition so RadioSet mounts
+        # with one authoritative choice instead of racing deferred messages.
         self.call_after_refresh(self._scroll_prefill_fields)
 
     def _apply_existing_table_prefill(self, existing_table: str) -> None:
@@ -1128,39 +1153,8 @@ class NewJobScreen(Screen[None]):
         schema_part, table_part = existing_table.split(".", 1)
         self.query_one("#existing-table", Input).value = table_part
         if schema_part in _KNOWN_EXISTING_SCHEMAS:
-            schema_btn = {
-                "coe_enc": "esc-coe-enc",
-                "aa_enc": "esc-aa-enc",
-            }[schema_part]
-            self._schedule_force_radio("#existing-schema", schema_btn)
             return
-        self._schedule_force_radio("#existing-schema", "esc-other")
         self.query_one("#existing-schema-custom", Input).value = schema_part
-
-    def _schedule_force_radio(self, radio_set_id: str, button_id: str) -> None:
-        self.call_after_refresh(self._force_radio, radio_set_id, button_id)
-        self.set_timer(0.05, lambda: self._force_radio(radio_set_id, button_id))
-        self.set_timer(0.25, lambda: self._force_radio(radio_set_id, button_id))
-
-    def _force_radio(self, radio_set_id: str, button_id: str) -> None:
-        radio_set = self.query_one(radio_set_id, RadioSet)
-        target = self.query_one(f"#{button_id}", RadioButton)
-        with self.prevent(RadioButton.Changed):
-            for btn in radio_set.query(RadioButton):
-                btn.value = btn is target
-        radio_set._pressed_button = target
-        nodes = list(radio_set._nodes)
-        if target in nodes:
-            radio_set._selected = nodes.index(target)
-        logger.info(
-            "prefill applied %s -> %s (pressed=%s)",
-            radio_set_id,
-            button_id,
-            radio_set.pressed_button.id if radio_set.pressed_button else None,
-        )
-        self._update_field_visibility()
-        self._inline_validate()
-        self._update_validation_summary()
 
     def _scroll_prefill_fields(self) -> None:
         """Bring the destination-dependent rows into the viewport for a

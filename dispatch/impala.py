@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncIterator
+from dataclasses import dataclass
 
 from . import process, sql
+from .formatting import format_data_size, parse_data_size
 
 QUERY_TIMEOUT_SECONDS = 30
 
@@ -54,6 +57,70 @@ async def show_tables(schema: str, pattern: str = "*") -> list[str]:
             continue
         tables.append(line)
     return tables
+
+
+@dataclass(frozen=True)
+class TableStats:
+    size_bytes: int | None
+    size_display: str
+
+
+def parse_table_stats_output(raw: str) -> TableStats:
+    """Parse pipe-delimited ``SHOW TABLE STATS`` output into total on-disk size."""
+    size_index: int | None = None
+    total_bytes = 0
+    saw_size = False
+
+    for raw_line in raw.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("Mock "):
+            continue
+        parts = [part.strip() for part in line.split("|")]
+        if not parts:
+            continue
+        if parts[0] == "#Rows":
+            try:
+                size_index = parts.index("Size")
+            except ValueError:
+                size_index = 2 if len(parts) > 2 else None
+            continue
+        if size_index is None or size_index >= len(parts):
+            continue
+        parsed = parse_data_size(parts[size_index])
+        if parsed is None:
+            continue
+        total_bytes += parsed
+        saw_size = True
+
+    if not saw_size:
+        return TableStats(size_bytes=None, size_display="—")
+    return TableStats(size_bytes=total_bytes, size_display=format_data_size(total_bytes))
+
+
+async def table_stats(full_table: str) -> TableStats:
+    _require_full_table(full_table)
+    output = await query(f"SHOW TABLE STATS {full_table};")
+    return parse_table_stats_output(output)
+
+
+async def iter_table_sizes(
+    schema: str, table_names: list[str]
+) -> AsyncIterator[tuple[str, TableStats]]:
+    """Yield ``(table_name, stats)`` one ``SHOW TABLE STATS`` query at a time.
+
+    The Impala coordinators cap parallel queries per user at two. Fetching
+    sizes strictly serially deliberately occupies at most one slot, leaving
+    the other free for interactive work (DESCRIBE, DROP, job launches) while
+    sizes trickle in. A table whose stats query fails yields unknown stats
+    rather than aborting the remaining tables.
+    """
+    for table_name in table_names:
+        full_table = table_name if "." in table_name else f"{schema}.{table_name}"
+        try:
+            stats = await table_stats(full_table)
+        except Exception:
+            stats = TableStats(size_bytes=None, size_display="—")
+        yield table_name, stats
 
 
 def _require_full_table(full_table: str) -> None:

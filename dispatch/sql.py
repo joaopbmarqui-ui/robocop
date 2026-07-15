@@ -20,6 +20,38 @@ def validate_identifier(value: str, label: str) -> str | None:
     return None
 
 
+def eid_table_prefix(eid: str) -> str:
+    """Return the fixed ``EID_`` prefix for user-owned table names."""
+    return f"{eid}_"
+
+
+def split_eid_table_suffix(full_or_suffix: str, eid: str) -> str:
+    """Return the editable suffix from a full ``EID_suffix`` or bare suffix."""
+    prefix = eid_table_prefix(eid)
+    if full_or_suffix.startswith(prefix):
+        return full_or_suffix[len(prefix) :]
+    return full_or_suffix
+
+
+def join_eid_table_name(eid: str, suffix: str) -> str:
+    """Build the full table name ``EID_suffix``."""
+    return f"{eid_table_prefix(eid)}{suffix.strip()}"
+
+
+def validate_eid_table_name(full: str, eid: str, label: str = "Table name") -> str | None:
+    """Return an error unless ``full`` is ``EID_suffix`` for the logged-in user."""
+    prefix = eid_table_prefix(eid)
+    if not full.startswith(prefix):
+        return f"{label} must start with {prefix}"
+    suffix = full[len(prefix) :]
+    if not suffix:
+        return f"{label} requires a suffix after {prefix}"
+    suffix_error = validate_identifier(suffix, f"{label} suffix")
+    if suffix_error:
+        return suffix_error
+    return validate_identifier(full, label)
+
+
 def validate_full_table(value: str, label: str = "table") -> str | None:
     """Return a clear error unless ``value`` is exactly ``schema.table``."""
     if not FULL_TABLE_RE.fullmatch(value):

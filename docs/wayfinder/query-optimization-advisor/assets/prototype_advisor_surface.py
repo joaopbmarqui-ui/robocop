@@ -25,11 +25,12 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-import dispatch
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen, Screen
 from textual.widgets import Button, Footer, Header, RichLog, Static
+
+import dispatch
 
 sys.path.insert(0, str(Path(dispatch.__file__).resolve().parents[1]))
 
@@ -124,7 +125,11 @@ def finding_lines(finding: Finding) -> str:
 class LaunchGateModal(ModalScreen[bool]):
     """Enforcement policy surface: errors pause on explicit proceed/cancel."""
 
-    BINDINGS = [("y", "proceed", "Launch anyway"), ("n", "cancel", "Cancel"), ("escape", "cancel", "Cancel")]
+    BINDINGS = [
+        ("y", "proceed", "Launch anyway"),
+        ("n", "cancel", "Cancel"),
+        ("escape", "cancel", "Cancel"),
+    ]
 
     def __init__(self, errors: list[Finding]) -> None:
         super().__init__()
@@ -135,7 +140,8 @@ class LaunchGateModal(ModalScreen[bool]):
             yield Static("[bold red]Advisor found error findings[/]", id="confirm-title")
             body = "\n\n".join(finding_lines(f) for f in self.errors)
             yield Static(
-                body + "\n\n[dim]The SQL launches exactly as written \u2014 Dispatch never rewrites it.[/]",
+                body
+                + "\n\n[dim]The SQL launches exactly as written \u2014 Dispatch never rewrites it.[/]",
                 id="confirm-body",
             )
             yield Static(
@@ -226,11 +232,17 @@ class NewJobProtoScreen(Screen[None]):
         yield Header(show_clock=False)
         with Vertical(id="main-content"):
             with Vertical(id="new-job-content"):
-                yield Static("[bold]New Job[/] [dim](prototype \u2014 keys 1/2/3 switch mock findings)[/]", classes="section-title")
+                yield Static(
+                    "[bold]New Job[/] [dim](prototype \u2014 keys 1/2/3 switch mock findings)[/]",
+                    classes="section-title",
+                )
                 yield Static("Source: [bold]SqlFile[/]   Destination: [bold]Table[/]")
                 yield Static("SQL File: monthly_pull.sql   Schema: aa_enc   Table: dispatch_result")
                 yield Static("")
-                yield Static("[green]\u2713[/] SQL file exists  [green]\u2713[/] Email  [green]\u2713[/] Kerberos", id="warning-text")
+                yield Static(
+                    "[green]\u2713[/] SQL file exists  [green]\u2713[/] Email  [green]\u2713[/] Kerberos",
+                    id="warning-text",
+                )
             with Horizontal(classes="action-bar"):
                 yield Static("", id="validation-summary", classes="action-status")
                 yield Button("Preview SQL [P]", id="preview", variant="default")

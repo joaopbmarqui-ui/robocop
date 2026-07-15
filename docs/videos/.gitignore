@@ -1,0 +1,7 @@
+# Recorder outputs are generated artifacts and stay untracked (AGENTS.md).
+clips/
+frames-pr7-eid-table-name-prefix/
+*.svg
+*.png
+*.mp4
+*.gif

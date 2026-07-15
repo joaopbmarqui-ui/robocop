@@ -212,6 +212,37 @@ def test_each_declared_fatal_error_is_pinned(category: str) -> None:
     assert category in _common.FATAL_ERRORS
 
 
+DEFAULT_POOLS = ["adhoc_fast", "acs_small", "adhoc_small", "acs_large", "adhoc"]
+
+
+def test_resolve_pools_defaults_when_env_unset(monkeypatch) -> None:
+    monkeypatch.delenv("DISPATCH_REQUEST_POOL", raising=False)
+    assert _common.resolve_pools(DEFAULT_POOLS) == DEFAULT_POOLS
+
+
+def test_resolve_pools_defaults_when_env_blank(monkeypatch) -> None:
+    monkeypatch.setenv("DISPATCH_REQUEST_POOL", "   ")
+    assert _common.resolve_pools(DEFAULT_POOLS) == DEFAULT_POOLS
+
+
+def test_resolve_pools_pins_single_selected_queue(monkeypatch) -> None:
+    monkeypatch.setenv("DISPATCH_REQUEST_POOL", "acs_large")
+    assert _common.resolve_pools(DEFAULT_POOLS) == ["acs_large"]
+
+
+def test_resolve_pools_parses_comma_separated_list(monkeypatch) -> None:
+    monkeypatch.setenv("DISPATCH_REQUEST_POOL", " adhoc_fast , adhoc ")
+    assert _common.resolve_pools(DEFAULT_POOLS) == ["adhoc_fast", "adhoc"]
+
+
+def test_resolve_pools_does_not_mutate_default(monkeypatch) -> None:
+    monkeypatch.delenv("DISPATCH_REQUEST_POOL", raising=False)
+    default = ["adhoc_fast", "adhoc"]
+    result = _common.resolve_pools(default)
+    result.append("mutated")
+    assert default == ["adhoc_fast", "adhoc"]
+
+
 def test_cycle_through_pools_propagates_unexpected_operation_errors(monkeypatch) -> None:
     failures: list[int] = []
     sleeps: list[int] = []

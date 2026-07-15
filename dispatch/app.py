@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from textual.app import App, SystemCommand
 from textual.reactive import reactive
 
-from . import config, kerberos, process, setup_logging, telemetry
+from . import config, kerberos, process, runtime, setup_logging, telemetry
 
 if TYPE_CHECKING:
     from textual.screen import Screen
@@ -22,6 +22,7 @@ from .screens.dashboard import DashboardScreen
 from .screens.help import HelpScreen
 from .screens.history import HistoryScreen
 from .screens.job_detail import JobDetailScreen
+from .screens.kerberos_login import KerberosLoginScreen
 from .screens.new_job import NewJobScreen
 from .screens.sidebar import NavItem
 from .version import __version__
@@ -95,6 +96,12 @@ class DispatchApp(App[None]):
             )
 
         self._check_terminal_size()
+        self.run_worker(self._startup_flow(), name="startup-flow", exclusive=True)
+
+    async def _startup_flow(self) -> None:
+        if not await self._ensure_kerberos_for_jupyter():
+            self.exit()
+            return
         telemetry.note_session_start(cwd=self.launch_cwd)
         telemetry.note_screen_view("overview")
         self.push_screen(DashboardScreen())
@@ -127,6 +134,23 @@ class DispatchApp(App[None]):
 
     def on_resize(self) -> None:
         self._check_terminal_size()
+
+    async def _ensure_kerberos_for_jupyter(self) -> bool:
+        """Gate startup in Jupyter until Kerberos can outlast a job launch.
+
+        Uses the launch threshold rather than a bare ``klist -s`` so a
+        nearly-expired ticket triggers the sign-in modal here instead of an
+        unexplained launch-time refusal minutes later.
+        """
+        if not runtime.is_jupyter_notebook():
+            return True
+        ttl = await kerberos.ticket_ttl_seconds()
+        if ttl is not None and ttl >= kerberos.MIN_LAUNCH_TTL_SECONDS:
+            return True
+        authenticated = await self.push_screen_wait(KerberosLoginScreen())
+        if not authenticated:
+            self.notify("Kerberos sign-in is required to use Dispatch.", severity="error")
+        return bool(authenticated)
 
     def _check_terminal_size(self) -> None:
         too_small = self.size.width < MIN_WIDTH or self.size.height < MIN_HEIGHT

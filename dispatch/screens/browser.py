@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import asyncio
-
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, DataTable, Footer, Header, Input, Static
+from textual.widgets.data_table import CellDoesNotExist, ColumnKey
 from textual.worker import Worker
 
 from .. import impala
@@ -16,6 +15,10 @@ from .confirm import ConfirmScreen
 from .sidebar import Sidebar
 
 NO_TABLES_PLACEHOLDER = "(no tables)"
+CHECKED_MARKER = "[x]"
+UNCHECKED_MARKER = "[ ]"
+SIZE_PENDING = "…"
+SIZE_UNKNOWN = "—"
 
 
 class BrowserScreen(Screen[None]):
@@ -25,15 +28,26 @@ class BrowserScreen(Screen[None]):
         ("enter", "describe", "Describe"),
         ("d", "drop", "Drop"),
         ("s", "show_tables", "Load Tables"),
+        ("o", "cycle_sort", "Sort"),
+        ("a", "select_all", "Select All"),
+        ("space", "toggle_check", "Toggle"),
         Binding("j", "cursor_down", "Down", show=False),
         Binding("k", "cursor_up", "Up", show=False),
     ]
+
+    SORT_MODES = ("name", "size")
 
     def __init__(self, *, auto_load: bool = True) -> None:
         super().__init__()
         self._auto_load = auto_load
         self._tables: list[str] = []
+        self._table_rows: list[dict[str, object]] = []
+        self._sort_mode = "name"
+        self._sort_reverse = False
+        self._checked: set[str] = set()
         self._describe_text: str = ""
+        self._sizes_loading = False
+        self._size_column_key: ColumnKey | None = None
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
@@ -46,13 +60,27 @@ class BrowserScreen(Screen[None]):
 
                 with Horizontal(id="browser-split"):
                     with Vertical(id="browser-left"):
-                        yield Static("[dim]Schema \u00b7 table filter[/]", classes="input-caption")
                         with Horizontal(id="browser-query-row"):
-                            yield Input(value="aa_enc", placeholder="Schema", id="schema")
-                            yield Input(
-                                value="*", placeholder="Filter (e.g. dispatch_*)", id="filter"
-                            )
+                            with Vertical(classes="browser-field"):
+                                yield Static("Schema", classes="field-label")
+                                yield Input(value="aa_enc", placeholder="Schema", id="schema")
+                            with Vertical(classes="browser-field", id="browser-filter-field"):
+                                with Horizontal(classes="browser-field-header"):
+                                    yield Static("Table name", classes="field-label")
+                                    yield Static(
+                                        "type firstword* and load",
+                                        classes="field-hint",
+                                    )
+                                yield Input(
+                                    value="*",
+                                    placeholder="Filter (e.g. dispatch_*)",
+                                    id="filter",
+                                )
                             yield Button("Load Tables [S]", id="show", variant="default")
+                        with Horizontal(id="browser-select-row"):
+                            yield Button("Select All [A]", id="select-all", variant="default")
+                            yield Static("", id="browser-selection-count")
+                        yield Static("[dim]Sorted by: name \u2191[/]", id="browser-sort-indicator")
                         yield DataTable(id="browser-table")
                         with Horizontal(id="browser-status"):
                             yield Static("", id="browser-selected")
@@ -76,7 +104,8 @@ class BrowserScreen(Screen[None]):
 
     async def on_mount(self) -> None:
         table = self.query_one("#browser-table", DataTable)
-        table.add_columns("Name", "Type")
+        column_keys = table.add_columns("Sel", "Name", "Type", "Size")
+        self._size_column_key = column_keys[3]
         table.cursor_type = "row"
         describe_table = self.query_one("#describe-table", DataTable)
         describe_table.add_columns("Column", "Type", "Comment")
@@ -121,36 +150,50 @@ class BrowserScreen(Screen[None]):
     def _schema(self) -> str:
         return self.query_one("#schema", Input).value.strip()
 
+    def _qualify_table(self, name: str) -> str:
+        if not name or name == NO_TABLES_PLACEHOLDER:
+            return ""
+        return name if "." in name else f"{self._schema()}.{name}"
+
     def _selected_table(self) -> str:
         table_widget = self.query_one("#browser-table", DataTable)
         try:
             row_key = table_widget.get_row_at(table_widget.cursor_row)
-            return str(row_key[0])
+            return str(row_key[1])
         except Exception:
             return ""
 
     def _full_table(self) -> str:
-        selected = self._selected_table()
-        # The empty-schema placeholder row is not a real table; never qualify or
-        # act on it, otherwise DESCRIBE/DROP would target "schema.(no tables)".
-        if not selected or selected == NO_TABLES_PLACEHOLDER:
-            return ""
-        return selected if "." in selected else f"{self._schema()}.{selected}"
+        return self._qualify_table(self._selected_table())
+
+    def _checked_full_tables(self) -> list[str]:
+        return sorted(self._qualify_table(name) for name in self._checked if name in self._tables)
+
+    def _check_marker(self, name: str) -> str:
+        return CHECKED_MARKER if name in self._checked else UNCHECKED_MARKER
+
+    def _update_selection_status(self) -> None:
+        count = len(self._checked)
+        if count:
+            text = f"[dim]{count} selected for drop[/]"
+        else:
+            text = "[dim]Space toggles selection · Select All marks every loaded table[/]"
+        self.query_one("#browser-selection-count", Static).update(text)
 
     def _update_action_state(self) -> None:
-        """Enable/disable DESCRIBE and DROP based on whether a real table is selected.
-
-        When a schema has no tables the list shows a single ``(no tables)``
-        placeholder row; actions must stay disabled so DESCRIBE/DROP are never
-        run against the placeholder.
-        """
-        has_selection = bool(self._full_table())
-        self.query_one("#describe", Button).disabled = not has_selection
-        self.query_one("#drop", Button).disabled = not has_selection
+        """Enable/disable DESCRIBE and DROP based on cursor and checked rows."""
+        has_cursor = bool(self._full_table())
+        has_checked = bool(self._checked_full_tables())
+        self.query_one("#describe", Button).disabled = not has_cursor
+        self.query_one("#drop", Button).disabled = not has_checked
+        self.query_one("#select-all", Button).disabled = not self._tables
+        self._update_selection_status()
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "show":
             await self.action_show_tables()
+        elif event.button.id == "select-all":
+            self.action_select_all()
         elif event.button.id == "describe":
             await self.action_describe()
         elif event.button.id == "drop":
@@ -158,7 +201,43 @@ class BrowserScreen(Screen[None]):
         elif event.button.id == "back":
             self.app.pop_screen()
 
+    @staticmethod
+    def _table_short_name(table_name: str) -> str:
+        return table_name.rsplit(".", 1)[-1]
+
+    def _rebuild_table_rows(self) -> None:
+        """Rebuild the backing row model for the current ``self._tables``.
+
+        Sizes start as pending placeholders; the background size worker fills
+        them in one query at a time (see ``_load_table_sizes``).
+        """
+        self._table_rows = []
+        for name in self._tables:
+            self._table_rows.append(
+                {
+                    "name": name,
+                    "type": "table",
+                    "size_display": SIZE_PENDING,
+                    "size_bytes": None,
+                }
+            )
+
+    def _remove_dropped_tables_from_list(self, dropped_full_names: list[str]) -> None:
+        """Remove dropped tables from the visible list without waiting on Impala."""
+        if not dropped_full_names:
+            return
+        dropped_names = {
+            name
+            for full_name in dropped_full_names
+            for name in (full_name, self._table_short_name(full_name))
+        }
+        self._tables = [name for name in self._tables if name not in dropped_names]
+        self._table_rows = [row for row in self._table_rows if row.get("name") not in dropped_names]
+        self._render_table_list()
+        self._update_action_state()
+
     async def action_show_tables(self, *, describe_selection: bool = True) -> None:
+        selected_before = self._selected_table()
         self._show_table_list_message("Loading tables…", severity="dim")
         try:
             schema = self._schema()
@@ -169,18 +248,128 @@ class BrowserScreen(Screen[None]):
             self.notify(f"SHOW TABLES failed: {exc}", severity="error")
             return
 
-        table = self.query_one("#browser-table", DataTable)
-        table.clear()
-        for name in self._tables:
-            table.add_row(name, "table")
-        self.query_one("#browser-count", Static).update(f"[dim]{len(self._tables)} tables[/]")
+        self._checked.intersection_update(self._tables)
+        self._rebuild_table_rows()
+
+        self._render_table_list(
+            selected_before=self._tables[0]
+            if describe_selection and self._tables
+            else selected_before
+        )
         if not self._tables:
-            table.add_row(NO_TABLES_PLACEHOLDER, "")
+            self._checked.clear()
             self._show_detail_placeholder()
         elif describe_selection:
-            table.cursor_coordinate = (0, 0)
             await self.action_describe()
         self._update_action_state()
+        self._start_size_fetch()
+
+    def _start_size_fetch(self) -> None:
+        """Fill the Size column in the background without blocking the list.
+
+        ``exclusive=True`` cancels any fetch still running from a previous
+        load, so at most one size query is ever in flight for this screen.
+        """
+        if not self._tables:
+            self._sizes_loading = False
+            return
+        names = [str(row["name"]) for row in self._sorted_rows()]
+        self._sizes_loading = True
+        self._update_sort_indicator()
+        # Exclusivity is scoped by group; keep this worker out of the default
+        # group so it never cancels (or is cancelled by) the drop flow.
+        self.run_worker(
+            self._load_table_sizes(names),
+            name="table-sizes",
+            group="table-sizes",
+            exclusive=True,
+        )
+
+    async def _load_table_sizes(self, names: list[str]) -> None:
+        """Fetch sizes serially in display order, updating cells in place."""
+        rows_by_name = {str(row["name"]): row for row in self._table_rows}
+        async for name, stats in impala.iter_table_sizes(self._schema(), names):
+            row = rows_by_name.get(name)
+            if row is None or row not in self._table_rows:
+                # The table was dropped or the list rebuilt while this fetch
+                # was in flight; skip the stale result.
+                continue
+            row["size_display"] = stats.size_display
+            row["size_bytes"] = stats.size_bytes
+            self._update_size_cell(name, stats.size_display)
+        self._sizes_loading = False
+        self._update_sort_indicator()
+        if self._sort_mode == "size" and self._table_rows:
+            self._render_table_list(selected_before=self._selected_table())
+
+    def _update_size_cell(self, name: str, size_display: str) -> None:
+        table = self.query_one("#browser-table", DataTable)
+        if self._size_column_key is None:
+            return
+        try:
+            table.update_cell(name, self._size_column_key, size_display, update_width=True)
+        except CellDoesNotExist:
+            pass
+
+    def _sorted_rows(self) -> list[dict[str, object]]:
+        rows = list(self._table_rows)
+        rows.sort(key=self._sort_key, reverse=self._sort_reverse)
+        return rows
+
+    def _update_sort_indicator(self) -> None:
+        # Size mode lists the largest table first when not reversed, so the
+        # arrow must reflect the direction actually shown, not _sort_reverse.
+        ascending = self._sort_reverse if self._sort_mode == "size" else not self._sort_reverse
+        arrow = "\u2191" if ascending else "\u2193"
+        suffix = " \u00b7 sizes loading\u2026" if self._sizes_loading else ""
+        self.query_one("#browser-sort-indicator", Static).update(
+            f"[dim]Sorted by: {self._sort_mode} {arrow}{suffix}[/]"
+        )
+
+    def _render_table_list(self, *, selected_before: str = "") -> None:
+        rows = self._sorted_rows()
+
+        table = self.query_one("#browser-table", DataTable)
+        table.clear()
+
+        self.query_one("#browser-count", Static).update(f"[dim]{len(self._tables)} tables[/]")
+        self._update_sort_indicator()
+
+        if not self._tables:
+            table.add_row(UNCHECKED_MARKER, NO_TABLES_PLACEHOLDER, "", SIZE_UNKNOWN)
+            table.cursor_coordinate = (0, 0)
+            return
+
+        selected_row = 0
+        for index, row in enumerate(rows):
+            name = str(row["name"])
+            table.add_row(
+                self._check_marker(name),
+                name,
+                row["type"],
+                row["size_display"],
+                key=name,
+            )
+            if selected_before and name == selected_before:
+                selected_row = index
+        table.cursor_coordinate = (selected_row, 0)
+
+    def _sort_key(self, row: dict[str, object]) -> tuple[object, ...]:
+        if self._sort_mode == "size":
+            size_bytes = row.get("size_bytes")
+            missing = size_bytes is None
+            return (missing, -(size_bytes or 0), str(row.get("name", "")).lower())
+        return (str(row.get("name", "")).lower(),)
+
+    def action_cycle_sort(self) -> None:
+        idx = self.SORT_MODES.index(self._sort_mode)
+        next_idx = (idx + 1) % len(self.SORT_MODES)
+        if next_idx == 0:
+            self._sort_reverse = not self._sort_reverse
+        self._sort_mode = self.SORT_MODES[next_idx]
+        if self._table_rows:
+            self._render_table_list(selected_before=self._selected_table())
+            self._update_action_state()
 
     async def action_describe(self) -> None:
         full = self._full_table()
@@ -251,47 +440,105 @@ class BrowserScreen(Screen[None]):
         if self.query_one("#browser-table", DataTable).has_focus:
             self.query_one("#browser-table", DataTable).action_cursor_up()
 
+    def action_toggle_check(self) -> None:
+        name = self._selected_table()
+        if not name or name == NO_TABLES_PLACEHOLDER:
+            return
+        if name in self._checked:
+            self._checked.remove(name)
+        else:
+            self._checked.add(name)
+        self._render_table_list(selected_before=name)
+        self._update_action_state()
+
+    def action_select_all(self) -> None:
+        if not self._tables:
+            return
+        if len(self._checked) == len(self._tables):
+            self._checked.clear()
+        else:
+            self._checked = set(self._tables)
+        cursor_name = self._selected_table()
+        self._render_table_list(selected_before=cursor_name if cursor_name in self._tables else "")
+        self._update_action_state()
+
     def action_drop(self) -> Worker[None]:
         """Run the confirm-and-drop flow in a worker (see NewJobScreen.action_launch)."""
-        return self.run_worker(self._drop_flow(), name="drop-flow", exclusive=True)
+        return self.run_worker(
+            self._drop_flow(), name="drop-flow", group="drop-flow", exclusive=True
+        )
 
     async def _drop_flow(self) -> None:
-        full = self._full_table()
-        if not full:
+        tables = self._checked_full_tables()
+        if not tables:
+            self.notify("Select one or more tables to drop.", severity="warning")
             return
 
-        confirmed = await self._confirm_drop(full)
+        confirmed = await self._confirm_drop(tables)
         if not confirmed:
             return
-        try:
-            result = await impala.drop_table(full)
-            self.notify(f"Dropped {full}", severity="information")
+
+        short_names_by_full = {self._qualify_table(name): name for name in self._tables}
+        dropped: list[str] = []
+        errors: list[str] = []
+        for full in tables:
+            try:
+                await impala.drop_table(full)
+                dropped.append(full)
+                short_name = short_names_by_full.get(full)
+                if short_name:
+                    self._checked.discard(short_name)
+            except Exception as exc:
+                errors.append(f"{full}: {exc}")
+
+        if dropped:
+            self.notify(
+                f"Dropped {len(dropped)} table(s): {', '.join(dropped)}",
+                severity="information",
+            )
+        if errors:
+            self.notify(f"DROP failed for {len(errors)} table(s).", severity="error")
+
+        # Optimistically remove dropped tables and re-sync with Impala (PR #9).
+        if dropped:
+            await self._refresh_after_successful_drop(dropped)
+        else:
             await self.action_show_tables(describe_selection=False)
-            self._show_detail_message(result, severity="success")
-        except Exception as exc:
-            self._show_detail_message(str(exc), severity="error")
-            self.notify(f"DROP failed: {exc}", severity="error")
 
-    async def _confirm_drop(self, full_table: str) -> bool:
-        loop_future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()
+        if errors and not dropped:
+            self._show_detail_message("\n".join(errors), severity="error")
+        elif errors:
+            summary = "Dropped:\n" + "\n".join(f"  • {name}" for name in dropped)
+            summary += "\n\nFailed:\n" + "\n".join(f"  • {msg}" for msg in errors)
+            self._show_detail_message(summary, severity="error")
+        elif dropped:
+            summary = "Dropped:\n" + "\n".join(f"  • {name}" for name in dropped)
+            self._show_detail_message(summary, severity="success")
 
-        def on_result(result: bool | None) -> None:
-            if not loop_future.done():
-                loop_future.set_result(bool(result))
+    async def _refresh_after_successful_drop(self, dropped_full_names: list[str]) -> None:
+        """Refresh the Browse table list after DROP succeeds."""
+        self._remove_dropped_tables_from_list(dropped_full_names)
+        await self.action_show_tables(describe_selection=False)
 
-        self.app.push_screen(
+    async def _confirm_drop(self, full_tables: list[str]) -> bool:
+        table_lines = "\n".join(f"  • [cyan]{name}[/]" for name in full_tables)
+        count = len(full_tables)
+        title = "DROP TABLE" if count == 1 else f"DROP {count} TABLES"
+        body = (
+            f"Drop the following table{'s' if count != 1 else ''}?\n\n"
+            f"{table_lines}\n\n"
+            "[red]This cannot be undone.[/]\n"
+            "Type I AM SURE, then DROP to confirm."
+        )
+        result = await self.app.push_screen_wait(
             ConfirmScreen(
-                "DROP TABLE",
-                (
-                    f"Drop [cyan]{full_table}[/]?\n\n"
-                    "[red]This cannot be undone.[/]\n"
-                    "Type the full table name to confirm."
-                ),
+                title,
+                body,
                 danger=True,
                 confirm_label="Drop",
-                cancel_label="Keep Table",
-                required_confirmation_text=full_table,
-            ),
-            callback=on_result,
+                cancel_label="Keep Table" if count == 1 else "Keep Tables",
+                required_confirmation_text="I AM SURE",
+                secondary_confirmation_text="DROP",
+            )
         )
-        return await loop_future
+        return bool(result)

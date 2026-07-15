@@ -373,7 +373,7 @@ def test_new_job_matrix_shows_legal_cells_and_toggles(mock_env_with_config, tmp_
                 "[green]\u2713[/]",
             ]
             assert matrix.get_row_at(1) == [
-                "SqlTemplate",
+                "MonthlyJob",
                 "[green]\u2713[/]",
                 "[dim]\u2014[/]",
                 "[dim]\u2014[/]",

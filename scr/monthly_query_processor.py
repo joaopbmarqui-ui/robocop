@@ -9,7 +9,7 @@ import calendar
 # Assumes Query_Impala_Parametrized.py is in the same directory on the remote server.
 try:
     from Query_Impala_Parametrized import run_on_impala
-    from _common import cycle_through_pools, send_email, validate_identifier
+    from _common import cycle_through_pools, resolve_pools, send_email, validate_identifier
 except ImportError:
     logging.error("Fatal Error: Could not import functions from Query_Impala_Parametrized.py.")
     sys.exit(1)
@@ -50,7 +50,7 @@ def execute_step_with_retry(query: str, operation_desc: str, args):
     lands on a different local-catalog coordinator than the temp table creates.
     """
     logging.info(f"--- Starting Step: {operation_desc} ---")
-    filas = ["adhoc_fast", "adhoc_small", "acs_small", "acs_large", "adhoc"]
+    filas = resolve_pools(["adhoc_fast", "adhoc_small", "acs_small", "acs_large", "adhoc"])
     def operation(fila):
         full_query = f"set request_pool={fila}; {query}"
         step_subject = f"{args.subject} - Step: {operation_desc}"

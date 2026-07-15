@@ -97,7 +97,9 @@ def test_new_job_badge_shows_error_counts(mock_env_with_config, tmp_path, monkey
     asyncio.run(run())
 
 
-def test_table_name_edit_reuses_sql_analysis(mock_env_with_config, tmp_path, monkeypatch) -> None:
+def test_table_name_suffix_edit_reuses_sql_analysis(
+    mock_env_with_config, tmp_path, monkeypatch
+) -> None:
     monkeypatch.setenv("USER", "alice")
     sql_path = tmp_path / "cached.sql"
     sql_path.write_text(
@@ -123,12 +125,12 @@ def test_table_name_edit_reuses_sql_analysis(mock_env_with_config, tmp_path, mon
             initial_parse_calls = parse_calls
             assert initial_parse_calls > 0
 
-            screen.query_one("#table-name", Input).value = "shared_result"
+            screen.query_one("#table-name-suffix", Input).value = "shared_result"
             await pilot.pause(0.4)
 
             assert parse_calls == initial_parse_calls
             summary = str(screen.query_one("#validation-summary", Static).render())
-            assert "Advisor: warning" in summary
+            assert "Advisor: clean" in summary
 
     asyncio.run(run())
 

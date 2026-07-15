@@ -16,20 +16,18 @@ import sys
 import tempfile
 from pathlib import Path
 
-
 WORKSPACE = Path(__file__).resolve().parents[1]
 if str(WORKSPACE) not in sys.path:
     sys.path.insert(0, str(WORKSPACE))
 
-from dispatch import impala, manifest
-from dispatch.app import DispatchApp
-from dispatch.screens.browser import BrowserScreen
-from dispatch.screens.help import HelpScreen
-from dispatch.screens.history import HistoryScreen
-from dispatch.screens.job_detail import JobDetailScreen
-from dispatch.screens.new_job import NewJobScreen
-from dispatch.screens.preview import PreviewScreen
-
+from dispatch import impala, manifest  # noqa: E402
+from dispatch.app import DispatchApp  # noqa: E402
+from dispatch.screens.browser import BrowserScreen  # noqa: E402
+from dispatch.screens.help import HelpScreen  # noqa: E402
+from dispatch.screens.history import HistoryScreen  # noqa: E402
+from dispatch.screens.job_detail import JobDetailScreen  # noqa: E402
+from dispatch.screens.new_job import NewJobScreen  # noqa: E402
+from dispatch.screens.preview import PreviewScreen  # noqa: E402
 
 MOCKS_BIN = WORKSPACE / "mocks" / "bin"
 SCR_DIR = WORKSPACE / "scr"
@@ -66,9 +64,7 @@ class CaptureContext:
 
         sql_path = self.launch_dir / "query.sql"
         sql_path.write_text(
-            "SELECT id, amount\n"
-            "FROM payments\n"
-            "WHERE ds BETWEEN '2026-05-01' AND '2026-05-31';\n",
+            "SELECT id, amount\nFROM payments\nWHERE ds BETWEEN '2026-05-01' AND '2026-05-31';\n",
             encoding="utf-8",
         )
         self.seed_jobs(sql_path)
@@ -229,11 +225,7 @@ async def capture_browser_states() -> None:
         return ["dispatch_result", "dispatch_archive"]
 
     async def fake_describe_table(full_table: str) -> str:
-        return (
-            "id|string|primary key\n"
-            "amount|decimal(18,2)|gross amount\n"
-            "ds|string|partition key"
-        )
+        return "id|string|primary key\namount|decimal(18,2)|gross amount\nds|string|partition key"
 
     impala.show_tables = fake_show_tables
     impala.describe_table = fake_describe_table

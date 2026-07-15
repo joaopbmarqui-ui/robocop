@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
+
+_SIZE_RE = re.compile(
+    r"^\s*(-?\d+(?:\.\d+)?)\s*([KMGT]?B)\s*$",
+    re.IGNORECASE,
+)
+_SIZE_UNITS = ("B", "KB", "MB", "GB", "TB", "PB")
 
 
 def parse_utc_timestamp(value: str | None) -> datetime | None:
@@ -81,6 +88,43 @@ def style_log_line(line: str) -> str:
         idx = line.index("]") + 1
         return f"[dim]{line[:idx]}[/]{line[idx:]}"
     return line
+
+
+def parse_data_size(value: str) -> int | None:
+    """Parse Impala ``SHOW TABLE STATS`` size strings such as ``370.45MB``."""
+    match = _SIZE_RE.match(value.strip())
+    if not match:
+        return None
+    amount = float(match.group(1))
+    if amount < 0:
+        return None
+    unit = match.group(2).upper()
+    if unit == "B":
+        return int(amount)
+    try:
+        exponent = _SIZE_UNITS.index(unit)
+    except ValueError:
+        return None
+    return int(amount * (1024**exponent))
+
+
+def format_data_size(bytes_value: int | None) -> str:
+    """Format byte counts consistently for table lists (e.g. ``12.6 MB``)."""
+    if bytes_value is None:
+        return "—"
+    if bytes_value < 0:
+        return "—"
+    if bytes_value == 0:
+        return "0 B"
+    value = float(bytes_value)
+    unit_index = 0
+    while value >= 1024 and unit_index < len(_SIZE_UNITS) - 1:
+        value /= 1024
+        unit_index += 1
+    unit = _SIZE_UNITS[unit_index]
+    if unit_index == 0:
+        return f"{int(value)} {unit}"
+    return f"{value:.1f} {unit}"
 
 
 def format_kerberos_ttl(ttl_seconds: int | None) -> str:

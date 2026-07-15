@@ -219,6 +219,34 @@ async def test_ticket_ttl_returns_none_when_klist_times_out(monkeypatch) -> None
     assert await kerberos.ticket_ttl_seconds() is None
 
 
+def test_principal_for_eid_appends_realm(monkeypatch) -> None:
+    monkeypatch.setenv("DISPATCH_KRB5_REALM", "CORP.MASTERCARD.ORG")
+    assert kerberos.principal_for_eid("jdoe") == "jdoe@CORP.MASTERCARD.ORG"
+    assert kerberos.principal_for_eid("jdoe@OTHER.REALM") == "jdoe@OTHER.REALM"
+
+
+@pytest.mark.asyncio
+async def test_kinit_with_password_succeeds_with_mock_tools(mock_env, monkeypatch) -> None:
+    monkeypatch.setenv("DISPATCH_MOCK_KLIST_TTL", "0")
+    ok, message = await kerberos.kinit_with_password("testuser", "secret")
+    assert ok is True
+    assert message == ""
+    assert await kerberos.has_ticket() is True
+
+
+@pytest.mark.asyncio
+async def test_kinit_with_password_reports_failure_without_logging_password(
+    mock_env, monkeypatch, caplog
+) -> None:
+    monkeypatch.setenv("DISPATCH_MOCK_KLIST_TTL", "0")
+    monkeypatch.setenv("DISPATCH_MOCK_SCENARIO", "auth_error")
+    password = "super-secret-password"
+    ok, message = await kerberos.kinit_with_password("testuser", password)
+    assert ok is False
+    assert "Password incorrect" in message
+    assert password not in caplog.text
+
+
 # =============================================================================
 # manifest.validate and LEGAL_CELLS
 # =============================================================================

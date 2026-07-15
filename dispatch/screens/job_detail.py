@@ -441,6 +441,7 @@ class JobDetailScreen(Screen[None]):
             "dest_type": dest.get("type", "Table"),
             "email": params.get("to_email", ""),
             "subject": params.get("subject", "Dispatch Job"),
+            "queue": params.get("queue", ""),
             "start_date": sql.from_orchestrator_date(params.get("start_date", "")),
             "end_date": sql.from_orchestrator_date(params.get("end_date", "")),
         }

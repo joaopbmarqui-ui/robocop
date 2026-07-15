@@ -62,6 +62,19 @@ LEGAL_CELLS: set[tuple[SourceType, DestinationType]] = {
     ("ExistingTable", "Csv"),
 }
 
+SOURCE_DISPLAY_LABELS: dict[SourceType, str] = {
+    "SqlFile": "SqlFile",
+    "SqlTemplate": "MonthlyJob",
+    "ExistingTable": "ExistingTable",
+}
+
+
+def source_display_label(source_type: SourceType | str) -> str:
+    """User-facing source name for the New Job flow (internal types unchanged)."""
+    if source_type in SOURCE_DISPLAY_LABELS:
+        return SOURCE_DISPLAY_LABELS[source_type]
+    return str(source_type)
+
 
 def now_utc() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

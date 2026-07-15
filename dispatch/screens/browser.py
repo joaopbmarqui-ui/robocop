@@ -317,7 +317,10 @@ class BrowserScreen(Screen[None]):
         return rows
 
     def _update_sort_indicator(self) -> None:
-        arrow = "\u2193" if self._sort_reverse else "\u2191"
+        # Size mode lists the largest table first when not reversed, so the
+        # arrow must reflect the direction actually shown, not _sort_reverse.
+        ascending = self._sort_reverse if self._sort_mode == "size" else not self._sort_reverse
+        arrow = "\u2191" if ascending else "\u2193"
         suffix = " \u00b7 sizes loading\u2026" if self._sizes_loading else ""
         self.query_one("#browser-sort-indicator", Static).update(
             f"[dim]Sorted by: {self._sort_mode} {arrow}{suffix}[/]"

@@ -520,6 +520,9 @@ def test_browser_sorts_by_table_size(mock_env_with_config, monkeypatch) -> None:
             assert table.get_row_at(0)[1] == "dispatch_zulu"
             assert table.get_row_at(1)[1] == "dispatch_alpha"
             assert table.get_row_at(0)[3] == "1.2 GB"
+            # Largest-first is a descending display, so the arrow points down.
+            indicator = str(screen.query_one("#browser-sort-indicator").render())
+            assert "Sorted by: size ↓" in indicator
 
     asyncio.run(run())
 

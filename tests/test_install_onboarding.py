@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import shutil
@@ -12,6 +11,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from bundle_helpers import make_bundle
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -32,7 +32,7 @@ def test_version_sources_agree() -> None:
 def make_install_root(tmp_path: Path) -> Path:
     root = tmp_path / "dispatch-root"
     (root / "bin").mkdir(parents=True)
-    for relative in ("install.sh", "shared_runtime.py", "bin/dispatch"):
+    for relative in ("install.sh", "shared_runtime.py", "bin/dispatch", "bin/runtime_check.sh"):
         source = ROOT / relative
         target = root / relative
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -41,44 +41,28 @@ def make_install_root(tmp_path: Path) -> Path:
     return root
 
 
-def make_bundle(tmp_path: Path, requirements: bytes = b"demo==1.0\n") -> tuple[Path, str]:
-    bundle = tmp_path / f"bundle-{hashlib.sha256(requirements).hexdigest()[:8]}"
-    (bundle / "requirements").mkdir(parents=True)
-    (bundle / "wheels").mkdir()
-    wheel = b"offline-wheel"
-    (bundle / "requirements" / "requirements.txt").write_bytes(requirements)
-    (bundle / "wheels" / "demo.whl").write_bytes(wheel)
-    files = []
-    for relative, content, kind in (
-        ("requirements/requirements.txt", requirements, "dependency"),
-        ("wheels/demo.whl", wheel, "wheel"),
-    ):
-        files.append(
-            {
-                "path": relative,
-                "sha256": hashlib.sha256(content).hexdigest(),
-                "size": len(content),
-                "kind": kind,
-            }
-        )
-    identity = {
-        "schema": "edge-deploy/dependency-bundle/1",
-        "tool": "robocop",
-        "source_sha": "a" * 40,
-        "target": {
-            "python": "3.10",
-            "implementation": "cp",
-            "abi": "cp310",
-            "platform": "manylinux2014_x86_64",
+def make_install_bundle(
+    tmp_path: Path, requirements: bytes = b"demo==1.0\n", *, target_python: str = "3.10"
+) -> tuple[Path, str]:
+    return make_bundle(
+        tmp_path,
+        {
+            "requirements/requirements.txt": requirements,
+            "wheels/demo.whl": b"offline-wheel",
         },
-        "files": files,
-    }
-    canonical = (json.dumps(identity, sort_keys=True, separators=(",", ":")) + "\n").encode()
-    digest = hashlib.sha256(canonical).hexdigest()
-    (bundle / "manifest.json").write_text(
-        json.dumps({**identity, "bundle_digest": digest}), encoding="utf-8"
+        target_python=target_python,
     )
-    return bundle, digest
+
+
+def make_edge_tools(tmp_path: Path) -> Path:
+    """Provide the mock klist/impala-shell binaries onboarding preflights."""
+    tools = tmp_path / "edge-tools"
+    tools.mkdir(exist_ok=True)
+    for name in ("klist", "impala-shell"):
+        tool = tools / name
+        tool.write_text("#!/usr/bin/env sh\nexit 0\n", encoding="utf-8")
+        tool.chmod(0o755)
+    return tools
 
 
 def make_approved_python(tmp_path: Path) -> Path:
@@ -139,7 +123,7 @@ def test_release_install_builds_offline_runtime_without_user_state(tmp_path: Pat
     if shutil.which("sh") is None or os.name == "nt":
         pytest.skip("Linux install smoke requires POSIX executables and symlinks")
     root = make_install_root(tmp_path)
-    bundle, digest = make_bundle(tmp_path)
+    bundle, digest = make_install_bundle(tmp_path)
     calls = tmp_path / "runtime-calls"
     calls.touch()
     result = install_runtime(root, bundle, make_approved_python(tmp_path), calls)
@@ -162,12 +146,12 @@ def test_failed_release_install_preserves_active_runtime(tmp_path: Path) -> None
     if shutil.which("sh") is None or os.name == "nt":
         pytest.skip("Linux install smoke requires POSIX executables and symlinks")
     root = make_install_root(tmp_path)
-    first_bundle, first_digest = make_bundle(tmp_path, b"demo==1.0\n")
+    first_bundle, first_digest = make_install_bundle(tmp_path, b"demo==1.0\n")
     calls = tmp_path / "runtime-calls"
     calls.touch()
     approved = make_approved_python(tmp_path)
     assert install_runtime(root, first_bundle, approved, calls).returncode == 0
-    second_bundle, second_digest = make_bundle(tmp_path, b"demo==2.0\n")
+    second_bundle, second_digest = make_install_bundle(tmp_path, b"demo==2.0\n")
     (second_bundle / "wheels" / "demo.whl").write_bytes(b"tampered")
 
     result = install_runtime(root, second_bundle, approved, calls)
@@ -175,6 +159,24 @@ def test_failed_release_install_preserves_active_runtime(tmp_path: Path) -> None
     assert result.returncode != 0
     assert (root / ".venv" / "current").resolve().name == first_digest
     assert not (root / ".venv" / "releases" / second_digest / ".complete.json").exists()
+
+
+def test_release_install_rejects_interpreter_that_misses_bundle_target(tmp_path: Path) -> None:
+    if shutil.which("sh") is None or os.name == "nt":
+        pytest.skip("Linux install smoke requires POSIX executables and symlinks")
+    root = make_install_root(tmp_path)
+    # The fake approved interpreter reports 3.10.99; a 3.11 bundle must fail
+    # validation before pip runs, leaving no completion marker behind.
+    bundle, digest = make_install_bundle(tmp_path, b"demo==3.0\n", target_python="3.11")
+    calls = tmp_path / "runtime-calls"
+    calls.touch()
+
+    result = install_runtime(root, bundle, make_approved_python(tmp_path), calls)
+
+    assert result.returncode != 0
+    assert "targets Python 3.11" in result.stderr
+    assert "pip install" not in calls.read_text(encoding="utf-8")
+    assert not (root / ".venv" / "releases" / digest / ".complete.json").exists()
 
 
 def prepare_onboarding_root(tmp_path: Path) -> tuple[Path, Path]:
@@ -210,11 +212,19 @@ def prepare_onboarding_root(tmp_path: Path) -> tuple[Path, Path]:
 
 
 def run_onboarding(
-    root: Path, *, home: Path, data_root: Path, email: str, calls: Path
+    root: Path,
+    *,
+    home: Path,
+    data_root: Path,
+    email: str,
+    calls: Path,
+    edge_tools: Path | None = None,
 ) -> subprocess.CompletedProcess[str]:
     home.mkdir(exist_ok=True)
     data_root.mkdir(parents=True, exist_ok=True)
     calls.touch(exist_ok=True)
+    if edge_tools is None:
+        edge_tools = make_edge_tools(root.parent)
     env = os.environ.copy()
     env.update(
         {
@@ -223,6 +233,7 @@ def run_onboarding(
             "DISPATCH_DATA_ROOT": fake_path(data_root),
             "DISPATCH_EMAIL": email,
             "ONBOARD_CALLS": fake_path(calls),
+            "PATH": f"{fake_path(edge_tools)}{os.pathsep}{env.get('PATH', '')}",
         }
     )
     return subprocess.run(
@@ -329,6 +340,70 @@ def test_onboarding_fails_before_changing_state_when_runtime_is_missing(tmp_path
     assert result.returncode != 0
     assert "shared runtime is not active" in result.stderr
     assert not (data_root / ".dispatch").exists()
+
+
+def test_onboarding_fails_before_changing_state_when_klist_is_missing(tmp_path: Path) -> None:
+    if shutil.which("sh") is None:
+        pytest.skip("onboarding smoke requires sh")
+    if shutil.which("klist"):
+        pytest.skip("host provides klist; cannot simulate a missing edge tool")
+    root, _runtime = prepare_onboarding_root(tmp_path)
+    tools = tmp_path / "impala-only"
+    tools.mkdir()
+    shell_tool = tools / "impala-shell"
+    shell_tool.write_text("#!/usr/bin/env sh\nexit 0\n", encoding="utf-8")
+    shell_tool.chmod(0o755)
+    data_root = tmp_path / "ads_storage" / "alice"
+
+    result = run_onboarding(
+        root,
+        home=tmp_path / "home",
+        data_root=data_root,
+        email="alice@example.com",
+        calls=tmp_path / "onboard-calls",
+        edge_tools=tools,
+    )
+
+    assert result.returncode != 0
+    assert "klist not found on PATH" in result.stderr
+    assert not (data_root / ".dispatch").exists()
+
+
+def test_onboarded_user_runs_dispatch_help_through_shared_launcher(tmp_path: Path) -> None:
+    if shutil.which("sh") is None:
+        pytest.skip("onboarding smoke requires sh")
+    root, runtime = prepare_onboarding_root(tmp_path)
+    home = tmp_path / "home"
+    data_root = tmp_path / "ads_storage" / "alice"
+    calls = tmp_path / "onboard-calls"
+    result = run_onboarding(
+        root, home=home, data_root=data_root, email="alice@example.com", calls=calls
+    )
+    assert result.returncode == 0, result.stderr
+
+    # Swap the runtime interpreter for one that records the launch and exits
+    # cleanly, so the assertion covers the launcher chain rather than the app.
+    runtime_python = runtime / "bin" / "python"
+    runtime_python.write_text(
+        '#!/usr/bin/env sh\nprintf \'%s\\n\' "$*" >> "${ONBOARD_CALLS:?}"\nexit 0\n',
+        encoding="utf-8",
+    )
+    runtime_python.chmod(0o755)
+    launcher = home / ".local" / "bin" / "dispatch"
+    env = os.environ.copy()
+    env["ONBOARD_CALLS"] = fake_path(calls)
+
+    run = subprocess.run(
+        ["sh", fake_path(launcher), "--help"],
+        cwd=tmp_path,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert run.returncode == 0, run.stderr
+    assert "-m dispatch --help" in calls.read_text(encoding="utf-8")
 
 
 def test_update_permissions_do_not_recurse_through_runtime_directories() -> None:

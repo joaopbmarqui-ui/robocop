@@ -19,6 +19,13 @@ import sys
 from collections.abc import Iterator
 from pathlib import Path, PurePosixPath
 
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows hosts never install the runtime
+    # Installation targets POSIX Edge Nodes only, but the module must stay
+    # importable on Windows so the test suite can be collected there.
+    fcntl = None  # type: ignore[assignment]
+
 DIGEST_RE = re.compile(r"^[0-9a-f]{64}$")
 REQUIRED_IMPORTS = ("textual", "sqlglot")
 COMPLETE_MARKER = ".complete.json"
@@ -121,23 +128,13 @@ def _complete_metadata(runtime: Path, digest: str) -> dict[str, object] | None:
 
 @contextlib.contextmanager
 def _install_lock(lock_path: Path) -> Iterator[None]:
+    if fcntl is None:
+        raise RuntimeInstallError("Shared runtime installation requires a POSIX host")
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with lock_path.open("a+", encoding="utf-8") as lock_file:
         lock_path.chmod(0o600)
         try:
-            if os.name == "nt":
-                import msvcrt
-
-                lock_file.seek(0)
-                if lock_file.read(1) == "":
-                    lock_file.write("0")
-                    lock_file.flush()
-                lock_file.seek(0)
-                msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 1)
-            else:
-                import fcntl
-
-                fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
         except OSError as exc:
             raise RuntimeInstallError(
                 f"Could not acquire runtime installation lock: {exc}"
@@ -145,11 +142,7 @@ def _install_lock(lock_path: Path) -> Iterator[None]:
         try:
             yield
         finally:
-            if os.name == "nt":
-                lock_file.seek(0)
-                msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
-            else:
-                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 
 def _run(command: list[str]) -> None:
@@ -161,14 +154,23 @@ def _run(command: list[str]) -> None:
         ) from exc
 
 
-def _write_metadata(runtime: Path, digest: str, approved_python: Path) -> None:
+def _runtime_python_version(runtime_python: Path) -> str:
+    try:
+        probe = subprocess.run(
+            [str(runtime_python), "-c", "import platform; print(platform.python_version())"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeInstallError(
+            f"Could not determine the runtime Python version: {exc}"
+        ) from exc
+    return probe.stdout.strip()
+
+
+def _write_metadata(runtime: Path, digest: str, approved_python: Path, version: str) -> None:
     runtime_python = runtime / "bin" / "python"
-    version = subprocess.run(
-        [str(runtime_python), "-c", "import platform; print(platform.python_version())"],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
     metadata = {
         "bundle_digest": digest,
         "approved_python": str(approved_python.resolve()),
@@ -210,15 +212,40 @@ def _make_owner_writable_only(runtime: Path) -> None:
             )
 
 
-def _build_runtime(runtime: Path, bundle_dir: Path, digest: str, approved_python: Path) -> None:
+def _major_minor(version: str) -> str:
+    return ".".join(version.split(".")[:2])
+
+
+def _target_python(manifest: dict[str, object]) -> str | None:
+    target = manifest.get("target")
+    if not isinstance(target, dict):
+        return None
+    python = target.get("python")
+    if isinstance(python, str) and python:
+        return python
+    return None
+
+
+def _build_runtime(
+    runtime: Path,
+    bundle_dir: Path,
+    digest: str,
+    approved_python: Path,
+    target_python: str | None,
+) -> None:
     if runtime.exists():
         shutil.rmtree(runtime)
-    runtime.parent.mkdir(parents=True, exist_ok=True)
     _run([str(approved_python), "-m", "venv", str(runtime)])
     # Keep the candidate private until every validation succeeds. Completed
     # runtimes become analyst-readable only in _make_owner_writable_only().
     runtime.chmod(0o700)
     runtime_python = runtime / "bin" / "python"
+    version = _runtime_python_version(runtime_python)
+    if target_python is not None and _major_minor(version) != _major_minor(target_python):
+        raise RuntimeInstallError(
+            f"Dependency bundle targets Python {target_python} but the approved "
+            f"interpreter provides {version}"
+        )
     _run(
         [
             str(runtime_python),
@@ -233,35 +260,82 @@ def _build_runtime(runtime: Path, bundle_dir: Path, digest: str, approved_python
     )
     _run([str(runtime_python), "-m", "pip", "check"])
     _run([str(runtime_python), "-c", "; ".join(f"import {name}" for name in REQUIRED_IMPORTS)])
-    _write_metadata(runtime, digest, approved_python)
+    _write_metadata(runtime, digest, approved_python, version)
     _make_owner_writable_only(runtime)
+
+
+def _ensure_runtime_is_not_active(runtime_root: Path, runtime: Path) -> None:
+    current = runtime_root / "current"
+    if not current.is_symlink():
+        return
+    try:
+        active = current.resolve(strict=True)
+    except OSError:
+        return
+    if active == runtime.resolve():
+        raise RuntimeInstallError(
+            f"The active runtime {runtime} failed completion validation and cannot be "
+            "rebuilt in place while `current` points at it. Activate a different "
+            "bundle or move the directory aside, then re-run the installation."
+        )
 
 
 def _activate(runtime_root: Path, runtime: Path) -> None:
     current = runtime_root / "current"
+    if not current.is_symlink() and current.exists():
+        raise RuntimeInstallError(
+            f"{current} exists but is not a symlink; move it aside before installing"
+        )
+    for stale in runtime_root.glob(".current.tmp.*"):
+        stale.unlink(missing_ok=True)
     temporary = runtime_root / f".current.tmp.{os.getpid()}"
-    temporary.unlink(missing_ok=True)
     temporary.symlink_to(Path("releases") / runtime.name, target_is_directory=True)
     os.replace(temporary, current)
 
 
+def _snapshot_bundle(bundle_dir: Path, runtime_root: Path) -> Path:
+    if not bundle_dir.is_dir():
+        raise RuntimeInstallError(f"Verified dependency bundle is incomplete: {bundle_dir}")
+    snapshot = runtime_root / f".bundle.tmp.{os.getpid()}"
+    if snapshot.exists():
+        shutil.rmtree(snapshot)
+    shutil.copytree(bundle_dir, snapshot)
+    snapshot.chmod(0o700)
+    return snapshot
+
+
 def install(bundle_dir: Path, approved_python: Path, root: Path) -> tuple[str, bool]:
-    _manifest, digest = _load_manifest(bundle_dir)
     runtime_root = root / ".venv"
-    runtime = runtime_root / "releases" / digest
-    runtime_root.mkdir(parents=True, exist_ok=True)
+    releases = runtime_root / "releases"
+    releases.mkdir(parents=True, exist_ok=True)
+    # Explicit modes: analysts must be able to traverse down to the runtime
+    # regardless of the Release Operator's umask.
     runtime_root.chmod(0o755)
+    releases.chmod(0o755)
     with _install_lock(runtime_root / "install.lock"):
-        reused = _complete_metadata(runtime, digest) is not None
-        if not reused:
-            try:
-                _build_runtime(runtime, bundle_dir, digest, approved_python)
-            except Exception:
-                shutil.rmtree(runtime, ignore_errors=True)
-                raise
-        else:
-            _make_owner_writable_only(runtime)
-        _activate(runtime_root, runtime)
+        # Verify and install from a private snapshot so the bytes pip reads are
+        # exactly the bytes that passed manifest verification.
+        snapshot = _snapshot_bundle(bundle_dir, runtime_root)
+        try:
+            manifest, digest = _load_manifest(snapshot)
+            runtime = releases / digest
+            reused = _complete_metadata(runtime, digest) is not None
+            if not reused:
+                _ensure_runtime_is_not_active(runtime_root, runtime)
+                try:
+                    _build_runtime(
+                        runtime, snapshot, digest, approved_python, _target_python(manifest)
+                    )
+                except Exception:
+                    shutil.rmtree(runtime, ignore_errors=True)
+                    raise
+            else:
+                # Content is immutable after construction; this only repairs
+                # permission drift so analysts can keep using the runtime.
+                _make_owner_writable_only(runtime)
+            _activate(runtime_root, runtime)
+        finally:
+            shutil.rmtree(snapshot, ignore_errors=True)
         (runtime_root / "install.lock").chmod(0o600)
     return digest, reused
 

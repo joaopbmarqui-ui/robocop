@@ -1,0 +1,28 @@
+#!/usr/bin/env sh
+set -eu
+
+ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+CURRENT="$ROOT_DIR/.venv/current"
+
+if [ ! -L "$CURRENT" ]; then
+  echo "Dispatch shared runtime is not active at $CURRENT." >&2
+  echo "Ask the Release Operator to run $ROOT_DIR/install.sh." >&2
+  exit 1
+fi
+
+RUNTIME=$(readlink -f "$CURRENT" 2>/dev/null || true)
+if [ -z "$RUNTIME" ] || [ ! -d "$RUNTIME" ] || [ ! -f "$RUNTIME/.complete.json" ]; then
+  echo "Dispatch shared runtime is invalid at $CURRENT." >&2
+  echo "Ask the Release Operator to reactivate a completed runtime." >&2
+  exit 1
+fi
+if [ ! -x "$RUNTIME/bin/python" ]; then
+  echo "Dispatch shared runtime has no executable Python at $RUNTIME/bin/python." >&2
+  exit 1
+fi
+
+export PYTHONPATH="$ROOT_DIR"
+export DISPATCH_SCR_DIR="$ROOT_DIR/scr"
+export DISPATCH_RUNTIME="$RUNTIME"
+exec "$RUNTIME/bin/python" -m dispatch "$@"
+

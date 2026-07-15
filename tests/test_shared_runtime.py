@@ -1,0 +1,259 @@
+"""Shared runtime and launcher contracts."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import shutil
+import subprocess
+import threading
+from pathlib import Path
+
+import pytest
+
+import shared_runtime
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def make_bundle(
+    tmp_path: Path,
+    *,
+    path: str = "requirements/requirements.txt",
+    content: bytes = b"textual==7.5.0\nsqlglot==30.12.0\n",
+) -> tuple[Path, str]:
+    bundle = tmp_path / f"bundle-{hashlib.sha256(content).hexdigest()[:8]}"
+    target = bundle.joinpath(*path.split("/"))
+    target.parent.mkdir(parents=True)
+    target.write_bytes(content)
+    (bundle / "wheels").mkdir(exist_ok=True)
+    identity = {
+        "schema": "edge-deploy/dependency-bundle/1",
+        "tool": "robocop",
+        "source_sha": "a" * 40,
+        "target": {
+            "python": "3.10",
+            "implementation": "cp",
+            "abi": "cp310",
+            "platform": "manylinux2014_x86_64",
+        },
+        "files": [
+            {
+                "path": path,
+                "sha256": hashlib.sha256(content).hexdigest(),
+                "size": len(content),
+                "kind": "dependency",
+            }
+        ],
+    }
+    canonical = (json.dumps(identity, sort_keys=True, separators=(",", ":")) + "\n").encode()
+    digest = hashlib.sha256(canonical).hexdigest()
+    manifest = {**identity, "bundle_digest": digest}
+    (bundle / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    return bundle, digest
+
+
+def test_manifest_digest_drives_release_path_and_completed_reuse(tmp_path: Path) -> None:
+    bundle, digest = make_bundle(tmp_path)
+    _manifest, loaded_digest = shared_runtime._load_manifest(bundle)
+    runtime = tmp_path / ".venv" / "releases" / digest
+    (runtime / "bin").mkdir(parents=True)
+    (runtime / "bin" / "python").write_text("", encoding="utf-8")
+    (runtime / shared_runtime.COMPLETE_MARKER).write_text(
+        json.dumps({"bundle_digest": digest}), encoding="utf-8"
+    )
+
+    assert loaded_digest == digest
+    assert shared_runtime._complete_metadata(runtime, digest) == {"bundle_digest": digest}
+
+
+@pytest.mark.parametrize("unsafe_path", ["../escape", "/absolute", "other/file.txt"])
+def test_manifest_rejects_unsafe_paths(tmp_path: Path, unsafe_path: str) -> None:
+    bundle, _digest = make_bundle(tmp_path)
+    manifest_path = bundle / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["files"][0]["path"] = unsafe_path
+    identity = {key: value for key, value in manifest.items() if key != "bundle_digest"}
+    canonical = (json.dumps(identity, sort_keys=True, separators=(",", ":")) + "\n").encode()
+    manifest["bundle_digest"] = hashlib.sha256(canonical).hexdigest()
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(shared_runtime.RuntimeInstallError, match="unsafe path"):
+        shared_runtime._load_manifest(bundle)
+
+
+def test_manifest_rejects_tampered_bundle_file(tmp_path: Path) -> None:
+    bundle, _digest = make_bundle(tmp_path)
+    (bundle / "requirements" / "requirements.txt").write_text("changed\n", encoding="utf-8")
+
+    with pytest.raises(shared_runtime.RuntimeInstallError, match="failed verification"):
+        shared_runtime._load_manifest(bundle)
+
+
+def test_shared_launcher_forwards_arguments_and_preserves_cwd(tmp_path: Path) -> None:
+    if shutil.which("sh") is None:
+        pytest.skip("shared launcher smoke requires sh")
+    root = tmp_path / "dispatch-root"
+    launcher = root / "bin" / "dispatch"
+    launcher.parent.mkdir(parents=True)
+    shutil.copy2(ROOT / "bin" / "dispatch", launcher)
+    launcher.chmod(0o755)
+    runtime = root / ".venv" / "releases" / ("a" * 64)
+    (runtime / "bin").mkdir(parents=True)
+    (runtime / shared_runtime.COMPLETE_MARKER).write_text("{}\n", encoding="utf-8")
+    capture = tmp_path / "capture.txt"
+    fake_python = runtime / "bin" / "python"
+    fake_python.write_text(
+        "#!/usr/bin/env sh\n"
+        'printf \'%s\\n\' "$PWD" "$PYTHONPATH" "$DISPATCH_SCR_DIR" "$DISPATCH_RUNTIME" "$@" > "$CAPTURE"\n',
+        encoding="utf-8",
+    )
+    fake_python.chmod(0o755)
+    current = root / ".venv" / "current"
+    try:
+        current.symlink_to(Path("releases") / runtime.name, target_is_directory=True)
+    except OSError as exc:
+        pytest.skip(f"symlink creation is unavailable: {exc}")
+    launch_cwd = tmp_path / "sql"
+    launch_cwd.mkdir()
+    env = os.environ.copy()
+    env["CAPTURE"] = capture.resolve().as_posix()
+
+    result = subprocess.run(
+        ["sh", launcher.resolve().as_posix(), "--help", "two words"],
+        cwd=launch_cwd,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    lines = capture.read_text(encoding="utf-8").splitlines()
+    assert Path(lines[0]).resolve() == launch_cwd.resolve()
+    assert Path(lines[1]).resolve() == root.resolve()
+    assert Path(lines[2]).resolve() == (root / "scr").resolve()
+    assert Path(lines[3]).resolve() == runtime.resolve()
+    assert lines[4:] == ["-m", "dispatch", "--help", "two words"]
+
+
+def test_shared_launcher_fails_clearly_without_active_runtime(tmp_path: Path) -> None:
+    if shutil.which("sh") is None:
+        pytest.skip("shared launcher smoke requires sh")
+    root = tmp_path / "dispatch-root"
+    (root / "bin").mkdir(parents=True)
+    shutil.copy2(ROOT / "bin" / "dispatch", root / "bin" / "dispatch")
+
+    result = subprocess.run(
+        ["sh", (root / "bin" / "dispatch").resolve().as_posix()],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode != 0
+    assert "shared runtime is not active" in result.stderr
+
+
+def fake_completed_build(runtime: Path, _bundle: Path, digest: str, _python: Path) -> None:
+    (runtime / "bin").mkdir(parents=True)
+    (runtime / "bin" / "python").write_text("", encoding="utf-8")
+    (runtime / shared_runtime.COMPLETE_MARKER).write_text(
+        json.dumps({"bundle_digest": digest}), encoding="utf-8"
+    )
+
+
+def test_activation_reuse_switch_and_rollback(tmp_path: Path, monkeypatch) -> None:
+    if os.name == "nt":
+        pytest.skip("activation symlinks are validated on Linux")
+    root = tmp_path / "root"
+    first_bundle, first_digest = make_bundle(tmp_path, content=b"first\n")
+    second_bundle, second_digest = make_bundle(tmp_path, content=b"second\n")
+    monkeypatch.setattr(shared_runtime, "_build_runtime", fake_completed_build)
+
+    digest, reused = shared_runtime.install(first_bundle, Path("/python"), root)
+    assert (digest, reused) == (first_digest, False)
+    assert (root / ".venv" / "current").resolve().name == first_digest
+
+    digest, reused = shared_runtime.install(first_bundle, Path("/python"), root)
+    assert (digest, reused) == (first_digest, True)
+
+    digest, reused = shared_runtime.install(second_bundle, Path("/python"), root)
+    assert (digest, reused) == (second_digest, False)
+    assert (root / ".venv" / "current").resolve().name == second_digest
+
+    digest, reused = shared_runtime.install(first_bundle, Path("/python"), root)
+    assert (digest, reused) == (first_digest, True)
+    assert (root / ".venv" / "current").resolve().name == first_digest
+
+
+def test_failed_candidate_does_not_change_current(tmp_path: Path, monkeypatch) -> None:
+    if os.name == "nt":
+        pytest.skip("activation symlinks are validated on Linux")
+    root = tmp_path / "root"
+    first_bundle, first_digest = make_bundle(tmp_path, content=b"first\n")
+    second_bundle, _second_digest = make_bundle(tmp_path, content=b"second\n")
+    monkeypatch.setattr(shared_runtime, "_build_runtime", fake_completed_build)
+    shared_runtime.install(first_bundle, Path("/python"), root)
+
+    def fail_build(*_args) -> None:
+        raise shared_runtime.RuntimeInstallError("simulated failure")
+
+    monkeypatch.setattr(shared_runtime, "_build_runtime", fail_build)
+    with pytest.raises(shared_runtime.RuntimeInstallError, match="simulated"):
+        shared_runtime.install(second_bundle, Path("/python"), root)
+
+    assert (root / ".venv" / "current").resolve().name == first_digest
+
+
+def test_install_lock_excludes_concurrent_installer(tmp_path: Path) -> None:
+    if os.name == "nt":
+        pytest.skip("flock concurrency contract is validated on Linux")
+    lock_path = tmp_path / "install.lock"
+    first_acquired = threading.Event()
+    release_first = threading.Event()
+    second_attempted = threading.Event()
+    second_acquired = threading.Event()
+
+    def first() -> None:
+        with shared_runtime._install_lock(lock_path):
+            first_acquired.set()
+            release_first.wait(timeout=5)
+
+    def second() -> None:
+        first_acquired.wait(timeout=5)
+        second_attempted.set()
+        with shared_runtime._install_lock(lock_path):
+            second_acquired.set()
+
+    first_thread = threading.Thread(target=first)
+    second_thread = threading.Thread(target=second)
+    first_thread.start()
+    second_thread.start()
+    assert second_attempted.wait(timeout=5)
+    assert not second_acquired.is_set()
+    release_first.set()
+    first_thread.join(timeout=5)
+    second_thread.join(timeout=5)
+    assert second_acquired.is_set()
+
+
+def test_completed_runtime_permissions_are_not_publicly_writable(tmp_path: Path) -> None:
+    if os.name == "nt":
+        pytest.skip("POSIX mode contract is validated on Linux")
+    runtime = tmp_path / "runtime"
+    package = runtime / "lib" / "package.py"
+    executable = runtime / "bin" / "python"
+    package.parent.mkdir(parents=True)
+    executable.parent.mkdir(parents=True)
+    package.write_text("", encoding="utf-8")
+    executable.write_text("", encoding="utf-8")
+    executable.chmod(0o755)
+
+    shared_runtime._make_owner_writable_only(runtime)
+
+    assert runtime.stat().st_mode & 0o022 == 0
+    assert package.stat().st_mode & 0o022 == 0
+    assert package.stat().st_mode & 0o044 == 0o044
+    assert executable.stat().st_mode & 0o055 == 0o055

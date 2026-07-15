@@ -386,17 +386,13 @@ def test_history_empty_state_focuses_search_for_keyboard_use(
     asyncio.run(run())
 
 
-def _fake_table_sizes(
+def _fake_iter_table_sizes(
     sizes: dict[str, tuple[int | None, str]],
 ):
-    async def fake(schema: str, table_names: list[str]) -> dict[str, impala.TableStats]:
-        return {
-            name: impala.TableStats(
-                size_bytes=sizes.get(name, (None, "—"))[0],
-                size_display=sizes.get(name, (None, "—"))[1],
-            )
-            for name in table_names
-        }
+    async def fake(schema: str, table_names: list[str]):
+        for name in table_names:
+            size_bytes, size_display = sizes.get(name, (None, "—"))
+            yield name, impala.TableStats(size_bytes=size_bytes, size_display=size_display)
 
     return fake
 
@@ -414,8 +410,8 @@ def test_browser_placeholder_and_auto_describe_after_show_tables(
 
     monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
     monkeypatch.setattr(
-        "dispatch.impala.table_sizes",
-        _fake_table_sizes(
+        "dispatch.impala.iter_table_sizes",
+        _fake_iter_table_sizes(
             {
                 "dispatch_result": (13_212_057, "12.6 MB"),
                 "dispatch_archive": (1_342_177_280, "1.2 GB"),
@@ -460,8 +456,8 @@ def test_browser_show_tables_failure_replaces_stale_schema_with_error(
 
     monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
     monkeypatch.setattr(
-        "dispatch.impala.table_sizes",
-        _fake_table_sizes({"dispatch_result": (13_212_057, "12.6 MB")}),
+        "dispatch.impala.iter_table_sizes",
+        _fake_iter_table_sizes({"dispatch_result": (13_212_057, "12.6 MB")}),
     )
     monkeypatch.setattr("dispatch.impala.describe_table", fake_describe_table)
 
@@ -494,15 +490,56 @@ def test_browser_sorts_by_table_size(mock_env_with_config, monkeypatch) -> None:
     async def fake_describe_table(full_table: str) -> str:
         return "name|type|comment\nid|string|primary key"
 
-    async def fake_table_sizes(schema: str, table_names: list[str]) -> dict[str, impala.TableStats]:
-        return {
-            "dispatch_alpha": impala.TableStats(size_bytes=13_212_057, size_display="12.6 MB"),
-            "dispatch_zulu": impala.TableStats(size_bytes=1_342_177_280, size_display="1.2 GB"),
-        }
+    monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
+    monkeypatch.setattr(
+        "dispatch.impala.iter_table_sizes",
+        _fake_iter_table_sizes(
+            {
+                "dispatch_alpha": (13_212_057, "12.6 MB"),
+                "dispatch_zulu": (1_342_177_280, "1.2 GB"),
+            }
+        ),
+    )
+    monkeypatch.setattr("dispatch.impala.describe_table", fake_describe_table)
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = BrowserScreen(auto_load=False)
+            app.push_screen(screen)
+            await pilot.pause()
+            await screen.action_show_tables(describe_selection=False)
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+
+            table = screen.query_one("#browser-table", DataTable)
+            assert table.get_row_at(0)[1] == "dispatch_alpha"
+            assert table.get_row_at(1)[1] == "dispatch_zulu"
+
+            screen.action_cycle_sort()
+            assert table.get_row_at(0)[1] == "dispatch_zulu"
+            assert table.get_row_at(1)[1] == "dispatch_alpha"
+            assert table.get_row_at(0)[3] == "1.2 GB"
+
+    asyncio.run(run())
+
+
+def test_browser_renders_list_before_sizes_and_fills_them_in_background(
+    mock_env_with_config, monkeypatch
+) -> None:
+    """The table list is usable immediately; sizes stream in one at a time."""
+    release_sizes = asyncio.Event()
+
+    async def fake_show_tables(schema: str, pattern: str = "*") -> list[str]:
+        return ["dispatch_alpha", "dispatch_zulu"]
+
+    async def gated_iter_table_sizes(schema: str, table_names: list[str]):
+        await release_sizes.wait()
+        for name in table_names:
+            yield name, impala.TableStats(size_bytes=1_342_177_280, size_display="1.2 GB")
 
     monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
-    monkeypatch.setattr("dispatch.impala.table_sizes", fake_table_sizes)
-    monkeypatch.setattr("dispatch.impala.describe_table", fake_describe_table)
+    monkeypatch.setattr("dispatch.impala.iter_table_sizes", gated_iter_table_sizes)
 
     async def run() -> None:
         app = DispatchApp()
@@ -514,13 +551,20 @@ def test_browser_sorts_by_table_size(mock_env_with_config, monkeypatch) -> None:
             await pilot.pause()
 
             table = screen.query_one("#browser-table", DataTable)
-            assert table.get_row_at(0)[1] == "dispatch_alpha"
-            assert table.get_row_at(1)[1] == "dispatch_zulu"
+            assert table.row_count == 2
+            assert table.get_row_at(0)[3] == "…"
+            assert "sizes loading" in str(screen.query_one("#browser-sort-indicator").render())
 
-            screen.action_cycle_sort()
-            assert table.get_row_at(0)[1] == "dispatch_zulu"
-            assert table.get_row_at(1)[1] == "dispatch_alpha"
+            table.cursor_coordinate = (1, 0)
+            release_sizes.set()
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+
             assert table.get_row_at(0)[3] == "1.2 GB"
+            assert table.get_row_at(1)[3] == "1.2 GB"
+            # In-place cell updates must not disturb the cursor.
+            assert table.cursor_coordinate.row == 1
+            assert "sizes loading" not in str(screen.query_one("#browser-sort-indicator").render())
 
     asyncio.run(run())
 
@@ -687,9 +731,6 @@ def test_browser_drop_refreshes_table_list_after_success(mock_env_with_config, m
         show_calls += 1
         return list(tables_state)
 
-    async def fake_table_sizes(schema, table_names):
-        return {}
-
     async def fake_drop_table(full_table: str) -> str:
         short_name = full_table.rsplit(".", 1)[-1]
         if short_name in tables_state:
@@ -697,7 +738,7 @@ def test_browser_drop_refreshes_table_list_after_success(mock_env_with_config, m
         return f"Dropped {full_table}"
 
     monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
-    monkeypatch.setattr("dispatch.impala.table_sizes", fake_table_sizes)
+    monkeypatch.setattr("dispatch.impala.iter_table_sizes", _fake_iter_table_sizes({}))
     monkeypatch.setattr("dispatch.impala.drop_table", fake_drop_table)
 
     async def run() -> None:
@@ -738,12 +779,9 @@ def test_browser_bulk_drop_only_checked_tables(mock_env_with_config, monkeypatch
     async def fake_show_tables(schema: str, pattern: str = "*") -> list[str]:
         return []
 
-    async def fake_table_sizes(schema, table_names):
-        return {}
-
     monkeypatch.setattr("dispatch.impala.drop_table", fake_drop_table)
     monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
-    monkeypatch.setattr("dispatch.impala.table_sizes", fake_table_sizes)
+    monkeypatch.setattr("dispatch.impala.iter_table_sizes", _fake_iter_table_sizes({}))
 
     async def run() -> None:
         app = DispatchApp()
@@ -777,15 +815,12 @@ def test_browser_drop_last_table_shows_placeholder(mock_env_with_config, monkeyp
     async def fake_show_tables(schema: str, pattern: str = "*") -> list[str]:
         return list(tables_state)
 
-    async def fake_table_sizes(schema, table_names):
-        return {}
-
     async def fake_drop_table(full_table: str) -> str:
         tables_state.clear()
         return f"Dropped {full_table}"
 
     monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
-    monkeypatch.setattr("dispatch.impala.table_sizes", fake_table_sizes)
+    monkeypatch.setattr("dispatch.impala.iter_table_sizes", _fake_iter_table_sizes({}))
     monkeypatch.setattr("dispatch.impala.drop_table", fake_drop_table)
 
     async def run() -> None:
@@ -849,9 +884,6 @@ def test_browser_multi_table_drop_refreshes_list_once(mock_env_with_config, monk
         show_calls += 1
         return list(tables_state)
 
-    async def fake_table_sizes(schema, table_names):
-        return {}
-
     async def fake_drop_table(full_table: str) -> str:
         drop_calls.append(full_table)
         short_name = full_table.rsplit(".", 1)[-1]
@@ -860,7 +892,7 @@ def test_browser_multi_table_drop_refreshes_list_once(mock_env_with_config, monk
         return f"Dropped {full_table}"
 
     monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
-    monkeypatch.setattr("dispatch.impala.table_sizes", fake_table_sizes)
+    monkeypatch.setattr("dispatch.impala.iter_table_sizes", _fake_iter_table_sizes({}))
     monkeypatch.setattr("dispatch.impala.drop_table", fake_drop_table)
 
     async def run() -> None:
@@ -900,12 +932,9 @@ def test_browser_bulk_drop_multiple_tables(mock_env_with_config, monkeypatch) ->
     async def fake_show_tables(schema: str, pattern: str = "*") -> list[str]:
         return []
 
-    async def fake_table_sizes(schema, table_names):
-        return {}
-
     monkeypatch.setattr("dispatch.impala.drop_table", fake_drop_table)
     monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
-    monkeypatch.setattr("dispatch.impala.table_sizes", fake_table_sizes)
+    monkeypatch.setattr("dispatch.impala.iter_table_sizes", _fake_iter_table_sizes({}))
 
     async def run() -> None:
         app = DispatchApp()

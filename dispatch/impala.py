@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 
 from . import process, sql
@@ -102,21 +103,24 @@ async def table_stats(full_table: str) -> TableStats:
     return parse_table_stats_output(output)
 
 
-async def table_sizes(schema: str, table_names: list[str]) -> dict[str, TableStats]:
-    """Fetch on-disk sizes for each table name in parallel."""
-    if not table_names:
-        return {}
+async def iter_table_sizes(
+    schema: str, table_names: list[str]
+) -> AsyncIterator[tuple[str, TableStats]]:
+    """Yield ``(table_name, stats)`` one ``SHOW TABLE STATS`` query at a time.
 
-    async def fetch_size(table_name: str) -> tuple[str, TableStats]:
+    The Impala coordinators cap parallel queries per user at two. Fetching
+    sizes strictly serially deliberately occupies at most one slot, leaving
+    the other free for interactive work (DESCRIBE, DROP, job launches) while
+    sizes trickle in. A table whose stats query fails yields unknown stats
+    rather than aborting the remaining tables.
+    """
+    for table_name in table_names:
         full_table = table_name if "." in table_name else f"{schema}.{table_name}"
         try:
             stats = await table_stats(full_table)
         except Exception:
             stats = TableStats(size_bytes=None, size_display="—")
-        return table_name, stats
-
-    results = await asyncio.gather(*(fetch_size(name) for name in table_names))
-    return dict(results)
+        yield table_name, stats
 
 
 def _require_full_table(full_table: str) -> None:

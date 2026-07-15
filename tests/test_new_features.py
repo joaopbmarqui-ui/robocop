@@ -7,7 +7,7 @@ import contextlib
 import json
 from pathlib import Path
 
-from dispatch import config, manifest, telemetry
+from dispatch import config, impala, manifest, telemetry
 from dispatch.app import DispatchApp
 from dispatch.screens.browser import BrowserScreen
 from dispatch.screens.help import HelpScreen
@@ -91,6 +91,37 @@ class TestImpalaTableStatsParsing:
         stats = parse_table_stats_output(raw)
         assert stats.size_bytes == 13_212_057 + 1_342_177_280
         assert stats.size_display == "1.3 GB"
+
+    def test_iter_table_sizes_is_strictly_serial(self, monkeypatch) -> None:
+        """The Impala per-user query cap is 2; size fetching must use one slot."""
+        in_flight = 0
+        max_in_flight = 0
+
+        async def fake_table_stats(full_table: str) -> impala.TableStats:
+            nonlocal in_flight, max_in_flight
+            in_flight += 1
+            max_in_flight = max(max_in_flight, in_flight)
+            await asyncio.sleep(0)
+            in_flight -= 1
+            if full_table.endswith("broken"):
+                raise RuntimeError("stats unavailable")
+            return impala.TableStats(size_bytes=42, size_display="42 B")
+
+        monkeypatch.setattr(impala, "table_stats", fake_table_stats)
+
+        async def run() -> list[tuple[str, impala.TableStats]]:
+            return [
+                item async for item in impala.iter_table_sizes("aa_enc", ["one", "broken", "two"])
+            ]
+
+        results = asyncio.run(run())
+        assert max_in_flight == 1
+        assert [name for name, _stats in results] == ["one", "broken", "two"]
+        assert results[0][1].size_bytes == 42
+        # A failed stats query yields unknown stats instead of aborting the rest.
+        assert results[1][1].size_bytes is None
+        assert results[1][1].size_display == "—"
+        assert results[2][1].size_bytes == 42
 
 
 # =============================================================================

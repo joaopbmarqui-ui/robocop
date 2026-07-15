@@ -9,6 +9,7 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, DataTable, Footer, Header, Input, Static
+from textual.widgets.data_table import CellDoesNotExist, ColumnKey
 from textual.worker import Worker
 
 from .. import impala
@@ -18,6 +19,8 @@ from .sidebar import Sidebar
 NO_TABLES_PLACEHOLDER = "(no tables)"
 CHECKED_MARKER = "[x]"
 UNCHECKED_MARKER = "[ ]"
+SIZE_PENDING = "…"
+SIZE_UNKNOWN = "—"
 
 
 class BrowserScreen(Screen[None]):
@@ -45,6 +48,8 @@ class BrowserScreen(Screen[None]):
         self._sort_reverse = False
         self._checked: set[str] = set()
         self._describe_text: str = ""
+        self._sizes_loading = False
+        self._size_column_key: ColumnKey | None = None
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
@@ -101,7 +106,8 @@ class BrowserScreen(Screen[None]):
 
     async def on_mount(self) -> None:
         table = self.query_one("#browser-table", DataTable)
-        table.add_columns("Sel", "Name", "Type", "Size")
+        column_keys = table.add_columns("Sel", "Name", "Type", "Size")
+        self._size_column_key = column_keys[3]
         table.cursor_type = "row"
         describe_table = self.query_one("#describe-table", DataTable)
         describe_table.add_columns("Column", "Type", "Comment")
@@ -207,18 +213,20 @@ class BrowserScreen(Screen[None]):
     def _table_short_name(table_name: str) -> str:
         return table_name.rsplit(".", 1)[-1]
 
-    def _rebuild_table_rows(self, sizes: dict[str, impala.TableStats] | None = None) -> None:
-        """Rebuild the backing row model for the current ``self._tables``."""
-        sizes = sizes or {}
+    def _rebuild_table_rows(self) -> None:
+        """Rebuild the backing row model for the current ``self._tables``.
+
+        Sizes start as pending placeholders; the background size worker fills
+        them in one query at a time (see ``_load_table_sizes``).
+        """
         self._table_rows = []
         for name in self._tables:
-            stats = sizes.get(name, impala.TableStats(size_bytes=None, size_display="—"))
             self._table_rows.append(
                 {
                     "name": name,
                     "type": "table",
-                    "size_display": stats.size_display,
-                    "size_bytes": stats.size_bytes,
+                    "size_display": SIZE_PENDING,
+                    "size_bytes": None,
                 }
             )
 
@@ -248,16 +256,8 @@ class BrowserScreen(Screen[None]):
             self.notify(f"SHOW TABLES failed: {exc}", severity="error")
             return
 
-        self._show_table_list_message("Loading table sizes…", severity="dim")
-        try:
-            sizes = await impala.table_sizes(self._schema(), self._tables)
-        except Exception as exc:
-            self._show_table_list_message(str(exc), severity="error")
-            self.notify(f"SHOW TABLE STATS failed: {exc}", severity="error")
-            return
-
         self._checked.intersection_update(self._tables)
-        self._rebuild_table_rows(sizes)
+        self._rebuild_table_rows()
 
         self._render_table_list(
             selected_before=self._tables[0]
@@ -270,22 +270,78 @@ class BrowserScreen(Screen[None]):
         elif describe_selection:
             await self.action_describe()
         self._update_action_state()
+        self._start_size_fetch()
 
-    def _render_table_list(self, *, selected_before: str = "") -> None:
+    def _start_size_fetch(self) -> None:
+        """Fill the Size column in the background without blocking the list.
+
+        ``exclusive=True`` cancels any fetch still running from a previous
+        load, so at most one size query is ever in flight for this screen.
+        """
+        if not self._tables:
+            self._sizes_loading = False
+            return
+        names = [str(row["name"]) for row in self._sorted_rows()]
+        self._sizes_loading = True
+        self._update_sort_indicator()
+        # Exclusivity is scoped by group; keep this worker out of the default
+        # group so it never cancels (or is cancelled by) the drop flow.
+        self.run_worker(
+            self._load_table_sizes(names),
+            name="table-sizes",
+            group="table-sizes",
+            exclusive=True,
+        )
+
+    async def _load_table_sizes(self, names: list[str]) -> None:
+        """Fetch sizes serially in display order, updating cells in place."""
+        rows_by_name = {str(row["name"]): row for row in self._table_rows}
+        async for name, stats in impala.iter_table_sizes(self._schema(), names):
+            row = rows_by_name.get(name)
+            if row is None or row not in self._table_rows:
+                # The table was dropped or the list rebuilt while this fetch
+                # was in flight; skip the stale result.
+                continue
+            row["size_display"] = stats.size_display
+            row["size_bytes"] = stats.size_bytes
+            self._update_size_cell(name, stats.size_display)
+        self._sizes_loading = False
+        self._update_sort_indicator()
+        if self._sort_mode == "size" and self._table_rows:
+            self._render_table_list(selected_before=self._selected_table())
+
+    def _update_size_cell(self, name: str, size_display: str) -> None:
+        table = self.query_one("#browser-table", DataTable)
+        if self._size_column_key is None:
+            return
+        try:
+            table.update_cell(name, self._size_column_key, size_display, update_width=True)
+        except CellDoesNotExist:
+            pass
+
+    def _sorted_rows(self) -> list[dict[str, object]]:
         rows = list(self._table_rows)
         rows.sort(key=self._sort_key, reverse=self._sort_reverse)
+        return rows
+
+    def _update_sort_indicator(self) -> None:
+        arrow = "\u2193" if self._sort_reverse else "\u2191"
+        suffix = " \u00b7 sizes loading\u2026" if self._sizes_loading else ""
+        self.query_one("#browser-sort-indicator", Static).update(
+            f"[dim]Sorted by: {self._sort_mode} {arrow}{suffix}[/]"
+        )
+
+    def _render_table_list(self, *, selected_before: str = "") -> None:
+        rows = self._sorted_rows()
 
         table = self.query_one("#browser-table", DataTable)
         table.clear()
 
         self.query_one("#browser-count", Static).update(f"[dim]{len(self._tables)} tables[/]")
-        arrow = "\u2193" if self._sort_reverse else "\u2191"
-        self.query_one("#browser-sort-indicator", Static).update(
-            f"[dim]Sorted by: {self._sort_mode} {arrow}[/]"
-        )
+        self._update_sort_indicator()
 
         if not self._tables:
-            table.add_row(UNCHECKED_MARKER, NO_TABLES_PLACEHOLDER, "", "—")
+            table.add_row(UNCHECKED_MARKER, NO_TABLES_PLACEHOLDER, "", SIZE_UNKNOWN)
             table.cursor_coordinate = (0, 0)
             return
 
@@ -413,7 +469,9 @@ class BrowserScreen(Screen[None]):
 
     def action_drop(self) -> Worker[None]:
         """Run the confirm-and-drop flow in a worker (see NewJobScreen.action_launch)."""
-        return self.run_worker(self._drop_flow(), name="drop-flow", exclusive=True)
+        return self.run_worker(
+            self._drop_flow(), name="drop-flow", group="drop-flow", exclusive=True
+        )
 
     async def _drop_flow(self) -> None:
         tables = self._checked_full_tables()

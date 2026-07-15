@@ -34,4 +34,3 @@ def test_app_captures_caller_working_directory_without_personal_venv(
 
     assert app.launch_cwd == tmp_path
     assert not (dispatch_home / "venv").exists()
-

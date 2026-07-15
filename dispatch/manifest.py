@@ -333,6 +333,10 @@ def build_orchestrator_calls(
             str(job_dir / "job.sql"),
             "--output-file",
             csv_path,
+            "--to-email",
+            email,
+            "--subject",
+            subject,
         ]
         calls.append({"script": "download_to_csv.py", "argv": argv})
 
@@ -342,6 +346,10 @@ def build_orchestrator_calls(
             full_table,
             "--output-file",
             csv_path,
+            "--to-email",
+            email,
+            "--subject",
+            subject,
         ]
         calls.append({"script": "download_to_csv.py", "argv": argv})
 
@@ -372,6 +380,10 @@ def build_orchestrator_calls(
             full_table,
             "--output-file",
             csv_path,
+            "--to-email",
+            email,
+            "--subject",
+            subject,
         ]
         calls.append({"script": "download_to_csv.py", "argv": argv})
 

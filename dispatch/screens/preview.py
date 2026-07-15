@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from rich.syntax import Syntax
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, RichLog, Static
 
-from .. import manifest
+from .. import advisor_data, manifest
+from ..advisor.models import AnalysisResult, badge_markup, counts_label
+from .findings import FindingBlock
 from .sidebar import Sidebar
 
 
@@ -42,6 +44,7 @@ class PreviewScreen(Screen[None]):
         table: str = "",
         source_type: str = "",
         dest_type: str = "",
+        analysis: AnalysisResult | None = None,
     ) -> None:
         super().__init__()
         self._title = title
@@ -50,6 +53,7 @@ class PreviewScreen(Screen[None]):
         self.table = table
         self.source_type = source_type or "SqlFile"
         self.dest_type = dest_type or "Table"
+        self.analysis = analysis or AnalysisResult(available=True, findings=())
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
@@ -59,7 +63,8 @@ class PreviewScreen(Screen[None]):
         with Vertical(id="main-content"):
             with Vertical(id="preview-content"):
                 yield Static(
-                    "[dim]\u2039 New Job /[/] [bold]" + self._title + "[/]",
+                    "[dim]\u2039 New Job /[/] [bold]" + self._title + "[/]"
+                    " [dim]— review before launching[/]",
                     classes="section-title",
                 )
 
@@ -72,7 +77,33 @@ class PreviewScreen(Screen[None]):
                     )
 
                 with Vertical(id="sql-display"):
-                    yield RichLog(id="preview-body", highlight=False, markup=False)
+                    yield RichLog(
+                        id="preview-body", highlight=False, markup=False, auto_scroll=False
+                    )
+
+                counts = counts_label(self.analysis)
+                counts_part = f"{counts} · " if counts else ""
+                yield Static(
+                    "[bold]Advisor findings[/] "
+                    f"[dim]· {counts_part}manual {advisor_data.MANUAL_VERSION}[/]",
+                    classes="section-title",
+                    id="findings-heading",
+                )
+                with VerticalScroll(id="findings-panel"):
+                    if not self.analysis.available:
+                        yield Static(
+                            "[dim]SQL analysis unavailable — SQL findings cannot be "
+                            "computed; launch is not gated.[/]",
+                            classes="findings-note",
+                        )
+                    for finding in self.analysis.findings:
+                        yield FindingBlock(finding)
+                    if self.analysis.available and not self.analysis.findings:
+                        yield Static(
+                            "[green]✓ No findings[/] [dim]— nothing in the manual's "
+                            "checklist fired.[/]",
+                            classes="findings-note",
+                        )
 
             with Horizontal(classes="action-bar"):
                 yield Static("", id="preview-status", classes="action-status")
@@ -85,7 +116,7 @@ class PreviewScreen(Screen[None]):
         log.write(sql_syntax(self.body))
         line_count = len(self.body.splitlines())
         self.query_one("#preview-status", Static).update(
-            f"{line_count} lines \u00b7 review before launching"
+            f"{badge_markup(self.analysis)} [dim]· {line_count} lines[/]"
         )
 
     def action_accept(self) -> None:

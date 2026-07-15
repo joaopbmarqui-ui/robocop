@@ -10,6 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
   "textual==8.2.5",
+  "sqlglot==30.12.0",
 ]
 
 [project.optional-dependencies]
@@ -21,7 +22,7 @@ dev = [
   "mypy",
 ]
 release = [
-  "edge-deploy-core @ git+https://github.com/pedrochagasmaster/edge-deploy-core.git@v1.1.0",
+  "edge-deploy-core @ git+https://github.com/pedrochagasmaster/edge-deploy-core.git@v1.5.1",
 ]
 
 [project.scripts]

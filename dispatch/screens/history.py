@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from typing import Protocol, cast
 
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -12,10 +13,13 @@ from textual.widgets import Button, DataTable, Footer, Header, Input, Static
 
 from .. import jobs
 from ..formatting import format_job_id, format_state, format_timestamp
-from .job_detail import JobDetailScreen
 from .sidebar import Sidebar
 
 PAGE_SIZE = 17
+
+
+class _JobDetailNavigator(Protocol):
+    def open_job_detail(self, job_id: str, *, cancel_on_mount: bool = False) -> None: ...
 
 
 class HistoryScreen(Screen[None]):
@@ -209,7 +213,7 @@ class HistoryScreen(Screen[None]):
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         row_key = str(event.row_key.value) if event.row_key else ""
         if row_key and row_key != "__empty__":
-            self.app.push_screen(JobDetailScreen(row_key))
+            cast(_JobDetailNavigator, self.app).open_job_detail(row_key)
 
     def _selected_job_id(self) -> str | None:
         table = self.query_one("#history-table", DataTable)
@@ -225,7 +229,7 @@ class HistoryScreen(Screen[None]):
     def action_view_logs(self) -> None:
         row_key = self._selected_job_id()
         if row_key:
-            self.app.push_screen(JobDetailScreen(row_key))
+            cast(_JobDetailNavigator, self.app).open_job_detail(row_key)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "view-logs":

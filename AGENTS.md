@@ -18,3 +18,25 @@ generated artifacts or secrets.
 
 For Textual work, use `.agents/skills/dispatch-textual-tui/SKILL.md`. Release
 Operators use [docs/release-workflow.md](docs/release-workflow.md).
+
+## Cursor Cloud specific instructions
+
+Dependencies live in a project virtualenv at `.venv` (gitignored). The startup
+update script recreates it and runs the editable install; use `.venv/bin/python`
+(or activate `.venv`) for all commands, e.g. `.venv/bin/python -m pytest`,
+`.venv/bin/ruff`, `.venv/bin/mypy`. Standard lint/test/build commands are the
+ones in [CONTRIBUTING.md](CONTRIBUTING.md) and `.github/workflows/ci.yml`.
+
+Running the TUI needs the mock layer plus SQL files in the launch directory:
+`source mocks/dev-env.sh` (starts a mock SMTP server and puts mock
+`kinit`/`klist`/`impala-shell` on `PATH`), then run `python -m dispatch` from a
+directory that contains at least one `.sql` file — the New Job form is empty
+without one. `mocks/dev-env.sh` requires bash (it uses `BASH_SOURCE`). Data root
+defaults to `/tmp/ads_storage/$USER`; job manifests and captured emails live
+under there and in `mocks/sent_emails/`.
+
+Known non-environment failures: the two
+`tests/test_install_onboarding.py::test_install_creates_runtime_artifacts_with_mocked_edge_tools`
+cases fail on a clean checkout because they assert the generated launcher
+contains `robocop`, which `install.sh` does not emit. This is a repo-level
+test/script mismatch, not a setup problem.

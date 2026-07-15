@@ -27,12 +27,25 @@ from textual.widgets import (
 )
 from textual.worker import Worker
 
-from .. import config, jobs, manifest, process, sql
+from .. import config, jobs, manifest, process, sql, telemetry
+from ..advisor import analyze, analyze_form, analyze_sql, combine_analysis
+from ..advisor.models import AnalysisResult, badge_markup
+from .advisor_gate import AdvisorLaunchGate
 from .confirm import ConfirmScreen
 from .preview import PreviewScreen
 from .sidebar import Sidebar
 
 logger = logging.getLogger("dispatch.new_job")
+
+
+def _refusal_reason(error: str) -> telemetry.RefusalReason:
+    lowered = error.lower()
+    if "concurrency cap" in lowered:
+        return "slot_cap"
+    if "kerberos" in lowered:
+        return "kerberos"
+    return "validation"
+
 
 _SOURCE_IDS = {
     "src-sqlfile": "SqlFile",
@@ -101,6 +114,7 @@ class NewJobScreen(Screen[None]):
         # (path, exists) memo so keystrokes in unrelated fields do not stat()
         # the SQL path (potentially a slow network mount) on every change.
         self._sql_exists_cache: tuple[str, bool] | None = None
+        self._sql_analysis_cache: tuple[tuple[str, str, str], AnalysisResult] | None = None
         self._validation_summary_timer: Timer | None = None
 
     def compose(self) -> ComposeResult:
@@ -567,12 +581,74 @@ class NewJobScreen(Screen[None]):
     def _update_validation_summary(self) -> None:
         issues = self._validation_issues()
         summary = self.query_one("#validation-summary", Static)
+        analysis = self._current_analysis()
+        badge = badge_markup(analysis)
         if issues:
             first = issues[0]
             extra = f" (+{len(issues) - 1} more)" if len(issues) > 1 else ""
-            summary.update(f"[red]\u2717 {len(issues)} issue(s): {first}{extra}[/]")
+            summary.update(f"[red]\u2717 {len(issues)} issue(s): {first}{extra}[/]  ·  {badge}")
         else:
-            summary.update("[green]\u2713 Ready to launch (checks passing)[/]")
+            summary.update(f"[green]\u2713 Ready to launch[/]  ·  {badge}")
+
+    def _current_analysis(self) -> AnalysisResult:
+        """Inline static analysis for the live form (no worker).
+
+        SQL analysis is memoized separately from cheap form rules so destination
+        table edits update R16 without rereading or reparsing a file on the
+        Textual event loop. The cache is invalidated when the in-TUI editor
+        returns; launch and preview always analyze fresh, so a stale badge after
+        an external edit never affects gating.
+        """
+        source_type = self._selected_source()
+        destination_type = self._selected_destination()
+        table = self._input_value("table-name")
+        user_id = config.current_user()
+        sql_path = "" if source_type == "ExistingTable" else self._input_value("sql-file")
+        form_result = analyze_form(
+            source_type=source_type,
+            destination_type=destination_type,
+            destination_table=table,
+            user_id=user_id,
+        )
+        sql_result = self._current_sql_analysis(source_type, user_id, sql_path)
+        return combine_analysis(sql_result, form_result)
+
+    def _current_sql_analysis(
+        self,
+        source_type: str,
+        user_id: str,
+        sql_path: str,
+    ) -> AnalysisResult:
+        cache_key = (source_type, user_id, sql_path)
+        if self._sql_analysis_cache is not None and self._sql_analysis_cache[0] == cache_key:
+            return self._sql_analysis_cache[1]
+        result = self._compute_sql_analysis(source_type, user_id, sql_path)
+        self._sql_analysis_cache = (cache_key, result)
+        return result
+
+    def _compute_sql_analysis(
+        self,
+        source_type: str,
+        user_id: str,
+        sql_path: str,
+    ) -> AnalysisResult:
+        if source_type == "ExistingTable":
+            return analyze_sql(
+                "",
+                source_type=source_type,
+                user_id=user_id,
+            )
+        if not sql_path or not self._sql_file_exists():
+            return AnalysisResult(available=True, findings=())
+        try:
+            sql_text = Path(sql_path).read_text(encoding="utf-8")
+        except OSError:
+            return AnalysisResult(available=True, findings=())
+        return analyze_sql(
+            sql_text,
+            source_type=source_type,
+            user_id=user_id,
+        )
 
     def _schedule_validation_summary(self) -> None:
         if self._validation_summary_timer is not None:
@@ -840,6 +916,14 @@ class NewJobScreen(Screen[None]):
             # Csv destination, or a SqlFile that already carries its own DDL:
             # show the SQL verbatim (no double-wrapping).
             preview = sql_text
+        # Analyze the on-disk / template SQL — never the wrapper or monthly expand.
+        analysis = analyze(
+            sql_text,
+            source_type=source_type,
+            destination_type=destination_type,
+            destination_table=table,
+            user_id=config.current_user(),
+        )
         self.app.push_screen(
             PreviewScreen(
                 "SQL Preview",
@@ -848,6 +932,7 @@ class NewJobScreen(Screen[None]):
                 table=table,
                 source_type=source_type,
                 dest_type=self._selected_destination(),
+                analysis=analysis,
             )
         )
 
@@ -862,6 +947,7 @@ class NewJobScreen(Screen[None]):
     async def _launch_flow(self) -> None:
         error = self._validate()
         if error:
+            telemetry.note_launch_refused(_refusal_reason(error))
             self._show_message(error, "error")
             self.notify(error, severity="error")
             return
@@ -871,15 +957,35 @@ class NewJobScreen(Screen[None]):
         else:
             sql_text = self._read_sql()
             if sql_text is None:
+                telemetry.note_launch_refused("validation")
                 return
         source, destination = self._source_destination()
-        confirmed = await self._confirm_launch(source, destination)
-        if not confirmed:
-            return
+        # Advisor error gate (confirm ceiling). Warnings/info never gate;
+        # analysis-unavailable never gates. When errors exist, the gate is the
+        # launch confirm; otherwise the existing Launch Job confirm applies.
+        analysis = analyze(
+            sql_text,
+            source_type=source_type,
+            destination_type=destination["type"],
+            destination_table=destination.get("table_name") or "",
+            user_id=config.current_user(),
+        )
+        errors = analysis.errors()
+        if errors:
+            # Single modal: the gate carries the Launch Job summary, so no
+            # information from the standard confirm is lost.
+            gated = await self._confirm_advisor_gate(errors, source, destination)
+            if not gated:
+                return
+        else:
+            confirmed = await self._confirm_launch(source, destination)
+            if not confirmed:
+                return
         if hasattr(self.app, "refresh_kerberos"):
             await self.app.refresh_kerberos()
         error = self._validate()
         if error:
+            telemetry.note_launch_refused(_refusal_reason(error))
             self._show_message(error, "error")
             self.notify(error, severity="error")
             return
@@ -893,9 +999,15 @@ class NewJobScreen(Screen[None]):
             )
         except jobs.LaunchSlotUnavailable as exc:
             error = str(exc)
+            telemetry.note_launch_refused("slot_cap")
             self._show_message(error, "error")
             self.notify(error, severity="error")
             return
+        telemetry.note_job_launched(
+            job_id=job_dir.name,
+            source=source["type"],
+            destination=destination["type"],
+        )
         try:
             await process.launch_runner(job_dir)
         except OSError as exc:
@@ -917,6 +1029,46 @@ class NewJobScreen(Screen[None]):
         self.notify(f"\u2713 Launched Job {job_dir.name}", severity="information")
         self._show_message(f"\u2713 Launched Job {job_dir.name}", "success")
 
+    def _launch_summary(
+        self,
+        source: manifest.Source,
+        destination: manifest.Destination,
+    ) -> str:
+        source_type = source["type"]
+        source_detail = source.get("table_name") or source.get("sql_path_at_launch") or "--"
+        dest_type = destination["type"]
+        schema = destination.get("schema") or "--"
+        table = destination.get("table_name") or "--"
+        csv_path = destination.get("csv_path") or "--"
+        queues = self._selected_queues()
+        queue_label = ", ".join(queues) if queues else "Auto (cycle all queues)"
+        return (
+            f"Source: [cyan]{manifest.source_display_label(source_type)}[/]  {source_detail}\n"
+            f"Destination: [cyan]{dest_type}[/]\n"
+            f"Target table: [cyan]{schema}.{table}[/]\n"
+            f"Queue: [cyan]{queue_label}[/]\n"
+            f"CSV path: {csv_path}\n"
+            f"Email: {self._input_value('email') or '--'}"
+        )
+
+    async def _confirm_advisor_gate(
+        self,
+        errors: tuple,
+        source: manifest.Source,
+        destination: manifest.Destination,
+    ) -> bool:
+        loop_future: asyncio.Future[bool] = asyncio.get_running_loop().create_future()
+
+        def on_result(result: bool | None) -> None:
+            if not loop_future.done():
+                loop_future.set_result(bool(result))
+
+        self.app.push_screen(
+            AdvisorLaunchGate(errors, job_summary=self._launch_summary(source, destination)),
+            callback=on_result,
+        )
+        return await loop_future
+
     async def _confirm_launch(
         self,
         source: manifest.Source,
@@ -928,22 +1080,7 @@ class NewJobScreen(Screen[None]):
             if not loop_future.done():
                 loop_future.set_result(bool(result))
 
-        source_type = source["type"]
-        source_detail = source.get("table_name") or source.get("sql_path_at_launch") or "--"
-        dest_type = destination["type"]
-        schema = destination.get("schema") or "--"
-        table = destination.get("table_name") or "--"
-        csv_path = destination.get("csv_path") or "--"
-        queues = self._selected_queues()
-        queue_label = ", ".join(queues) if queues else "Auto (cycle all queues)"
-        body = (
-            f"Source: [cyan]{manifest.source_display_label(source_type)}[/]  {source_detail}\n"
-            f"Destination: [cyan]{dest_type}[/]\n"
-            f"Target table: [cyan]{schema}.{table}[/]\n"
-            f"Queue: [cyan]{queue_label}[/]\n"
-            f"CSV path: {csv_path}\n"
-            f"Email: {self._input_value('email') or '--'}"
-        )
+        body = self._launch_summary(source, destination)
         self.app.push_screen(
             ConfirmScreen(
                 "Launch Job",
@@ -961,6 +1098,7 @@ class NewJobScreen(Screen[None]):
         with self.app.suspend():
             process.run_interactive(editor, self._input_value("sql-file"))
         self._sql_exists_cache = None  # the editor may have created the file
+        self._sql_analysis_cache = None  # or changed the SQL under the same path
         self._detect_sql()
 
     async def action_kinit(self) -> None:

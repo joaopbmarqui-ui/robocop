@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from textual.widgets import DataTable, Input
 
-from dispatch import impala, manifest
+from dispatch import impala, manifest, telemetry
 from dispatch.app import DispatchApp
 from dispatch.screens.browser import BrowserScreen
 from dispatch.screens.history import PAGE_SIZE, HistoryScreen
@@ -186,6 +187,15 @@ def test_history_enter_opens_full_job_id_not_truncated_value(
             assert app.screen.job_id == job_id
 
     asyncio.run(run())
+    assert telemetry.flush(timeout=1)
+    events = [
+        json.loads(line)
+        for line in telemetry.private_events_path().read_text(encoding="utf-8").splitlines()
+    ]
+    assert any(
+        event["event"] == "screen_view" and event["props"].get("screen") == "job_detail"
+        for event in events
+    )
 
 
 def test_sidebar_click_navigation_switches_screens_from_nested_state(

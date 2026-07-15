@@ -21,3 +21,4 @@ build/
 *.egg-info/
 vendor/
 .edge-deploy-bundles/
+edge-deploy/*

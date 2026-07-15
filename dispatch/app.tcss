@@ -450,7 +450,7 @@ Input:focus {
 
 #sql-display {
     height: 1fr;
-    min-height: 6;
+    min-height: 4;
     margin: 0 1;
     border: round $primary-background-darken-1;
     overflow-y: auto;
@@ -460,6 +460,46 @@ Input:focus {
     height: 1fr;
     padding: 0 1;
     background: $surface;
+}
+
+#findings-heading {
+    padding: 0 1;
+}
+
+#findings-panel {
+    height: auto;
+    max-height: 10;
+    min-height: 3;
+    margin: 0 1 1 1;
+    border: round $primary-background-darken-1;
+    padding: 0 1;
+    overflow-y: auto;
+}
+
+/* ── Advisor finding blocks (Preview panel + launch gate) ───────────── */
+
+.finding-block {
+    height: auto;
+    margin: 0 0 1 0;
+    padding: 0 1;
+    border-left: thick $primary-background-darken-1;
+}
+
+.finding-block.severity-error {
+    border-left: thick $error;
+}
+
+.finding-block.severity-warning {
+    border-left: thick $warning;
+}
+
+.finding-block.severity-info {
+    border-left: thick $accent;
+}
+
+.findings-note {
+    height: auto;
+    padding: 0 1;
 }
 
 /* ── Job Detail ─────────────────────────────────────────────────────── */
@@ -736,7 +776,8 @@ Input:focus {
 
 /* ── Confirmation modal ─────────────────────────────────────────────── */
 
-ConfirmScreen {
+ConfirmScreen,
+AdvisorLaunchGate {
     align: center middle;
 }
 
@@ -750,6 +791,33 @@ ConfirmScreen {
 
 #confirm-dialog.danger {
     border: double $error;
+}
+
+AdvisorLaunchGate #confirm-dialog {
+    width: 76;
+    max-width: 95%;
+    height: 90%;
+    max-height: 26;
+}
+
+AdvisorLaunchGate #confirm-body {
+    background: $surface-darken-1;
+    padding: 0 1;
+    margin: 0 0 1 0;
+}
+
+#confirm-body-scroll {
+    height: 1fr;
+    scrollbar-size-vertical: 1;
+}
+
+#confirm-note {
+    height: auto;
+    color: $text-muted;
+}
+
+AdvisorLaunchGate #confirm-help {
+    padding: 0;
 }
 
 #confirm-title {

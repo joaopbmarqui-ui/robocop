@@ -22,6 +22,7 @@ from textual.widgets import (
     Input,
     RadioButton,
     RadioSet,
+    SelectionList,
     Static,
 )
 from textual.worker import Worker
@@ -45,6 +46,35 @@ _EXISTING_SCHEMA_IDS = {
     "esc-other": "other",
 }
 _KNOWN_EXISTING_SCHEMAS = frozenset({"coe_enc", "aa_enc"})
+
+# Execution-queue (Impala request pool) selection. The user may pick one or
+# more queues; the job then cycles through the chosen pools (in the order shown
+# below) via DISPATCH_REQUEST_POOL. Selecting nothing keeps the original
+# behaviour: the orchestrators cycle their own hardcoded queue list.
+# See scr/_common.resolve_pools and dispatch/runner._orchestrator_env.
+_QUEUE_AUTO = "auto"
+_QUEUE_CHOICES: list[tuple[str, str]] = [
+    ("adhoc_fast \u00b7 fastest, short / simple queries", "adhoc_fast"),
+    ("adhoc_small \u00b7 small queries", "adhoc_small"),
+    ("acs_small \u00b7 ACS small pool", "acs_small"),
+    ("acs_large \u00b7 large / heavy queries", "acs_large"),
+    ("adhoc \u00b7 general, long-running queries", "adhoc"),
+]
+# Cycle-priority order (fast \u2192 large \u2192 general) used to normalise the
+# user's selection deterministically, regardless of click order.
+_QUEUE_ORDER = [value for _label, value in _QUEUE_CHOICES]
+_QUEUE_VALUES = set(_QUEUE_ORDER)
+_QUEUE_HINTS = {
+    "adhoc_fast": "Fast pool \u2014 best for short or simple queries.",
+    "adhoc_small": "Small pool \u2014 light queries with a modest footprint.",
+    "acs_small": "ACS small pool \u2014 light ACS workloads.",
+    "acs_large": "Large pool \u2014 heavy or long-running queries.",
+    "adhoc": "General pool \u2014 long-running or resource-heavy queries.",
+}
+_QUEUE_AUTO_HINT = (
+    "None selected \u2192 Auto: cycle every queue until one accepts (default). "
+    "Pick one or more to restrict; multiple are tried in order."
+)
 
 
 class NewJobScreen(Screen[None]):
@@ -112,6 +142,15 @@ class NewJobScreen(Screen[None]):
                                 yield RadioButton("Csv", value=True, id="dst-csv")
                                 yield RadioButton("Table+Csv", id="dst-table-csv")
                     yield Static("", id="dest-hint")
+
+                with Vertical(id="queue-panel"):
+                    yield Static(
+                        "Execution Queue (select one or more)",
+                        classes="field-label",
+                        id="lbl-queue",
+                    )
+                    yield SelectionList[str](*_QUEUE_CHOICES, id="queue")
+                    yield Static(_QUEUE_AUTO_HINT, id="queue-hint", classes="input-caption")
 
                 yield Static("", id="picker-caption", classes="input-caption")
                 yield DataTable(id="sql-file-picker")
@@ -374,10 +413,47 @@ class NewJobScreen(Screen[None]):
             return f"{schema}.{table}"
         return table
 
+    def _selected_queues(self) -> list[str]:
+        """Return the chosen queues in cycle-priority (display) order.
+
+        Normalising by ``_QUEUE_ORDER`` makes the result deterministic no
+        matter which order the user toggled the selections in.
+        """
+        try:
+            selection = self.query_one("#queue", SelectionList)
+        except Exception:  # noqa: BLE001
+            return []
+        chosen = {str(value) for value in selection.selected}
+        return [queue for queue in _QUEUE_ORDER if queue in chosen]
+
+    def _queue_param(self) -> str:
+        """Serialize the queue selection for the manifest params.
+
+        A comma-separated list pins the job to those pools (tried in order);
+        the ``auto`` sentinel (no selection) preserves the default cycling.
+        """
+        queues = self._selected_queues()
+        return ",".join(queues) if queues else _QUEUE_AUTO
+
+    def _update_queue_hint(self) -> None:
+        queues = self._selected_queues()
+        hint = self.query_one("#queue-hint", Static)
+        if not queues:
+            hint.update(_QUEUE_AUTO_HINT)
+        elif len(queues) == 1:
+            hint.update(_QUEUE_HINTS.get(queues[0], ""))
+        else:
+            hint.update("Tried in order: " + " \u2192 ".join(queues))
+
     def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
         self._update_field_visibility()
         self._inline_validate()
         self._update_validation_summary()
+
+    def on_selection_list_selected_changed(self, event: SelectionList.SelectedChanged) -> None:
+        if event.control.id != "queue":
+            return
+        self._update_queue_hint()
 
     def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id == "table-name-suffix":
@@ -714,7 +790,11 @@ class NewJobScreen(Screen[None]):
         return source, destination
 
     def _params(self) -> dict[str, str]:
-        params = {"to_email": self._input_value("email"), "subject": self._input_value("subject")}
+        params = {
+            "to_email": self._input_value("email"),
+            "subject": self._input_value("subject"),
+            "queue": self._queue_param(),
+        }
         if self._selected_source() == "SqlTemplate":
             params["start_date"] = sql.to_orchestrator_date(self._input_value("start-date"))
             params["end_date"] = sql.to_orchestrator_date(self._input_value("end-date"))
@@ -854,10 +934,13 @@ class NewJobScreen(Screen[None]):
         schema = destination.get("schema") or "--"
         table = destination.get("table_name") or "--"
         csv_path = destination.get("csv_path") or "--"
+        queues = self._selected_queues()
+        queue_label = ", ".join(queues) if queues else "Auto (cycle all queues)"
         body = (
             f"Source: [cyan]{manifest.source_display_label(source_type)}[/]  {source_detail}\n"
             f"Destination: [cyan]{dest_type}[/]\n"
             f"Target table: [cyan]{schema}.{table}[/]\n"
+            f"Queue: [cyan]{queue_label}[/]\n"
             f"CSV path: {csv_path}\n"
             f"Email: {self._input_value('email') or '--'}"
         )
@@ -917,6 +1000,7 @@ class NewJobScreen(Screen[None]):
         existing_table = self.prefill.get("existing_table", "")
         if existing_table:
             self._apply_existing_table_prefill(str(existing_table))
+        self._apply_queue_value(self.prefill.get("queue", ""))
         source_type = self.prefill.get("source_type")
         source_btn = {
             "SqlFile": "src-sqlfile",
@@ -997,6 +1081,25 @@ class NewJobScreen(Screen[None]):
                 row.scroll_visible(animate=False)
                 return
 
+    def _apply_queue_value(self, value: str) -> None:
+        """Restore the queue selection from a saved/prefilled ``params.queue``.
+
+        Accepts a comma-separated list; unknown tokens (including the legacy
+        ``auto`` sentinel) are ignored, leaving nothing selected (= Auto).
+        """
+        try:
+            selection = self.query_one("#queue", SelectionList)
+        except Exception:  # noqa: BLE001
+            return
+        queues = [
+            token.strip() for token in str(value).split(",") if token.strip() in _QUEUE_VALUES
+        ]
+        with selection.prevent(SelectionList.SelectedChanged):
+            selection.deselect_all()
+            for queue in queues:
+                selection.select(queue)
+        self._update_queue_hint()
+
     def _apply_saved_defaults(self) -> None:
         defaults = config.read_form_defaults()
         if not defaults:
@@ -1012,6 +1115,7 @@ class NewJobScreen(Screen[None]):
                     self.query_one(f"#{widget_id}", Input).value = defaults[key]
                 except Exception:
                     pass
+        self._apply_queue_value(defaults.get("queue", ""))
 
     def _save_form_defaults(self) -> None:
         values = {
@@ -1019,6 +1123,7 @@ class NewJobScreen(Screen[None]):
             "email": self._input_value("email"),
             "subject": self._input_value("subject"),
             "destination_type": self._selected_destination(),
+            "queue": self._queue_param(),
         }
         try:
             config.save_form_defaults(values)

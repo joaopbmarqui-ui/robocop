@@ -1,6 +1,12 @@
 # Edge Node First-Time Setup
 
-This is the canonical first-time deployment and install flow for Dispatch on a real Hadoop Edge Node.
+This is the canonical first-time bootstrap and install flow for Dispatch on a
+real Hadoop Edge Node. It is not the default release workflow. After bootstrap,
+use the shared orchestrator:
+
+```powershell
+python -m edge_deploy release
+```
 
 It covers:
 
@@ -11,7 +17,10 @@ It covers:
 
 ## 1. Prepare the deployable tree locally
 
-Confirm the vendored wheels exist:
+Normal releases use content-addressed bundles managed by edge-deploy-core v1.1.0.
+The commands below are bootstrap/recovery guidance only; `vendor/` is not committed.
+
+Confirm a bootstrap wheelhouse exists:
 
 ```bash
 ls vendor/*.whl
@@ -54,8 +63,8 @@ rm dispatch_deploy.zip
 ### Alternative: Bitbucket-backed working tree
 
 When the Edge Node can reach the corporate Bitbucket server, prefer a Git
-working tree for ongoing updates. It keeps the deployed code tied to a commit
-and makes rollback straightforward.
+working tree so the shared release orchestrator can manage ongoing updates. It
+keeps the deployed code tied to a commit and makes rollback straightforward.
 
 One-time setup:
 
@@ -66,23 +75,24 @@ cd /ads_storage/dispatch
 git remote -v
 ```
 
-Normal update:
+Recovery update, when the shared release orchestrator cannot complete:
 
 ```bash
 cd /ads_storage/dispatch
 GIT_REMOTE=bitbucket GIT_BRANCH=main ./update.sh
 ```
 
-Exact-commit deploy:
+Exact-commit recovery update:
 
 ```bash
 cd /ads_storage/dispatch
 GIT_REMOTE=bitbucket GIT_BRANCH=main ./update.sh <commit-sha>
 ```
 
-Rollback uses the same exact-SHA shape: move the shared tree to the previous
-known-good commit, then run `install.sh` again. For the public harness command,
-see `py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <previous-good-sha> --rollback-from <current-bad-sha>`.
+Rollback uses the same exact-SHA shape as a recovery operation: move the shared
+tree to the previous known-good commit, then run `install.sh` again. For the
+repo-local harness recovery command, see
+`py -m tools.prod_tui deploy --config tools/prod_tui/config.yaml --commit <previous-good-sha> --rollback-from <current-bad-sha>`.
 
 ## 3. Verify Edge Node prerequisites
 
@@ -118,8 +128,8 @@ chmod +x update.sh install.sh
 DISPATCH_EMAIL=you@example.com DISPATCH_PYTHON_BIN=$(command -v python3.11) ./install.sh
 ```
 
-For repeatable update, validation, and exact-SHA rollback workflows, see
-[docs/development-workflow.md](./development-workflow.md).
+For the normal release workflow and recovery-only exact-SHA rollback details, see
+[release-workflow.md](release-workflow.md).
 
 
 

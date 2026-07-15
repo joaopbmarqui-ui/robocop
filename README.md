@@ -33,9 +33,11 @@ DISPATCH_EMAIL=you@example.com DISPATCH_PYTHON_BIN=$(command -v python3) ./insta
 dispatch
 ```
 
-For the full contributor workflow, including local validation, GitHub +
-Bitbucket remotes, edge-node updates, and production harness checks, see
-[docs/development-workflow.md](docs/development-workflow.md).
+Contributors should use [CONTRIBUTING.md](CONTRIBUTING.md) for setup,
+validation, commit, and release handoff.
+
+Normal development ends with a GitHub pull request. Release Operators use
+[docs/release-workflow.md](docs/release-workflow.md).
 
 ## Run
 

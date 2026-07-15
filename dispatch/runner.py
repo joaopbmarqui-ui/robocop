@@ -26,6 +26,23 @@ def _log(message: str) -> None:
         LOG.flush()
 
 
+def _orchestrator_env(manifest: manifest_io.JobManifest) -> dict[str, str] | None:
+    """Build the environment for orchestrator subprocesses.
+
+    When the job selected a specific execution queue, export it as
+    ``DISPATCH_REQUEST_POOL`` so the orchestrators pin the query to that
+    Impala request pool (see ``scr/_common.resolve_pools``). The ``auto``
+    sentinel (and a missing/blank value) inherits the runner's environment
+    unchanged, preserving the historical "cycle every queue" behaviour.
+    """
+    queue = str(manifest.get("params", {}).get("queue", "")).strip()
+    if not queue or queue.lower() == "auto":
+        return None
+    env = os.environ.copy()
+    env["DISPATCH_REQUEST_POOL"] = queue
+    return env
+
+
 def _write_error(job_dir: Path, error: Exception) -> None:
     payload = {"error": str(error), "type": type(error).__name__}
     (job_dir / "manifest.error.json").write_text(
@@ -116,10 +133,15 @@ def run(job_dir: Path) -> int:
             pid=os.getpid(),
         )
 
+        orchestrator_env = _orchestrator_env(manifest)
+        if orchestrator_env is not None:
+            _log(f"[runner] pinning request_pool={orchestrator_env['DISPATCH_REQUEST_POOL']}")
         try:
             for call in manifest["orchestrator_calls"]:
                 _log(f"[runner] starting {call['script']}: {' '.join(call['argv'])}")
-                with subprocess.Popen(call["argv"], stdout=log, stderr=log) as proc:
+                with subprocess.Popen(
+                    call["argv"], stdout=log, stderr=log, env=orchestrator_env
+                ) as proc:
                     CURRENT_PROC = proc
                     rc = proc.wait()
                 _log(f"[runner] finished {call['script']} exit={rc}")

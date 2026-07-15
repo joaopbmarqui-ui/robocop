@@ -89,9 +89,7 @@ def test_orphan_pending_without_pid_reconciles_after_grace(
     assert reconciled["state"] == "Failed"
     assert reconciled["exit_code"] == -1
     assert reconciled["finished_at"] is not None
-    assert "Pending job exceeded startup grace" in (job_dir / "run.log").read_text(
-        encoding="utf-8"
-    )
+    assert "Pending job exceeded startup grace" in (job_dir / "run.log").read_text(encoding="utf-8")
 
 
 def test_fresh_pending_without_pid_stays_pending(mock_env, tmp_path: Path) -> None:

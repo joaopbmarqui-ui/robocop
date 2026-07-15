@@ -5,7 +5,7 @@ import argparse
 import sys
 import os
 
-from _common import FATAL_ERRORS, classificar_erro_impala, cycle_through_pools, send_email
+from _common import FATAL_ERRORS, classificar_erro_impala, cycle_through_pools, resolve_pools, send_email
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -37,7 +37,7 @@ def main():
     sql_query = load_query(args.sql_file)
 
     # Static variables that are not passed as arguments
-    filas = ["adhoc_fast", "acs_small", "adhoc_small", "acs_large","adhoc"]
+    filas = resolve_pools(["adhoc_fast", "acs_small", "adhoc_small", "acs_large","adhoc"])
 
     print("--- Script Configuration ---")
     print(f"User: {args.user}")

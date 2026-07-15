@@ -6,7 +6,7 @@ import sys
 import os
 import uuid
 
-from _common import FATAL_ERRORS, classificar_erro_impala, cycle_through_pools, validate_full_table
+from _common import FATAL_ERRORS, classificar_erro_impala, cycle_through_pools, resolve_pools, validate_full_table
 
 # Set up basic logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -142,7 +142,7 @@ def main():
             logging.error(f"ERROR: The query file '{args.query_file}' was not found.")
             sys.exit(1)
 
-    filas = ["adhoc_fast", "adhoc_small", "adhoc"] 
+    filas = resolve_pools(["adhoc_fast", "adhoc_small", "adhoc"]) 
 
     logging.info("--- Script Configuration ---")
     logging.info(f"Output CSV file: {args.output_file}")

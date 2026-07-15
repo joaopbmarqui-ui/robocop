@@ -31,7 +31,7 @@ def test_install_decision_auto_runs_for_runtime_changes() -> None:
 def test_install_decision_auto_skips_for_docs_only_changes() -> None:
     decision = deploy.decide_install_action(
         mode="auto",
-        changed_paths=["docs/development-workflow.md", "README.md"],
+        changed_paths=["docs/release-workflow.md", "README.md"],
     )
 
     assert decision.action == "skip"

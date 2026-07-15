@@ -120,6 +120,7 @@ def _complete_metadata(runtime: Path, digest: str) -> dict[str, object] | None:
 def _install_lock(lock_path: Path) -> Iterator[None]:
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with lock_path.open("a+", encoding="utf-8") as lock_file:
+        lock_path.chmod(0o600)
         try:
             if os.name == "nt":
                 import msvcrt
@@ -211,6 +212,9 @@ def _build_runtime(runtime: Path, bundle_dir: Path, digest: str, approved_python
         shutil.rmtree(runtime)
     runtime.parent.mkdir(parents=True, exist_ok=True)
     _run([str(approved_python), "-m", "venv", str(runtime)])
+    # Keep the candidate private until every validation succeeds. Completed
+    # runtimes become analyst-readable only in _make_owner_writable_only().
+    runtime.chmod(0o700)
     runtime_python = runtime / "bin" / "python"
     _run(
         [
@@ -252,6 +256,8 @@ def install(bundle_dir: Path, approved_python: Path, root: Path) -> tuple[str, b
             except Exception:
                 shutil.rmtree(runtime, ignore_errors=True)
                 raise
+        else:
+            _make_owner_writable_only(runtime)
         _activate(runtime_root, runtime)
         (runtime_root / "install.lock").chmod(0o600)
     return digest, reused

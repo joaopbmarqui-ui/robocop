@@ -8,23 +8,21 @@ import hashlib
 import json
 import subprocess
 import sys
-from collections.abc import Sequence
 from pathlib import Path
+from typing import Sequence
 
 from tools.prod_tui.reporting import OperationReport, ReportCheck, write_report
 from tools.prod_tui.robocop_tmux import DEFAULT_CONFIG_PATH, ProdTuiConfig, TmuxDriver, load_config
 
 ROOT = Path(__file__).resolve().parents[2]
 
-
-def _runtime_path_filter(path: str) -> bool:
-    normalized = path.replace("\\", "/")
-    if normalized.startswith("dispatch/") and normalized.endswith((".py", ".tcss")):
-        return True
-    if normalized.startswith("scr/") and normalized.endswith(".py"):
-        return True
-    return normalized in {
+# Individual release-critical files outside dispatch/ and scr/. deploy.py's
+# install triggers and edge_deploy.yaml's runtime_paths must stay in sync with
+# this set.
+_RELEASE_CRITICAL_FILES = frozenset(
+    {
         "bin/dispatch",
+        "bin/runtime_check.sh",
         "install.sh",
         "onboard.sh",
         "shared_runtime.py",
@@ -33,6 +31,16 @@ def _runtime_path_filter(path: str) -> bool:
         "requirements.txt",
         "VERSION",
     }
+)
+
+
+def _runtime_path_filter(path: str) -> bool:
+    normalized = path.replace("\\", "/")
+    if normalized.startswith("dispatch/") and normalized.endswith((".py", ".tcss")):
+        return True
+    if normalized.startswith("scr/") and normalized.endswith(".py"):
+        return True
+    return normalized in _RELEASE_CRITICAL_FILES
 
 
 def runtime_critical_paths() -> list[str]:
@@ -44,16 +52,7 @@ def runtime_critical_paths() -> list[str]:
         for path in root_path.rglob("*"):
             if path.is_file() and _runtime_path_filter(path.relative_to(ROOT).as_posix()):
                 paths.append(path.relative_to(ROOT).as_posix())
-    for name in (
-        "bin/dispatch",
-        "install.sh",
-        "onboard.sh",
-        "shared_runtime.py",
-        "update.sh",
-        "pyproject.toml",
-        "requirements.txt",
-        "VERSION",
-    ):
+    for name in sorted(_RELEASE_CRITICAL_FILES):
         if (ROOT / name).exists():
             paths.append(name)
     return sorted(set(paths))
@@ -98,7 +97,7 @@ def _extract_payload(screen: str, start: str, end: str) -> str:
     end_index = screen.find(end)
     if start_index == -1 or end_index == -1 or end_index <= start_index:
         raise RuntimeError(f"Could not find payload markers {start!r} / {end!r}")
-    return screen[start_index + len(start) : end_index].strip()
+    return screen[start_index + len(start):end_index].strip()
 
 
 def _remote_python(driver: TmuxDriver, script: str, *, timeout: float = 60.0) -> tuple[str, int]:
@@ -140,9 +139,7 @@ print("DRIFT_PAYLOAD_END")
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="Compare runtime-critical files against an expected commit"
-    )
+    parser = argparse.ArgumentParser(description="Compare runtime-critical files against an expected commit")
     parser.add_argument("--config", default=str(DEFAULT_CONFIG_PATH))
     parser.add_argument("--commit", required=True)
     parser.add_argument("--json-report")

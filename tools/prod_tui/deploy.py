@@ -7,9 +7,9 @@ import base64
 import json
 import subprocess
 import sys
-from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Sequence
 
 from tools.prod_tui.drift import runtime_critical_paths
 from tools.prod_tui.reporting import OperationReport, ReportCheck, write_report
@@ -18,6 +18,7 @@ from tools.prod_tui.robocop_tmux import DEFAULT_CONFIG_PATH, ProdTuiConfig, Tmux
 ROOT = Path(__file__).resolve().parents[2]
 _INSTALL_TRIGGER_PATHS = {
     "bin/dispatch",
+    "bin/runtime_check.sh",
     "install.sh",
     "pyproject.toml",
     "requirements.txt",
@@ -41,23 +42,17 @@ def decide_install_action(*, mode: str, changed_paths: list[str]) -> InstallDeci
     if mode == "never":
         return InstallDecision("skip", "Install skipped by --install never")
     sensitive = sorted(
-        path
-        for path in changed_paths
-        if path in _INSTALL_TRIGGER_PATHS or path.startswith("dispatch/")
+        path for path in changed_paths
+        if path in _INSTALL_TRIGGER_PATHS
+        or path.startswith("dispatch/")
     )
     if sensitive:
-        return InstallDecision(
-            "run", f"Install-sensitive files changed: {', '.join(sensitive[:6])}"
-        )
-    return InstallDecision(
-        "skip", "No install-sensitive files changed between the deployed and target commits"
-    )
+        return InstallDecision("run", f"Install-sensitive files changed: {', '.join(sensitive[:6])}")
+    return InstallDecision("skip", "No install-sensitive files changed between the deployed and target commits")
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="Update one Edge node to an exact deployment commit"
-    )
+    parser = argparse.ArgumentParser(description="Update one Edge node to an exact deployment commit")
     parser.add_argument("--config", default=str(DEFAULT_CONFIG_PATH))
     parser.add_argument("--commit", required=True)
     parser.add_argument("--install", choices=["auto", "always", "never"], default="auto")
@@ -81,7 +76,7 @@ def _extract_payload(screen: str, start: str, end: str) -> str:
     end_index = screen.find(end)
     if start_index == -1 or end_index == -1 or end_index <= start_index:
         raise RuntimeError(f"Could not find payload markers {start!r} / {end!r}")
-    return screen[start_index + len(start) : end_index].strip()
+    return screen[start_index + len(start):end_index].strip()
 
 
 def _ensure_session(config: ProdTuiConfig, driver: TmuxDriver, reuse_session: bool) -> None:
@@ -100,18 +95,14 @@ def _ensure_session(config: ProdTuiConfig, driver: TmuxDriver, reuse_session: bo
         )
 
 
-def _run_remote_python(
-    driver: TmuxDriver, script: str, *, timeout: float = 60.0
-) -> tuple[str, int]:
+def _run_remote_python(driver: TmuxDriver, script: str, *, timeout: float = 60.0) -> tuple[str, int]:
     encoded = base64.b64encode(script.encode("utf-8")).decode("ascii")
     py = "$(command -v python3.11 || command -v python3.10 || command -v python3)"
     command = f"printf %s {encoded} | base64 -d | {py} -"
     return driver.run_remote(command, timeout=timeout)
 
 
-def _remote_git_output(
-    driver: TmuxDriver, repo_path: str, command: str, *, timeout: float = 60.0
-) -> str:
+def _remote_git_output(driver: TmuxDriver, repo_path: str, command: str, *, timeout: float = 60.0) -> str:
     screen, code = driver.run_remote(f"cd {repo_path} && {command}", timeout=timeout)
     if code != 0:
         raise RuntimeError(f"Remote command failed ({code}): {command}")
@@ -123,9 +114,7 @@ def _remote_rev_parse(driver: TmuxDriver, repo_path: str, ref: str) -> str:
     return screen.strip().splitlines()[-2 if "__RC_" in screen else -1].strip()
 
 
-def _remote_changed_paths(
-    driver: TmuxDriver, repo_path: str, previous: str, target: str
-) -> list[str]:
+def _remote_changed_paths(driver: TmuxDriver, repo_path: str, previous: str, target: str) -> list[str]:
     screen = _remote_git_output(
         driver,
         repo_path,
@@ -265,9 +254,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         _ensure_session(config, driver, args.reuse_session)
         previous_commit = _remote_rev_parse(driver, config.repo_path, "HEAD")
-        changed_paths = _remote_changed_paths(
-            driver, config.repo_path, previous_commit, target_commit
-        )
+        changed_paths = _remote_changed_paths(driver, config.repo_path, previous_commit, target_commit)
         install = decide_install_action(mode=args.install, changed_paths=changed_paths)
         operation = "rollback" if args.rollback_from else "deploy"
         checks: list[ReportCheck] = []

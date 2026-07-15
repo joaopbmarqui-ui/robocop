@@ -44,6 +44,19 @@ _Avoid_: queue, fila.
 The gateway server providing access to the Hadoop cluster. Hosts the
 orchestrator scripts and (in the new design) the TUI itself.
 
+**Analyst**:
+A person who runs Dispatch on an **Edge Node** to launch and supervise
+**Jobs**. Owns private configuration, jobs, logs, and telemetry under
+`/ads_storage/<user>/.dispatch/`; never installs dependencies or runs pip.
+_Avoid_: user (ambiguous with the Unix account), end user, operator.
+
+**Release Operator**:
+The person who deploys Dispatch to an **Edge Node** and manages the shared
+runtime: delivering verified dependency bundles, running `install.sh`, and
+activating or rolling back runtimes (see ADR-0007). Distinct from an
+**Analyst**, who only runs `onboard.sh` and the TUI.
+_Avoid_: admin, deployer, maintainer.
+
 **Advisor**:
 The pre-launch static analysis feature that checks a **Job's** SQL against
 the Impala optimization manual and reports **Findings**. Flag-only: it never

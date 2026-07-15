@@ -10,6 +10,9 @@ def test_runtime_critical_paths_cover_expected_release_surface() -> None:
     assert "dispatch/app.tcss" in paths
     assert "scr/Query_Impala_Parametrized.py" in paths
     assert "install.sh" in paths
+    assert "onboard.sh" in paths
+    assert "shared_runtime.py" in paths
+    assert "bin/dispatch" in paths
     assert "update.sh" in paths
     assert "pyproject.toml" in paths
     assert "requirements.txt" in paths

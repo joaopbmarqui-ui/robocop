@@ -37,10 +37,6 @@ def config_path(user: str | None = None) -> Path:
     return dispatch_home(user) / "config.json"
 
 
-def installed_version_path(user: str | None = None) -> Path:
-    return dispatch_home(user) / "installed_version"
-
-
 def read_config(user: str | None = None) -> dict[str, Any]:
     path = config_path(user)
     with path.open("r", encoding="utf-8") as handle:

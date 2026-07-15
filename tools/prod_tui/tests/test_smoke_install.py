@@ -27,9 +27,7 @@ def test_install_check_sets_detected_python_bin() -> None:
 
     assert result.passed is True
     assert driver.commands == [
-        "DISPATCH_EMAIL=dispatch-smoke@example.com "
-        "DISPATCH_PYTHON_BIN=$(command -v python3.11 || command -v python3.10) "
-        "./install.sh"
+        "DISPATCH_PYTHON_BIN=$(command -v python3.11 || command -v python3.10) ./install.sh"
     ]
 
 

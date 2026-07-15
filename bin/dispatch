@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+set -eu
+
+ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd -P)
+. "$ROOT_DIR/bin/runtime_check.sh"
+
+RUNTIME=$(dispatch_active_runtime "$ROOT_DIR")
+
+export PYTHONPATH="$ROOT_DIR"
+export DISPATCH_SCR_DIR="$ROOT_DIR/scr"
+export DISPATCH_RUNTIME="$RUNTIME"
+exec "$RUNTIME/bin/python" -m dispatch "$@"

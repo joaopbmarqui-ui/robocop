@@ -2,7 +2,8 @@
 
 The server-side TUI is built on **Textual** (Textualize), pinned to a specific
 version with all transitive deps vendored as wheels under `vendor/` and
-installed into a per-user venv on the Edge Node. The orchestrator scripts in
+installed into the shared, immutable Edge Node runtime described by ADR-0007.
+The orchestrator scripts in
 `scr/` keep their stdlib-only policy — this ADR loosens that rule for the TUI
 only.
 
@@ -24,9 +25,9 @@ and aesthetic ceiling, not Job durability.
 
 ## Consequences
 
-- A `requirements.txt` with pinned versions plus a `vendor/` directory of
-  wheels is added to the repo. Install is
-  `pip install --user --no-index --find-links=vendor/ -r requirements.txt`.
+- A `requirements.txt` with pinned versions is delivered as a verified offline
+  wheel bundle. The Release Operator installs it into a content-addressed
+  shared virtual environment with no online index access.
 - The TUI must use async-safe subprocess primitives
   (`asyncio.create_subprocess_exec` or `loop.run_in_executor`); blocking
   `subprocess.run` calls in callbacks would freeze the UI.

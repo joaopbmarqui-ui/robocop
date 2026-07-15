@@ -47,7 +47,6 @@ class TestNarrowTerminalLayout:
         dispatch_home = tmp_path / ".dispatch"
         dispatch_home.mkdir(parents=True)
         (dispatch_home / "config.json").write_text("{}", encoding="utf-8")
-        (dispatch_home / "installed_version").write_text("1.0.0", encoding="utf-8")
 
         app = DispatchApp()
         async with app.run_test(size=(80, 24)) as pilot:
@@ -60,7 +59,6 @@ class TestNarrowTerminalLayout:
         dispatch_home = tmp_path / ".dispatch"
         dispatch_home.mkdir(parents=True)
         (dispatch_home / "config.json").write_text("{}", encoding="utf-8")
-        (dispatch_home / "installed_version").write_text("1.0.0", encoding="utf-8")
         notifications: list[str] = []
 
         app = DispatchApp()
@@ -79,7 +77,6 @@ class TestNarrowTerminalLayout:
         dispatch_home = tmp_path / ".dispatch"
         dispatch_home.mkdir(parents=True)
         (dispatch_home / "config.json").write_text("{}", encoding="utf-8")
-        (dispatch_home / "installed_version").write_text("1.0.0", encoding="utf-8")
 
         app = DispatchApp()
         async with app.run_test(size=(80, 24)) as pilot:
@@ -122,7 +119,6 @@ class TestJobDetailFollow:
         (jobs_dir / "run.log").write_text("line\n", encoding="utf-8")
         dispatch_home = tmp_path / ".dispatch"
         (dispatch_home / "config.json").write_text("{}", encoding="utf-8")
-        (dispatch_home / "installed_version").write_text("1.0.0", encoding="utf-8")
 
         app = DispatchApp()
         async with app.run_test(size=(120, 40)) as pilot:

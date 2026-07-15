@@ -138,6 +138,9 @@ def test_install_creates_runtime_artifacts_with_mocked_edge_tools(
     home.mkdir()
     data_root.mkdir(parents=True)
     fake_bin.mkdir()
+    stale_venv_file = data_root / ".dispatch" / "venv" / "stale-interpreter"
+    stale_venv_file.parent.mkdir(parents=True)
+    stale_venv_file.write_text("python3.11\n", encoding="utf-8")
     bundle = tmp_path / "bundle"
     (bundle / "wheels").mkdir(parents=True)
     (bundle / "requirements").mkdir()
@@ -155,17 +158,26 @@ def test_install_creates_runtime_artifacts_with_mocked_edge_tools(
         """#!/usr/bin/env sh
 set -eu
 if [ "${1:-}" = "-m" ] && [ "${2:-}" = "venv" ]; then
-  mkdir -p "$3/bin"
-  cat > "$3/bin/pip" <<'EOF'
+  if [ "${3:-}" = "--clear" ]; then
+    target=$4
+    rm -rf "$target"
+  else
+    target=$3
+  fi
+  mkdir -p "$target/bin"
+  cat > "$target/bin/pip" <<'EOF'
 #!/usr/bin/env sh
 exit 0
 EOF
-  chmod +x "$3/bin/pip"
-  cat > "$3/bin/python" <<'EOF'
+  chmod +x "$target/bin/pip"
+  cat > "$target/bin/python" <<'EOF'
 #!/usr/bin/env sh
+if [ "${1:-}" = "-m" ] && [ "${2:-}" = "pip" ]; then
+  touch "$0.pip-invoked"
+fi
 exit 0
 EOF
-  chmod +x "$3/bin/python"
+  chmod +x "$target/bin/python"
   exit 0
 fi
 if [ "${1:-}" = "-" ]; then
@@ -206,6 +218,8 @@ exit 0
         assert stat.S_IMODE(dispatch_home.stat().st_mode) == 0o700
         assert stat.S_IMODE((dispatch_home / "jobs").stat().st_mode) == 0o700
     assert (dispatch_home / "venv" / "bin" / "python").is_file()
+    assert not stale_venv_file.exists()
+    assert (dispatch_home / "venv" / "bin" / "python.pip-invoked").is_file()
     data = json.loads((dispatch_home / "config.json").read_text(encoding="utf-8"))
     assert data == {"form_defaults": {"email": email}}
     assert (dispatch_home / "installed_version").read_text(encoding="utf-8") == (

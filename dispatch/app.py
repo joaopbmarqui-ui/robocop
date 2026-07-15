@@ -136,10 +136,16 @@ class DispatchApp(App[None]):
         self._check_terminal_size()
 
     async def _ensure_kerberos_for_jupyter(self) -> bool:
-        """Gate startup in Jupyter until Kerberos is available."""
+        """Gate startup in Jupyter until Kerberos can outlast a job launch.
+
+        Uses the launch threshold rather than a bare ``klist -s`` so a
+        nearly-expired ticket triggers the sign-in modal here instead of an
+        unexplained launch-time refusal minutes later.
+        """
         if not runtime.is_jupyter_notebook():
             return True
-        if await kerberos.has_ticket():
+        ttl = await kerberos.ticket_ttl_seconds()
+        if ttl is not None and ttl >= kerberos.MIN_LAUNCH_TTL_SECONDS:
             return True
         authenticated = await self.push_screen_wait(KerberosLoginScreen())
         if not authenticated:

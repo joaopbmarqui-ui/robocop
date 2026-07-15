@@ -65,6 +65,22 @@ def test_jupyter_startup_skips_login_when_ticket_present(mock_env_with_config, m
     asyncio.run(run())
 
 
+def test_jupyter_startup_prompts_when_ticket_expires_before_launch_threshold(
+    mock_env_with_config, monkeypatch
+) -> None:
+    """A ticket under the 300s launch threshold must trigger sign-in at startup."""
+    monkeypatch.setenv("DISPATCH_JUPYTER_MODE", "1")
+    monkeypatch.setenv("DISPATCH_MOCK_KLIST_TTL", "60")
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(140, 50)) as pilot:
+            await pilot.pause()
+            assert isinstance(app.screen, KerberosLoginScreen)
+
+    asyncio.run(run())
+
+
 def test_non_jupyter_startup_skips_login_even_without_ticket(
     mock_env_with_config, monkeypatch
 ) -> None:

@@ -20,6 +20,11 @@ logger = logging.getLogger("dispatch.kerberos")
 DEFAULT_REALM = "CORP.MASTERCARD.ORG"
 KINIT_TIMEOUT_SECONDS = 30.0
 
+# Minimum remaining ticket lifetime Dispatch requires before launching a job.
+# The Jupyter startup gate uses the same threshold so a nearly-expired ticket
+# triggers the sign-in modal at startup instead of a launch-time refusal.
+MIN_LAUNCH_TTL_SECONDS = 300
+
 
 def krb5_realm() -> str:
     return os.environ.get("DISPATCH_KRB5_REALM", DEFAULT_REALM)
@@ -53,36 +58,25 @@ async def kinit_with_password(eid: str, password: str) -> tuple[bool, str]:
 
     logger.info("Running kinit for principal %s", principal)
     try:
-        proc = await asyncio.create_subprocess_exec(
+        rc, _stdout, stderr = await process.run_exec(
             "kinit",
             principal,
-            stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+            timeout=KINIT_TIMEOUT_SECONDS,
+            stdin_data=f"{password}\n".encode(),
         )
-    except (OSError, FileNotFoundError):
+    except OSError:
         logger.warning("kinit not found on PATH")
         return False, "Kerberos tools are unavailable on this host."
-
-    try:
-        _stdout, stderr = await asyncio.wait_for(
-            proc.communicate(input=f"{password}\n".encode()),
-            timeout=KINIT_TIMEOUT_SECONDS,
-        )
-    except asyncio.TimeoutError:
-        proc.kill()
-        await proc.wait()
+    except (asyncio.TimeoutError, TimeoutError):
         logger.warning("kinit timed out for principal %s", principal)
         return False, "Kerberos sign-in timed out. Try again."
 
-    if proc.returncode == 0:
+    if rc == 0:
         if not await has_ticket():
             return False, "Kerberos sign-in did not produce an active ticket."
         return True, ""
 
-    message = stderr.decode(errors="replace").strip()
-    if not message:
-        message = "Kerberos authentication failed."
+    message = stderr.strip() or "Kerberos authentication failed."
     logger.warning("kinit failed for principal %s: %s", principal, message)
     return False, message
 

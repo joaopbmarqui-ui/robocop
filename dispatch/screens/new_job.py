@@ -27,7 +27,7 @@ from textual.widgets import (
 )
 from textual.worker import Worker
 
-from .. import config, jobs, manifest, process, sql, telemetry
+from .. import config, jobs, kerberos, manifest, process, sql, telemetry
 from ..advisor import analyze, analyze_form, analyze_sql, combine_analysis
 from ..advisor.models import AnalysisResult, badge_markup
 from .advisor_gate import AdvisorLaunchGate
@@ -515,7 +515,7 @@ class NewJobScreen(Screen[None]):
                 msgs.append("[red]\u2717[/] Invalid email format")
         if self.kerberos_ttl is None:
             msgs.append("[red]\u2717[/] Kerberos missing")
-        elif self.kerberos_ttl < 300:
+        elif self.kerberos_ttl < kerberos.MIN_LAUNCH_TTL_SECONDS:
             msgs.append("[yellow]\u26a0[/] Kerberos TTL low")
         else:
             msgs.append("[green]\u2713[/] Kerberos")
@@ -574,7 +574,7 @@ class NewJobScreen(Screen[None]):
             issues.append(f"At the {jobs.RUNNING_CAP}-Job concurrency cap")
         if self.kerberos_ttl is None:
             issues.append("Kerberos missing \u2014 press K to kinit")
-        elif self.kerberos_ttl < 300:
+        elif self.kerberos_ttl < kerberos.MIN_LAUNCH_TTL_SECONDS:
             issues.append("Kerberos TTL under 5 min \u2014 press K to renew")
         return issues
 
@@ -739,7 +739,9 @@ class NewJobScreen(Screen[None]):
 
     def _refresh_kerberos(self) -> None:
         launch_btn = self.query_one("#launch", Button)
-        launch_btn.disabled = self.kerberos_ttl is None or self.kerberos_ttl < 300
+        launch_btn.disabled = (
+            self.kerberos_ttl is None or self.kerberos_ttl < kerberos.MIN_LAUNCH_TTL_SECONDS
+        )
         self._update_validation_summary()
 
     def _on_kerberos_change(self, value: int | None) -> None:
@@ -822,7 +824,7 @@ class NewJobScreen(Screen[None]):
             return f"Already at the {jobs.RUNNING_CAP}-Job concurrency cap; wait for one to finish"
         if self.kerberos_ttl is None:
             return "Kerberos ticket missing"
-        if self.kerberos_ttl < 300:
+        if self.kerberos_ttl < kerberos.MIN_LAUNCH_TTL_SECONDS:
             return "Kerberos ticket TTL is under 5 minutes"
         if source_type == "ExistingTable":
             return None

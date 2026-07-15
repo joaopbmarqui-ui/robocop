@@ -162,10 +162,11 @@ The detailed, checkable steps live in
 - **Level 1 — safe production smoke (no job launch):** SSH + tmux work,
   `compileall` is clean, the dashboard renders, Kerberos status shows, navigation
   works, SQL browser / history / preview open, quit is clean.
-- **Level 2 — real environment checks (no destructive actions):** `install.sh`
-  works against the real `/ads_storage/<user>/` path, `klist` is detected,
-  `impala-shell` is on PATH, the launch CWD is captured, Textual renders over the
-  corporate SSH chain.
+- **Level 2 — real environment checks (no destructive actions):** the shared
+  runtime metadata matches the delivered bundle, the explicit shared launcher
+  imports `sqlglot`, analyst onboarding works without a personal bundle or
+  venv, `klist` is detected, `impala-shell` is on PATH, and the launch CWD is
+  captured over the corporate SSH chain.
 - **Level 3 — controlled real job:** only a trivial scratch query
   (`SELECT 1 AS smoke_test_value`) into a writable scratch schema, with a
   destination table named `dispatch_smoke_<user>_<date>`.

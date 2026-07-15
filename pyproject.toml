@@ -22,7 +22,7 @@ dev = [
   "mypy",
 ]
 release = [
-  "edge-deploy-core @ git+https://github.com/pedrochagasmaster/edge-deploy-core.git@v1.5.1",
+  "edge-deploy-core @ git+https://github.com/pedrochagasmaster/edge-deploy-core.git@v1.5.2",
 ]
 
 [project.scripts]

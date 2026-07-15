@@ -16,6 +16,23 @@ from tools.prod_tui.robocop_tmux import DEFAULT_CONFIG_PATH, ProdTuiConfig, Tmux
 
 ROOT = Path(__file__).resolve().parents[2]
 
+# Individual release-critical files outside dispatch/ and scr/. deploy.py's
+# install triggers and edge_deploy.yaml's runtime_paths must stay in sync with
+# this set.
+_RELEASE_CRITICAL_FILES = frozenset(
+    {
+        "bin/dispatch",
+        "bin/runtime_check.sh",
+        "install.sh",
+        "onboard.sh",
+        "shared_runtime.py",
+        "update.sh",
+        "pyproject.toml",
+        "requirements.txt",
+        "VERSION",
+    }
+)
+
 
 def _runtime_path_filter(path: str) -> bool:
     normalized = path.replace("\\", "/")
@@ -23,7 +40,7 @@ def _runtime_path_filter(path: str) -> bool:
         return True
     if normalized.startswith("scr/") and normalized.endswith(".py"):
         return True
-    return normalized in {"install.sh", "update.sh", "pyproject.toml", "requirements.txt", "VERSION"}
+    return normalized in _RELEASE_CRITICAL_FILES
 
 
 def runtime_critical_paths() -> list[str]:
@@ -35,7 +52,7 @@ def runtime_critical_paths() -> list[str]:
         for path in root_path.rglob("*"):
             if path.is_file() and _runtime_path_filter(path.relative_to(ROOT).as_posix()):
                 paths.append(path.relative_to(ROOT).as_posix())
-    for name in ("install.sh", "update.sh", "pyproject.toml", "requirements.txt", "VERSION"):
+    for name in sorted(_RELEASE_CRITICAL_FILES):
         if (ROOT / name).exists():
             paths.append(name)
     return sorted(set(paths))

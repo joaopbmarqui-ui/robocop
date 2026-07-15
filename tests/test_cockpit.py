@@ -119,18 +119,15 @@ def test_cockpit_empty_state_and_startup_event_are_visible(mock_env_with_config)
     asyncio.run(run())
 
 
-def test_app_startup_logs_and_reports_version_mismatch(mock_env_with_config) -> None:
+def test_app_startup_logs_version(mock_env_with_config) -> None:
     data_root = Path(os.environ["DISPATCH_DATA_ROOT"])
     dispatch_home = data_root / ".dispatch"
-    (dispatch_home / "installed_version").write_text("0.9.0", encoding="utf-8")
 
-    app = DispatchApp()
-    warning = app._build_version_warning()
+    DispatchApp()
     for handler in logging.getLogger("dispatch").handlers:
         handler.flush()
 
     log_text = (dispatch_home / "dispatch.log").read_text(encoding="utf-8")
-    assert f"Version mismatch: installed 0.9.0, running {__version__}. Run install.sh." == warning
     assert f"Dispatch {__version__} starting" in log_text
 
 

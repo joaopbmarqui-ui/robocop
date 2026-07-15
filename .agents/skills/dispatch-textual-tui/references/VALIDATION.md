@@ -13,16 +13,15 @@ source "$repo/mocks/dev-env.sh"
 dispatch_home="$DISPATCH_DATA_ROOT/.dispatch"
 mkdir -p "$dispatch_home/jobs"
 printf '{"form_defaults":{"email":"test@example.com"}}\n' > "$dispatch_home/config.json"
-cp "$repo/VERSION" "$dispatch_home/installed_version"
 chmod 700 "$dispatch_home" "$dispatch_home/jobs"
-chmod 600 "$dispatch_home/config.json" "$dispatch_home/installed_version"
+chmod 600 "$dispatch_home/config.json"
 launch_dir=$(mktemp -d)
 printf 'SELECT 1 AS smoke_check;\n' > "$launch_dir/smoke.sql"
 cd "$launch_dir"
 DISPATCH_MOCK_SCENARIO=happy_path "$repo/.venv/bin/python" -m dispatch
 ```
 
-The local setup writes only development config/version metadata; `install.sh`
+The local setup writes only development config metadata; `install.sh`
 is the deployment path and requires a verified Edge dependency bundle. The
 launch directory must contain at least one `.sql` file or the New Job picker is
 empty. `mocks/dev-env.sh` supplies fake `kinit`, `klist`, and `impala-shell`,

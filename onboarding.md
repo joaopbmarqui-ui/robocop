@@ -1,23 +1,22 @@
 # Dispatch Onboarding
 
-Welcome to Dispatch. After the administrator deploys the shared
-`/ads_storage/dispatch` tree, each user only needs to run the installer once.
+Welcome to Dispatch. After the Release Operator deploys the shared tree and
+activates its runtime, each user only needs lightweight onboarding.
 
-## Install
+## Onboard
 
-Run the installer directly from the deployed tree:
+Run onboarding directly from the deployed tree:
 
 ```bash
-cd /ads_storage/dispatch
-./install.sh
+/ads_storage/dispatch/onboard.sh
 ```
 
-Do not run it with `source`. The installer creates your personal Dispatch
-runtime under `/ads_storage/$USER/.dispatch`, writes the `dispatch` launcher to
-`~/.local/bin/dispatch`, and updates your shell profile so new sessions can find
-the command.
+Do not run it with `source`. Onboarding creates or repairs your private state
+under `/ads_storage/$USER/.dispatch`, writes the `dispatch` launcher to
+`~/.local/bin/dispatch`, and updates your shell profile. It needs no dependency
+bundle or personal venv and never runs pip.
 
-If the installer says:
+If onboarding says:
 
 ```bash
 To use dispatch in this shell now:
@@ -46,13 +45,17 @@ export PATH="$HOME/.local/bin:$PATH"
 which dispatch
 ```
 
-If `which dispatch` still prints nothing, rerun the installer and keep the full
+If `which dispatch` still prints nothing, rerun onboarding and keep the full
 output for support:
 
 ```bash
-cd /ads_storage/dispatch
-./install.sh
+/ads_storage/dispatch/onboard.sh
 ```
 
 If Dispatch opens but reports Kerberos problems, run `kinit`, confirm the ticket
 with `klist`, then launch `dispatch` again.
+
+If onboarding reports that the shared runtime is missing or invalid, stop and
+contact the Release Operator. Do not run pip. Existing jobs, configuration, and
+old personal venvs can remain in place; rerunning onboarding safely replaces a
+stale launcher without deleting them.

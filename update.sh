@@ -50,7 +50,7 @@ while IFS= read -r _path; do
 done <<EOF
 $CHANGED_FILES
 EOF
-chmod a+rx . update.sh install.sh 2>/dev/null || true
+chmod a+rx . update.sh install.sh onboard.sh bin bin/dispatch bin/runtime_check.sh 2>/dev/null || true
 
 # Shared usage telemetry rollup (append-only per-user JSONL). Sticky bit so
 # analysts can create their own file without deleting others'.

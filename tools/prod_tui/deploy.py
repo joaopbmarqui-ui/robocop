@@ -17,9 +17,12 @@ from tools.prod_tui.robocop_tmux import DEFAULT_CONFIG_PATH, ProdTuiConfig, Tmux
 
 ROOT = Path(__file__).resolve().parents[2]
 _INSTALL_TRIGGER_PATHS = {
+    "bin/dispatch",
+    "bin/runtime_check.sh",
     "install.sh",
     "pyproject.toml",
     "requirements.txt",
+    "shared_runtime.py",
     "VERSION",
     "dispatch/__main__.py",
     "dispatch/__init__.py",
@@ -145,6 +148,8 @@ payload = {{
     "root_traversable": root.is_dir() and os.access(root, os.X_OK),
     "update_executable": os.access(root / "update.sh", os.X_OK),
     "install_executable": os.access(root / "install.sh", os.X_OK),
+    "onboard_executable": os.access(root / "onboard.sh", os.X_OK),
+    "shared_launcher_executable": os.access(root / "bin" / "dispatch", os.X_OK),
     "runtime_files_checked": len(files),
     "missing_runtime_files": missing,
     "unreadable_runtime_files": unreadable,
@@ -161,9 +166,64 @@ print("PERMISSION_PAYLOAD_END")
 
 
 def _install_command(config: ProdTuiConfig) -> str:
-    email = config.operator_email or "dispatch-operator@example.com"
     py = "$(command -v python3.11 || command -v python3.10)"
-    return f"DISPATCH_EMAIL={email} DISPATCH_PYTHON_BIN={py} ./install.sh"
+    return f"DISPATCH_PYTHON_BIN={py} ./install.sh"
+
+
+def _runtime_evidence(driver: TmuxDriver, repo_path: str) -> dict[str, object]:
+    script = f"""
+import json
+import os
+import stat
+import subprocess
+from pathlib import Path
+
+root = Path({repo_path!r})
+current = root / ".venv" / "current"
+runtime = current.resolve(strict=True)
+metadata = json.loads((runtime / ".complete.json").read_text(encoding="utf-8"))
+bundle_manifest = json.loads(
+    (Path.home() / ".edge-deploy" / "bundles" / "robocop" / "current" / "manifest.json")
+    .read_text(encoding="utf-8")
+)
+help_result = subprocess.run(
+    [str(root / "bin" / "dispatch"), "--help"],
+    cwd=root,
+    text=True,
+    capture_output=True,
+    check=False,
+)
+import_result = subprocess.run(
+    [str(runtime / "bin" / "python"), "-c", "import sqlglot; print(sqlglot.__file__)"],
+    text=True,
+    capture_output=True,
+    check=False,
+)
+publicly_writable = []
+for path in [runtime, *runtime.rglob("*")]:
+    if path.is_symlink():
+        continue
+    if stat.S_IMODE(path.stat().st_mode) & 0o022:
+        publicly_writable.append(str(path.relative_to(runtime)))
+payload = {{
+    "active_runtime": str(runtime),
+    "runtime_digest": metadata.get("bundle_digest"),
+    "bundle_digest": bundle_manifest.get("bundle_digest"),
+    "pip_check": metadata.get("pip_check"),
+    "help_exit_code": help_result.returncode,
+    "sqlglot_exit_code": import_result.returncode,
+    "sqlglot_path": import_result.stdout.strip(),
+    "publicly_writable": publicly_writable,
+}}
+print("RUNTIME_PAYLOAD_START")
+print(json.dumps(payload, sort_keys=True))
+print("RUNTIME_PAYLOAD_END")
+"""
+    screen, code = _run_remote_python(driver, script, timeout=120)
+    if code != 0:
+        raise RuntimeError(f"Shared runtime verification failed with exit code {code}")
+    payload = _extract_payload(screen, "RUNTIME_PAYLOAD_START", "RUNTIME_PAYLOAD_END")
+    return json.loads(payload)
 
 
 def _local_rev_parse(commit: str) -> str:
@@ -265,6 +325,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             bool(permissions["root_traversable"])
             and bool(permissions["update_executable"])
             and bool(permissions["install_executable"])
+            and bool(permissions["onboard_executable"])
+            and bool(permissions["shared_launcher_executable"])
             and not permissions["missing_runtime_files"]
             and not permissions["unreadable_runtime_files"]
         )
@@ -274,6 +336,23 @@ def main(argv: Sequence[str] | None = None) -> int:
                 permissions_ok,
                 "Permission evidence collected",
                 permissions,
+            )
+        )
+
+        runtime = _runtime_evidence(driver, config.repo_path)
+        runtime_ok = (
+            runtime["runtime_digest"] == runtime["bundle_digest"]
+            and runtime["pip_check"] == "passed"
+            and runtime["help_exit_code"] == 0
+            and runtime["sqlglot_exit_code"] == 0
+            and not runtime["publicly_writable"]
+        )
+        checks.append(
+            ReportCheck(
+                "shared_runtime",
+                runtime_ok,
+                "Active runtime, bundle metadata, launcher, and sqlglot verified",
+                runtime,
             )
         )
 

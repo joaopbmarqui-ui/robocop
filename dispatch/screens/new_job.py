@@ -601,7 +601,7 @@ class NewJobScreen(Screen[None]):
         """
         source_type = self._selected_source()
         destination_type = self._selected_destination()
-        table = self._input_value("table-name")
+        table = self._table_name_value()
         user_id = config.current_user()
         sql_path = "" if source_type == "ExistingTable" else self._input_value("sql-file")
         form_result = analyze_form(

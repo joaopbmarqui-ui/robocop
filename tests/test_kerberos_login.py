@@ -5,11 +5,30 @@ from __future__ import annotations
 import asyncio
 
 import pytest
-from textual.widgets import Input
+from textual.widgets import Input, Static
 
 from dispatch.app import DispatchApp
 from dispatch.screens.dashboard import DashboardScreen
 from dispatch.screens.kerberos_login import KerberosLoginScreen
+
+
+async def _wait_for_screen(app: DispatchApp, pilot, screen_type: type) -> None:
+    for _ in range(40):
+        if isinstance(app.screen, screen_type):
+            # Screen assignment precedes Textual's mount/layout callbacks.  Let
+            # those callbacks settle before interacting with or tearing down it.
+            await pilot.pause(delay=0.05)
+            return
+        await pilot.pause(delay=0.05)
+    raise AssertionError(f"Expected {screen_type.__name__}, got {type(app.screen).__name__}")
+
+
+async def _wait_for_text(widget: Static, pilot, expected: str) -> None:
+    for _ in range(40):
+        if expected in str(widget.render()):
+            return
+        await pilot.pause(delay=0.05)
+    raise AssertionError(f"Expected {expected!r}, got {str(widget.render())!r}")
 
 
 @pytest.mark.parametrize(
@@ -39,12 +58,12 @@ def test_jupyter_startup_prompts_for_kerberos_when_ticket_missing(
     async def run() -> None:
         app = DispatchApp()
         async with app.run_test(size=(140, 50)) as pilot:
-            await pilot.pause()
+            await _wait_for_screen(app, pilot, KerberosLoginScreen)
             assert isinstance(app.screen, KerberosLoginScreen)
             app.screen.query_one("#kerberos-login-eid", Input).value = "testuser"
             app.screen.query_one("#kerberos-login-password", Input).value = "secret"
             await pilot.click("#kerberos-login-submit")
-            await pilot.pause()
+            await _wait_for_screen(app, pilot, DashboardScreen)
             assert isinstance(app.screen, DashboardScreen)
             assert app.kerberos_ttl is not None
             assert app.kerberos_ttl > 0
@@ -59,7 +78,7 @@ def test_jupyter_startup_skips_login_when_ticket_present(mock_env_with_config, m
     async def run() -> None:
         app = DispatchApp()
         async with app.run_test(size=(140, 50)) as pilot:
-            await pilot.pause()
+            await _wait_for_screen(app, pilot, DashboardScreen)
             assert isinstance(app.screen, DashboardScreen)
 
     asyncio.run(run())
@@ -75,7 +94,7 @@ def test_jupyter_startup_prompts_when_ticket_expires_before_launch_threshold(
     async def run() -> None:
         app = DispatchApp()
         async with app.run_test(size=(140, 50)) as pilot:
-            await pilot.pause()
+            await _wait_for_screen(app, pilot, KerberosLoginScreen)
             assert isinstance(app.screen, KerberosLoginScreen)
 
     asyncio.run(run())
@@ -90,7 +109,7 @@ def test_non_jupyter_startup_skips_login_even_without_ticket(
     async def run() -> None:
         app = DispatchApp()
         async with app.run_test(size=(140, 50)) as pilot:
-            await pilot.pause()
+            await _wait_for_screen(app, pilot, DashboardScreen)
             assert isinstance(app.screen, DashboardScreen)
 
     asyncio.run(run())
@@ -104,15 +123,14 @@ def test_jupyter_login_shows_error_and_allows_retry(mock_env_with_config, monkey
     async def run() -> None:
         app = DispatchApp()
         async with app.run_test(size=(140, 50)) as pilot:
-            await pilot.pause()
+            await _wait_for_screen(app, pilot, KerberosLoginScreen)
             screen = app.screen
             assert isinstance(screen, KerberosLoginScreen)
             screen.query_one("#kerberos-login-eid", Input).value = "testuser"
             screen.query_one("#kerberos-login-password", Input).value = "wrong"
             await pilot.click("#kerberos-login-submit")
-            await pilot.pause(delay=0.2)
-            error = str(screen.query_one("#kerberos-login-error").render())
-            assert "Password incorrect" in error
+            error_widget = screen.query_one("#kerberos-login-error", Static)
+            await _wait_for_text(error_widget, pilot, "Password incorrect")
             assert isinstance(app.screen, KerberosLoginScreen)
 
             monkeypatch.setenv("DISPATCH_MOCK_SCENARIO", "happy_path")
@@ -120,7 +138,7 @@ def test_jupyter_login_shows_error_and_allows_retry(mock_env_with_config, monkey
             password_input.value = "secret"
             assert password_input.value == "secret"
             screen.action_submit()
-            await pilot.pause(delay=0.5)
+            await _wait_for_screen(app, pilot, DashboardScreen)
             assert isinstance(app.screen, DashboardScreen)
 
     asyncio.run(run())

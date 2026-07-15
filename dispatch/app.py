@@ -104,15 +104,15 @@ class DispatchApp(App[None]):
             return
         telemetry.note_session_start(cwd=self.launch_cwd)
         telemetry.note_screen_view("overview")
-        self.push_screen(DashboardScreen())
+        await self.push_screen(DashboardScreen())
         await self.refresh_kerberos()
         self.set_interval(60.0, self.refresh_kerberos)
-        self._maybe_open_test_prefill()
+        await self._maybe_open_test_prefill()
 
     def on_unmount(self) -> None:
         telemetry.note_session_end()
 
-    def _maybe_open_test_prefill(self) -> None:
+    async def _maybe_open_test_prefill(self) -> None:
         """Opt-in test seam: when ``DISPATCH_TEST_PREFILL`` names a JSON file,
         open the New Job screen pre-filled from it.
 
@@ -130,7 +130,8 @@ class DispatchApp(App[None]):
             logger.warning("Ignoring DISPATCH_TEST_PREFILL (%s): %s", path, exc)
             return
         if isinstance(prefill, dict):
-            self.call_after_refresh(self.open_new_job_prefill, prefill)
+            telemetry.note_screen_view("new_job")
+            await self.push_screen(NewJobScreen(self.launch_cwd, prefill=prefill))
 
     def on_resize(self) -> None:
         self._check_terminal_size()

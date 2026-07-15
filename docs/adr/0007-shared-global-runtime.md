@@ -37,8 +37,7 @@ is readable and traversable by analysts. Repository updates must not
 recursively change `.venv/` permissions.
 
 Each analyst owns their `.dispatch` directory with mode `0700`; configuration
-and source-version metadata use mode `0600`. One user's state is never shared
-with another user.
+uses mode `0600`. One user's state is never shared with another user.
 
 ## Consequences
 

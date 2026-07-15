@@ -12,8 +12,8 @@ UI-rendering user stories that cannot be exercised by the Edge harness:
 - PREV-002 SQL preview action bar (Copy SQL / Back, never Launch) + copy result
 
 The environment is mocked so the captures are clean: a temp data root with
-config + installed_version, a healthy Kerberos TTL, and a launch directory that
-contains a SQL file so New Job/Preview render real content.
+config, a healthy Kerberos TTL, and a launch directory that contains a SQL
+file so New Job/Preview render real content.
 
 Run:  py tools/dev/ui_captures.py
 Exit code is non-zero if any capture fails its content assertions.
@@ -73,13 +73,6 @@ def _install_healthy_kerberos() -> None:
         return HEALTHY_TTL_SECONDS
 
     kerberos.ticket_ttl_seconds = _fake_ttl  # type: ignore[assignment]
-
-
-def _write_installed_version() -> None:
-    from dispatch import config
-    from dispatch.version import __version__
-
-    config.installed_version_path().write_text(__version__, encoding="utf-8")
 
 
 @dataclass
@@ -254,7 +247,6 @@ def main() -> int:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     launch_cwd = _bootstrap_environment()
     _install_healthy_kerberos()
-    _write_installed_version()
     os.chdir(launch_cwd)
 
     captures = _build_captures()

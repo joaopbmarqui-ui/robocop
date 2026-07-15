@@ -253,10 +253,9 @@ def check_quit_cleanly(ctx: RunContext) -> SmokeResult:
 
 
 def check_install_runs(ctx: RunContext) -> SmokeResult:
-    email = ctx.config.operator_email or "dispatch-smoke@example.com"
     py = "$(command -v python3.11 || command -v python3.10)"
     _, code = ctx.driver.run_remote(
-        f"DISPATCH_EMAIL={email} DISPATCH_PYTHON_BIN={py} ./install.sh",
+        f"DISPATCH_PYTHON_BIN={py} ./install.sh",
         timeout=180,
     )
     screen = ctx.capture("install_runs")
@@ -305,16 +304,24 @@ def check_ads_storage_writable(ctx: RunContext) -> SmokeResult:
     return _ok("ads_storage_writable", "/ads_storage/$USER/.dispatch is writable", screen)
 
 
-def check_version_matches(ctx: RunContext) -> SmokeResult:
+def check_shared_runtime_active(ctx: RunContext) -> SmokeResult:
+    repo = ctx.config.repo_path
     command = (
-        "test -f VERSION && test -f /ads_storage/$USER/.dispatch/installed_version "
-        "&& diff -u VERSION /ads_storage/$USER/.dispatch/installed_version >/dev/null"
+        f"test -L {repo}/.venv/current "
+        f"&& test -f {repo}/.venv/current/.complete.json "
+        f"&& test -x {repo}/.venv/current/bin/python "
+        f"&& grep -q '\"pip_check\"' {repo}/.venv/current/.complete.json "
+        f"&& {repo}/bin/dispatch --help >/dev/null"
     )
-    _, code = ctx.driver.run_remote(command, timeout=15)
-    screen = ctx.capture("version_matches")
+    _, code = ctx.driver.run_remote(command, timeout=60)
+    screen = ctx.capture("shared_runtime_active")
     if code != 0:
-        return _fail("version_matches", "Installed version did not match repo VERSION", screen)
-    return _ok("version_matches", "Installed version matches repo VERSION", screen)
+        return _fail(
+            "shared_runtime_active",
+            "Shared runtime was missing, incomplete, or the shared launcher failed",
+            screen,
+        )
+    return _ok("shared_runtime_active", "Shared runtime is active and launches Dispatch", screen)
 
 
 def check_cwd_captured(ctx: RunContext) -> SmokeResult:
@@ -385,7 +392,7 @@ LEVEL_2_CHECKS: list[Callable[[RunContext], SmokeResult]] = [
     check_impala_shell_path,
     check_python_version,
     check_ads_storage_writable,
-    check_version_matches,
+    check_shared_runtime_active,
     # TUI-launching checks last; each returns to a shell prompt when done.
     check_cwd_captured,
     check_textual_rendering,

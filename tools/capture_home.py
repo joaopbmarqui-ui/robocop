@@ -12,7 +12,6 @@ async def capture():
         dispatch_home = tmp_path / ".dispatch"
         dispatch_home.mkdir()
         (dispatch_home / "jobs").mkdir()
-        (dispatch_home / "installed_version").write_text("1.0.0", encoding="utf-8")
         
         os.environ["DISPATCH_DATA_ROOT"] = tmp_dir
         

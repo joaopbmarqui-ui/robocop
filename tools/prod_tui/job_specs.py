@@ -150,7 +150,12 @@ def expected_visible_fields(
     """
     fields: dict[str, str] = {}
     if spec.source_type == "ExistingTable":
-        fields["Existing Table"] = existing_table
+        schema_part, table_part = existing_table.split(".", 1)
+        if schema_part in ("coe_enc", "aa_enc"):
+            fields["Schema"] = schema_part
+        else:
+            fields["Custom Schema"] = schema_part
+        fields["Existing Table"] = table_part
     else:
         fields["SQL File"] = sql_path
     if spec.produces_table or spec.is_template:

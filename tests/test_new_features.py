@@ -61,6 +61,38 @@ class TestBrowserDescribeParsing:
         assert len(columns) == 1
 
 
+class TestDataSizeFormatting:
+    def test_parse_data_size_units(self) -> None:
+        from dispatch.formatting import parse_data_size
+
+        assert parse_data_size("0B") == 0
+        assert parse_data_size("12.60MB") == 13_212_057
+        assert parse_data_size("370.45MB") == 388_444_979
+        assert parse_data_size("1.25GB") == 1_342_177_280
+
+    def test_format_data_size_is_consistent(self) -> None:
+        from dispatch.formatting import format_data_size
+
+        assert format_data_size(0) == "0 B"
+        assert format_data_size(13_212_057) == "12.6 MB"
+        assert format_data_size(1_342_177_280) == "1.2 GB"
+        assert format_data_size(None) == "—"
+
+
+class TestImpalaTableStatsParsing:
+    def test_parse_table_stats_output_sums_partitions(self) -> None:
+        from dispatch.impala import parse_table_stats_output
+
+        raw = (
+            "#Rows|#Files|Size|Bytes Cached|Format|Incremental stats\n"
+            "-1|1|12.60MB|NOT CACHED|TEXT|false\n"
+            "-1|2|1.25GB|NOT CACHED|PARQUET|false\n"
+        )
+        stats = parse_table_stats_output(raw)
+        assert stats.size_bytes == 13_212_057 + 1_342_177_280
+        assert stats.size_display == "1.3 GB"
+
+
 # =============================================================================
 # Job Detail elapsed time
 # =============================================================================
@@ -336,7 +368,7 @@ class TestNewJobInlineValidation:
                     original()
 
                 screen._update_validation_summary = counting_update  # type: ignore[method-assign]
-                screen.query_one("#table-name").value = "dispatch_result_2"
+                screen.query_one("#table-name-suffix").value = "dispatch_result_2"
                 await pilot.pause(0.05)
 
                 assert calls == 0
@@ -391,8 +423,8 @@ class TestNewJobInlineValidation:
                 await pilot.pause(0.5)
 
                 issues = screen._validation_issues()
-                assert "Table name must be a plain Impala identifier" in issues
-                assert screen._validate() == "Table name must be a plain Impala identifier"
+                assert "Table name suffix must be a plain Impala identifier" in issues
+                assert screen._validate() == "Table name suffix must be a plain Impala identifier"
 
         asyncio.run(run())
 
@@ -450,9 +482,11 @@ class TestNewJobInlineValidation:
                 await pilot.pause(0.5)
 
                 _source, destination = screen._source_destination()
+                eid = config.current_user()
                 assert Path(destination["csv_path"]) == (
-                    tmp_path.resolve() / "dispatch_smoke_1.csv"
+                    tmp_path.resolve() / f"{eid}_dispatch_smoke_1.csv"
                 )
+                assert destination["table_name"] == f"{eid}_dispatch_smoke_1"
 
         asyncio.run(run())
 

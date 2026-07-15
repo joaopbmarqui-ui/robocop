@@ -5,7 +5,7 @@ import types
 from tools.prod_tui.smoke_test import DASHBOARD_READY, _open_via_toggle_key
 
 _DASHBOARD = "Jobs \u00b7 running first \u00b7 last 7 days\n n New Job  b Browse"
-_BROWSER = "Browse Impala Metadata\nSchema \u00b7 table filter"
+_BROWSER = "Browse Impala Metadata\nTable name"
 
 
 class _ToggleDriver:

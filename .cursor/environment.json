@@ -1,0 +1,4 @@
+{
+  "snapshot": "snapshot-20260703-7ea863ca-be4d-4a47-a876-fd668473edbf",
+  "install": "python3 -m venv /workspace/.venv\n/workspace/.venv/bin/python -m pip install --quiet --upgrade pip\n/workspace/.venv/bin/pip install --quiet -e \"/workspace[dev]\""
+}

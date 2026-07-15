@@ -92,6 +92,26 @@ def classificar_erro_impala(stderr_text: str) -> dict:
     return {"categoria": "GENERIC_ERROR", **details}
 
 
+def resolve_pools(default_pools: list[str]) -> list[str]:
+    """Return the Impala request-pool (queue) list to cycle through.
+
+    Reads the ``DISPATCH_REQUEST_POOL`` environment variable, a comma-separated
+    list of request pools. When it is set to a non-empty value, those pools
+    replace the caller's default for this single run; when it is unset or empty
+    the caller's hardcoded default list is returned unchanged, preserving the
+    historical cycling behaviour exactly.
+
+    This is the ADR-0005 "configuration externalised via env vars with the
+    current hardcoded value as the default" pattern: the frozen queue-list
+    values live in the callers and are never modified here, but the TUI can pin
+    a job to a chosen queue by exporting ``DISPATCH_REQUEST_POOL`` before the
+    orchestrator runs.
+    """
+    raw = os.environ.get("DISPATCH_REQUEST_POOL", "")
+    selected = [pool.strip() for pool in raw.split(",") if pool.strip()]
+    return selected or list(default_pools)
+
+
 def cycle_through_pools(
     pools: list[str],
     operation: Callable[[str], bool],

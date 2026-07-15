@@ -7,6 +7,8 @@ import json
 import os
 from pathlib import Path
 
+from textual.widgets import Input, RadioButton
+
 from dispatch.app import DispatchApp
 from dispatch.screens.new_job import NewJobScreen
 
@@ -126,5 +128,95 @@ def test_test_prefill_seam_opens_new_job(mock_env_with_config, monkeypatch) -> N
             screen = app.screen
             assert isinstance(screen, NewJobScreen)
             assert screen._selected_destination() == "Table"
+
+    asyncio.run(run())
+
+
+def test_existing_table_shows_schema_selector(mock_env_with_config) -> None:
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            await pilot.pause(0.5)
+            app.push_screen(NewJobScreen(Path(os.environ["DISPATCH_DATA_ROOT"])))
+            await pilot.pause(0.5)
+            screen = app.screen
+            assert isinstance(screen, NewJobScreen)
+            assert screen.query_one("#row-existing-schema").display is False
+            assert screen.query_one("#row-existing-table").display is False
+
+            screen.query_one("#src-existingtable", RadioButton).value = True
+            await pilot.pause(0.2)
+
+            assert screen.query_one("#row-existing-schema").display is True
+            assert screen.query_one("#row-existing-table").display is True
+            assert screen.query_one("#row-existing-schema-custom").display is False
+            assert screen._selected_existing_schema_choice() == "aa_enc"
+
+    asyncio.run(run())
+
+
+def test_existing_table_other_schema_shows_custom_input(mock_env_with_config) -> None:
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            await pilot.pause(0.5)
+            app.push_screen(NewJobScreen(Path(os.environ["DISPATCH_DATA_ROOT"])))
+            await pilot.pause(0.5)
+            screen = app.screen
+            assert isinstance(screen, NewJobScreen)
+            screen.query_one("#src-existingtable", RadioButton).value = True
+            await pilot.pause(0.2)
+
+            screen.query_one("#esc-other", RadioButton).value = True
+            await pilot.pause(0.2)
+
+            assert screen.query_one("#row-existing-schema-custom").display is True
+            custom = screen.query_one("#existing-schema-custom", Input)
+            assert custom.disabled is False
+
+    asyncio.run(run())
+
+
+def test_existing_table_prefill_splits_known_schema(mock_env_with_config) -> None:
+    prefill = {
+        "source_type": "ExistingTable",
+        "dest_type": "Csv",
+        "existing_table": "coe_enc.dispatch_seed",
+    }
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            await pilot.pause(0.5)
+            app.push_screen(NewJobScreen(Path(os.environ["DISPATCH_DATA_ROOT"]), prefill=prefill))
+            await pilot.pause(0.8)
+            screen = app.screen
+            assert isinstance(screen, NewJobScreen)
+            assert screen._selected_existing_schema_choice() == "coe_enc"
+            assert screen._input_value("existing-table") == "dispatch_seed"
+            assert screen._existing_full_table() == "coe_enc.dispatch_seed"
+
+    asyncio.run(run())
+
+
+def test_existing_table_prefill_splits_custom_schema(mock_env_with_config) -> None:
+    prefill = {
+        "source_type": "ExistingTable",
+        "dest_type": "Csv",
+        "existing_table": "analytics.dispatch_seed",
+    }
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            await pilot.pause(0.5)
+            app.push_screen(NewJobScreen(Path(os.environ["DISPATCH_DATA_ROOT"]), prefill=prefill))
+            await pilot.pause(0.8)
+            screen = app.screen
+            assert isinstance(screen, NewJobScreen)
+            assert screen._selected_existing_schema_choice() == "other"
+            assert screen._input_value("existing-schema-custom") == "analytics"
+            assert screen._input_value("existing-table") == "dispatch_seed"
+            assert screen._existing_full_table() == "analytics.dispatch_seed"
 
     asyncio.run(run())

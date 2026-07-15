@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" && pwd)
+ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 USER_NAME=${USER:-$(id -un)}
 BUNDLE_DIR=${EDGE_DEPLOY_BUNDLE_DIR:-/ads_storage/$USER_NAME/.edge-deploy/bundles/robocop/current}
 PYTHON_BIN=${EDGE_DEPLOY_PYTHON_BIN:-${DISPATCH_PYTHON_BIN:-}}

@@ -1,36 +1,17 @@
 #!/usr/bin/env sh
 set -eu
 
-ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" && pwd)
+ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 USER_NAME=${USER:-$(id -un)}
 DATA_ROOT=${DISPATCH_DATA_ROOT:-/ads_storage/$USER_NAME}
 DISPATCH_HOME="$DATA_ROOT/.dispatch"
-CURRENT="$ROOT_DIR/.venv/current"
 
-if [ ! -L "$CURRENT" ]; then
-  echo "Dispatch shared runtime is not active at $CURRENT." >&2
-  echo "Ask the Release Operator to run $ROOT_DIR/install.sh before onboarding." >&2
-  exit 1
-fi
-RUNTIME=$(readlink -f "$CURRENT" 2>/dev/null || true)
-if [ -z "$RUNTIME" ] || [ ! -f "$RUNTIME/.complete.json" ] || [ ! -x "$RUNTIME/bin/python" ]; then
-  echo "Dispatch shared runtime is invalid at $CURRENT." >&2
-  echo "Ask the Release Operator to reactivate a completed runtime." >&2
-  exit 1
-fi
-case "$RUNTIME" in
-  "$ROOT_DIR/.venv/releases/"*) ;;
-  *)
-    echo "Dispatch shared runtime resolves outside the release root: $RUNTIME." >&2
-    exit 1
-    ;;
-esac
-DIGEST=$(basename "$RUNTIME")
-if ! grep -Eq '"bundle_digest"[[:space:]]*:[[:space:]]*"'"$DIGEST"'"' "$RUNTIME/.complete.json" ||
-   ! grep -Eq '"pip_check"[[:space:]]*:[[:space:]]*"passed"' "$RUNTIME/.complete.json"; then
-  echo "Dispatch shared runtime completion metadata is corrupt: $RUNTIME/.complete.json." >&2
-  exit 1
-fi
+. "$ROOT_DIR/bin/runtime_check.sh"
+RUNTIME=$(dispatch_active_runtime "$ROOT_DIR")
+
+command -v klist >/dev/null 2>&1 || { echo "klist not found on PATH" >&2; exit 1; }
+command -v impala-shell >/dev/null 2>&1 || { echo "impala-shell not found on PATH" >&2; exit 1; }
+
 if [ ! -x "$ROOT_DIR/bin/dispatch" ]; then
   echo "Shared Dispatch launcher is missing: $ROOT_DIR/bin/dispatch" >&2
   exit 1

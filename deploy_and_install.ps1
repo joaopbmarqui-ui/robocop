@@ -153,7 +153,7 @@ $RemoteCommand = "cd $RemotePath && " +
                  "echo '--- Verifying extraction ---' && " +
                  "ls -F && " +
                  "echo '--- Running Setup ---' && " +
-                 "chmod +x $SetupScript $UpdateScript onboard.sh bin/dispatch && " +
+                 "chmod +x $SetupScript $UpdateScript onboard.sh bin/dispatch && chmod a+r bin/runtime_check.sh && " +
                  "EDGE_DEPLOY_BUNDLE_DIR=$RemotePath/dependency_bundle DISPATCH_PYTHON_BIN=`$(command -v python3.11 || command -v python3.10) ./$SetupScript"
 
 Write-Host "Executing setup on remote server..."

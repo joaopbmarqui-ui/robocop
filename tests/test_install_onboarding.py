@@ -228,8 +228,7 @@ exit 0
     launcher = home / ".local" / "bin" / "dispatch"
     assert launcher.is_file()
     launcher_text = launcher.read_text(encoding="utf-8")
-    assert 'export PYTHONPATH="' in launcher_text
-    assert "robocop" in launcher_text
+    assert f'export PYTHONPATH="{fake_path(ROOT)}"' in launcher_text
     assert 'exec "' in launcher_text
 
 

@@ -4,24 +4,19 @@ from __future__ import annotations
 
 import asyncio
 import os
-import signal
 import sys
 import time
 from pathlib import Path
 
 import pytest
 
-from dispatch import capacity, impala, process
+from dispatch import capacity, impala, job_lifecycle, process
 
 PROCESS_TIMEOUT = 2.0
 
 
 def _pid_exists(pid: int) -> bool:
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    return True
+    return job_lifecycle.pid_is_alive(pid)
 
 
 async def _wait_for(predicate) -> bool:
@@ -88,6 +83,7 @@ def test_cancel_process_group_sends_sigterm_to_group(monkeypatch) -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.skipif(os.name == "nt", reason="POSIX SIGTERM handler contract")
 async def test_cancelled_impala_query_reaps_child_before_releasing_capacity(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -128,6 +124,16 @@ while True:
     monkeypatch.setenv("DISPATCH_TEST_CHILD_TERMINATED", str(terminated))
     monkeypatch.setenv("DISPATCH_TEST_CHILD_ALLOW_EXIT", str(allow_exit))
 
+    created: list[asyncio.subprocess.Process] = []
+    original_create_subprocess_exec = asyncio.create_subprocess_exec
+
+    async def capture_process(*argv: str, **kwargs: object) -> asyncio.subprocess.Process:
+        child = await original_create_subprocess_exec(*argv, **kwargs)
+        created.append(child)
+        return child
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", capture_process)
+
     existing = capacity.try_acquire_metadata("existing")
     task = asyncio.create_task(impala.query("SHOW TABLES IN aa_enc;"))
     pid = -1
@@ -146,8 +152,6 @@ while True:
             pass
 
         allow_exit.write_text("exit", encoding="utf-8")
-        if not terminated_before_release and _pid_exists(pid):
-            os.kill(pid, signal.SIGTERM)
         with pytest.raises(asyncio.CancelledError):
             await task
         assert await _wait_for(lambda: not _pid_exists(pid))
@@ -157,34 +161,72 @@ while True:
         assert probe is None
     finally:
         allow_exit.write_text("exit", encoding="utf-8")
-        if pid > 0 and _pid_exists(pid):
-            os.kill(pid, signal.SIGKILL)
-            await _wait_for(lambda: not _pid_exists(pid))
+        for child in created:
+            if child.returncode is None:
+                child.kill()
+            await child.wait()
         if probe is not None:
             probe.release()
         existing.release()
 
 
 @pytest.mark.asyncio
-async def test_run_exec_timeout_still_terminates_and_reaps_child(tmp_path: Path) -> None:
-    started = tmp_path / "timeout-started"
-    terminated = tmp_path / "timeout-terminated"
-    script = (
-        "import os,signal,time\n"
-        "from pathlib import Path\n"
-        f"started=Path({str(started)!r})\n"
-        f"terminated=Path({str(terminated)!r})\n"
-        "def stop(_signum,_frame):\n"
-        "    terminated.write_text('terminated',encoding='utf-8')\n"
-        "    raise SystemExit(0)\n"
-        "signal.signal(signal.SIGTERM,stop)\n"
-        "started.write_text(str(os.getpid()),encoding='utf-8')\n"
-        "while True: time.sleep(1)\n"
-    )
+async def test_run_exec_timeout_awaits_subprocess_cleanup(monkeypatch: pytest.MonkeyPatch) -> None:
+    events: list[str] = []
+
+    class FakeProcess:
+        returncode = None
+
+        async def communicate(self, *, input: bytes | None = None) -> tuple[bytes, bytes]:
+            return b"", b""
+
+    child = FakeProcess()
+
+    async def fake_create_subprocess_exec(*_argv: str, **_kwargs: object) -> FakeProcess:
+        return child
+
+    async def timeout(awaitable, *, timeout: float | None = None):
+        awaitable.close()
+        raise asyncio.TimeoutError
+
+    async def cleanup(proc: object) -> None:
+        assert proc is child
+        events.append("cleanup-started")
+        await asyncio.sleep(0)
+        events.append("cleanup-finished")
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", fake_create_subprocess_exec)
+    monkeypatch.setattr(asyncio, "wait_for", timeout)
+    monkeypatch.setattr(process, "_terminate_and_reap", cleanup)
 
     with pytest.raises(asyncio.TimeoutError):
-        await process.run_exec(sys.executable, "-c", script, timeout=0.1)
+        await process.run_exec("impala-shell", timeout=0.1)
 
-    pid = int(started.read_text(encoding="utf-8"))
-    assert terminated.exists()
-    assert not _pid_exists(pid)
+    assert events == ["cleanup-started", "cleanup-finished"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.skipif(os.name != "nt", reason="Windows hard-termination contract")
+async def test_windows_terminate_and_reap_stops_real_child(tmp_path: Path) -> None:
+    started = tmp_path / "windows-child-started"
+    script = (
+        "import os,time\n"
+        "from pathlib import Path\n"
+        f"Path({str(started)!r}).write_text(str(os.getpid()),encoding='utf-8')\n"
+        "while True: time.sleep(1)\n"
+    )
+    child = await asyncio.create_subprocess_exec(sys.executable, "-c", script)
+
+    try:
+        assert await _wait_for(started.exists)
+        pid = int(started.read_text(encoding="utf-8"))
+        assert _pid_exists(pid)
+
+        await process._terminate_and_reap(child)
+
+        assert child.returncode is not None
+        assert not _pid_exists(pid)
+    finally:
+        if child.returncode is None:
+            child.kill()
+        await child.wait()

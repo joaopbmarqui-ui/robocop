@@ -29,13 +29,20 @@ def _read_ledger(root: Path) -> dict[str, Any]:
     return json.loads((root / ".dispatch" / "capacity.json").read_text(encoding="utf-8"))
 
 
+def _read_ledger_for_polling(root: Path) -> dict[str, Any] | None:
+    try:
+        return _read_ledger(root)
+    except (FileNotFoundError, json.JSONDecodeError, PermissionError):
+        return None
+
+
 def _wait_for_intent_pids(root: Path, expected: list[int]) -> None:
     deadline = time.monotonic() + PROCESS_TIMEOUT
+    observed: list[int] = []
     while time.monotonic() < deadline:
-        try:
-            observed = [intent["pid"] for intent in _read_ledger(root)["launch_intents"]]
-        except (FileNotFoundError, json.JSONDecodeError):
-            observed = []
+        ledger = _read_ledger_for_polling(root)
+        if ledger is not None:
+            observed = [intent["pid"] for intent in ledger["launch_intents"]]
         if observed == expected:
             return
         time.sleep(0.01)

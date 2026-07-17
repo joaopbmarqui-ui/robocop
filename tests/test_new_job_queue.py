@@ -48,15 +48,16 @@ def _intent_sequences(data_root: Path) -> list[int]:
 
 async def _wait_for_intent_count(data_root: Path, count: int) -> list[int]:
     deadline = asyncio.get_running_loop().time() + 2
+    sequences: list[int] = []
     while asyncio.get_running_loop().time() < deadline:
         try:
             sequences = _intent_sequences(data_root)
-        except (FileNotFoundError, json.JSONDecodeError):
-            sequences = []
+        except (FileNotFoundError, json.JSONDecodeError, PermissionError):
+            pass
         if len(sequences) == count:
             return sequences
         await asyncio.sleep(0.01)
-    pytest.fail(f"launch intent count never reached {count}")
+    pytest.fail(f"launch intent count never reached {count}; observed {sequences!r}")
 
 
 def test_queue_defaults_to_auto_when_nothing_selected(mock_env_with_config) -> None:

@@ -8,6 +8,10 @@ Follow [CONTRIBUTING.md](CONTRIBUTING.md). Work from current GitHub `main`, use 
 short-lived branch, run `python -m pytest`, and finish with a GitHub pull
 request.
 
+On Windows, `tools/dev/local_check.ps1` is the authoritative release-validation
+gate. Invoke it with Windows PowerShell 5.1; parallel pytest is a developer
+stress check and does not replace the committed local check.
+
 Agents may create branches, commit, push a branch, and open a pull request when
 requested. Agents must not merge, change branch protection, create release
 tags, push Bitbucket, or deploy without explicit Release Operator instruction.

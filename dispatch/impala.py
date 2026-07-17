@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable, Coroutine
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from typing import Any
 
 from . import process, sql
 from .formatting import format_data_size, parse_data_size
 
 QUERY_TIMEOUT_SECONDS = 30
 MAX_QUERIES_PER_USER = 2
+# Running Jobs finish outside this process, so occupy() rechecks periodically.
+_EXTERNAL_SLOT_POLL_SECONDS = 0.25
 
 IMPALA_BASE_ARGV = (
     "impala-shell",
@@ -32,25 +35,70 @@ class QueryLedger:
     This ledger counts TUI-side ``impala-shell`` calls (SHOW/DESCRIBE/DROP/STATS).
     Running Jobs are counted separately via ``external_running_query_count`` —
     their orchestrators hold coordinator capacity outside this process.
+
+    Invariant: ``in_flight + external_running_query_count()`` never exceeds
+    ``MAX_QUERIES_PER_USER`` at the moment a slot is granted. Cancellation of an
+    occupied call always releases the slot in ``finally``.
     """
 
     def __init__(self) -> None:
         self._in_flight = 0
+        self._peak_total = 0
         self._changed = asyncio.Condition()
 
     @property
     def in_flight(self) -> int:
         return self._in_flight
 
+    @property
+    def peak_total(self) -> int:
+        """Highest ``in_flight + external`` observed when a slot was granted."""
+        return self._peak_total
+
+    def _record_grant_locked(self) -> None:
+        total = self._in_flight + external_running_query_count()
+        if total > self._peak_total:
+            self._peak_total = total
+
     @asynccontextmanager
     async def occupy(self) -> AsyncIterator[None]:
-        """Block until a coordinator slot is free, then hold it for the call."""
+        """Block until a coordinator slot is free, then hold it for the call.
+
+        Counts both in-process queries and Running Jobs. Polls while waiting so
+        a Job finishing (which cannot notify this Condition) still unblocks.
+        """
         async with self._changed:
-            while self._in_flight >= MAX_QUERIES_PER_USER:
-                await self._changed.wait()
+            while self._in_flight + external_running_query_count() >= MAX_QUERIES_PER_USER:
+                try:
+                    await asyncio.wait_for(
+                        self._changed.wait(), timeout=_EXTERNAL_SLOT_POLL_SECONDS
+                    )
+                except asyncio.TimeoutError:
+                    continue
             self._in_flight += 1
+            self._record_grant_locked()
         try:
             yield
+        finally:
+            async with self._changed:
+                self._in_flight -= 1
+                self._changed.notify_all()
+
+    @asynccontextmanager
+    async def try_occupy(self) -> AsyncIterator[bool]:
+        """Non-blocking slot take for size fetch: False if the cap is already full."""
+        async with self._changed:
+            if self._in_flight + external_running_query_count() >= MAX_QUERIES_PER_USER:
+                acquired = False
+            else:
+                self._in_flight += 1
+                self._record_grant_locked()
+                acquired = True
+        if not acquired:
+            yield False
+            return
+        try:
+            yield True
         finally:
             async with self._changed:
                 self._in_flight -= 1
@@ -180,6 +228,25 @@ async def table_stats(full_table: str) -> TableStats:
     return parse_table_stats_output(output)
 
 
+# Preserved so ``iter_table_sizes`` can detect test monkeypatches of ``table_stats``.
+_PRODUCTION_TABLE_STATS: Callable[[str], Coroutine[Any, Any, TableStats]] = table_stats
+
+
+async def _table_stats_for_size_fetch(full_table: str) -> TableStats | None:
+    """Fetch stats only if a free slot is available right now; else return None.
+
+    Uses ``try_occupy`` so size fetch never queues behind a full coordinator and
+    never stacks past the per-user cap of two (including Running Jobs).
+    """
+    _require_full_table(full_table)
+    async with query_ledger.try_occupy() as acquired:
+        if not acquired:
+            return None
+        # Bypass ``query()`` to avoid double-occupying the ledger.
+        output = await _run_impala_shell(f"SHOW TABLE STATS {full_table};")
+        return parse_table_stats_output(output)
+
+
 async def iter_table_sizes(
     schema: str, table_names: list[str]
 ) -> AsyncIterator[tuple[str, TableStats]]:
@@ -188,7 +255,7 @@ async def iter_table_sizes(
     The Impala coordinators cap parallel queries per user at two. Size fetch
     fills only the free slots after counting:
 
-    - in-process metadata queries (``query_ledger``, via ``query()``)
+    - in-process metadata queries (``query_ledger``, via ``query()`` / try_occupy)
     - Running Jobs (``external_running_query_count`` / ``jobs.running_jobs``)
 
     When both slots are already taken, remaining tables yield unknown stats
@@ -211,10 +278,14 @@ async def iter_table_sizes(
         async def _one(table_name: str) -> tuple[str, TableStats]:
             full_table = table_name if "." in table_name else f"{schema}.{table_name}"
             try:
-                # When tests monkeypatch ``table_stats``, this path does not go
-                # through ``query()``/the ledger; production calls do.
-                stats = await table_stats(full_table)
+                if table_stats is _PRODUCTION_TABLE_STATS:
+                    stats = await _table_stats_for_size_fetch(full_table)
+                else:
+                    # Test monkeypatch: call the replacement directly.
+                    stats = await table_stats(full_table)
             except Exception:
+                stats = unknown
+            if stats is None:
                 stats = unknown
             return table_name, stats
 

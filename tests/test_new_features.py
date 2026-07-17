@@ -214,6 +214,70 @@ class TestImpalaTableStatsParsing:
         assert results[1][1].size_display == "—"
         assert results[2][1].size_bytes == 42
 
+    def test_occupy_never_exceeds_two_under_contention(self, monkeypatch) -> None:
+        """Overlapping occupy/try_occupy calls never grant more than 2 total slots."""
+        from dispatch import impala
+
+        impala.reset_query_ledger_for_tests()
+        monkeypatch.setattr(impala, "external_running_query_count", lambda: 0)
+        peaks: list[int] = []
+
+        async def hold(duration: float, *, try_slot: bool = False) -> None:
+            if try_slot:
+                async with impala.query_ledger.try_occupy() as acquired:
+                    if not acquired:
+                        return
+                    peaks.append(impala.query_ledger.in_flight)
+                    await asyncio.sleep(duration)
+            else:
+                async with impala.query_ledger.occupy():
+                    peaks.append(impala.query_ledger.in_flight)
+                    await asyncio.sleep(duration)
+
+        async def run() -> None:
+            # Flood with overlapping interactive + size-style acquires.
+            await asyncio.gather(
+                hold(0.05),
+                hold(0.05),
+                hold(0.05),
+                hold(0.05, try_slot=True),
+                hold(0.05, try_slot=True),
+                hold(0.05, try_slot=True),
+                hold(0.05),
+                hold(0.05, try_slot=True),
+            )
+
+        asyncio.run(run())
+        assert peaks
+        assert max(peaks) <= 2
+        assert impala.query_ledger.in_flight == 0
+        assert impala.query_ledger.peak_total <= 2
+
+    def test_occupy_counts_running_jobs_toward_cap(self, monkeypatch) -> None:
+        """Interactive query waits when Running Jobs already fill both slots."""
+        from dispatch import impala
+
+        impala.reset_query_ledger_for_tests()
+        external = {"n": 2}
+        monkeypatch.setattr(impala, "external_running_query_count", lambda: external["n"])
+        entered = asyncio.Event()
+
+        async def run() -> None:
+            async def waiter() -> None:
+                async with impala.query_ledger.occupy():
+                    entered.set()
+
+            task = asyncio.create_task(waiter())
+            await asyncio.sleep(0.3)
+            assert not entered.is_set()
+            assert impala.query_ledger.in_flight == 0
+            external["n"] = 1
+            await asyncio.wait_for(entered.wait(), timeout=2.0)
+            await task
+
+        asyncio.run(run())
+        assert impala.query_ledger.peak_total <= 2
+
 
 # =============================================================================
 # Job Detail elapsed time

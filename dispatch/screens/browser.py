@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from textual import events
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
+from textual.coordinate import Coordinate
 from textual.geometry import Size
+from textual.message import Message
 from textual.screen import Screen
 from textual.widgets import Button, DataTable, Footer, Header, Input, Static
 from textual.widgets.data_table import CellDoesNotExist, ColumnKey
@@ -28,6 +31,41 @@ _TYPE_COLUMN_WIDTH = 5
 _SIZE_COLUMN_WIDTH = 10
 _NAME_COLUMN_MIN_WIDTH = 4
 _COLUMN_COUNT = 4
+_SEL_COLUMN_INDEX = 0
+
+
+class BrowserTable(DataTable):
+    """DataTable that toggles row checks when the Sel checkbox cell is clicked."""
+
+    class SelClicked(Message):
+        """Posted when the user clicks the Sel checkbox for a data row."""
+
+        def __init__(self, data_table: DataTable, row_key: object) -> None:
+            self.data_table = data_table
+            self.row_key = row_key
+            super().__init__()
+
+        @property
+        def control(self) -> DataTable:
+            return self.data_table
+
+    async def _on_click(self, event: events.Click) -> None:
+        meta = event.style.meta
+        if meta and "row" in meta and "column" in meta:
+            row_index = meta["row"]
+            column_index = meta["column"]
+            if (
+                column_index == _SEL_COLUMN_INDEX
+                and isinstance(row_index, int)
+                and row_index >= 0
+                and row_index < self.row_count
+            ):
+                row_key = self.coordinate_to_cell_key(Coordinate(row_index, column_index)).row_key
+                self.cursor_coordinate = Coordinate(row_index, column_index)
+                self.post_message(self.SelClicked(self, row_key))
+                event.stop()
+                return
+        await super()._on_click(event)
 
 
 class BrowserScreen(Screen[None]):
@@ -39,7 +77,6 @@ class BrowserScreen(Screen[None]):
         ("s", "show_tables", "Load Tables"),
         ("o", "cycle_sort", "Sort"),
         ("a", "select_all", "Select All"),
-        ("space", "toggle_check", "Toggle"),
         Binding("j", "cursor_down", "Down", show=False),
         Binding("k", "cursor_up", "Up", show=False),
     ]
@@ -90,7 +127,7 @@ class BrowserScreen(Screen[None]):
                             yield Button("Select All [A]", id="select-all", variant="default")
                             yield Static("", id="browser-selection-count")
                         yield Static("[dim]Sorted by: name \u2191[/]", id="browser-sort-indicator")
-                        yield DataTable(id="browser-table")
+                        yield BrowserTable(id="browser-table")
                         with Horizontal(id="browser-status"):
                             yield Static("", id="browser-selected")
                             yield Static("", id="browser-count")
@@ -112,12 +149,11 @@ class BrowserScreen(Screen[None]):
         yield Footer()
 
     async def on_mount(self) -> None:
-        table = self.query_one("#browser-table", DataTable)
-        # Size sits beside Sel so it stays visible when Name is long and the
-        # list scrolls horizontally on narrow SSH terminals.
+        table = self.query_one("#browser-table", BrowserTable)
+        # Name then Size: analysts scan names first; Size stays immediately to the right.
         table.add_column("Sel", width=_SEL_COLUMN_WIDTH)
-        self._size_column_key = table.add_column("Size", width=_SIZE_COLUMN_WIDTH)
         table.add_column("Name", width=_NAME_COLUMN_MIN_WIDTH)
+        self._size_column_key = table.add_column("Size", width=_SIZE_COLUMN_WIDTH)
         table.add_column("Type", width=_TYPE_COLUMN_WIDTH)
         table.cursor_type = "row"
         self._sync_column_widths()
@@ -149,11 +185,11 @@ class BrowserScreen(Screen[None]):
         padding_total = 2 * table.cell_padding * _COLUMN_COUNT
         fixed = _SEL_COLUMN_WIDTH + _TYPE_COLUMN_WIDTH + _SIZE_COLUMN_WIDTH + padding_total
         name_width = max(_NAME_COLUMN_MIN_WIDTH, available - fixed)
-        # Column order: Sel, Size, Name, Type
+        # Column order: Sel, Name, Size, Type
         widths = (
             _SEL_COLUMN_WIDTH,
-            _SIZE_COLUMN_WIDTH,
             name_width,
+            _SIZE_COLUMN_WIDTH,
             _TYPE_COLUMN_WIDTH,
         )
         for column, width in zip(table.columns.values(), widths, strict=True):
@@ -225,7 +261,7 @@ class BrowserScreen(Screen[None]):
         if count:
             text = f"[dim]{count} selected for drop[/]"
         else:
-            text = "[dim]Space toggles selection · Select All marks every loaded table[/]"
+            text = "[dim]Click [ ] to select · Select All marks every loaded table[/]"
         self.query_one("#browser-selection-count", Static).update(text)
 
     def _update_action_state(self) -> None:
@@ -387,7 +423,7 @@ class BrowserScreen(Screen[None]):
         self._update_sort_indicator()
 
         if not self._tables:
-            table.add_row(UNCHECKED_MARKER, SIZE_UNKNOWN, NO_TABLES_PLACEHOLDER, "")
+            table.add_row(UNCHECKED_MARKER, NO_TABLES_PLACEHOLDER, SIZE_UNKNOWN, "")
             table.cursor_coordinate = (0, 0)
             self._sync_column_widths()
             return
@@ -397,8 +433,8 @@ class BrowserScreen(Screen[None]):
             name = str(row["name"])
             table.add_row(
                 self._check_marker(name),
-                row["size_display"],
                 name,
+                row["size_display"],
                 row["type"],
                 key=name,
             )
@@ -499,6 +535,13 @@ class BrowserScreen(Screen[None]):
             self._render_table_list(selected_before=self._selected_table())
             self._update_action_state()
 
+    def on_browser_table_sel_clicked(self, event: BrowserTable.SelClicked) -> None:
+        """Toggle drop-selection when the Sel checkbox cell is clicked."""
+        if event.data_table.id != "browser-table":
+            return
+        name = str(event.row_key.value)
+        self._toggle_check_named(name)
+
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         """Update button state whenever the cursor moves to a different row."""
         self._update_action_state()
@@ -511,9 +554,8 @@ class BrowserScreen(Screen[None]):
         if self.query_one("#browser-table", DataTable).has_focus:
             self.query_one("#browser-table", DataTable).action_cursor_up()
 
-    def action_toggle_check(self) -> None:
-        name = self._selected_table()
-        if not name or name == NO_TABLES_PLACEHOLDER:
+    def _toggle_check_named(self, name: str) -> None:
+        if not name or name == NO_TABLES_PLACEHOLDER or name not in self._tables:
             return
         if name in self._checked:
             self._checked.remove(name)

@@ -24,7 +24,7 @@ def _prepare_checked_table(screen: BrowserScreen, table_name: str = "danger_tabl
     screen._checked = {table_name}
     table = screen.query_one("#browser-table", DataTable)
     table.clear()
-    table.add_row("[x]", table_name, "table")
+    table.add_row("[x]", "—", table_name, "table", key=table_name)
     table.cursor_coordinate = (0, 0)
     screen._update_action_state()
     return table
@@ -513,13 +513,13 @@ def test_browser_sorts_by_table_size(mock_env_with_config, monkeypatch) -> None:
             await pilot.pause()
 
             table = screen.query_one("#browser-table", DataTable)
-            assert table.get_row_at(0)[1] == "dispatch_alpha"
-            assert table.get_row_at(1)[1] == "dispatch_zulu"
+            assert table.get_row_at(0)[2] == "dispatch_alpha"
+            assert table.get_row_at(1)[2] == "dispatch_zulu"
 
             screen.action_cycle_sort()
-            assert table.get_row_at(0)[1] == "dispatch_zulu"
-            assert table.get_row_at(1)[1] == "dispatch_alpha"
-            assert table.get_row_at(0)[3] == "1.2 GB"
+            assert table.get_row_at(0)[2] == "dispatch_zulu"
+            assert table.get_row_at(1)[2] == "dispatch_alpha"
+            assert table.get_row_at(0)[1] == "1.2 GB"
             # Largest-first is a descending display, so the arrow points down.
             indicator = str(screen.query_one("#browser-sort-indicator").render())
             assert "Sorted by: size ↓" in indicator
@@ -555,7 +555,7 @@ def test_browser_renders_list_before_sizes_and_fills_them_in_background(
 
             table = screen.query_one("#browser-table", DataTable)
             assert table.row_count == 2
-            assert table.get_row_at(0)[3] == "…"
+            assert table.get_row_at(0)[1] == "…"
             assert "sizes loading" in str(screen.query_one("#browser-sort-indicator").render())
 
             table.cursor_coordinate = (1, 0)
@@ -563,8 +563,8 @@ def test_browser_renders_list_before_sizes_and_fills_them_in_background(
             await app.workers.wait_for_complete()
             await pilot.pause()
 
-            assert table.get_row_at(0)[3] == "1.2 GB"
-            assert table.get_row_at(1)[3] == "1.2 GB"
+            assert table.get_row_at(0)[1] == "1.2 GB"
+            assert table.get_row_at(1)[1] == "1.2 GB"
             # In-place cell updates must not disturb the cursor.
             assert table.cursor_coordinate.row == 1
             assert "sizes loading" not in str(screen.query_one("#browser-sort-indicator").render())
@@ -596,9 +596,9 @@ def test_browser_size_column_visible_on_typical_ssh_width(
         ),
     )
 
-    async def run() -> None:
+    async def run_at(size: tuple[int, int]) -> None:
         app = DispatchApp()
-        async with app.run_test(size=(100, 30)) as pilot:
+        async with app.run_test(size=size) as pilot:
             screen = BrowserScreen(auto_load=False)
             app.push_screen(screen)
             await pilot.pause()
@@ -607,15 +607,35 @@ def test_browser_size_column_visible_on_typical_ssh_width(
             await pilot.pause()
 
             table = screen.query_one("#browser-table", DataTable)
-            assert table.get_row_at(0)[3] in {"370.4 MB", "12.6 MB"}
+            assert table.get_row_at(0)[1] in {"370.4 MB", "12.6 MB"}
+            # Size is the second column (after Sel), so it remains visible even
+            # when Name overflows and the table can scroll horizontally.
             assert table.scroll_x == 0
-            assert table.max_scroll_x == 0
 
-            svg_path = tmp_path / "browse-sizes.svg"
+            svg_path = tmp_path / f"browse-sizes-{size[0]}x{size[1]}.svg"
             app.save_screenshot(filename=str(svg_path))
             svg = svg_path.read_text(encoding="utf-8")
             assert "Size" in svg
             assert "MB" in svg
+
+    async def run() -> None:
+        await run_at((100, 30))
+        # 80×24 still exposes the Size header beside Sel; data rows may be
+        # clipped vertically by the minimum terminal layout, so only assert
+        # the header remains on-screen there.
+        app = DispatchApp()
+        async with app.run_test(size=(80, 24)) as pilot:
+            screen = BrowserScreen(auto_load=False)
+            app.push_screen(screen)
+            await pilot.pause()
+            await screen.action_show_tables(describe_selection=False)
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            table = screen.query_one("#browser-table", DataTable)
+            assert table.get_row_at(0)[1] in {"370.4 MB", "12.6 MB"}
+            svg_path = tmp_path / "browse-sizes-80x24.svg"
+            app.save_screenshot(filename=str(svg_path))
+            assert "Size" in svg_path.read_text(encoding="utf-8")
 
     asyncio.run(run())
 
@@ -811,7 +831,7 @@ def test_browser_drop_refreshes_table_list_after_success(mock_env_with_config, m
             await worker.wait()
             await pilot.pause()
 
-            rows = [table.get_row_at(i)[1] for i in range(table.row_count)]
+            rows = [table.get_row_at(i)[2] for i in range(table.row_count)]
             assert rows == ["table_b"]
             assert "1 tables" in str(screen.query_one("#browser-count").render())
             assert show_calls == 2
@@ -844,8 +864,8 @@ def test_browser_bulk_drop_only_checked_tables(mock_env_with_config, monkeypatch
             screen._checked = {"drop_me"}
             table = screen.query_one("#browser-table", DataTable)
             table.clear()
-            table.add_row("[ ]", "keep_me", "table", "—")
-            table.add_row("[x]", "drop_me", "table", "—")
+            table.add_row("[ ]", "—", "keep_me", "table", key="keep_me")
+            table.add_row("[x]", "—", "drop_me", "table", key="drop_me")
             table.cursor_coordinate = (0, 0)
             screen._update_action_state()
 
@@ -893,7 +913,7 @@ def test_browser_drop_last_table_shows_placeholder(mock_env_with_config, monkeyp
             await worker.wait()
             await pilot.pause()
 
-            rows = [table.get_row_at(i)[1] for i in range(table.row_count)]
+            rows = [table.get_row_at(i)[2] for i in range(table.row_count)]
             assert rows == ["(no tables)"]
 
     asyncio.run(run())
@@ -965,7 +985,7 @@ def test_browser_multi_table_drop_refreshes_list_once(mock_env_with_config, monk
             await pilot.pause()
 
             table = screen.query_one("#browser-table", DataTable)
-            rows = [table.get_row_at(i)[1] for i in range(table.row_count)]
+            rows = [table.get_row_at(i)[2] for i in range(table.row_count)]
             assert rows == ["table_c"]
             assert sorted(drop_calls) == ["aa_enc.table_a", "aa_enc.table_b"]
             assert show_calls == 2
@@ -997,8 +1017,8 @@ def test_browser_bulk_drop_multiple_tables(mock_env_with_config, monkeypatch) ->
             screen._checked = {"one", "two"}
             table = screen.query_one("#browser-table", DataTable)
             table.clear()
-            table.add_row("[x]", "one", "table", "—")
-            table.add_row("[x]", "two", "table", "—")
+            table.add_row("[x]", "—", "one", "table", key="one")
+            table.add_row("[x]", "—", "two", "table", key="two")
             screen._update_action_state()
 
             worker = screen.action_drop()

@@ -5,6 +5,7 @@ from __future__ import annotations
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
+from textual.geometry import Size
 from textual.screen import Screen
 from textual.widgets import Button, DataTable, Footer, Header, Input, Static
 from textual.widgets.data_table import CellDoesNotExist, ColumnKey
@@ -112,10 +113,12 @@ class BrowserScreen(Screen[None]):
 
     async def on_mount(self) -> None:
         table = self.query_one("#browser-table", DataTable)
+        # Size sits beside Sel so it stays visible when Name is long and the
+        # list scrolls horizontally on narrow SSH terminals.
         table.add_column("Sel", width=_SEL_COLUMN_WIDTH)
+        self._size_column_key = table.add_column("Size", width=_SIZE_COLUMN_WIDTH)
         table.add_column("Name", width=_NAME_COLUMN_MIN_WIDTH)
         table.add_column("Type", width=_TYPE_COLUMN_WIDTH)
-        self._size_column_key = table.add_column("Size", width=_SIZE_COLUMN_WIDTH)
         table.cursor_type = "row"
         self._sync_column_widths()
         describe_table = self.query_one("#describe-table", DataTable)
@@ -128,30 +131,36 @@ class BrowserScreen(Screen[None]):
             await self.action_show_tables()
 
     def on_resize(self) -> None:
-        """Keep Size visible when the split pane or terminal width changes."""
+        """Keep column budget correct when the split pane or terminal changes."""
         self._sync_column_widths()
 
     def _sync_column_widths(self) -> None:
-        """Cap Name so Sel/Type/Size always fit in the visible table width."""
+        """Cap Name so Sel/Size/Type fit; long names truncate instead of clipping Size."""
         table = self.query_one("#browser-table", DataTable)
         if not table.columns:
             return
         available = table.size.width
         if available <= 0:
             return
+        # Always reserve the vertical scrollbar gutter so the first layout pass
+        # does not give Name a cell that disappears when the scrollbar appears.
+        available -= table.scrollbar_size_vertical
         # DataTable render width is content width + 2 * cell_padding per column.
         padding_total = 2 * table.cell_padding * _COLUMN_COUNT
         fixed = _SEL_COLUMN_WIDTH + _TYPE_COLUMN_WIDTH + _SIZE_COLUMN_WIDTH + padding_total
         name_width = max(_NAME_COLUMN_MIN_WIDTH, available - fixed)
+        # Column order: Sel, Size, Name, Type
         widths = (
             _SEL_COLUMN_WIDTH,
+            _SIZE_COLUMN_WIDTH,
             name_width,
             _TYPE_COLUMN_WIDTH,
-            _SIZE_COLUMN_WIDTH,
         )
         for column, width in zip(table.columns.values(), widths, strict=True):
             column.width = width
             column.auto_width = False
+        total_width = sum(column.get_render_width(table) for column in table.columns.values())
+        table.virtual_size = Size(total_width, table.virtual_size.height)
         table.refresh()
 
     def _show_detail_placeholder(self) -> None:
@@ -196,8 +205,9 @@ class BrowserScreen(Screen[None]):
     def _selected_table(self) -> str:
         table_widget = self.query_one("#browser-table", DataTable)
         try:
-            row_key = table_widget.get_row_at(table_widget.cursor_row)
-            return str(row_key[1])
+            cell_key = table_widget.coordinate_to_cell_key(table_widget.cursor_coordinate)
+            name = str(cell_key.row_key.value)
+            return name if name in self._tables else ""
         except Exception:
             return ""
 
@@ -371,14 +381,14 @@ class BrowserScreen(Screen[None]):
 
         table = self.query_one("#browser-table", DataTable)
         table.clear()
-        self._sync_column_widths()
 
         self.query_one("#browser-count", Static).update(f"[dim]{len(self._tables)} tables[/]")
         self._update_sort_indicator()
 
         if not self._tables:
-            table.add_row(UNCHECKED_MARKER, NO_TABLES_PLACEHOLDER, "", SIZE_UNKNOWN)
+            table.add_row(UNCHECKED_MARKER, SIZE_UNKNOWN, NO_TABLES_PLACEHOLDER, "")
             table.cursor_coordinate = (0, 0)
+            self._sync_column_widths()
             return
 
         selected_row = 0
@@ -386,14 +396,17 @@ class BrowserScreen(Screen[None]):
             name = str(row["name"])
             table.add_row(
                 self._check_marker(name),
+                row["size_display"],
                 name,
                 row["type"],
-                row["size_display"],
                 key=name,
             )
             if selected_before and name == selected_before:
                 selected_row = index
         table.cursor_coordinate = (selected_row, 0)
+        # Recompute after rows exist so a newly-shown vertical scrollbar is
+        # reserved and columns stay within the visible width.
+        self._sync_column_widths()
 
     def _sort_key(self, row: dict[str, object]) -> tuple[object, ...]:
         if self._sort_mode == "size":

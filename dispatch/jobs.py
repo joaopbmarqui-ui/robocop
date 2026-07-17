@@ -3,27 +3,27 @@
 from __future__ import annotations
 
 import logging
-import os
-from collections.abc import Iterator
-from contextlib import contextmanager
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
+from functools import partial
 from pathlib import Path
 from typing import Any
 
-from . import config, manifest
+from . import capacity, config, job_lifecycle, manifest
 
 logger = logging.getLogger("dispatch.jobs")
 
 ACTIVE_WINDOW = timedelta(days=7)
 RUNNING_CAP = 2
 LAUNCH_SLOT_STATES = {"Pending", "Running"}
-PENDING_ORPHAN_GRACE = timedelta(minutes=5)
+PENDING_ORPHAN_GRACE = job_lifecycle.PENDING_ORPHAN_GRACE
+LAUNCH_WAIT_TIMEOUT_SECONDS = 30.0
 
 _manifest_cache: dict[Path, tuple[float, manifest.JobManifest]] = {}
 
 
-class LaunchSlotUnavailable(RuntimeError):
-    """Raised when a Job cannot be accepted because all launch slots are full."""
+LaunchSlotUnavailable = capacity.CapacityBusy
+pid_is_alive = job_lifecycle.pid_is_alive
 
 
 def parse_time(value: str | None) -> datetime | None:
@@ -96,26 +96,6 @@ def list_manifests(root: Path | None = None) -> list[manifest.JobManifest]:
     return loaded
 
 
-def pid_is_alive(pid: int) -> bool:
-    """Return whether ``pid`` still names a live process.
-
-    ``os.kill(pid, 0)`` performs the conservative POSIX liveness probe without
-    sending a signal. A permission failure means a process exists but cannot be
-    signalled by this user, so it is treated as alive.
-    """
-    if pid <= 0:
-        return False
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    except OSError:
-        return False
-    return True
-
-
 def _append_dispatch_log(job_dir: Path, line: str) -> None:
     log_path = job_dir / "run.log"
     if not log_path.exists():
@@ -128,47 +108,28 @@ def _append_dispatch_log(job_dir: Path, line: str) -> None:
 
 
 def reconcile_manifest(path: Path) -> manifest.JobManifest | None:
-    """Load and conservatively reconcile one manifest.
-
-    ``Running`` Jobs with a stored PID are failed when the PID no longer
-    exists. ``Pending`` Jobs with ``pid=None`` are failed only after the
-    manifest file has remained untouched past ``PENDING_ORPHAN_GRACE``.
-    """
+    """Load one manifest and persist the shared stale-Job transition."""
     item = _load_manifest_cached(path)
-    pid = item.get("pid")
-    if item["state"] != "Running" or pid is None or pid_is_alive(pid):
-        if item["state"] != "Pending" or pid is not None:
-            return item
+    modified_at: datetime | None = None
+    if item["state"] == "Pending" and item.get("pid") is None:
         try:
-            manifest_mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+            modified_at = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
         except OSError as exc:
             raise ValueError(str(exc)) from exc
-        now = datetime.now(timezone.utc)
-        if now - manifest_mtime <= PENDING_ORPHAN_GRACE:
-            return item
-        updated = manifest.update(
-            path,
-            state="Failed",
-            exit_code=-1,
-            finished_at=now.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        )
-        _manifest_cache.pop(path, None)
-        _append_dispatch_log(
-            path.parent,
-            "[dispatch] Pending job exceeded startup grace; manifest marked Failed",
-        )
-        return updated
-    updated = manifest.update(
+    reconciliation = job_lifecycle.reconcile(item, modified_at, pid_probe=pid_is_alive)
+    if reconciliation is None:
+        return item
+
+    updated, reconciliation_applied = manifest.update_if_current(
         path,
-        state="Failed",
-        exit_code=-1,
-        finished_at=manifest.now_utc(),
+        item,
+        state=reconciliation.manifest["state"],
+        exit_code=reconciliation.manifest["exit_code"],
+        finished_at=reconciliation.manifest["finished_at"],
     )
     _manifest_cache.pop(path, None)
-    _append_dispatch_log(
-        path.parent,
-        f"[dispatch] stale runner pid {pid} not found; manifest marked Failed",
-    )
+    if reconciliation_applied:
+        _append_dispatch_log(path.parent, reconciliation.log_message)
     return updated
 
 
@@ -230,39 +191,23 @@ def can_launch(root: Path | None = None) -> bool:
     return count_launch_slot_jobs(root) < RUNNING_CAP
 
 
-@contextmanager
-def _launch_lock(user: str | None = None) -> Iterator[None]:
-    jobs_path = config.jobs_dir(user)
-    jobs_path.mkdir(parents=True, exist_ok=True)
-    lock_path = jobs_path / ".dispatch-launch.lock"
-    with lock_path.open("a+b") as handle:
-        try:
-            import fcntl
-
-            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
-            try:
-                yield
-            finally:
-                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
-            return
-        except ImportError:
-            pass
-
-        try:
-            import msvcrt
-        except ImportError as exc:
-            raise RuntimeError(
-                "Dispatch launch locking requires fcntl.flock on POSIX or "
-                "msvcrt.locking on Windows; refusing to run without a real lock."
-            ) from exc
-
-        handle.seek(0)
-        msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
-        try:
-            yield
-        finally:
-            handle.seek(0)
-            msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+def _pending_job_creator(
+    source: manifest.Source,
+    destination: manifest.Destination,
+    params: dict[str, Any],
+    launch_cwd: Path,
+    sql_text: str,
+    user: str | None,
+) -> Callable[[], tuple[Path, manifest.JobManifest]]:
+    return partial(
+        manifest.create_job,
+        source=source,
+        destination=destination,
+        params=params,
+        launch_cwd=launch_cwd,
+        sql_text=sql_text,
+        user=user,
+    )
 
 
 def create_job_if_slot_available(
@@ -272,26 +217,35 @@ def create_job_if_slot_available(
     launch_cwd: Path,
     sql_text: str = "",
     user: str | None = None,
+    timeout: float = LAUNCH_WAIT_TIMEOUT_SECONDS,
 ) -> tuple[Path, manifest.JobManifest]:
-    """Create a Pending Job only if a launch slot is available.
+    """Atomically admit and create one Pending Job through shared capacity."""
+    return capacity.admit_launch(
+        _pending_job_creator(source, destination, params, launch_cwd, sql_text, user),
+        timeout=timeout,
+        root=config.data_root(user),
+    )
 
-    The slot decision and manifest creation happen while holding a filesystem
-    lock so concurrent TUI sessions cannot both consume the last slot.
+
+async def create_job_when_capacity_available(
+    source: manifest.Source,
+    destination: manifest.Destination,
+    params: dict[str, Any],
+    launch_cwd: Path,
+    sql_text: str = "",
+    user: str | None = None,
+    timeout: float = LAUNCH_WAIT_TIMEOUT_SECONDS,
+) -> tuple[Path, manifest.JobManifest]:
+    """Wait asynchronously for one atomic Pending admission.
+
+    The capacity module owns FIFO identity, 250ms waits, deadline enforcement,
+    and the cancellation-safe callback commit boundary.
     """
-    with _launch_lock(user):
-        root = config.jobs_dir(user)
-        if count_launch_slot_jobs(root=root) >= RUNNING_CAP:
-            raise LaunchSlotUnavailable(
-                f"Already at the {RUNNING_CAP}-Job concurrency cap; wait for one to finish"
-            )
-        return manifest.create_job(
-            source=source,
-            destination=destination,
-            params=params,
-            launch_cwd=launch_cwd,
-            sql_text=sql_text,
-            user=user,
-        )
+    return await capacity.admit_launch_async(
+        _pending_job_creator(source, destination, params, launch_cwd, sql_text, user),
+        timeout=timeout,
+        root=config.data_root(user),
+    )
 
 
 def active_jobs(root: Path | None = None) -> list[manifest.JobManifest]:

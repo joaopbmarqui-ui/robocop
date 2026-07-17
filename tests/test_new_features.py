@@ -5,15 +5,25 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import threading
 from pathlib import Path
 
-from dispatch import config, impala, manifest, telemetry
+import pytest
+
+from dispatch import capacity, config, impala, manifest, telemetry
 from dispatch.app import DispatchApp
 from dispatch.screens.browser import BrowserScreen
 from dispatch.screens.help import HelpScreen
 from dispatch.screens.job_detail import JobDetailScreen
 from dispatch.screens.new_job import NewJobScreen
 from dispatch.screens.preview import PreviewScreen, sql_syntax
+
+
+async def _collect_table_sizes(
+    schema: str, table_names: list[str]
+) -> list[tuple[str, impala.TableStats]]:
+    return [item async for item in impala.iter_table_sizes(schema, table_names)]
+
 
 # =============================================================================
 # Preview SQL highlighting and scrolling
@@ -60,6 +70,40 @@ class TestBrowserDescribeParsing:
         columns = BrowserScreen._parse_describe(raw)
         assert len(columns) == 1
 
+    def test_browser_surfaces_typed_capacity_error_in_status_and_notification(
+        self, mock_env_with_config, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        failure = capacity.CapacityLedgerError("cannot read capacity ledger")
+
+        async def fail_show_tables(_schema: str, _pattern: str = "*") -> list[str]:
+            raise failure
+
+        monkeypatch.setattr(impala, "show_tables", fail_show_tables)
+
+        async def run() -> tuple[str, list[tuple[str, str | None]]]:
+            app = DispatchApp()
+            async with app.run_test(size=(120, 40)) as pilot:
+                screen = BrowserScreen(auto_load=False)
+                app.push_screen(screen)
+                await pilot.pause()
+                notifications: list[tuple[str, str | None]] = []
+                monkeypatch.setattr(
+                    screen,
+                    "notify",
+                    lambda message, severity=None, **_kwargs: notifications.append(
+                        (str(message), severity)
+                    ),
+                )
+
+                await screen.action_show_tables()
+                status = str(screen.query_one("#browser-action-status").render())
+                return status, notifications
+
+        status, notifications = asyncio.run(run())
+
+        assert "cannot read capacity ledger" in status
+        assert ("SHOW TABLES failed: cannot read capacity ledger", "error") in notifications
+
 
 class TestDataSizeFormatting:
     def test_parse_data_size_units(self) -> None:
@@ -92,36 +136,189 @@ class TestImpalaTableStatsParsing:
         assert stats.size_bytes == 13_212_057 + 1_342_177_280
         assert stats.size_display == "1.3 GB"
 
-    def test_iter_table_sizes_is_strictly_serial(self, monkeypatch) -> None:
-        """The Impala per-user query cap is 2; size fetching must use one slot."""
-        in_flight = 0
-        max_in_flight = 0
+    @pytest.mark.parametrize("operation", ["show_tables", "table_stats", "describe", "drop"])
+    def test_every_metadata_command_holds_a_shared_capacity_lease(
+        self,
+        operation: str,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setenv("DISPATCH_DATA_ROOT", str(tmp_path))
 
-        async def fake_table_stats(full_table: str) -> impala.TableStats:
-            nonlocal in_flight, max_in_flight
-            in_flight += 1
-            max_in_flight = max(max_in_flight, in_flight)
+        async def run() -> None:
+            entered = asyncio.Event()
+            release = asyncio.Event()
+
+            async def fake_run_exec(*_argv: str, **_kwargs: object) -> tuple[int, str, str]:
+                entered.set()
+                await release.wait()
+                if operation == "show_tables":
+                    return 0, "name\none\n", ""
+                if operation == "table_stats":
+                    return 0, "#Rows|#Files|Size\n1|1|42B\n", ""
+                if operation == "describe":
+                    return 0, "name|type|comment\nid|int|\n", ""
+                return 0, "", ""
+
+            monkeypatch.setattr("dispatch.process.run_exec", fake_run_exec)
+            existing = capacity.try_acquire_metadata("existing")
+            try:
+                if operation == "show_tables":
+                    command = impala.show_tables("aa_enc")
+                elif operation == "table_stats":
+                    command = impala.table_stats("aa_enc.one")
+                elif operation == "describe":
+                    command = impala.describe_table("aa_enc.one")
+                else:
+                    command = impala.drop_table("aa_enc.one")
+                task = asyncio.create_task(command)
+                await asyncio.wait_for(entered.wait(), timeout=1)
+                with pytest.raises(capacity.CapacityBusy):
+                    capacity.try_acquire_metadata("probe")
+                release.set()
+                await task
+            finally:
+                existing.release()
+
+        asyncio.run(run())
+
+    def test_metadata_fails_fast_before_starting_subprocess(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("DISPATCH_DATA_ROOT", str(tmp_path))
+        subprocess_called = False
+
+        async def fake_run_exec(*_argv: str, **_kwargs: object) -> tuple[int, str, str]:
+            nonlocal subprocess_called
+            subprocess_called = True
+            return 0, "", ""
+
+        monkeypatch.setattr("dispatch.process.run_exec", fake_run_exec)
+        first = capacity.try_acquire_metadata("first")
+        second = capacity.try_acquire_metadata("second")
+        try:
+            with pytest.raises(capacity.CapacityBusy):
+                asyncio.run(impala.show_tables("aa_enc"))
+        finally:
+            first.release()
+            second.release()
+        assert subprocess_called is False
+
+    def test_cancelled_metadata_acquisition_releases_threaded_lease(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("DISPATCH_DATA_ROOT", str(tmp_path))
+        acquired = threading.Event()
+        allow_handoff = threading.Event()
+        handed_off = threading.Event()
+        original_acquire = capacity.try_acquire_metadata
+
+        def delayed_acquire(operation: str) -> capacity.MetadataLease:
+            lease = original_acquire(operation)
+            acquired.set()
+            assert allow_handoff.wait(2)
+            handed_off.set()
+            return lease
+
+        async def unexpected_run_exec(*_argv: str, **_kwargs: object) -> tuple[int, str, str]:
+            raise AssertionError("cancelled acquisition must not run impala-shell")
+
+        monkeypatch.setattr(capacity, "try_acquire_metadata", delayed_acquire)
+        monkeypatch.setattr("dispatch.process.run_exec", unexpected_run_exec)
+
+        async def run() -> None:
+            task = asyncio.create_task(impala.show_tables("aa_enc"))
+            assert await asyncio.to_thread(acquired.wait, 2)
+            task.cancel()
             await asyncio.sleep(0)
-            in_flight -= 1
-            if full_table.endswith("broken"):
-                raise RuntimeError("stats unavailable")
-            return impala.TableStats(size_bytes=42, size_display="42 B")
+            task.cancel()
+            allow_handoff.set()
+            with pytest.raises(asyncio.CancelledError):
+                await task
+            assert await asyncio.to_thread(handed_off.wait, 2)
 
-        monkeypatch.setattr(impala, "table_stats", fake_table_stats)
+        asyncio.run(run())
 
-        async def run() -> list[tuple[str, impala.TableStats]]:
-            return [
-                item async for item in impala.iter_table_sizes("aa_enc", ["one", "broken", "two"])
-            ]
+        first = original_acquire("probe-one")
+        second = original_acquire("probe-two")
+        first.release()
+        second.release()
 
-        results = asyncio.run(run())
-        assert max_in_flight == 1
-        assert [name for name, _stats in results] == ["one", "broken", "two"]
-        assert results[0][1].size_bytes == 42
-        # A failed stats query yields unknown stats instead of aborting the rest.
-        assert results[1][1].size_bytes is None
-        assert results[1][1].size_display == "—"
-        assert results[2][1].size_bytes == 42
+    def test_stats_map_capacity_busy_to_unknown(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("DISPATCH_DATA_ROOT", str(tmp_path))
+
+        async def unexpected_run_exec(*_argv: str, **_kwargs: object) -> tuple[int, str, str]:
+            raise AssertionError("busy stats must not start impala-shell")
+
+        monkeypatch.setattr("dispatch.process.run_exec", unexpected_run_exec)
+        first = capacity.try_acquire_metadata("first")
+        second = capacity.try_acquire_metadata("second")
+        try:
+            results = asyncio.run(_collect_table_sizes("aa_enc", ["one", "two"]))
+        finally:
+            first.release()
+            second.release()
+
+        assert [name for name, _stats in results] == ["one", "two"]
+        assert all(stats == impala.TableStats(None, "—") for _name, stats in results)
+
+    def test_stats_map_impala_query_failure_to_unknown(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("DISPATCH_DATA_ROOT", str(tmp_path))
+
+        async def failed_run_exec(*_argv: str, **_kwargs: object) -> tuple[int, str, str]:
+            return 1, "", "stats unavailable"
+
+        monkeypatch.setattr("dispatch.process.run_exec", failed_run_exec)
+
+        results = asyncio.run(_collect_table_sizes("aa_enc", ["broken"]))
+
+        assert results == [("broken", impala.TableStats(None, "—"))]
+
+    def test_impala_execution_failures_use_dedicated_error(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("DISPATCH_DATA_ROOT", str(tmp_path))
+
+        async def failed_run_exec(*_argv: str, **_kwargs: object) -> tuple[int, str, str]:
+            return 1, "", "query rejected"
+
+        monkeypatch.setattr("dispatch.process.run_exec", failed_run_exec)
+
+        with pytest.raises(impala.ImpalaExecutionError, match="query rejected"):
+            asyncio.run(impala.table_stats("aa_enc.broken"))
+
+    def test_stats_do_not_hide_arbitrary_runtime_errors(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("DISPATCH_DATA_ROOT", str(tmp_path))
+
+        async def broken_subprocess_adapter(*_argv: str, **_kwargs: object) -> tuple[int, str, str]:
+            raise RuntimeError("subprocess adapter bug")
+
+        monkeypatch.setattr("dispatch.process.run_exec", broken_subprocess_adapter)
+
+        with pytest.raises(RuntimeError, match="subprocess adapter bug"):
+            asyncio.run(_collect_table_sizes("aa_enc", ["broken"]))
+
+    def test_stats_surface_capacity_ledger_failures(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("DISPATCH_DATA_ROOT", str(tmp_path))
+        lease = capacity.try_acquire_metadata("initialize")
+        lease.release()
+        (config.dispatch_home() / "capacity.json").write_text("{not-json", encoding="utf-8")
+
+        with pytest.raises(capacity.CapacityLedgerError):
+            asyncio.run(_collect_table_sizes("aa_enc", ["one"]))
+
+    def test_process_local_query_ledger_api_is_removed(self) -> None:
+        assert not hasattr(impala, "QueryLedger")
+        assert not hasattr(impala, "query_ledger")
+        assert not hasattr(impala, "reset_query_ledger_for_tests")
 
 
 # =============================================================================

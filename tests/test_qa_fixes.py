@@ -71,7 +71,7 @@ def test_clone_prefill_reads_params_email_subject_and_dates() -> None:
 # ── Impala timeout message (F10 / IMP-06) ────────────────────────────────
 
 
-def test_impala_query_timeout_has_message(monkeypatch) -> None:
+def test_impala_query_timeout_has_message(mock_env, monkeypatch) -> None:
     async def fake_run_exec(*argv, timeout=None):
         raise asyncio.TimeoutError()
 
@@ -217,7 +217,7 @@ def test_preview_bad_template_dates_does_not_crash(mock_env_with_config, tmp_pat
     asyncio.run(run())
 
 
-def test_validation_summary_reflects_running_cap(
+def test_validation_summary_defers_running_cap_to_authoritative_admission(
     mock_env_with_config, monkeypatch, tmp_path
 ) -> None:
     monkeypatch.setattr(jobs, "pid_is_alive", lambda pid: True)
@@ -234,7 +234,7 @@ def test_validation_summary_reflects_running_cap(
             screen = _new_job_screen(app, tmp_path)
             await pilot.pause(1.0)
             issues = screen._validation_issues()
-            assert any("cap" in i.lower() for i in issues)
+            assert not any("cap" in i.lower() for i in issues)
 
     asyncio.run(run())
 
@@ -496,7 +496,7 @@ def test_browser_placeholder_not_actionable(mock_env_with_config) -> None:
             await pilot.pause(0.3)
             table = screen.query_one("#browser-table", DataTable)
             table.clear()
-            table.add_row("[ ]", NO_TABLES_PLACEHOLDER, "", "—")
+            table.add_row("[ ]", NO_TABLES_PLACEHOLDER, "—", "")
             table.cursor_coordinate = (0, 0)
             await pilot.pause(0.1)
             assert screen._full_table() == ""

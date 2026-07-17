@@ -6,10 +6,12 @@ import asyncio
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 
-from . import process, sql
+from . import capacity, process, sql
+from .asyncio_utils import await_uncancellable
 from .formatting import format_data_size, parse_data_size
 
 QUERY_TIMEOUT_SECONDS = 30
+_SIZE_FETCH_BATCH_SIZE = 2
 
 IMPALA_BASE_ARGV = (
     "impala-shell",
@@ -23,7 +25,11 @@ IMPALA_BASE_ARGV = (
 )
 
 
-async def query(sql: str) -> str:
+class ImpalaExecutionError(RuntimeError):
+    """An expected impala-shell timeout or non-zero query result."""
+
+
+async def _run_impala_shell(sql: str) -> str:
     try:
         rc, stdout, stderr = await process.run_exec(
             *IMPALA_BASE_ARGV, "-q", sql, timeout=QUERY_TIMEOUT_SECONDS
@@ -31,10 +37,56 @@ async def query(sql: str) -> str:
     except (asyncio.TimeoutError, TimeoutError):
         # str(TimeoutError()) is empty, which would surface as a blank error in
         # the Browser; give the user an actionable message instead.
-        raise RuntimeError(f"impala-shell timed out after {QUERY_TIMEOUT_SECONDS}s") from None
+        raise ImpalaExecutionError(
+            f"impala-shell timed out after {QUERY_TIMEOUT_SECONDS}s"
+        ) from None
     if rc != 0:
-        raise RuntimeError(stderr or stdout or f"impala-shell exited {rc}")
+        raise ImpalaExecutionError(stderr or stdout or f"impala-shell exited {rc}")
     return stdout
+
+
+async def _release_metadata(lease: capacity.MetadataLease) -> None:
+    release = asyncio.create_task(asyncio.to_thread(lease.release))
+    try:
+        await asyncio.shield(release)
+    except asyncio.CancelledError:
+        await await_uncancellable(release)
+        raise
+
+
+async def _acquire_metadata(operation: str) -> capacity.MetadataLease:
+    acquisition = asyncio.create_task(asyncio.to_thread(capacity.try_acquire_metadata, operation))
+    try:
+        return await asyncio.shield(acquisition)
+    except asyncio.CancelledError as cancelled:
+        try:
+            lease = await await_uncancellable(acquisition)
+        except Exception:
+            raise cancelled
+        await _release_metadata(lease)
+        raise cancelled
+
+
+async def query(sql: str) -> str:
+    """Run one Impala metadata statement under a shared fail-fast lease."""
+    lease = await _acquire_metadata(_operation_name(sql))
+    try:
+        return await _run_impala_shell(sql)
+    finally:
+        await _release_metadata(lease)
+
+
+def _operation_name(statement: str) -> str:
+    normalized = " ".join(statement.split()).upper()
+    if normalized.startswith("SHOW TABLE STATS"):
+        return "SHOW TABLE STATS"
+    if normalized.startswith("SHOW TABLES"):
+        return "SHOW TABLES"
+    if normalized.startswith("DESCRIBE"):
+        return "DESCRIBE"
+    if normalized.startswith("DROP"):
+        return "DROP"
+    return "Impala metadata query"
 
 
 async def show_tables(schema: str, pattern: str = "*") -> list[str]:
@@ -106,21 +158,25 @@ async def table_stats(full_table: str) -> TableStats:
 async def iter_table_sizes(
     schema: str, table_names: list[str]
 ) -> AsyncIterator[tuple[str, TableStats]]:
-    """Yield ``(table_name, stats)`` one ``SHOW TABLE STATS`` query at a time.
+    """Yield sizes in two-wide batches without hiding ledger failures."""
+    remaining = list(table_names)
+    unknown = TableStats(size_bytes=None, size_display="—")
 
-    The Impala coordinators cap parallel queries per user at two. Fetching
-    sizes strictly serially deliberately occupies at most one slot, leaving
-    the other free for interactive work (DESCRIBE, DROP, job launches) while
-    sizes trickle in. A table whose stats query fails yields unknown stats
-    rather than aborting the remaining tables.
-    """
-    for table_name in table_names:
-        full_table = table_name if "." in table_name else f"{schema}.{table_name}"
-        try:
-            stats = await table_stats(full_table)
-        except Exception:
-            stats = TableStats(size_bytes=None, size_display="—")
-        yield table_name, stats
+    while remaining:
+        batch = remaining[:_SIZE_FETCH_BATCH_SIZE]
+        remaining = remaining[_SIZE_FETCH_BATCH_SIZE:]
+
+        async def _one(table_name: str) -> tuple[str, TableStats]:
+            full_table = table_name if "." in table_name else f"{schema}.{table_name}"
+            try:
+                stats = await table_stats(full_table)
+            except (capacity.CapacityBusy, ImpalaExecutionError):
+                stats = unknown
+            return table_name, stats
+
+        results = await asyncio.gather(*(_one(name) for name in batch))
+        for item in results:
+            yield item
 
 
 def _require_full_table(full_table: str) -> None:

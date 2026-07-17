@@ -27,15 +27,22 @@ from textual.widgets import (
 )
 from textual.worker import Worker
 
-from .. import config, jobs, kerberos, manifest, process, sql, telemetry
+from .. import capacity, config, jobs, kerberos, manifest, process, sql, telemetry
 from ..advisor import analyze, analyze_form, analyze_sql, combine_analysis
 from ..advisor.models import AnalysisResult, badge_markup
+from ..asyncio_utils import await_uncancellable
 from .advisor_gate import AdvisorLaunchGate
 from .confirm import ConfirmScreen
 from .preview import PreviewScreen
 from .sidebar import Sidebar
 
 logger = logging.getLogger("dispatch.new_job")
+
+
+async def _launch_runner_after_commit(job_dir: Path) -> int:
+    """Finish runner handoff after Pending commit despite task cancellation."""
+    launch = asyncio.create_task(process.launch_runner(job_dir))
+    return await await_uncancellable(launch)
 
 
 def _refusal_reason(error: str) -> telemetry.RefusalReason:
@@ -645,10 +652,6 @@ class NewJobScreen(Screen[None]):
         email = self._input_value("email")
         if email and ("@" not in email or "." not in email.split("@")[-1]):
             issues.append("Invalid email format")
-        if not jobs.can_launch():
-            issues.append(
-                f"At the {jobs.RUNNING_CAP}-Job concurrency cap \u2014 wait for one to finish"
-            )
         if self.kerberos_ttl is None:
             issues.append("Kerberos ticket missing \u2014 press K to kinit")
         elif self.kerberos_ttl < kerberos.MIN_LAUNCH_TTL_SECONDS:
@@ -1027,16 +1030,22 @@ class NewJobScreen(Screen[None]):
             self.notify(error, severity="error")
             return
         try:
-            job_dir, _job_manifest = jobs.create_job_if_slot_available(
+            job_dir, _job_manifest = await jobs.create_job_when_capacity_available(
                 source=source,
                 destination=destination,
                 params=self._params(),
                 launch_cwd=self.launch_cwd,
                 sql_text=sql_text,
             )
-        except jobs.LaunchSlotUnavailable as exc:
+        except capacity.CapacityBusy as exc:
             error = str(exc)
             telemetry.note_launch_refused("slot_cap")
+            self._show_message(error, "error")
+            self.notify(error, severity="error")
+            return
+        except (capacity.CapacityTimeout, capacity.CapacityLedgerError) as exc:
+            error = str(exc)
+            telemetry.note_launch_refused("validation")
             self._show_message(error, "error")
             self.notify(error, severity="error")
             return
@@ -1046,7 +1055,7 @@ class NewJobScreen(Screen[None]):
             destination=destination["type"],
         )
         try:
-            await process.launch_runner(job_dir)
+            await _launch_runner_after_commit(job_dir)
         except OSError as exc:
             manifest.update(
                 job_dir / "manifest.json",

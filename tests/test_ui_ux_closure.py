@@ -8,11 +8,18 @@ import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from rich.text import Text
+from textual.coordinate import Coordinate
 from textual.widgets import DataTable, Input
 
 from dispatch import impala, manifest, telemetry
 from dispatch.app import DispatchApp
-from dispatch.screens.browser import BrowserScreen
+from dispatch.screens.browser import (
+    CHECKED_MARKER,
+    UNCHECKED_MARKER,
+    BrowserScreen,
+    BrowserTable,
+)
 from dispatch.screens.history import PAGE_SIZE, HistoryScreen
 from dispatch.screens.job_detail import JobDetailScreen
 from dispatch.screens.new_job import NewJobScreen
@@ -24,10 +31,53 @@ def _prepare_checked_table(screen: BrowserScreen, table_name: str = "danger_tabl
     screen._checked = {table_name}
     table = screen.query_one("#browser-table", DataTable)
     table.clear()
-    table.add_row("[x]", table_name, "table")
+    table.add_row(CHECKED_MARKER, table_name, "—", "table", key=table_name)
     table.cursor_coordinate = (0, 0)
     screen._update_action_state()
     return table
+
+
+def _sel_plain(cell: object) -> str:
+    return cell.plain if isinstance(cell, Text) else str(cell)
+
+
+async def _click_visible_table_cell(pilot, table: DataTable, row: int, column: int) -> None:
+    """Click a visible DataTable cell using its scroll-adjusted rendered center."""
+    region = table._get_cell_region(Coordinate(row, column))
+    content_x = table.content_region.x - table.region.x
+    content_y = table.content_region.y - table.region.y
+    center_x, center_y = region.center
+    scroll_x, scroll_y = table.scroll_offset
+    if column >= table.fixed_columns:
+        center_x -= scroll_x
+    if row >= table.fixed_rows:
+        center_y -= scroll_y
+    click_x = center_x + content_x
+    click_y = center_y + content_y
+    assert content_x <= click_x < content_x + table.content_region.width
+    assert content_y <= click_y < content_y + table.content_region.height
+    clicked = await pilot.click(
+        table,
+        offset=(click_x, click_y),
+    )
+    assert clicked is True
+
+
+async def _click_visible_table_header(pilot, table: DataTable, column: int) -> None:
+    """Click a visible DataTable header using its scroll-adjusted rendered center."""
+    region = table._get_column_region(column)
+    content_x = table.content_region.x - table.region.x
+    content_y = table.content_region.y - table.region.y
+    center_x = region.x + region.width // 2
+    if column >= table.fixed_columns:
+        center_x -= table.scroll_offset.x
+    click_x = center_x + content_x
+    assert content_x <= click_x < content_x + table.content_region.width
+    clicked = await pilot.click(
+        table,
+        offset=(click_x, content_y),
+    )
+    assert clicked is True
 
 
 async def _confirm_bulk_drop(pilot, app: DispatchApp) -> None:
@@ -481,8 +531,10 @@ def test_browser_show_tables_failure_replaces_stale_schema_with_error(
     asyncio.run(run())
 
 
-def test_browser_sorts_by_table_size(mock_env_with_config, monkeypatch) -> None:
-    """Browser can cycle sort modes and order rows by on-disk size."""
+def test_browser_size_header_click_sorts_descending_then_ascending(
+    mock_env_with_config, monkeypatch
+) -> None:
+    """The rendered Size header toggles descending and ascending size order."""
 
     async def fake_show_tables(schema: str, pattern: str = "*") -> list[str]:
         return ["dispatch_alpha", "dispatch_zulu"]
@@ -516,13 +568,19 @@ def test_browser_sorts_by_table_size(mock_env_with_config, monkeypatch) -> None:
             assert table.get_row_at(0)[1] == "dispatch_alpha"
             assert table.get_row_at(1)[1] == "dispatch_zulu"
 
-            screen.action_cycle_sort()
+            await _click_visible_table_header(pilot, table, 2)
+            await pilot.pause()
             assert table.get_row_at(0)[1] == "dispatch_zulu"
             assert table.get_row_at(1)[1] == "dispatch_alpha"
-            assert table.get_row_at(0)[3] == "1.2 GB"
-            # Largest-first is a descending display, so the arrow points down.
+            assert table.get_row_at(0)[2] == "1.2 GB"
             indicator = str(screen.query_one("#browser-sort-indicator").render())
             assert "Sorted by: size ↓" in indicator
+
+            await _click_visible_table_header(pilot, table, 2)
+            await pilot.pause()
+            assert table.get_row_at(0)[1] == "dispatch_alpha"
+            assert table.get_row_at(1)[1] == "dispatch_zulu"
+            assert "Sorted by: size ↑" in str(screen.query_one("#browser-sort-indicator").render())
 
     asyncio.run(run())
 
@@ -530,7 +588,7 @@ def test_browser_sorts_by_table_size(mock_env_with_config, monkeypatch) -> None:
 def test_browser_renders_list_before_sizes_and_fills_them_in_background(
     mock_env_with_config, monkeypatch
 ) -> None:
-    """The table list is usable immediately; sizes stream in one at a time."""
+    """The table list is usable immediately; sizes stream in in the background."""
     release_sizes = asyncio.Event()
 
     async def fake_show_tables(schema: str, pattern: str = "*") -> list[str]:
@@ -555,7 +613,7 @@ def test_browser_renders_list_before_sizes_and_fills_them_in_background(
 
             table = screen.query_one("#browser-table", DataTable)
             assert table.row_count == 2
-            assert table.get_row_at(0)[3] == "…"
+            assert table.get_row_at(0)[2] == "…"
             assert "sizes loading" in str(screen.query_one("#browser-sort-indicator").render())
 
             table.cursor_coordinate = (1, 0)
@@ -563,11 +621,250 @@ def test_browser_renders_list_before_sizes_and_fills_them_in_background(
             await app.workers.wait_for_complete()
             await pilot.pause()
 
-            assert table.get_row_at(0)[3] == "1.2 GB"
-            assert table.get_row_at(1)[3] == "1.2 GB"
+            assert table.get_row_at(0)[2] == "1.2 GB"
+            assert table.get_row_at(1)[2] == "1.2 GB"
             # In-place cell updates must not disturb the cursor.
             assert table.cursor_coordinate.row == 1
             assert "sizes loading" not in str(screen.query_one("#browser-sort-indicator").render())
+
+    asyncio.run(run())
+
+
+def test_replacement_browser_size_worker_owns_loading_state(
+    mock_env_with_config,
+    monkeypatch,
+) -> None:
+    """A cancelled predecessor cannot clear the replacement worker's loading state."""
+
+    async def run() -> None:
+        first_started = asyncio.Event()
+        first_finalizing = asyncio.Event()
+        allow_first_finish = asyncio.Event()
+        first_finished = asyncio.Event()
+        second_started = asyncio.Event()
+        allow_second_finish = asyncio.Event()
+        call_count = 0
+
+        async def gated_sizes(schema: str, table_names: list[str]):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                first_started.set()
+                try:
+                    await asyncio.Event().wait()
+                finally:
+                    first_finalizing.set()
+                    await allow_first_finish.wait()
+                    first_finished.set()
+                return
+            second_started.set()
+            await allow_second_finish.wait()
+            for name in table_names:
+                yield name, impala.TableStats(size_bytes=42, size_display="42 B")
+
+        monkeypatch.setattr("dispatch.impala.iter_table_sizes", gated_sizes)
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = BrowserScreen(auto_load=False)
+            app.push_screen(screen)
+            await pilot.pause()
+            screen._tables = ["first"]
+            screen._rebuild_table_rows()
+            screen._render_table_list()
+            screen._start_size_fetch()
+            await asyncio.wait_for(first_started.wait(), timeout=1)
+
+            screen._tables = ["second"]
+            screen._rebuild_table_rows()
+            screen._render_table_list()
+            screen._start_size_fetch()
+            await asyncio.wait_for(first_finalizing.wait(), timeout=1)
+            await asyncio.wait_for(second_started.wait(), timeout=1)
+            allow_first_finish.set()
+            await asyncio.wait_for(first_finished.wait(), timeout=1)
+            await pilot.pause()
+
+            assert screen._sizes_loading is True
+            assert "sizes loading" in str(screen.query_one("#browser-sort-indicator").render())
+
+            allow_second_finish.set()
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            assert screen._sizes_loading is False
+
+    asyncio.run(run())
+
+
+def test_browser_mouse_and_x_toggle_selection_while_space_does_not(
+    mock_env_with_config, monkeypatch
+) -> None:
+    """Sel-cell clicks and x toggle selection; Space remains inactive."""
+
+    async def fake_show_tables(schema: str, pattern: str = "*") -> list[str]:
+        return ["dispatch_alpha", "dispatch_zulu"]
+
+    monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
+    monkeypatch.setattr("dispatch.impala.iter_table_sizes", _fake_iter_table_sizes({}))
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = BrowserScreen(auto_load=False)
+            app.push_screen(screen)
+            await pilot.pause()
+            await screen.action_show_tables(describe_selection=False)
+            await pilot.pause()
+
+            table = screen.query_one("#browser-table", BrowserTable)
+            assert screen._checked == set()
+
+            await _click_visible_table_cell(pilot, table, 0, 0)
+            await pilot.pause()
+            assert screen._checked == {"dispatch_alpha"}
+            assert _sel_plain(table.get_row_at(0)[0]) == "[X]"
+            assert screen.query_one("#drop").disabled is False
+            assert "1 selected for drop" in str(
+                screen.query_one("#browser-selection-count").render()
+            )
+
+            await _click_visible_table_cell(pilot, table, 0, 0)
+            await pilot.pause()
+            assert screen._checked == set()
+            assert screen.query_one("#drop").disabled is True
+
+            await pilot.press("space")
+            await pilot.pause()
+            assert screen._checked == set()
+            assert _sel_plain(table.get_row_at(0)[0]) == UNCHECKED_MARKER.plain
+
+            await pilot.press("down")
+            await pilot.pause()
+            assert table.cursor_coordinate.row == 1
+
+            await pilot.press("x")
+            await pilot.pause()
+            assert screen._checked == {"dispatch_zulu"}
+            assert _sel_plain(table.get_row_at(0)[0]) == UNCHECKED_MARKER.plain
+            assert _sel_plain(table.get_row_at(1)[0]) == "[X]"
+            assert screen.query_one("#drop").disabled is False
+
+            await pilot.press("x")
+            await pilot.pause()
+            assert screen._checked == set()
+            assert "Click [ ] or press X to select" in str(
+                screen.query_one("#browser-selection-count").render()
+            )
+
+            # Column order is Name then Size.
+            assert list(table.columns.keys())  # non-empty
+            labels = [str(col.label) for col in table.columns.values()]
+            assert labels == ["Sel", "Name", "Size", "Type"]
+
+    asyncio.run(run())
+
+
+def test_browser_sel_hit_testing_accounts_for_scroll_offset(
+    mock_env_with_config, monkeypatch
+) -> None:
+    """Pilot clicks use rendered coordinates after the Browser table scrolls."""
+    table_names = [f"dispatch_{index:02d}" for index in range(24)]
+
+    async def fake_show_tables(schema: str, pattern: str = "*") -> list[str]:
+        return table_names
+
+    monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
+    monkeypatch.setattr("dispatch.impala.iter_table_sizes", _fake_iter_table_sizes({}))
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            screen = BrowserScreen(auto_load=False)
+            app.push_screen(screen)
+            await pilot.pause()
+            await screen.action_show_tables(describe_selection=False)
+            await pilot.pause()
+
+            table = screen.query_one("#browser-table", BrowserTable)
+            table.focus()
+            for _ in range(20):
+                await pilot.press("down")
+            await pilot.pause()
+
+            assert table.cursor_coordinate.row == 20
+            assert table.scroll_offset.y > 0
+
+            await _click_visible_table_cell(pilot, table, 20, 0)
+            await pilot.pause()
+            assert screen._checked == {"dispatch_20"}
+            assert _sel_plain(table.get_row_at(20)[0]) == "[X]"
+
+    asyncio.run(run())
+
+
+def test_browser_size_column_visible_on_typical_ssh_width(
+    mock_env_with_config, monkeypatch, tmp_path
+) -> None:
+    """Size must remain on-screen at common SSH widths with long table names.
+
+    Analysts often run Dispatch over SSH at ~100×30. Auto-sized Name columns
+    used to push Size off the right edge of the Browse list, so sizes looked
+    like they never loaded even though the worker had finished.
+    """
+
+    async def fake_show_tables(schema: str, pattern: str = "*") -> list[str]:
+        return ["dispatch_monthly_fulljoin", "dispatch_result"]
+
+    monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
+    monkeypatch.setattr(
+        "dispatch.impala.iter_table_sizes",
+        _fake_iter_table_sizes(
+            {
+                "dispatch_monthly_fulljoin": (388_444_979, "370.4 MB"),
+                "dispatch_result": (13_212_057, "12.6 MB"),
+            }
+        ),
+    )
+
+    async def run_at(size: tuple[int, int]) -> None:
+        app = DispatchApp()
+        async with app.run_test(size=size) as pilot:
+            screen = BrowserScreen(auto_load=False)
+            app.push_screen(screen)
+            await pilot.pause()
+            await screen.action_show_tables(describe_selection=False)
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+
+            table = screen.query_one("#browser-table", DataTable)
+            assert table.get_row_at(0)[2] in {"370.4 MB", "12.6 MB"}
+            # Size sits to the right of Name and stays visible when Name is capped.
+            assert table.scroll_x == 0
+
+            svg_path = tmp_path / f"browse-sizes-{size[0]}x{size[1]}.svg"
+            app.save_screenshot(filename=str(svg_path))
+            svg = svg_path.read_text(encoding="utf-8")
+            assert "Size" in svg
+            assert "MB" in svg
+
+    async def run() -> None:
+        await run_at((100, 30))
+        await run_at((120, 40))
+        # 80×24 still exposes the Size header beside Name; data rows may be
+        # clipped vertically by the minimum terminal layout, so only assert
+        # the header remains on-screen there.
+        app = DispatchApp()
+        async with app.run_test(size=(80, 24)) as pilot:
+            screen = BrowserScreen(auto_load=False)
+            app.push_screen(screen)
+            await pilot.pause()
+            await screen.action_show_tables(describe_selection=False)
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+            table = screen.query_one("#browser-table", DataTable)
+            assert table.get_row_at(0)[2] in {"370.4 MB", "12.6 MB"}
+            svg_path = tmp_path / "browse-sizes-80x24.svg"
+            app.save_screenshot(filename=str(svg_path))
+            assert "Size" in svg_path.read_text(encoding="utf-8")
 
     asyncio.run(run())
 
@@ -796,8 +1093,8 @@ def test_browser_bulk_drop_only_checked_tables(mock_env_with_config, monkeypatch
             screen._checked = {"drop_me"}
             table = screen.query_one("#browser-table", DataTable)
             table.clear()
-            table.add_row("[ ]", "keep_me", "table", "—")
-            table.add_row("[x]", "drop_me", "table", "—")
+            table.add_row(UNCHECKED_MARKER, "keep_me", "—", "table", key="keep_me")
+            table.add_row(CHECKED_MARKER, "drop_me", "—", "table", key="drop_me")
             table.cursor_coordinate = (0, 0)
             screen._update_action_state()
 
@@ -863,12 +1160,14 @@ def test_browser_select_all_marks_every_loaded_table(mock_env_with_config) -> No
             screen._render_table_list()
             screen._update_action_state()
 
-            screen.action_select_all()
+            table = screen.query_one("#browser-table", DataTable)
+            table.focus()
+            await pilot.press("a")
             await pilot.pause()
             assert screen._checked == {"alpha", "beta"}
             assert screen.query_one("#drop").disabled is False
 
-            screen.action_select_all()
+            await pilot.press("a")
             await pilot.pause()
             assert screen._checked == set()
             assert screen.query_one("#drop").disabled is True
@@ -949,8 +1248,8 @@ def test_browser_bulk_drop_multiple_tables(mock_env_with_config, monkeypatch) ->
             screen._checked = {"one", "two"}
             table = screen.query_one("#browser-table", DataTable)
             table.clear()
-            table.add_row("[x]", "one", "table", "—")
-            table.add_row("[x]", "two", "table", "—")
+            table.add_row(CHECKED_MARKER, "one", "—", "table", key="one")
+            table.add_row(CHECKED_MARKER, "two", "—", "table", key="two")
             screen._update_action_state()
 
             worker = screen.action_drop()

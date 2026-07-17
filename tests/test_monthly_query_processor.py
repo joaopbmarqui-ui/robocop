@@ -35,6 +35,67 @@ def _args(tmp_path: Path) -> Namespace:
     )
 
 
+def _impala_statements(query: str) -> list[str]:
+    """Split a multi-statement Impala script the way ``impala-shell -q`` does."""
+    statements = []
+    statement = []
+    state = "sql"
+    index = 0
+
+    while index < len(query):
+        char = query[index]
+        next_char = query[index + 1] if index + 1 < len(query) else ""
+
+        if state == "line_comment":
+            statement.append(char)
+            if char == "\n":
+                state = "sql"
+        elif state == "block_comment":
+            statement.append(char)
+            if char == "*" and next_char == "/":
+                statement.append(next_char)
+                index += 1
+                state = "sql"
+        elif state in {"single_quote", "double_quote"}:
+            statement.append(char)
+            quote = "'" if state == "single_quote" else '"'
+            if char == "\\" and next_char:
+                statement.append(next_char)
+                index += 1
+            elif char == quote:
+                if next_char == quote:
+                    statement.append(next_char)
+                    index += 1
+                else:
+                    state = "sql"
+        elif char == "-" and next_char == "-":
+            statement.extend((char, next_char))
+            index += 1
+            state = "line_comment"
+        elif char == "/" and next_char == "*":
+            statement.extend((char, next_char))
+            index += 1
+            state = "block_comment"
+        elif char == "'":
+            statement.append(char)
+            state = "single_quote"
+        elif char == '"':
+            statement.append(char)
+            state = "double_quote"
+        elif char == ";":
+            if text := "".join(statement).strip():
+                statements.append(text)
+            statement = []
+        else:
+            statement.append(char)
+
+        index += 1
+
+    if text := "".join(statement).strip():
+        statements.append(text)
+    return statements
+
+
 def test_build_monthly_job_query_keeps_temp_join_and_cleanup_in_one_script(tmp_path: Path) -> None:
     args = _args(tmp_path)
     sql_template = Path(args.sql_file).read_text(encoding="utf-8")
@@ -58,6 +119,123 @@ def test_build_monthly_job_query_keeps_temp_join_and_cleanup_in_one_script(tmp_p
         "CREATE TABLE aa_enc.dispatch_smoke_fulljoin"
     )
     assert "/das/aa/enc/e123456/dispatch_smoke_temp_202605" in query
+
+
+@pytest.mark.parametrize(
+    ("sql_template", "rendered_tail"),
+    [
+        (
+            "SELECT '{date_inicio}' AS start_dt, '{date_fim}' AS end_dt",
+            "SELECT '2026-05-01' AS start_dt, '2026-05-31' AS end_dt",
+        ),
+        (
+            "SELECT '{date_inicio}' AS start_dt, '{date_fim}' AS end_dt;",
+            "SELECT '2026-05-01' AS start_dt, '2026-05-31' AS end_dt",
+        ),
+        (
+            "SELECT '{date_inicio}' AS start_dt, '{date_fim}' AS end_dt; -- keep this",
+            "SELECT '2026-05-01' AS start_dt, '2026-05-31' AS end_dt -- keep this",
+        ),
+        (
+            "SELECT '{date_inicio}' AS start_dt, '{date_fim}' AS end_dt; /* keep this */",
+            "SELECT '2026-05-01' AS start_dt, '2026-05-31' AS end_dt /* keep this */",
+        ),
+        (
+            "SELECT ';' AS marker, '{date_inicio}' AS start_dt, '{date_fim}' AS end_dt",
+            "SELECT ';' AS marker, '2026-05-01' AS start_dt, '2026-05-31' AS end_dt",
+        ),
+        (
+            r"SELECT 'escaped \'; -- string text' AS marker, "
+            "'{date_inicio}' AS start_dt, '{date_fim}' AS end_dt",
+            r"SELECT 'escaped \'; -- string text' AS marker, "
+            "'2026-05-01' AS start_dt, '2026-05-31' AS end_dt",
+        ),
+        (
+            r'SELECT "escaped \"; -- string text" AS marker, '
+            "'{date_inicio}' AS start_dt, '{date_fim}' AS end_dt",
+            r'SELECT "escaped \"; -- string text" AS marker, '
+            "'2026-05-01' AS start_dt, '2026-05-31' AS end_dt",
+        ),
+    ],
+)
+def test_build_monthly_job_query_terminates_every_statement_with_semicolon(
+    tmp_path: Path, sql_template: str, rendered_tail: str
+) -> None:
+    """Regression: CREATE fulljoin + cleanup DROP must not share one Impala parse.
+
+    Production SYNTAX_ERROR when the single-coordinator monthly script glued
+    ``CREATE TABLE ..._fulljoin AS ...`` to the following ``DROP TABLE`` without
+    a semicolon between them (user e169744, 2026-07-17).
+    """
+    args = _args(tmp_path)
+    query, temp_tables, final_table = monthly.build_monthly_job_query(args, sql_template)
+    statements = _impala_statements(query)
+
+    assert query.count(f"{rendered_tail}\n            ;") == 1
+
+    def _created_table(statement: str) -> str:
+        # "CREATE TABLE schema.name ..." -> "schema.name"
+        tokens = statement.split()
+        return tokens[2] if len(tokens) >= 3 else ""
+
+    def _dropped_table(statement: str) -> str:
+        # "DROP TABLE IF EXISTS schema.name" -> "schema.name"
+        tokens = statement.split()
+        return tokens[-1] if tokens else ""
+
+    create_temps = [
+        s
+        for s in statements
+        if s.upper().startswith("CREATE TABLE") and "_temp_" in _created_table(s)
+    ]
+    drop_fulljoin = [
+        s
+        for s in statements
+        if s.upper().startswith("DROP TABLE") and _dropped_table(s).endswith("_fulljoin")
+    ]
+    create_fulljoin = [
+        s
+        for s in statements
+        if s.upper().startswith("CREATE TABLE") and _created_table(s).endswith("_fulljoin")
+    ]
+    fulljoin_create_idx = next(
+        i
+        for i, s in enumerate(statements)
+        if s.upper().startswith("CREATE TABLE") and _created_table(s).endswith("_fulljoin")
+    )
+    cleanup_drops = [
+        s
+        for i, s in enumerate(statements)
+        if i > fulljoin_create_idx
+        and s.upper().startswith("DROP TABLE")
+        and "_temp_" in _dropped_table(s)
+    ]
+
+    assert len(create_temps) == 2
+    assert len(drop_fulljoin) == 1
+    assert len(create_fulljoin) == 1
+    assert len(cleanup_drops) == 2
+    assert final_table == "aa_enc.dispatch_smoke_fulljoin"
+    assert temp_tables == [
+        "aa_enc.dispatch_smoke_temp_202605",
+        "aa_enc.dispatch_smoke_temp_202606",
+    ]
+    # Exact production failure mode: one statement containing both.
+    assert all(
+        "\nDROP TABLE" not in s.upper() and not s.upper().endswith("DROP TABLE")
+        for s in create_fulljoin
+    )
+    assert all(
+        s.upper().startswith("DROP TABLE") and "CREATE TABLE" not in s.upper()
+        for s in cleanup_drops
+    )
+    assert all("\nDROP TABLE" not in s.upper() for s in create_temps)
+    # Every statement in the script must be a single verb (no glued peers).
+    for statement in statements:
+        verb_hits = sum(
+            1 for verb in ("CREATE TABLE", "DROP TABLE") if statement.upper().count(verb) > 0
+        )
+        assert verb_hits == 1, statement
 
 
 def test_process_monthly_job_invokes_impala_once_for_whole_job(tmp_path: Path, monkeypatch) -> None:

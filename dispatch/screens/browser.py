@@ -20,6 +20,14 @@ UNCHECKED_MARKER = "[ ]"
 SIZE_PENDING = "…"
 SIZE_UNKNOWN = "—"
 
+# Fixed Browse-list column widths. Name flexes into the leftover space so the
+# Size column stays on-screen at typical SSH widths (see _sync_column_widths).
+_SEL_COLUMN_WIDTH = 5
+_TYPE_COLUMN_WIDTH = 5
+_SIZE_COLUMN_WIDTH = 10
+_NAME_COLUMN_MIN_WIDTH = 4
+_COLUMN_COUNT = 4
+
 
 class BrowserScreen(Screen[None]):
     BINDINGS = [
@@ -104,9 +112,12 @@ class BrowserScreen(Screen[None]):
 
     async def on_mount(self) -> None:
         table = self.query_one("#browser-table", DataTable)
-        column_keys = table.add_columns("Sel", "Name", "Type", "Size")
-        self._size_column_key = column_keys[3]
+        table.add_column("Sel", width=_SEL_COLUMN_WIDTH)
+        table.add_column("Name", width=_NAME_COLUMN_MIN_WIDTH)
+        table.add_column("Type", width=_TYPE_COLUMN_WIDTH)
+        self._size_column_key = table.add_column("Size", width=_SIZE_COLUMN_WIDTH)
         table.cursor_type = "row"
+        self._sync_column_widths()
         describe_table = self.query_one("#describe-table", DataTable)
         describe_table.add_columns("Column", "Type", "Comment")
         describe_table.show_cursor = False
@@ -115,6 +126,33 @@ class BrowserScreen(Screen[None]):
         self._update_action_state()
         if self._auto_load:
             await self.action_show_tables()
+
+    def on_resize(self) -> None:
+        """Keep Size visible when the split pane or terminal width changes."""
+        self._sync_column_widths()
+
+    def _sync_column_widths(self) -> None:
+        """Cap Name so Sel/Type/Size always fit in the visible table width."""
+        table = self.query_one("#browser-table", DataTable)
+        if not table.columns:
+            return
+        available = table.size.width
+        if available <= 0:
+            return
+        # DataTable render width is content width + 2 * cell_padding per column.
+        padding_total = 2 * table.cell_padding * _COLUMN_COUNT
+        fixed = _SEL_COLUMN_WIDTH + _TYPE_COLUMN_WIDTH + _SIZE_COLUMN_WIDTH + padding_total
+        name_width = max(_NAME_COLUMN_MIN_WIDTH, available - fixed)
+        widths = (
+            _SEL_COLUMN_WIDTH,
+            name_width,
+            _TYPE_COLUMN_WIDTH,
+            _SIZE_COLUMN_WIDTH,
+        )
+        for column, width in zip(table.columns.values(), widths, strict=True):
+            column.width = width
+            column.auto_width = False
+        table.refresh()
 
     def _show_detail_placeholder(self) -> None:
         self.query_one("#file-preview-title", Static).update("[dim]No table selected[/]")
@@ -307,7 +345,9 @@ class BrowserScreen(Screen[None]):
         if self._size_column_key is None:
             return
         try:
-            table.update_cell(name, self._size_column_key, size_display, update_width=True)
+            # Keep the fixed Size width from _sync_column_widths; auto-growing
+            # here reintroduces horizontal overflow on narrow SSH terminals.
+            table.update_cell(name, self._size_column_key, size_display, update_width=False)
         except CellDoesNotExist:
             pass
 
@@ -331,6 +371,7 @@ class BrowserScreen(Screen[None]):
 
         table = self.query_one("#browser-table", DataTable)
         table.clear()
+        self._sync_column_widths()
 
         self.query_one("#browser-count", Static).update(f"[dim]{len(self._tables)} tables[/]")
         self._update_sort_indicator()

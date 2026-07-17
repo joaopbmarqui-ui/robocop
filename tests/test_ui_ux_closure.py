@@ -572,6 +572,54 @@ def test_browser_renders_list_before_sizes_and_fills_them_in_background(
     asyncio.run(run())
 
 
+def test_browser_size_column_visible_on_typical_ssh_width(
+    mock_env_with_config, monkeypatch, tmp_path
+) -> None:
+    """Size must remain on-screen at common SSH widths with long table names.
+
+    Analysts often run Dispatch over SSH at ~100×30. Auto-sized Name columns
+    used to push Size off the right edge of the Browse list, so sizes looked
+    like they never loaded even though the worker had finished.
+    """
+
+    async def fake_show_tables(schema: str, pattern: str = "*") -> list[str]:
+        return ["dispatch_monthly_fulljoin", "dispatch_result"]
+
+    monkeypatch.setattr("dispatch.impala.show_tables", fake_show_tables)
+    monkeypatch.setattr(
+        "dispatch.impala.iter_table_sizes",
+        _fake_iter_table_sizes(
+            {
+                "dispatch_monthly_fulljoin": (388_444_979, "370.4 MB"),
+                "dispatch_result": (13_212_057, "12.6 MB"),
+            }
+        ),
+    )
+
+    async def run() -> None:
+        app = DispatchApp()
+        async with app.run_test(size=(100, 30)) as pilot:
+            screen = BrowserScreen(auto_load=False)
+            app.push_screen(screen)
+            await pilot.pause()
+            await screen.action_show_tables(describe_selection=False)
+            await app.workers.wait_for_complete()
+            await pilot.pause()
+
+            table = screen.query_one("#browser-table", DataTable)
+            assert table.get_row_at(0)[3] in {"370.4 MB", "12.6 MB"}
+            assert table.scroll_x == 0
+            assert table.max_scroll_x == 0
+
+            svg_path = tmp_path / "browse-sizes.svg"
+            app.save_screenshot(filename=str(svg_path))
+            svg = svg_path.read_text(encoding="utf-8")
+            assert "Size" in svg
+            assert "MB" in svg
+
+    asyncio.run(run())
+
+
 def test_browser_drop_requires_typing_i_am_sure_and_drop(mock_env_with_config, monkeypatch) -> None:
     """DROP confirmation requires I AM SURE and DROP, not the table name."""
     calls: list[str] = []

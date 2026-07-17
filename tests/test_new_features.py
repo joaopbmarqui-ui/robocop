@@ -568,6 +568,14 @@ class TestNewJobKerberosGating:
 # =============================================================================
 
 
+class _TimerStub:
+    def __init__(self) -> None:
+        self.stopped = False
+
+    def stop(self) -> None:
+        self.stopped = True
+
+
 class TestNewJobInlineValidation:
     def test_validation_summary_is_debounced_during_typing(
         self, mock_env_with_config, monkeypatch, tmp_path: Path
@@ -596,12 +604,25 @@ class TestNewJobInlineValidation:
                     original()
 
                 screen._update_validation_summary = counting_update  # type: ignore[method-assign]
-                screen.query_one("#table-name-suffix").value = "dispatch_result_2"
-                await pilot.pause(0.05)
+                scheduled: list[tuple[float, object, _TimerStub]] = []
 
+                def capture_timer(delay: float, callback: object) -> _TimerStub:
+                    timer = _TimerStub()
+                    scheduled.append((delay, callback, timer))
+                    return timer
+
+                monkeypatch.setattr(screen, "set_timer", capture_timer)
+                screen._validation_summary_timer = None
+                screen._schedule_validation_summary()
+                screen._schedule_validation_summary()
+
+                assert [item[0] for item in scheduled] == [0.2, 0.2]
+                assert scheduled[0][2].stopped is True
+                assert scheduled[1][2].stopped is False
                 assert calls == 0
-
-                await pilot.pause(0.3)
+                callback = scheduled[1][1]
+                assert callable(callback)
+                callback()
                 assert calls == 1
 
         asyncio.run(run())

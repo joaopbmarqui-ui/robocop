@@ -286,7 +286,7 @@ def test_existing_user_migrates_launcher_without_touching_state_or_personal_venv
     assert job.read_text(encoding="utf-8") == "{}\n"
     assert personal_venv.read_text(encoding="utf-8") == "old\n"
     launcher = old_launcher.read_text(encoding="utf-8")
-    assert fake_path(root / "bin" / "dispatch") in launcher
+    assert shell_path(root / "bin" / "dispatch") in launcher
     assert ".dispatch/venv" not in launcher
     assert calls.read_text(encoding="utf-8") == ""
     assert not (dispatch_home / "installed_version").exists()
@@ -319,7 +319,7 @@ def test_two_users_share_launcher_runtime_but_keep_private_state(tmp_path: Path)
             assert stat.S_IMODE((data_root / ".dispatch").stat().st_mode) == 0o700
 
     assert launchers[0] == launchers[1]
-    assert fake_path(root / "bin" / "dispatch") in launchers[0]
+    assert shell_path(root / "bin" / "dispatch") in launchers[0]
     assert (root / ".venv" / "current").resolve() == runtime.resolve()
 
 
@@ -414,3 +414,10 @@ def test_update_permissions_do_not_recurse_through_runtime_directories() -> None
 
 def fake_path(path: Path) -> str:
     return path.resolve().as_posix()
+
+
+def shell_path(path: Path) -> str:
+    resolved = path.resolve()
+    if os.name != "nt":
+        return resolved.as_posix()
+    return subprocess.check_output(["cygpath", "-u", str(resolved)], text=True).strip()

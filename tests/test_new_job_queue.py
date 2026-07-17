@@ -538,7 +538,6 @@ def test_new_job_surfaces_typed_capacity_failure(
             )
 
             await screen._launch_flow()
-            await pilot.pause()
             return str(screen.query_one("#warning-text").render()), notifications
 
     warning, notifications = asyncio.run(run())

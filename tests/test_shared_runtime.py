@@ -136,11 +136,18 @@ def test_shared_launcher_forwards_arguments_and_preserves_cwd(tmp_path: Path) ->
 
     assert result.returncode == 0, result.stderr
     lines = capture.read_text(encoding="utf-8").splitlines()
-    assert Path(lines[0]).resolve() == launch_cwd.resolve()
-    assert Path(lines[1]).resolve() == root.resolve()
-    assert Path(lines[2]).resolve() == (root / "scr").resolve()
-    assert Path(lines[3]).resolve() == runtime.resolve()
+    assert lines[0] == shell_path(launch_cwd)
+    assert lines[1] == shell_path(root)
+    assert lines[2] == shell_path(root / "scr")
+    assert lines[3] == shell_path(runtime)
     assert lines[4:] == ["-m", "dispatch", "--help", "two words"]
+
+
+def shell_path(path: Path) -> str:
+    resolved = path.resolve()
+    if os.name != "nt":
+        return resolved.as_posix()
+    return subprocess.check_output(["cygpath", "-u", str(resolved)], text=True).strip()
 
 
 def test_shared_launcher_fails_clearly_without_active_runtime(tmp_path: Path) -> None:

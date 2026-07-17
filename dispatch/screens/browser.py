@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from rich.text import Text
 from textual import events
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -19,8 +20,9 @@ from .confirm import ConfirmScreen
 from .sidebar import Sidebar
 
 NO_TABLES_PLACEHOLDER = "(no tables)"
-CHECKED_MARKER = "[x]"
-UNCHECKED_MARKER = "[ ]"
+# Use capital X: Rich markup treats lowercase "[x]" as a style tag and renders it blank.
+CHECKED_MARKER = Text("[X]", style="bold green")
+UNCHECKED_MARKER = Text("[ ]")
 SIZE_PENDING = "…"
 SIZE_UNKNOWN = "—"
 
@@ -253,7 +255,7 @@ class BrowserScreen(Screen[None]):
     def _checked_full_tables(self) -> list[str]:
         return sorted(self._qualify_table(name) for name in self._checked if name in self._tables)
 
-    def _check_marker(self, name: str) -> str:
+    def _check_marker(self, name: str) -> Text:
         return CHECKED_MARKER if name in self._checked else UNCHECKED_MARKER
 
     def _update_selection_status(self) -> None:

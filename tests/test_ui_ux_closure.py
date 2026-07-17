@@ -8,11 +8,12 @@ import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from rich.text import Text
 from textual.widgets import DataTable, Input
 
 from dispatch import impala, manifest, telemetry
 from dispatch.app import DispatchApp
-from dispatch.screens.browser import BrowserScreen
+from dispatch.screens.browser import CHECKED_MARKER, UNCHECKED_MARKER, BrowserScreen
 from dispatch.screens.history import PAGE_SIZE, HistoryScreen
 from dispatch.screens.job_detail import JobDetailScreen
 from dispatch.screens.new_job import NewJobScreen
@@ -24,10 +25,14 @@ def _prepare_checked_table(screen: BrowserScreen, table_name: str = "danger_tabl
     screen._checked = {table_name}
     table = screen.query_one("#browser-table", DataTable)
     table.clear()
-    table.add_row("[x]", table_name, "—", "table", key=table_name)
+    table.add_row(CHECKED_MARKER, table_name, "—", "table", key=table_name)
     table.cursor_coordinate = (0, 0)
     screen._update_action_state()
     return table
+
+
+def _sel_plain(cell: object) -> str:
+    return cell.plain if isinstance(cell, Text) else str(cell)
 
 
 async def _confirm_bulk_drop(pilot, app: DispatchApp) -> None:
@@ -629,14 +634,15 @@ def test_browser_click_sel_toggles_check_space_does_not(mock_env_with_config, mo
             await pilot.press("space")
             await pilot.pause()
             assert screen._checked == set()
-            assert table.get_row_at(0)[0] == "[ ]"
+            assert _sel_plain(table.get_row_at(0)[0]) == UNCHECKED_MARKER.plain
 
             # Clicking the Sel cell toggles the checkbox for that row.
             row_key = table.coordinate_to_cell_key(table.cursor_coordinate).row_key
             screen.on_browser_table_sel_clicked(BrowserTable.SelClicked(table, row_key))
             await pilot.pause()
             assert screen._checked == {"dispatch_alpha"}
-            assert table.get_row_at(0)[0] == "[x]"
+            # Selected state must show a visible mark inside the box (not blank).
+            assert _sel_plain(table.get_row_at(0)[0]) == "[X]"
             assert screen.query_one("#drop").disabled is False
 
             # Column order is Name then Size.
@@ -938,8 +944,8 @@ def test_browser_bulk_drop_only_checked_tables(mock_env_with_config, monkeypatch
             screen._checked = {"drop_me"}
             table = screen.query_one("#browser-table", DataTable)
             table.clear()
-            table.add_row("[ ]", "keep_me", "—", "table", key="keep_me")
-            table.add_row("[x]", "drop_me", "—", "table", key="drop_me")
+            table.add_row(UNCHECKED_MARKER, "keep_me", "—", "table", key="keep_me")
+            table.add_row(CHECKED_MARKER, "drop_me", "—", "table", key="drop_me")
             table.cursor_coordinate = (0, 0)
             screen._update_action_state()
 
@@ -1091,8 +1097,8 @@ def test_browser_bulk_drop_multiple_tables(mock_env_with_config, monkeypatch) ->
             screen._checked = {"one", "two"}
             table = screen.query_one("#browser-table", DataTable)
             table.clear()
-            table.add_row("[x]", "one", "—", "table", key="one")
-            table.add_row("[x]", "two", "—", "table", key="two")
+            table.add_row(CHECKED_MARKER, "one", "—", "table", key="one")
+            table.add_row(CHECKED_MARKER, "two", "—", "table", key="two")
             screen._update_action_state()
 
             worker = screen.action_drop()

@@ -40,11 +40,6 @@ def _impala_statements(query: str) -> list[str]:
     return [part.strip() for part in query.split(";") if part.strip()]
 
 
-def _impala_statements(query: str) -> list[str]:
-    """Split a multi-statement Impala script the way ``impala-shell -q`` does."""
-    return [part.strip() for part in query.split(";") if part.strip()]
-
-
 def test_build_monthly_job_query_keeps_temp_join_and_cleanup_in_one_script(tmp_path: Path) -> None:
     args = _args(tmp_path)
     sql_template = Path(args.sql_file).read_text(encoding="utf-8")

@@ -52,7 +52,10 @@ jobs:
       - name: Bind py to the setup-python interpreter
         shell: powershell
         run: |
-          $pythonExe = (Get-Command python -CommandType Application).Source
+          $pythonExe = Join-Path $env:pythonLocation "python.exe"
+          if (-not (Test-Path -LiteralPath $pythonExe -PathType Leaf)) {
+            throw "setup-python interpreter not found at $pythonExe"
+          }
           $shimDir = Join-Path $env:RUNNER_TEMP "setup-python-py-shim"
           $shimPath = Join-Path $shimDir "py.cmd"
           New-Item -ItemType Directory -Path $shimDir -Force | Out-Null

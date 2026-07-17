@@ -524,13 +524,40 @@ def test_browser_sorts_by_table_size(mock_env_with_config, monkeypatch) -> None:
             indicator = str(screen.query_one("#browser-sort-indicator").render())
             assert "Sorted by: size ↓" in indicator
 
+            # Clicking the Size header toggles ascending / descending.
+            assert screen._size_column_key is not None
+            screen.on_data_table_header_selected(
+                DataTable.HeaderSelected(
+                    table,
+                    screen._size_column_key,
+                    1,
+                    table.columns[screen._size_column_key].label,
+                )
+            )
+            await pilot.pause()
+            assert table.get_row_at(0)[2] == "dispatch_alpha"
+            assert table.get_row_at(1)[2] == "dispatch_zulu"
+            assert "Sorted by: size ↑" in str(screen.query_one("#browser-sort-indicator").render())
+
+            screen.on_data_table_header_selected(
+                DataTable.HeaderSelected(
+                    table,
+                    screen._size_column_key,
+                    1,
+                    table.columns[screen._size_column_key].label,
+                )
+            )
+            await pilot.pause()
+            assert table.get_row_at(0)[2] == "dispatch_zulu"
+            assert "Sorted by: size ↓" in str(screen.query_one("#browser-sort-indicator").render())
+
     asyncio.run(run())
 
 
 def test_browser_renders_list_before_sizes_and_fills_them_in_background(
     mock_env_with_config, monkeypatch
 ) -> None:
-    """The table list is usable immediately; sizes stream in one at a time."""
+    """The table list is usable immediately; sizes stream in in the background."""
     release_sizes = asyncio.Event()
 
     async def fake_show_tables(schema: str, pattern: str = "*") -> list[str]:

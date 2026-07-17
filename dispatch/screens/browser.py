@@ -315,8 +315,9 @@ class BrowserScreen(Screen[None]):
     def _start_size_fetch(self) -> None:
         """Fill the Size column in the background without blocking the list.
 
-        ``exclusive=True`` cancels any fetch still running from a previous
-        load, so at most one size query is ever in flight for this screen.
+        Concurrency is ``max(0, 2 - running_queries)`` (see
+        ``impala.size_fetch_concurrency``). ``exclusive=True`` cancels any fetch
+        still running from a previous load.
         """
         if not self._tables:
             self._sizes_loading = False
@@ -334,7 +335,7 @@ class BrowserScreen(Screen[None]):
         )
 
     async def _load_table_sizes(self, names: list[str]) -> None:
-        """Fetch sizes serially in display order, updating cells in place."""
+        """Fetch sizes with adaptive concurrency, updating cells in place."""
         rows_by_name = {str(row["name"]): row for row in self._table_rows}
         async for name, stats in impala.iter_table_sizes(self._schema(), names):
             row = rows_by_name.get(name)
@@ -481,6 +482,22 @@ class BrowserScreen(Screen[None]):
                     }
                 )
         return columns
+
+    def on_data_table_header_selected(self, event: DataTable.HeaderSelected) -> None:
+        """Clicking the Size header sorts by size; repeated clicks toggle direction."""
+        if event.data_table.id != "browser-table":
+            return
+        if self._size_column_key is None or event.column_key != self._size_column_key:
+            return
+        if self._sort_mode == "size":
+            self._sort_reverse = not self._sort_reverse
+        else:
+            self._sort_mode = "size"
+            # Default size sort is largest-first (see _sort_key / indicator).
+            self._sort_reverse = False
+        if self._table_rows:
+            self._render_table_list(selected_before=self._selected_table())
+            self._update_action_state()
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         """Update button state whenever the cursor moves to a different row."""

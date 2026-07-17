@@ -92,8 +92,100 @@ class TestImpalaTableStatsParsing:
         assert stats.size_bytes == 13_212_057 + 1_342_177_280
         assert stats.size_display == "1.3 GB"
 
-    def test_iter_table_sizes_is_strictly_serial(self, monkeypatch) -> None:
-        """The Impala per-user query cap is 2; size fetching must use one slot."""
+    def test_size_fetch_concurrency_accounts_for_other_queries(self, monkeypatch) -> None:
+        """Size fetch uses max(0, 2 - running) slots across TUI + Running jobs."""
+        from dispatch import impala
+
+        impala.reset_query_ledger_for_tests()
+        monkeypatch.setattr(impala, "external_running_query_count", lambda: 0)
+        assert impala.size_fetch_concurrency() == 2
+
+        monkeypatch.setattr(impala, "external_running_query_count", lambda: 1)
+        assert impala.size_fetch_concurrency() == 1
+
+        monkeypatch.setattr(impala, "external_running_query_count", lambda: 2)
+        assert impala.size_fetch_concurrency() == 0
+
+        monkeypatch.setattr(impala, "external_running_query_count", lambda: 0)
+
+        async def hold_one_slot() -> None:
+            async with impala.query_ledger.occupy():
+                assert impala.size_fetch_concurrency() == 1
+                await asyncio.sleep(0)
+
+        asyncio.run(hold_one_slot())
+        assert impala.size_fetch_concurrency() == 2
+
+    def test_iter_table_sizes_runs_two_at_a_time_when_idle(self, monkeypatch) -> None:
+        """When no other queries are running, size fetch may use both slots."""
+        from dispatch import impala
+
+        impala.reset_query_ledger_for_tests()
+        monkeypatch.setattr(impala, "external_running_query_count", lambda: 0)
+        in_flight = 0
+        max_in_flight = 0
+        release = asyncio.Event()
+
+        async def fake_table_stats(full_table: str) -> impala.TableStats:
+            nonlocal in_flight, max_in_flight
+            in_flight += 1
+            max_in_flight = max(max_in_flight, in_flight)
+            await release.wait()
+            in_flight -= 1
+            return impala.TableStats(size_bytes=42, size_display="42 B")
+
+        monkeypatch.setattr(impala, "table_stats", fake_table_stats)
+
+        async def run() -> list[tuple[str, impala.TableStats]]:
+            results: list[tuple[str, impala.TableStats]] = []
+
+            async def consume() -> None:
+                async for item in impala.iter_table_sizes("aa_enc", ["one", "two", "three"]):
+                    results.append(item)
+
+            task = asyncio.create_task(consume())
+            for _ in range(50):
+                if max_in_flight >= 2:
+                    break
+                await asyncio.sleep(0.01)
+            assert max_in_flight == 2
+            release.set()
+            await task
+            return results
+
+        results = asyncio.run(run())
+        assert [name for name, _ in results] == ["one", "two", "three"]
+        assert all(stats.size_bytes == 42 for _name, stats in results)
+
+    def test_iter_table_sizes_skips_when_no_slots_available(self, monkeypatch) -> None:
+        """With 2 queries already running, sizes stay unavailable (not queued)."""
+        from dispatch import impala
+
+        impala.reset_query_ledger_for_tests()
+        monkeypatch.setattr(impala, "external_running_query_count", lambda: 2)
+        calls: list[str] = []
+
+        async def fake_table_stats(full_table: str) -> impala.TableStats:
+            calls.append(full_table)
+            return impala.TableStats(size_bytes=42, size_display="42 B")
+
+        monkeypatch.setattr(impala, "table_stats", fake_table_stats)
+
+        async def run() -> list[tuple[str, impala.TableStats]]:
+            return [item async for item in impala.iter_table_sizes("aa_enc", ["one", "two"])]
+
+        results = asyncio.run(run())
+        assert calls == []
+        assert [name for name, _ in results] == ["one", "two"]
+        assert all(stats.size_bytes is None for _name, stats in results)
+        assert all(stats.size_display == "—" for _name, stats in results)
+
+    def test_iter_table_sizes_uses_one_slot_when_one_query_running(self, monkeypatch) -> None:
+        """One external/TUI query leaves a single size-fetch slot."""
+        from dispatch import impala
+
+        impala.reset_query_ledger_for_tests()
+        monkeypatch.setattr(impala, "external_running_query_count", lambda: 1)
         in_flight = 0
         max_in_flight = 0
 
@@ -118,7 +210,6 @@ class TestImpalaTableStatsParsing:
         assert max_in_flight == 1
         assert [name for name, _stats in results] == ["one", "broken", "two"]
         assert results[0][1].size_bytes == 42
-        # A failed stats query yields unknown stats instead of aborting the rest.
         assert results[1][1].size_bytes is None
         assert results[1][1].size_display == "—"
         assert results[2][1].size_bytes == 42

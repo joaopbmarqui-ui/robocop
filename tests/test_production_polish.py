@@ -86,10 +86,14 @@ def test_template_source_auto_corrects_illegal_destination(mock_env_with_config)
             # Default destination is Csv; switching source to SqlTemplate makes
             # that cell illegal and must auto-select Table.
             screen.query_one("#src-sqltemplate", RadioButton).value = True
-            await pilot.pause(0.5)
-            dest = screen.query_one("#destination", RadioSet)
-            assert dest.pressed_button is not None
-            assert dest.pressed_button.id == "dst-table"
+            for _ in range(40):
+                dest = screen.query_one("#destination", RadioSet)
+                if dest.pressed_button is not None and dest.pressed_button.id == "dst-table":
+                    break
+                await pilot.pause(delay=0.05)
+            else:
+                pressed = dest.pressed_button.id if dest.pressed_button is not None else None
+                raise AssertionError(f"Expected dst-table, got {pressed!r}")
             assert screen._validate() != ("Illegal Source/Destination cell: SqlTemplate/Csv")
 
     asyncio.run(run())

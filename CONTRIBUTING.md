@@ -15,6 +15,16 @@ python -m pip install -e ".[dev]"
 python -m pytest -n 4 --dist loadfile
 ```
 
+On Windows, the authoritative release validation is the committed local check:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\dev\local_check.ps1
+```
+
+It runs the test suite serially with repository-local temporary directories.
+Parallel pytest remains a useful developer stress check, but it is not a
+substitute for the committed Windows gate.
+
 For local TUI work, source `mocks/dev-env.sh`. For `scr/` changes, follow
 [docs/adr/0005-scr-modification-policy.md](docs/adr/0005-scr-modification-policy.md).
 
@@ -27,9 +37,9 @@ files.
 
 ## Maintainer
 
-Merge only after CI passes on Python 3.10 and 3.12 and one human Maintainer
-approves. Use squash merge and delete the merged branch. Do not push directly
-to `main`.
+Merge only after CI passes on Ubuntu Python 3.10 and 3.12, the Windows Python
+3.12 local-check job passes, and one human Maintainer approves. Use squash
+merge and delete the merged branch. Do not push directly to `main`.
 
 Release work starts only after merge and is documented in
 [docs/release-workflow.md](docs/release-workflow.md).

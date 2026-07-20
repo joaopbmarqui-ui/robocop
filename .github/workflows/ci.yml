@@ -36,3 +36,46 @@ jobs:
         run: python -m dispatch --help
       - name: Tests
         run: python -m pytest
+
+  windows-test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: Bind py to the setup-python interpreter
+        shell: powershell
+        run: |
+          $pythonExe = Join-Path $env:pythonLocation "python.exe"
+          if (-not (Test-Path -LiteralPath $pythonExe -PathType Leaf)) {
+            throw "setup-python interpreter not found at $pythonExe"
+          }
+          $shimDir = Join-Path $env:RUNNER_TEMP "setup-python-py-shim"
+          $shimPath = Join-Path $shimDir "py.cmd"
+          New-Item -ItemType Directory -Path $shimDir -Force | Out-Null
+          [System.IO.File]::WriteAllLines(
+            $shimPath,
+            @("@echo off", "`"$pythonExe`" %*"),
+            [System.Text.Encoding]::ASCII
+          )
+          Add-Content -Path $env:GITHUB_PATH -Value $shimDir
+          & $shimPath -c "import sys; assert sys.version_info[:2] == (3, 12), sys.version; print(sys.executable); print(sys.version)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Authoritative Windows local check
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\dev\local_check.ps1
+      - name: Focused Windows xdist regressions
+        run: >-
+          py -m pytest
+          tests/test_capacity.py::test_launch_intents_are_admitted_fifo_across_processes
+          tests/test_capacity.py::test_dead_launch_intent_is_reclaimed
+          tests/test_process.py::test_cancelled_impala_query_reaps_child_before_releasing_capacity
+          tests/test_process.py::test_run_exec_timeout_awaits_subprocess_cleanup
+          tests/test_process.py::test_windows_terminate_and_reap_stops_real_child
+          tests/test_new_job_queue.py::test_cancelled_launch_removes_shared_intent
+          -n 4 --dist loadfile -q

@@ -28,6 +28,17 @@ async def _wait_for(predicate) -> bool:
     return predicate()
 
 
+async def _wait_for_pid(path: Path) -> int:
+    """Wait until a child PID marker exists and its contents are readable."""
+    deadline = time.monotonic() + PROCESS_TIMEOUT
+    while time.monotonic() < deadline:
+        try:
+            return int(path.read_text(encoding="utf-8"))
+        except (FileNotFoundError, ValueError):
+            await asyncio.sleep(0.01)
+    raise AssertionError(f"child PID marker was not ready: {path}")
+
+
 def test_windows_resolver_prefers_exact_python_script_before_pathext_wrapper(
     tmp_path: Path, monkeypatch
 ) -> None:
@@ -139,8 +150,7 @@ while True:
     pid = -1
     probe = None
     try:
-        assert await _wait_for(started.exists)
-        pid = int(started.read_text(encoding="utf-8"))
+        pid = await _wait_for_pid(started)
         task.cancel()
         assert await _wait_for(lambda: terminated.exists() or task.done())
 
@@ -218,8 +228,7 @@ async def test_windows_terminate_and_reap_stops_real_child(tmp_path: Path) -> No
     child = await asyncio.create_subprocess_exec(sys.executable, "-c", script)
 
     try:
-        assert await _wait_for(started.exists)
-        pid = int(started.read_text(encoding="utf-8"))
+        pid = await _wait_for_pid(started)
         assert _pid_exists(pid)
 
         await process._terminate_and_reap(child)

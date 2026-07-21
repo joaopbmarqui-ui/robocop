@@ -28,7 +28,10 @@ from dispatch import config, impala, jobs, kerberos, manifest, sql
         ("dispatch_smoke_1", None),
         ("_leading_underscore", None),
         ("144", "Table name must be a plain Impala identifier"),
-        ("138936_das_curated_gco_cdl_daily_tinkoff", "Table name must be a plain Impala identifier"),
+        (
+            "138936_das_curated_gco_cdl_daily_tinkoff",
+            "Table name must be a plain Impala identifier",
+        ),
         ("", "Table name must be a plain Impala identifier"),
         ("bad-name", "Table name must be a plain Impala identifier"),
         ("t;drop", "Table name must be a plain Impala identifier"),

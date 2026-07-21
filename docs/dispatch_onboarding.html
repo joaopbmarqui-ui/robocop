@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Executive onboarding guide for Dispatch, the server-side TUI for launching and supervising Impala jobs.">
+  <title>Dispatch Onboarding Guide</title>
+  <style>
+    :root {
+      --bg: #f3f4f6;
+      --bg-elevated: #ffffff;
+      --bg-muted: #e8eaed;
+      --border: #d1d5db;
+      --text: #1f2937;
+      --text-muted: #4b5563;
+      --charcoal: #2d2d2d;
+      --red: #eb001b;
+      --orange: #ff5f00;
+      --yellow: #f79e1b;
+      --focus: #1f2937;
+      --success: #166534;
+      --warning-bg: #fff7ed;
+      --warning-border: #f79e1b;
+      --danger-bg: #fef2f2;
+      --danger-border: #eb001b;
+      --info-bg: #f8fafc;
+      --sidebar-width: 260px;
+      --radius: 8px;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+      --font: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --mono: "Cascadia Code", "Consolas", "Liberation Mono", Menlo, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.55;
+      font-size: 16px;
+    }
+
+    a { color: var(--charcoal); }
+    a:hover { color: var(--red); }
+    :focus-visible {
+      outline: 3px solid var(--yellow);
+      outline-offset: 2px;
+    }
+
+    .skip-link {
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      background: var(--charcoal);
+      color: #fff;
+      padding: 0.75rem 1rem;
+      z-index: 1000;
+    }
+    .skip-link:focus { left: 1rem; top: 1rem; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: var(--charcoal);
+      color: #f9fafb;
+      padding: 1.25rem 1rem 2rem;
+      border-right: 4px solid var(--red);
+    }
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+    }
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      background: #fff;
+      color: var(--charcoal);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+      flex-shrink: 0;
+      border-bottom: 3px solid var(--orange);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+    }
+    .brand-mark::before {
+      content: "D";
+    }
+    .brand-text strong {
+      display: block;
+      font-size: 1.15rem;
+      letter-spacing: 0.02em;
+    }
+    .brand-text span {
+      font-size: 0.75rem;
+      color: #d1d5db;
+    }
+
+    .search-wrap { margin-bottom: 1rem; }
+    .search-wrap label {
+      display: block;
+      font-size: 0.75rem;
+      color: #d1d5db;
+      margin-bottom: 0.35rem;
+    }
+    #topic-search {
+      width: 100%;
+      padding: 0.55rem 0.7rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      font: inherit;
+    }
+    #topic-search::placeholder { color: #9ca3af; }
+
+    .nav-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .nav-list a {
+      display: block;
+      color: #e5e7eb;
+      text-decoration: none;
+      padding: 0.45rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      border-left: 3px solid transparent;
+    }
+    .nav-list a:hover,
+    .nav-list a:focus-visible {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+    }
+    .nav-list a.active {
+      background: rgba(247, 158, 27, 0.18);
+      border-left-color: var(--yellow);
+      color: #fff;
+      font-weight: 600;
+    }
+    .sidebar-actions {
+      margin-top: 1.25rem;
+      display: grid;
+      gap: 0.5rem;
+    }
+    .sidebar-actions button {
+      width: 100%;
+      font: inherit;
+      font-size: 0.85rem;
+      padding: 0.5rem 0.65rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: transparent;
+      color: #fff;
+      cursor: pointer;
+    }
+    .sidebar-actions button:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .content {
+      padding: 1.5rem 1.75rem 4rem;
+      max-width: 980px;
+    }
+
+    .hero {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.75rem 1.75rem 1.5rem;
+      margin-bottom: 1.5rem;
+      border-top: 4px solid var(--red);
+    }
+    .hero-eyebrow {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 0.5rem;
+    }
+    .hero h1 {
+      margin: 0 0 0.75rem;
+      font-size: clamp(1.75rem, 3vw, 2.25rem);
+      color: var(--charcoal);
+      line-height: 1.2;
+    }
+    .hero-lead {
+      margin: 0 0 1rem;
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 42rem;
+    }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: var(--bg-muted);
+      color: var(--charcoal);
+      border: 1px solid var(--border);
+    }
+    .badge-required { background: #fff1f0; border-color: #fecaca; color: #991b1b; }
+    .badge-optional { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+    .badge-warning { background: var(--warning-bg); border-color: var(--warning-border); color: #9a3412; }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      align-items: center;
+    }
+    .toolbar button,
+    .btn {
+      font: inherit;
+      font-size: 0.9rem;
+      padding: 0.55rem 0.9rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-elevated);
+      color: var(--charcoal);
+      cursor: pointer;
+    }
+    .toolbar button:hover,
+    .btn:hover { border-color: var(--orange); }
+    .btn-primary {
+      background: var(--charcoal);
+      color: #fff;
+      border-color: var(--charcoal);
+    }
+    .btn-primary:hover { background: #111; }
+
+    section {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.5rem 1.5rem 1.25rem;
+      margin-bottom: 1.25rem;
+      scroll-margin-top: 1rem;
+    }
+    section.is-hidden-by-search { display: none; }
+    section h2 {
+      margin: 0 0 0.85rem;
+      font-size: 1.35rem;
+      color: var(--charcoal);
+      padding-bottom: 0.55rem;
+      border-bottom: 2px solid var(--bg-muted);
+    }
+    section h3 {
+      margin: 1.25rem 0 0.5rem;
+      font-size: 1.05rem;
+      color: var(--charcoal);
+    }
+    section h4 {
+      margin: 1rem 0 0.4rem;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+    p { margin: 0 0 0.85rem; }
+    ul, ol { margin: 0 0 0.85rem; padding-left: 1.25rem; }
+    li { margin-bottom: 0.35rem; }
+    .muted { color: var(--text-muted); }
+    .small { font-size: 0.9rem; }
+
+    .callout {
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 0.85rem 1rem;
+      margin: 0.85rem 0;
+      background: var(--info-bg);
+    }
+    .callout strong { display: inline-block; margin-bottom: 0.15rem; }
+    .callout-warning {
+      background: var(--warning-bg);
+      border-color: var(--warning-border);
+    }
+    .callout-danger {
+      background: var(--danger-bg);
+      border-color: var(--danger-border);
+    }
+    .callout-tbc {
+      background: #fffbeb;
+      border-color: var(--yellow);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.85rem;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.85rem;
+    }
+    .card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      background: #fafafa;
+    }
+    .card h3, .card h4 { margin-top: 0; }
+    .card a { text-decoration: none; font-weight: 600; }
+
+    .cmd {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      margin: 0.65rem 0 1rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      background: #111827;
+    }
+    .cmd pre {
+      margin: 0;
+      padding: 0.85rem 1rem;
+      flex: 1;
+      overflow-x: auto;
+      color: #f9fafb;
+      font-family: var(--mono);
+      font-size: 0.88rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .cmd button {
+      border: none;
+      border-left: 1px solid #374151;
+      background: #1f2937;
+      color: #f9fafb;
+      padding: 0 0.9rem;
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.8rem;
+      font-weight: 600;
+      min-width: 4.5rem;
+    }
+    .cmd button:hover { background: #374151; }
+    .cmd button.copied { background: #166534; }
+
+    details {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin: 0.65rem 0;
+      background: #fafafa;
+    }
+    details > summary {
+      cursor: pointer;
+      padding: 0.7rem 0.9rem;
+      font-weight: 600;
+      list-style: none;
+    }
+    details > summary::-webkit-details-marker { display: none; }
+    details > summary::before {
+      content: "+";
+      display: inline-block;
+      width: 1.1rem;
+      color: var(--orange);
+      font-weight: 700;
+    }
+    details[open] > summary::before { content: "−"; }
+    details .details-body { padding: 0 0.9rem 0.9rem; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.65rem 0 1rem;
+      font-size: 0.92rem;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.55rem 0.65rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: var(--bg-muted);
+      color: var(--charcoal);
+      font-weight: 700;
+    }
+
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .checklist li {
+      display: flex;
+      gap: 0.65rem;
+      align-items: flex-start;
+      padding: 0.55rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 0.45rem;
+      background: #fff;
+    }
+    .checklist input {
+      margin-top: 0.2rem;
+      width: 1.05rem;
+      height: 1.05rem;
+      accent-color: var(--orange);
+    }
+    .progress-wrap {
+      margin: 0.75rem 0 1rem;
+    }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+    .progress-bar {
+      height: 8px;
+      background: var(--bg-muted);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-bar > span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--red), var(--orange), var(--yellow));
+      transition: width 0.2s ease;
+    }
+
+    .kbd {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      padding: 0.1rem 0.4rem;
+      border: 1px solid var(--border);
+      border-bottom-width: 2px;
+      border-radius: 4px;
+      background: #fff;
+      color: var(--charcoal);
+    }
+
+    .tab-guide {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.55rem;
+      margin: 1rem 0;
+    }
+    .tab-guide a {
+      text-align: center;
+      text-decoration: none;
+      padding: 0.75rem 0.4rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--charcoal);
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    .tab-guide a:hover {
+      border-color: var(--orange);
+      background: #fff7ed;
+    }
+
+    .troubleshoot-item {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.65rem;
+      background: #fff;
+    }
+    .troubleshoot-item h4 { margin: 0 0 0.45rem; }
+    .label { font-weight: 700; color: var(--charcoal); }
+
+    .back-to-top {
+      position: fixed;
+      right: 1.25rem;
+      bottom: 1.25rem;
+      z-index: 50;
+      display: none;
+      border: none;
+      border-radius: 999px;
+      padding: 0.75rem 1rem;
+      background: var(--charcoal);
+      color: #fff;
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .back-to-top.is-visible { display: inline-flex; }
+    .back-to-top:hover { background: #111; }
+
+    footer.page-footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar {
+        position: relative;
+        height: auto;
+        max-height: none;
+      }
+      .grid-2, .grid-3, .tab-guide {
+        grid-template-columns: 1fr;
+      }
+      .content { padding: 1rem 1rem 3.5rem; }
+    }
+
+    @media print {
+      .sidebar,
+      .toolbar,
+      .sidebar-actions,
+      .back-to-top,
+      .cmd button,
+      .skip-link { display: none !important; }
+      .layout { display: block; }
+      .content { max-width: none; padding: 0; }
+      section, .hero, .card {
+        box-shadow: none;
+        break-inside: avoid;
+      }
+      a { text-decoration: none; color: inherit; }
+      details { open: true; }
+      details[open] > summary::before,
+      details > summary::before { content: ""; }
+      body { background: #fff; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <div class="layout">
+    <aside class="sidebar" aria-label="Onboarding navigation">
+      <div class="sidebar-brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div class="brand-text">
+          <strong>Dispatch</strong>
+          <span>Onboarding Guide</span>
+        </div>
+      </div>
+
+      <div class="search-wrap">
+        <label for="topic-search">Search topics</label>
+        <input id="topic-search" type="search" placeholder="Filter sections…" autocomplete="off" aria-controls="main">
+      </div>
+
+      <nav aria-label="Sections">
+        <ul class="nav-list" id="side-nav">
+          <li><a href="#welcome">1. Welcome</a></li>
+          <li><a href="#prerequisites">2. Prerequisites</a></li>
+          <li><a href="#installation">3. Installation</a></li>
+          <li><a href="#authentication">4. Authentication</a></li>
+          <li><a href="#starting">5. Starting Dispatch</a></li>
+          <li><a href="#interface">6. Interface overview</a></li>
+          <li><a href="#overview-tab">7. Overview</a></li>
+          <li><a href="#new-job-tab">8. New Job</a></li>
+          <li><a href="#view-logs-tab">9. View Logs</a></li>
+          <li><a href="#history-tab">10. History</a></li>
+          <li><a href="#browse-tab">11. Browse</a></li>
+          <li><a href="#journey">12. Recommended journey</a></li>
+          <li><a href="#troubleshooting">13. Troubleshooting</a></li>
+          <li><a href="#quick-reference">14. Quick reference</a></li>
+        </ul>
+      </nav>
+
+      <div class="sidebar-actions">
+        <button type="button" id="expand-all" aria-label="Expand all detailed sections">Expand all details</button>
+        <button type="button" id="collapse-all" aria-label="Collapse all detailed sections">Collapse all details</button>
+        <button type="button" id="reset-checklist" aria-label="Reset progress checklist">Reset checklist</button>
+      </div>
+    </aside>
+
+    <main id="main" class="content">
+      <header class="hero">
+        <div class="hero-eyebrow">Analyst onboarding</div>
+        <h1>Welcome to Dispatch</h1>
+        <p class="hero-lead">
+          Dispatch is the official server-side terminal interface for launching and supervising
+          Impala jobs on the Hadoop Edge Node. This guide takes you from first setup to confident daily use.
+        </p>
+        <div class="badge-row">
+          <span class="badge">Official name: Dispatch</span>
+          <span class="badge badge-required">Kerberos required</span>
+          <span class="badge badge-optional">Jobs survive disconnects</span>
+        </div>
+      </header>
+
+      <div class="toolbar" role="group" aria-label="Page actions">
+        <button type="button" class="btn-primary" id="print-guide">Print / Save as PDF</button>
+        <button type="button" id="expand-all-top">Expand all details</button>
+        <button type="button" id="collapse-all-top">Collapse all details</button>
+      </div>
+
+      <div class="progress-wrap" aria-live="polite">
+        <div class="progress-label">
+          <span>Onboarding checklist progress</span>
+          <span id="progress-text">0 / 0</span>
+        </div>
+        <div class="progress-bar" aria-hidden="true"><span id="progress-fill"></span></div>
+      </div>
+
+      <!-- 1. Welcome -->
+      <section id="welcome" data-search="welcome dispatch purpose benefits official name">
+        <h2>1. Welcome to Dispatch</h2>
+        <p>
+          Dispatch is a server-side text user interface (TUI) that runs on the Hadoop Edge Node.
+          You start it from a directory that contains your SQL files, launch Impala jobs, watch their
+          progress, inspect logs, review history, and browse Impala metadata—without depending on a
+          local Windows GUI.
+        </p>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Purpose</h3>
+            <ul>
+              <li>Launch Impala jobs from SQL files, monthly templates, or existing tables</li>
+              <li>Supervise running and recent jobs from one cockpit</li>
+              <li>Inspect logs, history, and Impala metadata in the same session</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Main benefits</h3>
+            <ul>
+              <li>Jobs continue after terminal disconnects (detached runner)</li>
+              <li>CSV results write uncompressed to your launch directory</li>
+              <li>Built-in Kerberos checks and a two-job concurrency cap</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout">
+          <strong>Official name</strong>
+          <p class="muted" style="margin:0">
+            The official product name is <strong>Dispatch</strong>. Use the <code>dispatch</code> command.
+            This guide refers to the product exclusively as Dispatch.
+          </p>
+        </div>
+        <h3>After completing this onboarding you will be able to</h3>
+        <ul>
+          <li>Complete analyst onboarding and verify the <code>dispatch</code> launcher</li>
+          <li>Authenticate with Kerberos and start the TUI</li>
+          <li>Create, monitor, cancel, and inspect jobs across Overview, View Logs, and History</li>
+          <li>Browse Impala schemas and tables, including catalog names that begin with digits</li>
+        </ul>
+      </section>
+
+      <!-- 2. Prerequisites -->
+      <section id="prerequisites" data-search="prerequisites jupyter python kerberos klist impala checklist">
+        <h2>2. Prerequisites</h2>
+        <p>Confirm these items before installation. Only requirements verified in the repository are listed.</p>
+
+        <h3>Confirmed requirements</h3>
+        <ul>
+          <li><strong>Jupyter already installed</strong> on your computer (assumed for this audience).</li>
+          <li><strong>Access to the Hadoop Edge Node</strong> over SSH (documented port <code>2222</code>), typically with RSA SecurID at the <code>Enter PASSCODE:</code> prompt.</li>
+          <li><strong>Python 3.10 or 3.11</strong> available on the Edge Node for the shared runtime (Release Operator concern; analysts do not install Python packages).</li>
+          <li><strong><code>klist</code> and <code>impala-shell</code></strong> on <code>PATH</code> (onboarding fails if either is missing).</li>
+          <li><strong>Writable private data root</strong>: <code>/ads_storage/$USER</code> (override with <code>DISPATCH_DATA_ROOT</code> if set).</li>
+          <li><strong>Shared Dispatch tree already deployed</strong> by a Release Operator (typically <code>/ads_storage/dispatch</code>), including an active shared runtime.</li>
+          <li><strong>At least one <code>.sql</code> file</strong> in the directory from which you launch Dispatch (needed for the New Job SQL picker).</li>
+        </ul>
+
+        <div class="callout callout-tbc">
+          <strong>To be confirmed</strong>
+          <ul style="margin-bottom:0">
+            <li>Exact UI steps to open a terminal from your JupyterLab / JupyterHub environment.</li>
+            <li>Whether your team’s primary launch path is SSH-only, a Jupyter terminal, or both.</li>
+            <li>Your organization’s VPN name and RSA SecurID provisioning process for new analysts.</li>
+          </ul>
+        </div>
+
+        <h3>Readiness checklist</h3>
+        <ul class="checklist" data-checklist="prereq">
+          <li><label><input type="checkbox" data-key="prereq-jupyter"> Jupyter is available on my computer</label></li>
+          <li><label><input type="checkbox" data-key="prereq-ssh"> I can reach the Edge Node (SSH / secured access)</label></li>
+          <li><label><input type="checkbox" data-key="prereq-tools"> <code>klist</code> and <code>impala-shell</code> are on PATH</label></li>
+          <li><label><input type="checkbox" data-key="prereq-storage"> <code>/ads_storage/$USER</code> exists and is writable</label></li>
+          <li><label><input type="checkbox" data-key="prereq-shared"> Shared Dispatch tree is deployed (Release Operator)</label></li>
+          <li><label><input type="checkbox" data-key="prereq-sql"> I have a working directory with at least one <code>.sql</code> file</label></li>
+        </ul>
+      </section>
+
+      <!-- 3. Installation -->
+      <section id="installation" data-search="installation onboard install path launcher verify">
+        <h2>3. Installation</h2>
+        <p>
+          Analysts do <strong>not</strong> run <code>install.sh</code> or <code>pip</code>.
+          After the Release Operator activates the shared runtime, each analyst runs lightweight onboarding.
+        </p>
+
+        <h3>Open a terminal</h3>
+        <ol>
+          <li>Connect to the Edge Node (documented example: <code>ssh -p 2222 &lt;user&gt;@&lt;edge-node&gt;</code>).</li>
+          <li>If you work from Jupyter, open a terminal in that environment and connect to the same Edge Node session your team uses.</li>
+        </ol>
+        <div class="callout callout-tbc">
+          <strong>To be confirmed:</strong> exact menu path to open a terminal inside your Jupyter product (not documented in this repository).
+        </div>
+
+        <h3>Run analyst onboarding</h3>
+        <p>Run onboarding directly from the deployed tree. Do <strong>not</strong> run it with <code>source</code>.</p>
+        <div class="cmd">
+          <pre><code>/ads_storage/dispatch/onboard.sh</code></pre>
+          <button type="button" data-copy="/ads_storage/dispatch/onboard.sh" aria-label="Copy onboard command">Copy</button>
+        </div>
+        <p class="small muted">
+          Onboarding creates or repairs private state under <code>/ads_storage/$USER/.dispatch</code>,
+          writes the <code>dispatch</code> launcher to <code>~/.local/bin/dispatch</code>, and updates your shell profile.
+          It needs no dependency bundle or personal venv and never runs pip.
+        </p>
+
+        <h3>Activate PATH in the current shell (if prompted)</h3>
+        <p>If onboarding prints the following, copy and run it once in the current shell:</p>
+        <div class="cmd">
+          <pre><code>export PATH="$HOME/.local/bin:$PATH"</code></pre>
+          <button type="button" data-copy='export PATH="$HOME/.local/bin:$PATH"' aria-label="Copy PATH export">Copy</button>
+        </div>
+        <p>Otherwise, open a new SSH session so the updated profile is loaded.</p>
+
+        <h3>Verify installation</h3>
+        <div class="cmd">
+          <pre><code>which dispatch</code></pre>
+          <button type="button" data-copy="which dispatch" aria-label="Copy which dispatch">Copy</button>
+        </div>
+        <div class="cmd">
+          <pre><code>cd /path/to/your/sql/files
+dispatch</code></pre>
+          <button type="button" data-copy="cd /path/to/your/sql/files
+dispatch" aria-label="Copy first launch commands">Copy</button>
+        </div>
+        <ul>
+          <li>Success: onboarding prints <code>Dispatch onboarding complete.</code></li>
+          <li>Success: <code>which dispatch</code> shows a path under <code>~/.local/bin</code>.</li>
+          <li>Success: the TUI opens (Overview / dashboard).</li>
+        </ul>
+
+        <details>
+          <summary>Release Operator note (not required for analysts)</summary>
+          <div class="details-body">
+            <p>Once per Edge Node, the Release Operator activates the shared runtime:</p>
+            <div class="cmd">
+              <pre><code>cd /ads_storage/dispatch
+DISPATCH_PYTHON_BIN=$(command -v python3.11) ./install.sh</code></pre>
+              <button type="button" data-copy="cd /ads_storage/dispatch
+DISPATCH_PYTHON_BIN=$(command -v python3.11) ./install.sh" aria-label="Copy install command">Copy</button>
+            </div>
+            <p>Analysts should not run this unless they are also acting as Release Operator.</p>
+          </div>
+        </details>
+
+        <h3>Installation troubleshooting (verified)</h3>
+        <div class="troubleshoot-item">
+          <h4><code>dispatch</code> not found</h4>
+          <p><span class="label">Action:</span> export PATH, then <code>which dispatch</code>. If still empty, rerun <code>/ads_storage/dispatch/onboard.sh</code>.</p>
+        </div>
+        <div class="troubleshoot-item">
+          <h4>Shared runtime missing or invalid</h4>
+          <p><span class="label">Action:</span> stop and contact the Release Operator. Do not run pip.</p>
+        </div>
+        <div class="troubleshoot-item">
+          <h4><code>klist</code> / <code>impala-shell</code> not found</h4>
+          <p><span class="label">Action:</span> onboarding exits before creating private state. Restore Edge Node tooling on PATH, then rerun onboarding.</p>
+        </div>
+      </section>
+
+      <!-- 4. Authentication -->
+      <section id="authentication" data-search="authentication kinit klist kerberos ticket ttl jupyter">
+        <h2>4. Authentication with kinit</h2>
+        <p>
+          Impala and related cluster tools rely on Kerberos. Dispatch checks your ticket before
+          launching jobs and refreshes the displayed time-to-live (TTL) about every 60 seconds.
+          Launch is refused when a ticket is missing or has less than five minutes remaining.
+        </p>
+
+        <h3>Obtain a ticket (SSH / interactive shell)</h3>
+        <div class="cmd">
+          <pre><code>kinit
+klist</code></pre>
+          <button type="button" data-copy="kinit
+klist" aria-label="Copy kinit and klist">Copy</button>
+        </div>
+        <ul>
+          <li>Default realm used by Dispatch: <code>CORP.MASTERCARD.ORG</code> (override with <code>DISPATCH_KRB5_REALM</code> if set).</li>
+          <li>Success indicator: <code>klist</code> shows a valid, non-expired ticket; Dispatch sidebar shows a TTL such as <code>KRB 7h 23m</code>, not missing.</li>
+        </ul>
+
+        <h3>Inside Dispatch</h3>
+        <ul>
+          <li>On <strong>New Job</strong>, press <span class="kbd">K</span> to run interactive <code>kinit</code>.</li>
+          <li>Or open the command palette with <span class="kbd">Ctrl</span>+<span class="kbd">P</span> and choose <em>Refresh Kerberos (kinit)</em>.</li>
+        </ul>
+
+        <h3>Jupyter sessions</h3>
+        <p>
+          When Dispatch detects a Jupyter environment and the ticket is missing or under five minutes,
+          a <strong>Kerberos sign-in</strong> modal appears (fields: <code>EID</code>, <code>Windows password</code>; button: <strong>Sign in</strong>).
+          Cancel exits Dispatch with the message that Kerberos sign-in is required.
+        </p>
+
+        <h3>Expiration and re-authentication</h3>
+        <ul>
+          <li>Minimum launch TTL: <strong>300 seconds (5 minutes)</strong>.</li>
+          <li>Sidebar may highlight a low TTL when under about one hour.</li>
+          <li>Renew with <code>kinit</code> (shell) or <span class="kbd">K</span> / command palette (TUI).</li>
+        </ul>
+
+        <details>
+          <summary>Authentication troubleshooting</summary>
+          <div class="details-body">
+            <div class="troubleshoot-item">
+              <h4>Dispatch reports Kerberos problems</h4>
+              <p>Run <code>kinit</code>, confirm with <code>klist</code>, then launch <code>dispatch</code> again.</p>
+            </div>
+            <div class="troubleshoot-item">
+              <h4>Launch refused: ticket missing or TTL under 5 minutes</h4>
+              <p>Press <span class="kbd">K</span> on New Job (or run <code>kinit</code> in the shell) and retry.</p>
+            </div>
+            <div class="troubleshoot-item">
+              <h4>Jupyter sign-in fails</h4>
+              <p>Correct EID / Windows password and retry. Documented failure text may include authentication errors such as incorrect password.</p>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <!-- 5. Starting -->
+      <section id="starting" data-search="starting launch quit help sidebar keyboard">
+        <h2>5. Starting Dispatch</h2>
+        <h3>Launch sequence</h3>
+        <ol>
+          <li>Authenticate with <code>kinit</code> (if needed).</li>
+          <li>Change to the directory that contains your SQL files.</li>
+          <li>Start Dispatch.</li>
+        </ol>
+        <div class="cmd">
+          <pre><code>cd /path/to/your/sql/files
+dispatch</code></pre>
+          <button type="button" data-copy="cd /path/to/your/sql/files
+dispatch" aria-label="Copy start commands">Copy</button>
+        </div>
+        <p class="small muted">
+          Dispatch captures the launch-time working directory once. CSV destinations resolve relative to that directory for the entire session.
+        </p>
+
+        <h3>What you should expect</h3>
+        <ul>
+          <li>Window title <strong>Dispatch</strong>; subtitle includes your launch directory.</li>
+          <li>Overview (jobs cockpit) opens after startup checks.</li>
+          <li>Kerberos TTL appears in the sidebar.</li>
+          <li>Warning if the terminal is smaller than <strong>80×24</strong>.</li>
+          <li>If private setup is missing: notification to run <code>onboard.sh</code>.</li>
+        </ul>
+
+        <h3>Essential navigation</h3>
+        <table>
+          <thead><tr><th>Key</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td><span class="kbd">?</span></td><td>Help (all shortcuts)</td></tr>
+            <tr><td><span class="kbd">F2</span></td><td>Collapse / expand sidebar</td></tr>
+            <tr><td><span class="kbd">Ctrl</span>+<span class="kbd">P</span></td><td>Command palette</td></tr>
+            <tr><td><span class="kbd">Tab</span></td><td>Move focus between controls</td></tr>
+            <tr><td><span class="kbd">Q</span></td><td>Quit Dispatch</td></tr>
+          </tbody>
+        </table>
+        <div class="callout">
+          <strong>Safe exit</strong>
+          <p style="margin:0">Press <span class="kbd">Q</span> to quit. Jobs keep running after the TUI exits because a detached runner owns orchestrator execution.</p>
+        </div>
+      </section>
+
+      <!-- 6. Interface -->
+      <section id="interface" data-search="interface tabs overview new job view logs history browse navigation">
+        <h2>6. Dispatch interface overview</h2>
+        <p>Use the sidebar or keyboard shortcuts to move between official destinations:</p>
+        <div class="tab-guide" role="navigation" aria-label="Tab map">
+          <a href="#overview-tab">Overview</a>
+          <a href="#new-job-tab">New Job</a>
+          <a href="#view-logs-tab">View Logs</a>
+          <a href="#history-tab">History</a>
+          <a href="#browse-tab">Browse</a>
+        </div>
+        <table>
+          <thead><tr><th>Nav label</th><th>Purpose</th><th>Quick open</th></tr></thead>
+          <tbody>
+            <tr><td>Overview</td><td>Supervision cockpit for the last 7 days</td><td>Sidebar / command palette</td></tr>
+            <tr><td>New Job</td><td>Configure and launch a job</td><td><span class="kbd">N</span> from Overview</td></tr>
+            <tr><td>View Logs</td><td>Full live log for a selected job (Job Detail)</td><td><span class="kbd">V</span> / Enter (requires selection)</td></tr>
+            <tr><td>History</td><td>Finished jobs older than 7 days</td><td><span class="kbd">H</span></td></tr>
+            <tr><td>Browse</td><td>Impala metadata (list, describe, size, drop)</td><td><span class="kbd">B</span></td></tr>
+          </tbody>
+        </table>
+        <div class="callout callout-warning">
+          <strong>View Logs is not a separate catalog</strong>
+          <p style="margin:0">
+            Selecting <strong>View Logs</strong> without a job selected shows:
+            <em>Please select a job from the Overview or History table first.</em>
+          </p>
+        </div>
+      </section>
+
+      <!-- 7. Overview -->
+      <section id="overview-tab" data-search="overview dashboard status strip jobs filter cancel">
+        <h2>7. Overview tab</h2>
+        <p>Overview is the supervision cockpit: status, recent jobs, a live log preview, and quick actions.</p>
+
+        <h3>Visible sections</h3>
+        <ul>
+          <li><strong>Status strip:</strong> Kerberos TTL, <code>RUNNING n / 2</code>, finished and failed counts for 7 days.</li>
+          <li><strong>Jobs table</strong> (running first · last 7 days): columns <code>ID</code>, <code>Source</code>, <code>Destination</code>, <code>State</code>, <code>Elapsed</code>.</li>
+          <li><strong>Filter</strong> (press <span class="kbd">/</span>): filter by id, file, table, or state; <span class="kbd">Esc</span> clears.</li>
+          <li><strong>Detail pane</strong> (when height ≥ 30): short log preview for the selected job; hint <code>· V for full logs</code>.</li>
+          <li><strong>Action bar:</strong> event trail; buttons <strong>New Job [N]</strong>, <strong>View Logs [V]</strong>, <strong>Cancel [C]</strong>.</li>
+        </ul>
+
+        <h3>How to interpret states</h3>
+        <table>
+          <thead><tr><th>State</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>Pending</td><td>Briefly between launch and runner start</td></tr>
+            <tr><td>Running</td><td>Orchestrator process is alive</td></tr>
+            <tr><td>Succeeded</td><td>Orchestrator exited successfully</td></tr>
+            <tr><td>Failed</td><td>Non-zero exit; may show a classified error code</td></tr>
+            <tr><td>Cancelled</td><td>Cancelled from the TUI</td></tr>
+          </tbody>
+        </table>
+        <p class="small muted">Concurrency cap: at most two jobs may be Pending or Running at once.</p>
+
+        <h3>Shortcuts</h3>
+        <p>
+          <span class="kbd">N</span> New Job ·
+          <span class="kbd">V</span> View Logs ·
+          <span class="kbd">C</span> Cancel ·
+          <span class="kbd">H</span> History ·
+          <span class="kbd">B</span> Browse ·
+          <span class="kbd">/</span> Filter ·
+          <span class="kbd">J</span>/<span class="kbd">K</span> or arrows move selection ·
+          <span class="kbd">Enter</span> open detail
+        </p>
+
+        <div class="callout">
+          <strong>When to use this tab</strong>
+          <p style="margin:0">Start here every session to check Kerberos health, watch active jobs, cancel if needed, and jump into full logs.</p>
+        </div>
+      </section>
+
+      <!-- 8. New Job -->
+      <section id="new-job-tab" data-search="new job source destination monthlyjob sqlfile launch validation email">
+        <h2>8. New Job tab</h2>
+        <p>Configure one Source and one Destination, validate the form, optionally preview SQL, then launch.</p>
+
+        <h3>Legal Source × Destination combinations</h3>
+        <table>
+          <thead>
+            <tr><th>Source (UI)</th><th>Table</th><th>Csv</th><th>Table+Csv</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>SqlFile</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+            <tr><td>MonthlyJob <span class="muted">(SqlTemplate)</span></td><td>Yes</td><td>No</td><td>No</td></tr>
+            <tr><td>ExistingTable</td><td>No</td><td>Yes</td><td>No</td></tr>
+          </tbody>
+        </table>
+        <p class="small muted">Illegal destinations are disabled automatically. Press <span class="kbd">M</span> to toggle the legal-cells matrix.</p>
+
+        <h3>Fields and controls</h3>
+        <table>
+          <thead><tr><th>Control</th><th>Required?</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Source</td><td>Required</td><td>SqlFile, MonthlyJob, or ExistingTable</td></tr>
+            <tr><td>Destination</td><td>Required</td><td>Table, Csv, or Table+Csv (when legal)</td></tr>
+            <tr><td>Execution Queue</td><td>Optional</td><td>adhoc_fast, adhoc_small, acs_small, acs_large, adhoc; none selected = Auto cycle</td></tr>
+            <tr><td>SQL file picker / SQL File</td><td>Required for SQL sources</td><td>Lists <code>*.sql</code> in the launch directory</td></tr>
+            <tr><td>Schema</td><td>Required for Table destinations</td><td>Default <code>aa_enc</code>; plain Impala identifier</td></tr>
+            <tr><td>Table Name</td><td>Required for Table destinations</td><td>Fixed <code>EID_</code> prefix + editable suffix (default suffix <code>dispatch_result</code>)</td></tr>
+            <tr><td>Start Date / End Date</td><td>Required for MonthlyJob</td><td>Format <code>YYYY-MM-DD</code>; start must not be after end</td></tr>
+            <tr><td>Existing schema radios</td><td>Required for ExistingTable</td><td><code>coe_enc</code>, <code>aa_enc</code>, or <code>other</code> + Custom Schema</td></tr>
+            <tr><td>Existing Table</td><td>Required for ExistingTable</td><td>Resolved as <code>schema.table</code> with plain identifiers</td></tr>
+            <tr><td>Email (notifications)</td><td>Required (validated)</td><td>Must be a valid email format; may seed from onboarding / <code>DISPATCH_EMAIL</code></td></tr>
+            <tr><td>Subject (email)</td><td>Optional default</td><td>Default <code>Dispatch Job</code></td></tr>
+          </tbody>
+        </table>
+
+        <h3>Actions</h3>
+        <ul>
+          <li><strong>Preview SQL [P]</strong> — review generated SQL (not available for ExistingTable).</li>
+          <li><strong>Launch [L]</strong> — confirm launch; Advisor may show findings first.</li>
+          <li><span class="kbd">E</span> — edit SQL file in <code>$EDITOR</code>.</li>
+          <li><span class="kbd">K</span> — refresh Kerberos via <code>kinit</code>.</li>
+        </ul>
+
+        <details>
+          <summary>Validated refusal / validation messages (excerpt)</summary>
+          <div class="details-body">
+            <ul>
+              <li>Illegal combination: Source → Destination</li>
+              <li>Schema / table identifier errors; EID table must start with <code>{EID}_</code> and include a suffix</li>
+              <li>SQL file path required / not found / unreadable</li>
+              <li>Date format and range errors; MonthlyJob requires both <code>{date_inicio}</code> and <code>{date_fim}</code></li>
+              <li>Invalid email format</li>
+              <li>At the 2-Job concurrency cap — wait for one to finish</li>
+              <li>Kerberos ticket missing / TTL under 5 minutes — press K</li>
+              <li>Ready state: <code>✓ Ready to launch</code></li>
+            </ul>
+          </div>
+        </details>
+
+        <h3>After submission</h3>
+        <ol>
+          <li>Confirm on the Launch Job dialog (or Advisor gate if error findings exist).</li>
+          <li>Success notification: <code>✓ Launched Job {id}</code>.</li>
+          <li>A detached runner writes manifests under <code>/ads_storage/$USER/.dispatch/jobs/</code> and appends <code>run.log</code>.</li>
+          <li>CSV output (when selected) is written uncompressed to the launch-time working directory.</li>
+        </ol>
+
+        <div class="callout">
+          <strong>Pre-submission checklist</strong>
+          <ul class="checklist" data-checklist="launch" style="margin-top:0.5rem">
+            <li><label><input type="checkbox" data-key="launch-sql"> Correct SQL file / existing table selected</label></li>
+            <li><label><input type="checkbox" data-key="launch-combo"> Legal Source × Destination combination</label></li>
+            <li><label><input type="checkbox" data-key="launch-eid"> Table name uses my EID prefix (table destinations)</label></li>
+            <li><label><input type="checkbox" data-key="launch-email"> Notification email is valid</label></li>
+            <li><label><input type="checkbox" data-key="launch-krb"> Kerberos TTL ≥ 5 minutes</label></li>
+            <li><label><input type="checkbox" data-key="launch-cap"> Fewer than two jobs already running/pending</label></li>
+            <li><label><input type="checkbox" data-key="launch-preview"> Previewed SQL when applicable</label></li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 9. View Logs -->
+      <section id="view-logs-tab" data-search="view logs job detail streaming cancel clone search">
+        <h2>9. View Logs tab</h2>
+        <p>
+          View Logs opens <strong>Job Detail</strong> for the job selected on Overview or History.
+          It is the live-tail viewer for that job’s <code>run.log</code>.
+        </p>
+
+        <h3>How to access</h3>
+        <ul>
+          <li>Overview: select a row → <span class="kbd">V</span>, <strong>View Logs [V]</strong>, or <span class="kbd">Enter</span></li>
+          <li>History: select a row → <span class="kbd">Enter</span> or <strong>View Logs [Enter]</strong></li>
+          <li>Sidebar <strong>View Logs</strong> (requires a current selection)</li>
+        </ul>
+
+        <h3>Controls and features</h3>
+        <ul>
+          <li>Summary: State, Source, Destination, Started, Elapsed, CSV</li>
+          <li>Error banner on Failed jobs (classified codes when matched)</li>
+          <li>Streaming indicator: Streaming / Paused / Complete / Failed / Cancelled</li>
+          <li>Log search (<span class="kbd">/</span>), follow toggle (<span class="kbd">Space</span>/<span class="kbd">F</span>), jump top/bottom (<span class="kbd">g</span>/<span class="kbd">G</span>)</li>
+          <li>Copy job ID (<span class="kbd">Y</span>); Clone finished jobs (<span class="kbd">R</span>); Cancel running/pending (<span class="kbd">C</span>)</li>
+        </ul>
+
+        <h3>How logs relate to execution</h3>
+        <p>
+          The detached runner appends orchestrator output to <code>run.log</code> under the job directory.
+          Overview shows a short preview; Job Detail streams up to the on-screen bound (200 lines).
+          Application process logs also exist at <code>~/.dispatch/dispatch.log</code> / the private Dispatch home log (not shown in the TUI).
+        </p>
+
+        <h3>Informational vs warnings vs errors</h3>
+        <ul>
+          <li><strong>Job states</strong> encode outcome (Succeeded / Failed / Cancelled / Running).</li>
+          <li><strong>Failed jobs</strong> may show classified codes: SYNTAX, TABLE_NOT_FOUND, MEMORY, AUTH, QUEUE — each with a suggested next step.</li>
+          <li><strong>Log line styling</strong> dims timestamps/comments; it does not define a separate warning severity channel in the viewer.</li>
+          <li><strong>Advisor findings</strong> (on Preview / launch gate) use severities <code>error</code>, <code>warning</code>, and <code>info</code>.</li>
+        </ul>
+
+        <details>
+          <summary>Simple log troubleshooting flow</summary>
+          <div class="details-body">
+            <ol>
+              <li>Confirm job State on Overview or Job Detail.</li>
+              <li>If Failed, read the error banner code and suggestion.</li>
+              <li>Search the log for the matching lines.</li>
+              <li>For AUTH: renew Kerberos and retry (or clone).</li>
+              <li>For SYNTAX: Preview SQL, fix the file, relaunch.</li>
+              <li>For QUEUE / MEMORY: reduce scope or retry off-peak / ask platform team.</li>
+            </ol>
+          </div>
+        </details>
+      </section>
+
+      <!-- 10. History -->
+      <section id="history-tab" data-search="history finished older search sort pagination">
+        <h2>10. History tab</h2>
+        <p>History lists finished jobs older than the Overview’s 7-day window so you can find prior executions.</p>
+
+        <h3>Columns and controls</h3>
+        <ul>
+          <li>Title: <strong>Job History · finished more than 7 days ago</strong></li>
+          <li>Columns: <code>ID</code>, <code>Table/Target</code>, <code>State</code>, <code>Finished At</code></li>
+          <li>Search: filter by table, date, or job-id</li>
+          <li>Sort cycle (<span class="kbd">S</span>): date → state → table</li>
+          <li>Pagination: <span class="kbd">[</span> / <span class="kbd">]</span></li>
+          <li>Actions: <strong>Back [B]</strong>, <strong>View Logs [Enter]</strong></li>
+        </ul>
+        <p>
+          Persisted job data lives as on-disk manifests under
+          <code>/ads_storage/$USER/.dispatch/jobs/</code> (and related logs). History loads finished jobs outside the active window; it does not auto-refresh on an interval.
+        </p>
+        <p class="muted small">Cancel is not offered from History—open logs / Job Detail for a running job from Overview instead.</p>
+      </section>
+
+      <!-- 11. Browse -->
+      <section id="browse-tab" data-search="browse metadata schema tables drop describe size numeric backticks">
+        <h2>11. Browse tab</h2>
+        <p>
+          <strong>Browse Impala Metadata</strong> lists tables in a schema, shows sizes, describes columns,
+          and can drop tables. It does not create or run jobs.
+        </p>
+
+        <h3>Selectors and actions</h3>
+        <ul>
+          <li><strong>Schema</strong> input (default <code>aa_enc</code>)</li>
+          <li><strong>Table name</strong> filter (default <code>*</code>; hint: type <code>firstword*</code> and load)</li>
+          <li><strong>Load Tables [S]</strong> — runs Impala <code>SHOW TABLES</code></li>
+          <li>Table columns: Sel, Name, Size, Type</li>
+          <li>Sizes load in the background via <code>SHOW TABLE STATS</code> (pending <code>…</code>, unknown <code>—</code>)</li>
+          <li><strong>Describe [Enter]</strong> — column metadata in the right pane</li>
+          <li><strong>Select All [A]</strong> / click Sel checkbox — multi-select for drop</li>
+          <li>Sort (<span class="kbd">O</span>): name → size</li>
+          <li><strong>Drop [D]</strong> — destructive; see warning below</li>
+        </ul>
+
+        <h3>Names that begin with numbers</h3>
+        <p>
+          Catalog schemas/tables whose names begin with digits are allowed in Browse.
+          Dispatch backtick-quotes digit-leading identifiers in Impala SQL.
+          New Job creation paths still require classic identifiers (letter or underscore first) for user-supplied names.
+        </p>
+
+        <div class="callout callout-danger">
+          <strong>Warning: Drop is irreversible</strong>
+          <p style="margin:0">
+            Dropping tables requires typing exactly <code>I AM SURE</code>, then confirming <strong>DROP</strong>.
+            The confirmation states that this cannot be undone. Prefer Keep Table(s) unless you intend to destroy metadata.
+          </p>
+        </div>
+
+        <div class="callout">
+          <strong>Browse vs jobs</strong>
+          <p style="margin:0">Use Browse to inspect or clean up Impala objects. Use New Job to materialize results into tables or CSV files.</p>
+        </div>
+      </section>
+
+      <!-- 12. Journey -->
+      <section id="journey" data-search="journey workflow end to end recommended">
+        <h2>12. Recommended user journey</h2>
+        <ol>
+          <li><strong>Confirm prerequisites</strong> — tools on PATH, writable data root, shared tree deployed, SQL directory ready.</li>
+          <li><strong>Install (onboard)</strong> — run <code>/ads_storage/dispatch/onboard.sh</code>; fix PATH if prompted.</li>
+          <li><strong>Authenticate</strong> — <code>kinit</code> then <code>klist</code>.</li>
+          <li><strong>Start Dispatch</strong> — <code>cd</code> to SQL files, run <code>dispatch</code>.</li>
+          <li><strong>Create a job</strong> — New Job (<span class="kbd">N</span>), complete the form, Preview, Launch.</li>
+          <li><strong>Monitor execution</strong> — watch Overview status and the detail preview.</li>
+          <li><strong>Review logs and history</strong> — View Logs for the active job; History for older finished work.</li>
+          <li><strong>Browse metadata when needed</strong> — verify tables, sizes, or describe schemas; drop only with care.</li>
+        </ol>
+        <ul class="checklist" data-checklist="journey">
+          <li><label><input type="checkbox" data-key="j1"> Prerequisites confirmed</label></li>
+          <li><label><input type="checkbox" data-key="j2"> Onboarding completed</label></li>
+          <li><label><input type="checkbox" data-key="j3"> Kerberos ticket valid</label></li>
+          <li><label><input type="checkbox" data-key="j4"> Dispatch started from SQL directory</label></li>
+          <li><label><input type="checkbox" data-key="j5"> First job launched</label></li>
+          <li><label><input type="checkbox" data-key="j6"> Logs reviewed</label></li>
+          <li><label><input type="checkbox" data-key="j7"> History / Browse explored as needed</label></li>
+        </ul>
+      </section>
+
+      <!-- 13. Troubleshooting -->
+      <section id="troubleshooting" data-search="troubleshooting installation authentication startup validation execution logs browse">
+        <h2>13. Troubleshooting</h2>
+
+        <h3>Installation</h3>
+        <div class="troubleshoot-item">
+          <h4><code>dispatch</code> command not found</h4>
+          <p><span class="label">Symptom:</span> shell cannot find <code>dispatch</code>.</p>
+          <p><span class="label">Likely cause:</span> <code>~/.local/bin</code> not on PATH, or onboarding not run.</p>
+          <p><span class="label">Action:</span> <code>export PATH="$HOME/.local/bin:$PATH"</code>; <code>which dispatch</code>; rerun <code>/ads_storage/dispatch/onboard.sh</code>.</p>
+        </div>
+        <div class="troubleshoot-item">
+          <h4>Shared runtime missing / invalid</h4>
+          <p><span class="label">Symptom:</span> onboarding or launcher reports shared runtime problems.</p>
+          <p><span class="label">Likely cause:</span> Release Operator install not completed or runtime symlink broken.</p>
+          <p><span class="label">Action:</span> contact Release Operator; do not run pip.</p>
+        </div>
+
+        <h3>Authentication</h3>
+        <div class="troubleshoot-item">
+          <h4>Kerberos missing or expiring</h4>
+          <p><span class="label">Symptom:</span> sidebar missing TTL; launch refused under 5 minutes.</p>
+          <p><span class="label">Likely cause:</span> no ticket or short remaining lifetime.</p>
+          <p><span class="label">Action:</span> <code>kinit</code> → <code>klist</code> → relaunch, or press <span class="kbd">K</span> in New Job.</p>
+        </div>
+
+        <h3>Application startup</h3>
+        <div class="troubleshoot-item">
+          <h4>Dispatch not set up for this user</h4>
+          <p><span class="label">Symptom:</span> notification to run <code>onboard.sh</code>.</p>
+          <p><span class="label">Likely cause:</span> private <code>.dispatch</code> home missing.</p>
+          <p><span class="label">Action:</span> run <code>/ads_storage/dispatch/onboard.sh</code>.</p>
+        </div>
+        <div class="troubleshoot-item">
+          <h4>Terminal too small</h4>
+          <p><span class="label">Symptom:</span> warning about minimum size.</p>
+          <p><span class="label">Likely cause:</span> terminal smaller than 80×24.</p>
+          <p><span class="label">Action:</span> enlarge the terminal window.</p>
+        </div>
+        <div class="troubleshoot-item">
+          <h4>SSH idle disconnects</h4>
+          <p><span class="label">Symptom:</span> session drops while idle.</p>
+          <p><span class="label">Likely cause:</span> SSH idle timeout.</p>
+          <p><span class="label">Action:</span> connect with <code>ssh -o ServerAliveInterval=30</code>.</p>
+        </div>
+
+        <h3>Job validation</h3>
+        <div class="troubleshoot-item">
+          <h4>Illegal combination / identifier / email errors</h4>
+          <p><span class="label">Symptom:</span> validation summary shows issues; Launch disabled or refused.</p>
+          <p><span class="label">Likely cause:</span> illegal Source×Destination, bad identifiers, EID table rules, or invalid email.</p>
+          <p><span class="label">Action:</span> fix fields until <code>✓ Ready to launch</code>; consult the legal-cells matrix (<span class="kbd">M</span>).</p>
+        </div>
+        <div class="troubleshoot-item">
+          <h4>Concurrency cap</h4>
+          <p><span class="label">Symptom:</span> “At the 2-Job concurrency cap…”</p>
+          <p><span class="label">Likely cause:</span> two Pending/Running jobs already exist.</p>
+          <p><span class="label">Action:</span> wait for one to finish or cancel a running job from Overview.</p>
+        </div>
+
+        <h3>Job execution</h3>
+        <div class="troubleshoot-item">
+          <h4>Job Failed with classified code</h4>
+          <p><span class="label">Symptom:</span> Failed state with SYNTAX / TABLE_NOT_FOUND / MEMORY / AUTH / QUEUE.</p>
+          <p><span class="label">Likely cause:</span> matching orchestrator log pattern.</p>
+          <p><span class="label">Action:</span> follow the on-screen suggestion (Preview SQL, verify tables, renew Kerberos, retry off-peak, etc.).</p>
+        </div>
+
+        <h3>Logs</h3>
+        <div class="troubleshoot-item">
+          <h4>View Logs does nothing useful</h4>
+          <p><span class="label">Symptom:</span> warning to select a job first.</p>
+          <p><span class="label">Likely cause:</span> no row selected on Overview/History.</p>
+          <p><span class="label">Action:</span> select a job, then open View Logs.</p>
+        </div>
+
+        <h3>Browse and Impala metadata</h3>
+        <div class="troubleshoot-item">
+          <h4>SHOW TABLES failed</h4>
+          <p><span class="label">Symptom:</span> error notification after Load Tables.</p>
+          <p><span class="label">Likely cause:</span> Impala connectivity, Kerberos, or invalid schema/filter.</p>
+          <p><span class="label">Action:</span> confirm Kerberos, correct schema/filter, retry Load Tables [<span class="kbd">S</span>].</p>
+        </div>
+        <div class="troubleshoot-item">
+          <h4>Drop confirmation rejected</h4>
+          <p><span class="label">Symptom:</span> cannot proceed with drop.</p>
+          <p><span class="label">Likely cause:</span> confirmation text not exactly <code>I AM SURE</code>.</p>
+          <p><span class="label">Action:</span> type the exact phrase, then confirm DROP—or cancel to keep tables.</p>
+        </div>
+      </section>
+
+      <!-- 14. Quick reference -->
+      <section id="quick-reference" data-search="quick reference commands checklist warnings">
+        <h2>14. Quick reference</h2>
+
+        <h3>Essential commands</h3>
+        <div class="cmd">
+          <pre><code>/ads_storage/dispatch/onboard.sh
+export PATH="$HOME/.local/bin:$PATH"
+which dispatch
+kinit
+klist
+cd /path/to/your/sql/files
+dispatch</code></pre>
+          <button type="button" data-copy='/ads_storage/dispatch/onboard.sh
+export PATH="$HOME/.local/bin:$PATH"
+which dispatch
+kinit
+klist
+cd /path/to/your/sql/files
+dispatch' aria-label="Copy essential commands">Copy</button>
+        </div>
+
+        <h3>Core workflow</h3>
+        <p>Onboard → kinit → <code>cd</code> to SQL → <code>dispatch</code> → New Job → monitor Overview → View Logs → History / Browse as needed → <span class="kbd">Q</span> to quit.</p>
+
+        <h3>Tab-by-tab purpose</h3>
+        <ul>
+          <li><strong>Overview</strong> — live supervision (7 days)</li>
+          <li><strong>New Job</strong> — configure and launch</li>
+          <li><strong>View Logs</strong> — full job log / detail</li>
+          <li><strong>History</strong> — finished jobs older than 7 days</li>
+          <li><strong>Browse</strong> — Impala metadata only</li>
+        </ul>
+
+        <h3>Key warnings</h3>
+        <ul>
+          <li>Do not run pip or personal venvs for analyst setup.</li>
+          <li>Do not launch with Kerberos missing or under 5 minutes TTL.</li>
+          <li>At most two concurrent Pending/Running jobs.</li>
+          <li>CSV paths stay inside the launch directory.</li>
+          <li>Browse Drop requires <code>I AM SURE</code> and cannot be undone.</li>
+        </ul>
+
+        <h3>Onboarding completion checklist</h3>
+        <ul class="checklist" data-checklist="complete">
+          <li><label><input type="checkbox" data-key="c1"> I completed <code>onboard.sh</code> and can run <code>dispatch</code></label></li>
+          <li><label><input type="checkbox" data-key="c2"> I can obtain and verify a Kerberos ticket</label></li>
+          <li><label><input type="checkbox" data-key="c3"> I can start Dispatch from my SQL directory</label></li>
+          <li><label><input type="checkbox" data-key="c4"> I understand Overview, New Job, View Logs, History, and Browse</label></li>
+          <li><label><input type="checkbox" data-key="c5"> I know how to quit safely with <span class="kbd">Q</span></label></li>
+        </ul>
+      </section>
+
+      <footer class="page-footer">
+        <p>
+          Dispatch Onboarding Guide · Content derived from repository documentation and source.
+          Unverified items are marked <em>To be confirmed</em>.
+        </p>
+      </footer>
+    </main>
+  </div>
+
+  <button type="button" class="back-to-top" id="back-to-top" aria-label="Back to top">Back to top</button>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var STORAGE_KEY = "dispatch-onboarding-checklist-v1";
+
+      function qs(sel, root) { return (root || document).querySelector(sel); }
+      function qsa(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+
+      /* Copy buttons */
+      qsa("[data-copy]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var text = btn.getAttribute("data-copy") || "";
+          function done() {
+            var prev = btn.textContent;
+            btn.textContent = "Copied";
+            btn.classList.add("copied");
+            setTimeout(function () {
+              btn.textContent = prev;
+              btn.classList.remove("copied");
+            }, 1500);
+          }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done).catch(function () {
+              fallbackCopy(text); done();
+            });
+          } else {
+            fallbackCopy(text); done();
+          }
+        });
+      });
+
+      function fallbackCopy(text) {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "absolute";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); } catch (e) { /* ignore */ }
+        document.body.removeChild(ta);
+      }
+
+      /* Expand / collapse details */
+      function setDetails(open) {
+        qsa("details").forEach(function (d) { d.open = open; });
+      }
+      qs("#expand-all").addEventListener("click", function () { setDetails(true); });
+      qs("#collapse-all").addEventListener("click", function () { setDetails(false); });
+      qs("#expand-all-top").addEventListener("click", function () { setDetails(true); });
+      qs("#collapse-all-top").addEventListener("click", function () { setDetails(false); });
+      qs("#print-guide").addEventListener("click", function () { window.print(); });
+
+      /* Search / filter sections */
+      var search = qs("#topic-search");
+      search.addEventListener("input", function () {
+        var needle = (search.value || "").trim().toLowerCase();
+        qsa("main section[id]").forEach(function (section) {
+          if (!needle) {
+            section.classList.remove("is-hidden-by-search");
+            return;
+          }
+          var hay = (
+            (section.getAttribute("data-search") || "") + " " +
+            (section.textContent || "")
+          ).toLowerCase();
+          section.classList.toggle("is-hidden-by-search", hay.indexOf(needle) === -1);
+        });
+      });
+
+      /* Active nav on scroll */
+      var sections = qsa("main section[id]");
+      var navLinks = qsa("#side-nav a");
+      function setActive(id) {
+        navLinks.forEach(function (a) {
+          var href = a.getAttribute("href") || "";
+          a.classList.toggle("active", href === "#" + id);
+        });
+      }
+      if ("IntersectionObserver" in window) {
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) setActive(entry.target.id);
+          });
+        }, { rootMargin: "-20% 0px -65% 0px", threshold: 0.01 });
+        sections.forEach(function (s) { observer.observe(s); });
+      }
+
+      /* Back to top */
+      var backBtn = qs("#back-to-top");
+      window.addEventListener("scroll", function () {
+        backBtn.classList.toggle("is-visible", window.scrollY > 500);
+      }, { passive: true });
+      backBtn.addEventListener("click", function () {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+      /* Checklist persistence */
+      function loadState() {
+        try {
+          return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") || {};
+        } catch (e) {
+          return {};
+        }
+      }
+      function saveState(state) {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+      }
+      function updateProgress() {
+        var boxes = qsa('.checklist input[type="checkbox"]');
+        var total = boxes.length;
+        var done = boxes.filter(function (b) { return b.checked; }).length;
+        qs("#progress-text").textContent = done + " / " + total;
+        qs("#progress-fill").style.width = (total ? (done / total) * 100 : 0) + "%";
+      }
+      var state = loadState();
+      qsa('.checklist input[type="checkbox"]').forEach(function (box) {
+        var key = box.getAttribute("data-key");
+        if (key && state[key]) box.checked = true;
+        box.addEventListener("change", function () {
+          if (!key) return;
+          state[key] = !!box.checked;
+          saveState(state);
+          updateProgress();
+        });
+      });
+      updateProgress();
+
+      qs("#reset-checklist").addEventListener("click", function () {
+        state = {};
+        saveState(state);
+        qsa('.checklist input[type="checkbox"]').forEach(function (box) { box.checked = false; });
+        updateProgress();
+      });
+    })();
+  </script>
+</body>
+</html>

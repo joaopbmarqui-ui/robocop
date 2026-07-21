@@ -166,7 +166,7 @@ async def query(sql: str) -> str:
 
 
 async def show_tables(schema: str, pattern: str = "*") -> list[str]:
-    schema_error = sql.validate_identifier(schema, "Schema")
+    schema_error = sql.validate_catalog_identifier(schema, "Schema")
     if schema_error:
         raise ValueError(schema_error)
     if "'" in pattern:
@@ -288,15 +288,12 @@ async def iter_table_sizes(
                     # Test monkeypatch: call the replacement directly.
                     stats = await table_stats(full_table)
             except (ValueError, RuntimeError) as exc:
-                # Narrow recoverable set on this path (repo evidence):
-                # - ValueError: ``_require_full_table`` / format_full_table_sql
-                #   when a catalog name is not a safe schema.table identifier.
-                # - RuntimeError: ``_run_impala_shell`` timeout or non-zero exit
-                #   (this module has no ImpalaExecutionError / CapacityBusy type;
-                #   slot exhaustion uses try_occupy → None, not an exception).
-                # Do not catch OSError/FileNotFoundError here: a missing
-                # impala-shell is process-wide configuration, not a per-table
-                # metadata miss, and catching it would log once per table.
+                # Recoverable per-table misses only:
+                # - ValueError: catalog validation / format_full_table_sql reject
+                # - RuntimeError: _run_impala_shell timeout or non-zero exit
+                # Propagate OSError/FileNotFoundError (missing impala-shell is
+                # process-wide), programming errors (e.g. TypeError), and
+                # CancelledError so Textual exclusive workers still stop cleanly.
                 logger.warning(
                     "table stats unavailable for %s (%s): %s",
                     full_table,
@@ -314,11 +311,11 @@ async def iter_table_sizes(
 
 
 def _require_full_table(full_table: str) -> str:
-    """Validate ``schema.table`` and return Impala SQL rendering (with quoting).
+    """Validate catalog ``schema.table`` and return Impala SQL (with quoting).
 
     Shared by ``table_stats``, ``describe_table``, and ``drop_table`` so every
-    metadata statement that interpolates a qualified table uses the same
-    safe formatter (including digit-leading catalog names).
+    Browse metadata statement that interpolates a qualified table uses the same
+    catalog-safe formatter (including digit-leading catalog names).
     """
     return sql.format_full_table_sql(full_table, "Table")
 

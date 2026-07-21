@@ -287,9 +287,10 @@ async def iter_table_sizes(
                 else:
                     # Test monkeypatch: call the replacement directly.
                     stats = await table_stats(full_table)
-            except (ValueError, RuntimeError) as exc:
-                # Expected per-table failures (validation, Impala shell errors).
-                # Isolate so one bad catalog name cannot abort the Browse worker.
+            except (ValueError, RuntimeError, OSError) as exc:
+                # Expected per-table failures (validation, Impala shell errors,
+                # missing binary). Isolate so one bad catalog name cannot abort
+                # the Browse worker.
                 logger.warning("table stats unavailable for %s: %s", full_table, exc)
                 stats = unknown
             if stats is None:

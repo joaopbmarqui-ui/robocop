@@ -287,11 +287,22 @@ async def iter_table_sizes(
                 else:
                     # Test monkeypatch: call the replacement directly.
                     stats = await table_stats(full_table)
-            except (ValueError, RuntimeError, OSError) as exc:
-                # Expected per-table failures (validation, Impala shell errors,
-                # missing binary). Isolate so one bad catalog name cannot abort
-                # the Browse worker.
-                logger.warning("table stats unavailable for %s: %s", full_table, exc)
+            except (ValueError, RuntimeError) as exc:
+                # Narrow recoverable set on this path (repo evidence):
+                # - ValueError: ``_require_full_table`` / format_full_table_sql
+                #   when a catalog name is not a safe schema.table identifier.
+                # - RuntimeError: ``_run_impala_shell`` timeout or non-zero exit
+                #   (this module has no ImpalaExecutionError / CapacityBusy type;
+                #   slot exhaustion uses try_occupy → None, not an exception).
+                # Do not catch OSError/FileNotFoundError here: a missing
+                # impala-shell is process-wide configuration, not a per-table
+                # metadata miss, and catching it would log once per table.
+                logger.warning(
+                    "table stats unavailable for %s (%s): %s",
+                    full_table,
+                    type(exc).__name__,
+                    exc,
+                )
                 stats = unknown
             if stats is None:
                 stats = unknown
@@ -303,7 +314,12 @@ async def iter_table_sizes(
 
 
 def _require_full_table(full_table: str) -> str:
-    """Validate ``schema.table`` and return Impala SQL rendering (with quoting)."""
+    """Validate ``schema.table`` and return Impala SQL rendering (with quoting).
+
+    Shared by ``table_stats``, ``describe_table``, and ``drop_table`` so every
+    metadata statement that interpolates a qualified table uses the same
+    safe formatter (including digit-leading catalog names).
+    """
     return sql.format_full_table_sql(full_table, "Table")
 
 

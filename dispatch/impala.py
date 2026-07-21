@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import AsyncIterator, Callable, Coroutine
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -10,6 +11,8 @@ from typing import Any
 
 from . import process, sql
 from .formatting import format_data_size, parse_data_size
+
+logger = logging.getLogger("dispatch.impala")
 
 QUERY_TIMEOUT_SECONDS = 30
 MAX_QUERIES_PER_USER = 2
@@ -163,12 +166,13 @@ async def query(sql: str) -> str:
 
 
 async def show_tables(schema: str, pattern: str = "*") -> list[str]:
-    schema_error = sql.validate_identifier(schema, "Schema")
+    schema_error = sql.validate_catalog_identifier(schema, "Schema")
     if schema_error:
         raise ValueError(schema_error)
     if "'" in pattern:
         raise ValueError("SHOW TABLES pattern must not contain a single quote")
-    output = await query(f"SHOW TABLES IN {schema} LIKE '{pattern}';")
+    rendered_schema = sql.quote_identifier(schema)
+    output = await query(f"SHOW TABLES IN {rendered_schema} LIKE '{pattern}';")
     tables: list[str] = []
     for raw_line in output.splitlines():
         line = raw_line.strip()
@@ -223,8 +227,8 @@ def parse_table_stats_output(raw: str) -> TableStats:
 
 
 async def table_stats(full_table: str) -> TableStats:
-    _require_full_table(full_table)
-    output = await query(f"SHOW TABLE STATS {full_table};")
+    rendered = _require_full_table(full_table)
+    output = await query(f"SHOW TABLE STATS {rendered};")
     return parse_table_stats_output(output)
 
 
@@ -238,12 +242,12 @@ async def _table_stats_for_size_fetch(full_table: str) -> TableStats | None:
     Uses ``try_occupy`` so size fetch never queues behind a full coordinator and
     never stacks past the per-user cap of two (including Running Jobs).
     """
-    _require_full_table(full_table)
+    rendered = _require_full_table(full_table)
     async with query_ledger.try_occupy() as acquired:
         if not acquired:
             return None
         # Bypass ``query()`` to avoid double-occupying the ledger.
-        output = await _run_impala_shell(f"SHOW TABLE STATS {full_table};")
+        output = await _run_impala_shell(f"SHOW TABLE STATS {rendered};")
         return parse_table_stats_output(output)
 
 
@@ -283,7 +287,19 @@ async def iter_table_sizes(
                 else:
                     # Test monkeypatch: call the replacement directly.
                     stats = await table_stats(full_table)
-            except Exception:
+            except (ValueError, RuntimeError) as exc:
+                # Recoverable per-table misses only:
+                # - ValueError: catalog validation / format_full_table_sql reject
+                # - RuntimeError: _run_impala_shell timeout or non-zero exit
+                # Propagate OSError/FileNotFoundError (missing impala-shell is
+                # process-wide), programming errors (e.g. TypeError), and
+                # CancelledError so Textual exclusive workers still stop cleanly.
+                logger.warning(
+                    "table stats unavailable for %s (%s): %s",
+                    full_table,
+                    type(exc).__name__,
+                    exc,
+                )
                 stats = unknown
             if stats is None:
                 stats = unknown
@@ -294,17 +310,21 @@ async def iter_table_sizes(
             yield item
 
 
-def _require_full_table(full_table: str) -> None:
-    full_table_error = sql.validate_full_table(full_table, "Table")
-    if full_table_error:
-        raise ValueError(full_table_error)
+def _require_full_table(full_table: str) -> str:
+    """Validate catalog ``schema.table`` and return Impala SQL (with quoting).
+
+    Shared by ``table_stats``, ``describe_table``, and ``drop_table`` so every
+    Browse metadata statement that interpolates a qualified table uses the same
+    catalog-safe formatter (including digit-leading catalog names).
+    """
+    return sql.format_full_table_sql(full_table, "Table")
 
 
 async def describe_table(full_table: str) -> str:
-    _require_full_table(full_table)
-    return await query(f"DESCRIBE {full_table};")
+    rendered = _require_full_table(full_table)
+    return await query(f"DESCRIBE {rendered};")
 
 
 async def drop_table(full_table: str) -> str:
-    _require_full_table(full_table)
-    return await query(f"DROP TABLE IF EXISTS {full_table};")
+    rendered = _require_full_table(full_table)
+    return await query(f"DROP TABLE IF EXISTS {rendered};")

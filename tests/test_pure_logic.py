@@ -26,10 +26,15 @@ from dispatch import config, impala, jobs, kerberos, manifest, sql
     ("value", "expected"),
     [
         ("dispatch_smoke_1", None),
+        ("138936_das_curated_gco_cdl_daily_tinkoff", None),
+        ("144", None),
         ("", "Table name must be a plain Impala identifier"),
         ("bad-name", "Table name must be a plain Impala identifier"),
         ("t;drop", "Table name must be a plain Impala identifier"),
         ("schema.table", "Table name must be a plain Impala identifier"),
+        ("`quoted`", "Table name must be a plain Impala identifier"),
+        ("has space", "Table name must be a plain Impala identifier"),
+        ("a--b", "Table name must be a plain Impala identifier"),
     ],
 )
 def test_plain_impala_identifier_validation(value: str, expected: str | None) -> None:
@@ -40,6 +45,8 @@ def test_plain_impala_identifier_validation(value: str, expected: str | None) ->
     ("value", "expected"),
     [
         ("aa_enc.dispatch_smoke_1", None),
+        ("aa_enc.138936_das_curated_gco_cdl_daily_tinkoff", None),
+        ("aa_enc.144", None),
         (
             "schema.table.extra",
             "Existing table must be schema.table using plain Impala identifiers",
@@ -47,10 +54,59 @@ def test_plain_impala_identifier_validation(value: str, expected: str | None) ->
         ("schema.bad-name", "Existing table must be schema.table using plain Impala identifiers"),
         ("schema.t;drop", "Existing table must be schema.table using plain Impala identifiers"),
         ("", "Existing table must be schema.table using plain Impala identifiers"),
+        (
+            "aa_enc.`144`",
+            "Existing table must be schema.table using plain Impala identifiers",
+        ),
+        (
+            "aa_enc.table;drop",
+            "Existing table must be schema.table using plain Impala identifiers",
+        ),
+        (
+            "aa_enc.table--x",
+            "Existing table must be schema.table using plain Impala identifiers",
+        ),
+        (
+            "aa_enc.table name",
+            "Existing table must be schema.table using plain Impala identifiers",
+        ),
     ],
 )
 def test_full_impala_table_validation(value: str, expected: str | None) -> None:
     assert sql.validate_full_table(value, "Existing table") == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("dispatch_smoke_1", "dispatch_smoke_1"),
+        ("_leading_underscore", "_leading_underscore"),
+        ("138936_das_curated_gco_cdl_daily_tinkoff", "`138936_das_curated_gco_cdl_daily_tinkoff`"),
+        ("144", "`144`"),
+    ],
+)
+def test_quote_identifier_backticks_digit_leading_names(value: str, expected: str) -> None:
+    assert sql.quote_identifier(value) == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("aa_enc.dispatch_smoke_1", "aa_enc.dispatch_smoke_1"),
+        (
+            "aa_enc.138936_das_curated_gco_cdl_daily_tinkoff",
+            "aa_enc.`138936_das_curated_gco_cdl_daily_tinkoff`",
+        ),
+        ("aa_enc.144", "aa_enc.`144`"),
+    ],
+)
+def test_format_full_table_sql_quotes_digit_leading_table(value: str, expected: str) -> None:
+    assert sql.format_full_table_sql(value, "Table") == expected
+
+
+def test_format_full_table_sql_rejects_unsafe_before_rendering() -> None:
+    with pytest.raises(ValueError, match="schema.table using plain Impala identifiers"):
+        sql.format_full_table_sql("aa_enc.bad-name", "Table")
 
 
 def test_csv_path_is_confined_to_launch_cwd(tmp_path: Path) -> None:
@@ -96,7 +152,7 @@ def test_show_tables_rejects_quoted_pattern_before_query(monkeypatch) -> None:
     assert queries == []
 
 
-@pytest.mark.parametrize("helper_name", ["describe_table", "drop_table"])
+@pytest.mark.parametrize("helper_name", ["describe_table", "drop_table", "table_stats"])
 def test_full_table_helpers_reject_unsafe_name_before_query(monkeypatch, helper_name: str) -> None:
     queries: list[str] = []
 
@@ -113,6 +169,102 @@ def test_full_table_helpers_reject_unsafe_name_before_query(monkeypatch, helper_
 
     asyncio.run(run())
     assert queries == []
+
+
+@pytest.mark.parametrize(
+    ("full_table", "expected_fragment"),
+    [
+        ("aa_enc.dispatch_smoke_1", "aa_enc.dispatch_smoke_1"),
+        ("aa_enc.144", "aa_enc.`144`"),
+        (
+            "aa_enc.138936_das_curated_gco_cdl_daily_tinkoff",
+            "aa_enc.`138936_das_curated_gco_cdl_daily_tinkoff`",
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    ("helper_name", "sql_prefix"),
+    [
+        ("describe_table", "DESCRIBE "),
+        ("drop_table", "DROP TABLE IF EXISTS "),
+        ("table_stats", "SHOW TABLE STATS "),
+    ],
+)
+def test_full_table_helpers_quote_digit_leading_names(
+    monkeypatch, helper_name: str, sql_prefix: str, full_table: str, expected_fragment: str
+) -> None:
+    queries: list[str] = []
+
+    async def fake_query(statement: str) -> str:
+        queries.append(statement)
+        if helper_name == "table_stats":
+            return "#Rows|#Files|Size|Bytes Cached|Format|Incremental stats\n-1|1|4.20MB|NOT CACHED|TEXT|false\n"
+        return "name|type|comment\nid|int|\n"
+
+    monkeypatch.setattr(impala, "query", fake_query)
+
+    async def run() -> None:
+        helper = getattr(impala, helper_name)
+        await helper(full_table)
+
+    asyncio.run(run())
+    assert queries == [f"{sql_prefix}{expected_fragment};"]
+
+
+def test_iter_table_sizes_isolates_validation_failure(monkeypatch, caplog) -> None:
+    """One invalid/unsupported table must not abort the rest of the size batch."""
+    import logging
+
+    impala.reset_query_ledger_for_tests()
+    monkeypatch.setattr(impala, "external_running_query_count", lambda: 0)
+    calls: list[str] = []
+
+    async def fake_run_impala_shell(statement: str) -> str:
+        calls.append(statement)
+        return (
+            "#Rows|#Files|Size|Bytes Cached|Format|Incremental stats\n"
+            "-1|1|4.20MB|NOT CACHED|TEXT|false\n"
+        )
+
+    monkeypatch.setattr(impala, "_run_impala_shell", fake_run_impala_shell)
+
+    async def run() -> list[tuple[str, impala.TableStats]]:
+        return [
+            item
+            async for item in impala.iter_table_sizes(
+                "aa_enc",
+                [
+                    "ok_table",
+                    "bad-name",
+                    "144",
+                    "138936_das_curated_gco_cdl_daily_tinkoff",
+                ],
+            )
+        ]
+
+    with caplog.at_level(logging.WARNING, logger="dispatch.impala"):
+        results = asyncio.run(run())
+
+    by_name = {name: stats for name, stats in results}
+    assert list(by_name) == [
+        "ok_table",
+        "bad-name",
+        "144",
+        "138936_das_curated_gco_cdl_daily_tinkoff",
+    ]
+    assert by_name["ok_table"].size_bytes == 4_404_019
+    assert by_name["bad-name"].size_bytes is None
+    assert by_name["bad-name"].size_display == "—"
+    assert by_name["144"].size_bytes == 4_404_019
+    assert by_name["138936_das_curated_gco_cdl_daily_tinkoff"].size_bytes == 4_404_019
+    assert any("aa_enc.bad-name" in record.getMessage() for record in caplog.records)
+    assert any("SHOW TABLE STATS aa_enc.ok_table;" in call for call in calls)
+    assert any("SHOW TABLE STATS aa_enc.`144`;" in call for call in calls)
+    assert any(
+        "SHOW TABLE STATS aa_enc.`138936_das_curated_gco_cdl_daily_tinkoff`;" in call
+        for call in calls
+    )
+    assert not any("bad-name" in call for call in calls)
 
 
 # =============================================================================

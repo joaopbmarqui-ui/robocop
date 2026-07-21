@@ -7,8 +7,13 @@ import re
 from datetime import date, datetime
 from pathlib import Path
 
-IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
-FULL_TABLE_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*")
+# Character-safe Impala identifier body. Digit-leading names are legal in the
+# catalog (and must be backtick-quoted in SQL); separators/comments/whitespace
+# are rejected here so callers can interpolate without injection risk.
+IDENTIFIER_RE = re.compile(r"[A-Za-z0-9_]+")
+# Identifiers that Impala accepts unquoted (letter or underscore first).
+UNQUOTED_IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+FULL_TABLE_RE = re.compile(r"[A-Za-z0-9_]+\.[A-Za-z0-9_]+")
 DATE_INICIO_TOKEN = "{date_inicio}"
 DATE_FIM_TOKEN = "{date_fim}"
 
@@ -18,6 +23,27 @@ def validate_identifier(value: str, label: str) -> str | None:
     if not IDENTIFIER_RE.fullmatch(value):
         return f"{label} must be a plain Impala identifier"
     return None
+
+
+def quote_identifier(value: str) -> str:
+    """Render a validated identifier for Impala SQL.
+
+    Classic names stay bare; digit-leading (and any other safe-but-not-unquoted)
+    names are wrapped in backticks. Callers must validate first — this helper
+    does not accept unchecked input.
+    """
+    if UNQUOTED_IDENTIFIER_RE.fullmatch(value):
+        return value
+    return f"`{value}`"
+
+
+def format_full_table_sql(value: str, label: str = "table") -> str:
+    """Validate ``schema.table`` and return it rendered for Impala SQL."""
+    error = validate_full_table(value, label)
+    if error:
+        raise ValueError(error)
+    schema, table = value.split(".", 1)
+    return f"{quote_identifier(schema)}.{quote_identifier(table)}"
 
 
 def eid_table_prefix(eid: str) -> str:

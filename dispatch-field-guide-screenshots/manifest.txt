@@ -1,0 +1,35 @@
+manifest.txt — Dispatch field-guide captures
+Source: /opt/cursor/artifacts/dispatch-field-guide-captures/
+
+filename | screen_or_state | completeness
+---------|-----------------|-------------
+01-overview.png | Overview (Dashboard) — empty job list, Kerberos OK, RUNNING 0/2 | complete
+01-overview.svg | Overview (Dashboard) — empty job list, Kerberos OK, RUNNING 0/2 | complete
+02-help.png | Help modal — Quick Reference and per-screen bindings | complete
+02-help.svg | Help modal — Quick Reference and per-screen bindings | complete
+03-new-job.png | New Job — Source/Destination, queues, SQL picker, Ready to launch | complete
+03-new-job.svg | New Job — Source/Destination, queues, SQL picker, Ready to launch | complete
+04-sql-preview.png | SQL Preview — MonthlyJob → Table preview before launch | complete
+04-sql-preview.svg | SQL Preview — MonthlyJob → Table preview before launch | complete
+05-history.png | History — finished jobs older than 7 days | complete
+05-history.svg | History — finished jobs older than 7 days | complete
+06-browse.png | Browse Impala Metadata — schema/tables/describe pane | complete
+06-browse.svg | Browse Impala Metadata — schema/tables/describe pane | complete
+07-command-palette.png | Command palette (Ctrl+P) over Overview | complete
+07-command-palette.svg | Command palette (Ctrl+P) over Overview | complete
+08-sidebar-collapsed.png | Overview with sidebar collapsed (F2) | complete
+08-sidebar-collapsed.svg | Overview with sidebar collapsed (F2) | complete
+09-overview-80x24.png | Overview at minimum terminal size 80x24 | complete
+09-overview-80x24.svg | Overview at minimum terminal size 80x24 | complete
+10-kerberos-login-jupyter.png | Kerberos sign-in modal (Jupyter startup gate) | complete
+10-kerberos-login-jupyter.svg | Kerberos sign-in modal (Jupyter startup gate) | complete
+11-launch-confirm.png | Launch Job confirmation modal (summary + Launch/Review) | complete
+11-launch-confirm.svg | Launch Job confirmation modal (summary + Launch/Review) | complete
+12-overview-with-job.png | Intended: Overview with a job row — actual: empty Overview (no job seeded) | partial
+12-overview-with-job.svg | Intended: Overview with a job row — actual: empty Overview (no job seeded) | partial
+13-job-detail.png | Intended: Job Detail / View Logs — actual: empty Overview (detail did not open) | partial
+13-job-detail.svg | Intended: Job Detail / View Logs — actual: empty Overview (detail did not open) | partial
+14-browse-drop-confirm.png | Intended: Browse DROP confirmation — actual: Browse screen without DROP modal | partial
+14-browse-drop-confirm.svg | Intended: Browse DROP confirmation — actual: Browse screen without DROP modal | partial
+
+Totals: 28 image files (14 PNG + 14 SVG). Complete: 22. Partial: 6.

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Silent New Job onboarding — 8s scenes, Carlito dialogue, element spotlights @ 1080p.
+"""New Job onboarding — Carlito dialogue, element spotlights @ 1080p, original audio.
 
-Calibri is not available in this environment; Carlito (fonts-crosextra-carlito)
-is used as the metric-compatible substitute.
-
+Timing: typing (1.0–1.5s) + exactly 5.0s complete-text hold.
+Calibri unavailable → Carlito (OFL metric-compatible).
 Verified MonthlyJob SQL rule: ``{date_inicio}`` and ``{date_fim}``.
+Original chiptune BGM + UI blip (not Pokémon-derived).
 """
 
 from __future__ import annotations
@@ -37,7 +37,7 @@ NARRATION_LEGACY = OUT_DIR / "dispatch_robocop_new_job_narration_ptbr.txt"
 
 VIDEO_W, VIDEO_H = 1920, 1080
 FPS = 30
-SCENE_SECONDS = 8.0
+HOLD_COMPLETE_S = 5.0  # complete text visible exactly 5.0s after typing
 MOVE_FRAMES = 9
 CLICK_FRAMES = 4
 OUTCOME_S = 0.8
@@ -53,6 +53,17 @@ BADGE_FONT_PX = 22
 MARGIN_FIELD_PX = 20
 MARGIN_BUTTON_PX = 16
 MARGIN_SMALL_PX = 14
+PAD_X = 64
+PAD_Y = 40
+# Original audio (generated for this package — not Pokémon-derived)
+AUDIO_DIR = OUT_DIR / "audio" / "original"
+BGM_WAV = AUDIO_DIR / "town_walk_original_chiptune.wav"
+SFX_WAV = AUDIO_DIR / "dialogue_open_ui_blip.wav"
+BGM_LEVEL = 0.18
+SFX_LEVEL = 0.55
+DUCK_LEVEL = 0.06
+DUCK_FADE_DOWN_S = 0.12
+DUCK_FADE_UP_S = 0.35
 
 # Font selection (priority: Calibri → Carlito → Liberation Sans)
 FONT_REGULAR = FONTS_DIR / "Carlito-Regular.ttf"
@@ -110,352 +121,322 @@ class Step:
     instructional: bool = True
     spotlight: tuple[float, float, float, float] | None = None
     targets: list[str] = field(default_factory=list)
+    spotlight_group: str = ""  # reuse exact spotlight across related cards
 
 
 def _steps() -> list[Step]:
-    """Instructional steps. Meaning preserved; wording fit for 8s + 2-line box."""
+    """Top-to-bottom New Job walkthrough. No 'Opcional' badges."""
     return [
+        # --- Opening ---
         Step("01_open", "card:open", "Dispatch (Robocop)",
              "Como utilizar a aba New Job.\nConfigure e inicie um job passo a passo.",
-             "", (0.50, 0.50), section="Abertura", evidence="opening card"),
-        Step("02_purpose_a", "arrive", "Para que serve New Job",
-             "Configure e inicie uma nova execução no Dispatch.",
-             "", (0.55, 0.12), section="Propósito", evidence="NewJobScreen"),
-        Step("02_purpose_b", "arrive", "O que você decide aqui",
-             "Origem, destino, consulta e opções do job.",
-             "", (0.55, 0.20), section="Propósito", evidence="NewJobScreen form"),
-        Step("03_matrix", "matrix", "Source × Destination",
-             "Mostra as combinações permitidas.\nConsulte antes de escolher origem e destino.",
-             "Opcional", (0.52, 0.18), click=True, section="Matriz",
-             evidence="matrix-collapsible + LEGAL_CELLS"),
-        Step("04_detected", "arrive", "Detected source",
-             "Tipo identificado no arquivo SQL.\nConfirme se é o job que você quer executar.",
-             "", (0.55, 0.28), section="Detecção", evidence="info-detected"),
-        Step("05_source_intro", "source_sqlfile", "Source",
-             "Define de onde vêm os dados do job.\nÉ a primeira decisão do formulário.",
-             "Obrigatório", (0.38, 0.34), section="Source", evidence="RadioSet #source"),
-        Step("06_source_sqlfile", "source_sqlfile", "Source → SqlFile",
-             "Use quando a consulta está em um .sql simples.",
+             "", (0.50, 0.50), section="Abertura", evidence="opening card",
+             spotlight_group="open"),
+        Step("02_purpose", "arrive", "O que é New Job",
+             "Tela para configurar e iniciar\numa nova execução no Dispatch.",
+             "", (0.55, 0.18), section="Abertura", evidence="NewJobScreen",
+             spotlight_group="purpose"),
+
+        # --- Source (first config) ---
+        Step("10_source_what", "source_sqlfile", "O que é",
+             "Source define de onde vêm\nos dados do job.",
+             "Obrigatório", (0.38, 0.34), section="Source", evidence="#source",
+             spotlight_group="source"),
+        Step("10b_source_decide", "source_sqlfile", "O que você decide aqui",
+             "Escolha SqlFile, MonthlyJob\nou ExistingTable.",
+             "Obrigatório", (0.38, 0.34), section="Source", evidence="#source",
+             spotlight_group="source"),
+        Step("11_source_sqlfile", "source_sqlfile", "SqlFile",
+             "Use quando a consulta está\nem um arquivo .sql simples.",
              "Obrigatório", (0.38, 0.34), click=True, section="Source",
-             evidence="src-sqlfile"),
-        Step("06b_source_sqlfile_effect", "source_sqlfile", "SqlFile — efeito",
-             "O Dispatch executa esse arquivo conforme o destino.",
-             "Obrigatório", (0.38, 0.34), section="Source", evidence="LEGAL SqlFile"),
-        Step("07_dest_intro", "source_sqlfile", "Destination",
-             "Define onde o resultado será armazenado.\nDepende da origem escolhida.",
-             "Obrigatório", (0.70, 0.28), section="Destination", evidence="#destination"),
-        Step("08_dest_table", "dest_table", "Destination → Table",
-             "Salva o resultado em uma tabela.\nUse para consultar depois no ambiente.",
-             "Obrigatório", (0.70, 0.26), click=True, section="Destination", evidence="dst-table"),
-        Step("09_dest_csv", "source_sqlfile", "Destination → Csv",
-             "Gera um CSV na pasta em que você abriu o Dispatch.",
-             "Obrigatório", (0.70, 0.30), click=True, section="Destination", evidence="dst-csv"),
-        Step("09b_dest_csv_when", "source_sqlfile", "Csv — quando usar",
-             "Use para baixar ou compartilhar o resultado como arquivo.",
-             "Obrigatório", (0.70, 0.30), section="Destination", evidence="ADR-0003"),
-        Step("10_dest_tablecsv", "dest_tablecsv", "Destination → Table+Csv",
-             "Cria a tabela e também gera o CSV.\nUse quando precisa dos dois formatos.",
-             "Obrigatório", (0.70, 0.34), click=True, section="Destination", evidence="dst-table-csv"),
-        Step("11_queue_a", "queues", "Execution Queue",
-             "Fila de processamento do job.\nSem marcação, a escolha é automática.",
-             "Opcional", (0.55, 0.50), section="Fila", evidence="#queue"),
-        Step("12_queue_b", "queues", "Execution Queue — marcar",
-             "Marque filas só se o projeto indicar qual usar.",
-             "Opcional", (0.55, 0.54), click=True, section="Fila", evidence="_QUEUE_CHOICES"),
-        Step("12b_queue_order", "queues", "Várias filas",
-             "Se marcar várias, são tentadas na ordem da lista.",
-             "Opcional", (0.55, 0.54), section="Fila", evidence="_QUEUE_AUTO_HINT"),
-        Step("13_sql_intro", "picker", "SQL File",
-             "É a consulta que o job vai executar.",
-             "Obrigatório", (0.55, 0.62), section="SQL File", evidence="row-sql-file"),
-        Step("13b_sql_when", "picker", "SQL File — quando",
-             "Obrigatório para SqlFile e MonthlyJob.",
-             "Obrigatório", (0.55, 0.62), section="SQL File", evidence="required sources"),
-        Step("14_sql_picker", "picker", "Lista de arquivos SQL",
-             "Mostra os .sql da pasta atual.\nSelecione o arquivo do seu job.",
+             evidence="src-sqlfile", spotlight_group="src-sqlfile"),
+        Step("11b_source_sqlfile_effect", "source_sqlfile", "Efeito",
+             "O Dispatch executa esse .sql\nconforme o Destination escolhido.",
+             "Obrigatório", (0.38, 0.34), section="Source", evidence="LEGAL SqlFile",
+             spotlight_group="src-sqlfile"),
+
+        # --- Destination ---
+        Step("20_dest_what", "source_sqlfile", "O que é",
+             "Destination define onde o\nresultado será armazenado.",
+             "Obrigatório", (0.70, 0.28), section="Destination", evidence="#destination",
+             spotlight_group="destination"),
+        Step("20b_dest_decide", "source_sqlfile", "O que você decide aqui",
+             "Table, Csv ou Table+Csv,\nconforme a origem escolhida.",
+             "Obrigatório", (0.70, 0.28), section="Destination", evidence="#destination",
+             spotlight_group="destination"),
+        Step("21_dest_csv", "source_sqlfile", "Csv",
+             "Gera um CSV na pasta em que\nvocê abriu o Dispatch.",
+             "Obrigatório", (0.70, 0.30), click=True, section="Destination",
+             evidence="dst-csv", spotlight_group="dst-csv"),
+        Step("21b_dest_csv_effect", "source_sqlfile", "Efeito",
+             "Use para baixar ou compartilhar\no resultado como arquivo.",
+             "Obrigatório", (0.70, 0.30), section="Destination", evidence="ADR-0003",
+             spotlight_group="dst-csv"),
+
+        # --- Near-top aids, then continue downward ---
+        Step("35_detected", "arrive", "Detected source",
+             "Tipo identificado no arquivo SQL.\nConfirme se é o job desejado.",
+             "", (0.55, 0.28), section="Detecção", evidence="info-detected",
+             spotlight_group="detected"),
+        Step("36_matrix", "matrix", "Source × Destination",
+             "Mostra as combinações permitidas\nantes de escolher origem e destino.",
+             "", (0.52, 0.18), click=True, section="Matriz",
+             evidence="matrix-collapsible", spotlight_group="matrix"),
+
+        # --- Execution Queue (above SQL File in the form) ---
+        Step("40_queue_what", "queues", "O que é",
+             "Execution Queue define em qual fila\no job tentará executar.",
+             "", (0.55, 0.50), section="Fila", evidence="#queue",
+             spotlight_group="queue"),
+        Step("40b_queue_none", "queues", "Sem marcação",
+             "Sem marcar uma fila, o Dispatch\ntentará as filas na ordem configurada.",
+             "", (0.55, 0.50), section="Fila", evidence="_QUEUE_AUTO_HINT",
+             spotlight_group="queue"),
+        Step("40c_queue_decide", "queues", "O que você decide aqui",
+             "Marque uma fila só se souber onde\na query rende melhor (simples/complexa).",
+             "", (0.55, 0.54), section="Fila", evidence="_QUEUE_HINTS",
+             spotlight_group="queue"),
+        Step("41_queue_example", "queues_selected", "Exemplo de escolha",
+             "Ex.: adhoc_fast para consultas\ncurtas ou mais simples.",
+             "", (0.55, 0.54), click=True, section="Fila", evidence="adhoc_fast hint",
+             spotlight_group="queue-selected"),
+
+        # --- SQL File (+ Destination) when reached visually ---
+        Step("30_sql_what", "picker", "O que é",
+             "SQL File é a consulta que\no job vai executar.",
+             "Obrigatório", (0.55, 0.62), section="SQL File", evidence="row-sql-file",
+             spotlight_group="sql-file"),
+        Step("30b_sql_decide", "picker", "O que você decide aqui",
+             "Obrigatório para SqlFile e MonthlyJob.\nSelecione o .sql do seu job.",
+             "Obrigatório", (0.55, 0.62), section="SQL File", evidence="required sources",
+             spotlight_group="sql-file"),
+        Step("31_sql_picker", "picker", "Lista de arquivos SQL",
+             "Mostra os .sql da pasta atual.\nSelecione o arquivo do job.",
              "Obrigatório", (0.55, 0.62), click=True, section="SQL File",
-             evidence="sql-file-picker"),
-        Step("15_sql_verify", "picker", "O que conferir",
-             "Confirme o nome e o tipo Detected na lista.",
-             "Obrigatório", (0.58, 0.72), section="SQL File", evidence="Detected column"),
-        Step("15b_sql_path", "picker", "Caminho do SQL File",
-             "Após a seleção, o caminho preenche o campo SQL File.",
-             "Obrigatório", (0.58, 0.72), section="SQL File", evidence="path-hint"),
-        Step("16_sql_role", "picker", "Papel do SQL File",
-             "Define quais dados serão lidos ou calculados.",
-             "Obrigatório", (0.58, 0.72), section="SQL File", evidence="manifest sql_path"),
-        Step("16b_sql_role_dest", "picker", "SQL + destino",
-             "Source e Destination decidem como entregar o resultado.",
-             "Obrigatório", (0.58, 0.72), section="SQL File", evidence="LEGAL_CELLS"),
-        Step("17_email", "email_ok", "Email (notifications)",
+             evidence="sql-file-picker", spotlight_group="sql-picker"),
+        Step("31b_sql_path", "picker", "Efeito",
+             "Após a seleção, o caminho\npreenche o campo SQL File.",
+             "Obrigatório", (0.55, 0.72), section="SQL File", evidence="path-hint",
+             spotlight_group="sql-picker"),
+        Step("32_sql_dest", "picker", "SQL File e Destination",
+             "O .sql fornece os dados;\no Destination define a entrega.",
+             "Obrigatório", (0.55, 0.40), section="SQL File", evidence="LEGAL_CELLS",
+             spotlight_group="sql-dest-rel"),
+
+        # --- Email / Subject (no Opcional) ---
+        Step("50_email", "email_ok", "Email (notifications)",
              "Recebe aviso quando o job terminar.\nDeixe em branco se não quiser.",
-             "Opcional", (0.58, 0.78), click=True, section="Notificação", evidence="#email"),
-        Step("18_subject", "email_ok", "Subject (email)",
-             "Assunto do e-mail de notificação.\nUse um texto curto que identifique o job.",
-             "Opcional", (0.58, 0.84), click=True, section="Notificação", evidence="#subject"),
-        Step("19_status_bar", "ready_review", "Status do formulário",
-             "Ready to launch = sem problemas bloqueantes.",
-             "", (0.72, 0.92), section="Status", evidence="validation-summary"),
-        Step("19b_actions", "ready_review", "Preview SQL e Launch",
-             "Ficam na barra inferior para revisão e envio.",
-             "", (0.78, 0.92), section="Status", evidence="action bar"),
-        # MonthlyJob
-        Step("20_mj_intro", "monthly", "MonthlyJob",
-             "Use para cobrir um intervalo de datas,\nexecutando o período mês a mês.",
-             "Use apenas quando...", (0.38, 0.38), click=True, section="MonthlyJob",
-             evidence="SqlTemplate labeled MonthlyJob"),
-        Step("21_mj_dest", "monthly", "MonthlyJob → Destination",
-             "Com MonthlyJob, o destino permitido é só Table.",
-             "Obrigatório", (0.70, 0.28), section="MonthlyJob", evidence="LEGAL SqlTemplate/Table"),
-        Step("21b_mj_dest_blocked", "monthly", "Csv e Table+Csv",
-             "Ficam indisponíveis neste modo.",
-             "Obrigatório", (0.70, 0.34), section="MonthlyJob", evidence="dest hint"),
-        Step("22_mj_sql_rule_a", "card:sql_tokens", "SQL no MonthlyJob — regra",
-             "O .sql precisa conter os dois marcadores:\n{date_inicio} e {date_fim}",
+             "", (0.58, 0.78), click=True, section="Notificação", evidence="#email",
+             spotlight_group="email"),
+        Step("51_subject", "email_ok", "Subject (email)",
+             "Assunto do e-mail de notificação.\nUse um texto curto e claro.",
+             "", (0.58, 0.84), click=True, section="Notificação", evidence="#subject",
+             spotlight_group="subject"),
+
+        # --- MonthlyJob (simplified) ---
+        Step("60_mj_what", "monthly", "O que é",
+             "MonthlyJob cobre um intervalo de datas,\nexecutando o período mês a mês.",
+             "", (0.38, 0.38), click=True, section="MonthlyJob",
+             evidence="SqlTemplate", spotlight_group="monthly"),
+        Step("60b_mj_decide", "monthly", "O que você decide aqui",
+             "Use com Destination = Table\ne um .sql preparado para o período.",
+             "Obrigatório", (0.38, 0.38), section="MonthlyJob",
+             evidence="LEGAL SqlTemplate/Table", spotlight_group="monthly"),
+        Step("61_mj_dest", "monthly", "Destination = Table",
+             "Com MonthlyJob, selecione Table\ncomo destino do resultado.",
+             "Obrigatório", (0.70, 0.28), section="MonthlyJob",
+             evidence="LEGAL SqlTemplate/Table", spotlight_group="mj-dest"),
+        Step("62_mj_sql_a", "card:sql_tokens", "Regra do arquivo SQL",
+             "O .sql precisa conter os dois marcadores:",
              "Obrigatório", (0.50, 0.45), section="MonthlyJob SQL",
-             evidence="; ".join(MONTHLY_SQL_EVIDENCE)),
-        Step("23_mj_sql_rule_b", "card:sql_tokens", "Como conferir no arquivo",
-             "Abra o .sql e busque exatamente\n{date_inicio} e {date_fim}.",
+             evidence="; ".join(MONTHLY_SQL_EVIDENCE), spotlight_group="mj-sql"),
+        Step("62b_mj_sql_b", "card:sql_tokens", "Marcadores obrigatórios",
+             "{date_inicio} e {date_fim}",
              "Obrigatório", (0.50, 0.50), section="MonthlyJob SQL",
-             evidence="_sql_content_issues"),
-        Step("23b_mj_sql_missing", "card:sql_tokens", "Se faltar um marcador",
-             "O job não pode ser iniciado como MonthlyJob.",
+             evidence="_sql_content_issues", spotlight_group="mj-sql"),
+        Step("62c_mj_sql_c", "card:sql_tokens", "Como conferir",
+             "Abra o .sql e busque exatamente\nesses dois textos.",
              "Obrigatório", (0.50, 0.50), section="MonthlyJob SQL",
-             evidence="is_malformed_template"),
-        Step("24_mj_sql_rule_c", "card:sql_tokens", "O que os marcadores fazem",
-             "Reservam início e fim de cada mês do período.",
-             "Obrigatório", (0.50, 0.55), section="MonthlyJob SQL",
-             evidence="render_monthly_sql"),
-        Step("24b_mj_sql_fill", "card:sql_tokens", "Preenchimento das datas",
-             "O Dispatch preenche conforme Start Date e End Date.",
-             "Obrigatório", (0.50, 0.55), section="MonthlyJob SQL",
-             evidence="monthly_preview"),
-        Step("25_mj_picker", "monthly_picker", "SQL do MonthlyJob",
+             evidence="is_malformed_template", spotlight_group="mj-sql"),
+        Step("63_mj_picker", "monthly_picker", "SQL do MonthlyJob",
              "Na lista, escolha Detected = MonthlyJob.",
              "Obrigatório", (0.55, 0.60), click=True, section="MonthlyJob SQL",
-             evidence="detect_source"),
-        Step("25b_mj_picker_confirm", "monthly_picker", "Detected = MonthlyJob",
-             "Confirma que os dois marcadores foram encontrados.",
-             "Obrigatório", (0.55, 0.60), section="MonthlyJob SQL",
-             evidence="picker Detected"),
-        Step("26_mj_schema", "monthly_fields", "Schema (MonthlyJob)",
-             "Schema da tabela de resultado.\nInforme o schema correto do seu trabalho.",
-             "Obrigatório", (0.58, 0.68), section="MonthlyJob campos", evidence="#schema"),
-        Step("27_mj_table", "monthly_fields", "Table Name (MonthlyJob)",
-             "Nome da tabela com o prefixo do usuário.",
+             evidence="detect_source", spotlight_group="mj-picker"),
+        Step("64_mj_schema", "monthly_fields", "Schema",
+             "Schema da tabela de resultado.\nInforme o schema do seu trabalho.",
+             "Obrigatório", (0.58, 0.68), section="MonthlyJob campos", evidence="#schema",
+             spotlight_group="mj-schema"),
+        Step("65_mj_table", "monthly_fields", "Table Name",
+             "Nome da tabela; complete o sufixo\ncom o prefixo já preenchido.",
              "Obrigatório", (0.58, 0.74), section="MonthlyJob campos",
-             evidence="#table-name-prefix"),
-        Step("27b_mj_table_suffix", "monthly_fields", "Sufixo da tabela",
-             "Complete só o sufixo; o prefixo já vem preenchido.",
-             "Obrigatório", (0.58, 0.74), section="MonthlyJob campos",
-             evidence="#table-name-suffix"),
-        Step("28_mj_start", "monthly_fields", "Start Date",
-             "Data inicial (AAAA-MM-DD).\nDefine o primeiro mês a processar.",
-             "Obrigatório", (0.58, 0.80), section="MonthlyJob campos", evidence="#start-date"),
-        Step("29_mj_end", "monthly_fields", "End Date",
-             "Data final (AAAA-MM-DD).\nDeve ser igual ou posterior à Start Date.",
-             "Obrigatório", (0.58, 0.86), section="MonthlyJob campos", evidence="#end-date"),
-        # ExistingTable
-        Step("30_et_intro", "existing", "ExistingTable",
-             "Use quando os dados já estão em uma tabela\ne você quer exportá-los sem .sql.",
-             "Use apenas quando...", (0.38, 0.36), click=True, section="ExistingTable",
-             evidence="src-existingtable"),
-        Step("31_et_dest", "existing", "ExistingTable → Destination",
-             "Neste modo o destino permitido é apenas Csv.",
-             "Obrigatório", (0.70, 0.30), section="ExistingTable",
-             evidence="LEGAL ExistingTable/Csv"),
-        Step("31b_et_dest_blocked", "existing", "Table e Table+Csv",
-             "Ficam indisponíveis com ExistingTable.",
-             "Obrigatório", (0.70, 0.34), section="ExistingTable", evidence="dest hint"),
-        Step("32_et_no_sql", "existing", "Sem SQL File",
-             "A lista e o campo SQL File ficam ocultos.\nA origem é a tabela existente.",
-             "Use apenas quando...", (0.55, 0.48), section="ExistingTable",
-             evidence="picker display=False"),
-        Step("33_et_schema_coe", "existing_coe", "Schema → coe_enc",
-             "Seleciona o schema coe_enc da tabela existente.",
-             "Obrigatório", (0.50, 0.68), click=True, section="ExistingTable Schema",
-             evidence="esc-coe-enc"),
-        Step("34_et_schema_aa", "existing_fields", "Schema → aa_enc",
-             "Seleciona o schema aa_enc.\nÉ a opção padrão nesse schema.",
-             "Obrigatório", (0.55, 0.68), click=True, section="ExistingTable Schema",
-             evidence="esc-aa-enc"),
-        Step("35_et_schema_other", "existing_other", "Schema → other",
-             "Use quando o schema não é coe_enc nem aa_enc.",
-             "Use apenas quando...", (0.60, 0.68), click=True,
-             section="ExistingTable Schema", evidence="esc-other"),
-        Step("35b_et_other_field", "existing_other", "other → Custom Schema",
-             "Ao marcar other, aparece o campo Custom Schema.",
-             "Use apenas quando...", (0.60, 0.72), section="ExistingTable Schema",
-             evidence="#existing-schema-custom"),
-        Step("36_et_custom", "existing_other", "Custom Schema",
-             "Digite o nome do schema personalizado.\nSó aparece com Schema = other.",
-             "Obrigatório", (0.58, 0.74), section="ExistingTable Schema",
-             evidence="row-existing-schema-custom"),
-        Step("37_et_table", "existing_fields", "Existing Table",
-             "Informe só o nome da tabela (sem o schema).",
-             "Obrigatório", (0.58, 0.78), click=True, section="ExistingTable",
-             evidence="#existing-table"),
-        Step("37b_et_full", "existing_fields", "Origem completa",
-             "Com o schema, forma schema.tabela.",
-             "Obrigatório", (0.58, 0.78), section="ExistingTable",
-             evidence="validate_full_table"),
-        # Relations
-        Step("38_rel_standard", "ready_review", "Combinação comum",
-             "SqlFile + Csv + .sql sem marcadores de data.",
-             "", (0.55, 0.36), click=True, section="Relações", evidence="LEGAL SqlFile/Csv"),
-        Step("38b_rel_standard_use", "ready_review", "Fluxo típico",
-             "Gera um CSV a partir de uma consulta.",
-             "", (0.55, 0.36), section="Relações", evidence="detect_source"),
-        Step("39_rel_monthly", "monthly_fields", "Combinação MonthlyJob",
-             "MonthlyJob + Table + .sql com\n{date_inicio} e {date_fim}.",
-             "", (0.55, 0.40), section="Relações", evidence="LEGAL SqlTemplate/Table"),
-        Step("39b_rel_monthly_fields", "monthly_fields", "Campos do MonthlyJob",
-             "Schema e Table Name entram no nome da tabela.",
-             "", (0.55, 0.58), section="Relações", evidence="date fields"),
-        Step("39c_rel_monthly_dates", "monthly_fields", "Datas do MonthlyJob",
-             "Start Date e End Date definem o intervalo mês a mês.",
-             "", (0.55, 0.70), section="Relações", evidence="monthly dates"),
-        Step("40_rel_existing", "existing_fields", "Combinação ExistingTable",
-             "ExistingTable + Csv + Schema + Existing Table.",
-             "", (0.55, 0.42), section="Relações", evidence="ExistingTable flow"),
-        Step("40b_rel_existing_no_sql", "existing_fields", "Sem SQL neste modo",
-             "Não usa SQL File nem MonthlyJob ao mesmo tempo.",
-             "", (0.55, 0.42), section="Relações", evidence="source exclusive"),
-        Step("41_rel_incompat", "matrix", "Combinações indisponíveis",
-             "MonthlyJob não aceita Csv ou Table+Csv.",
-             "", (0.52, 0.20), section="Relações", evidence="LEGAL_CELLS"),
-        Step("41b_rel_incompat_et", "matrix", "ExistingTable — limite",
-             "ExistingTable não aceita Table ou Table+Csv.",
-             "", (0.52, 0.20), section="Relações", evidence="LEGAL_CELLS"),
-        # Validation / launch
-        Step("42_val_bad", "email_bad", "E-mail inválido",
-             "Se o formato estiver errado, o status mostra o problema.",
-             "", (0.58, 0.78), section="Validação", evidence="Invalid email"),
-        Step("43_val_ok", "ready_review", "Formulário pronto",
-             "Com os dados corrigidos, volta Ready to launch.",
-             "", (0.72, 0.92), section="Validação", evidence="Ready to launch"),
-        Step("43b_val_review", "ready_review", "Revise antes de enviar",
-             "Confira origem, destino, arquivo e fila.",
-             "", (0.55, 0.40), section="Validação", evidence="form review"),
-        Step("44_preview", "ready_review", "Preview SQL",
-             "Mostra o conteúdo que será usado no job.",
-             "", (0.78, 0.92), click=True, section="Preview", evidence="Preview SQL [P]"),
-        Step("44b_preview_check", "preview", "O que conferir no Preview",
-             "Confira a consulta e o destino antes do envio.",
-             "", (0.55, 0.35), section="Preview", evidence="preview screen"),
-        Step("45_checklist", "card:checklist", "Antes de iniciar, confirme",
-             "Origem, destino, arquivo ou tabela,\ne fila de execução.",
-             "", (0.50, 0.50), section="Revisão", evidence="checklist"),
-        Step("45b_checklist_b", "card:checklist", "Também confira",
-             "Opções adicionais e e-mail de notificação.",
-             "", (0.50, 0.50), section="Revisão", evidence="checklist"),
-        Step("46_confirm", "confirm", "Launch Job",
-             "Inicia o job com as configurações revisadas.",
-             "", (0.42, 0.72), click=True, section="Envio", evidence="ConfirmScreen"),
-        Step("46b_confirm_read", "confirm", "Confirme só se estiver correto",
-             "Leia o resumo antes de confirmar o envio.",
-             "", (0.42, 0.72), section="Envio", evidence="Launch Job"),
-        Step("47_launched", "launched", "Job enviado",
-             "O job foi enviado pelo Dispatch.\nAcompanhe na tela de monitoramento.",
-             "", (0.55, 0.88), section="Envio", evidence="Launched Job"),
-        Step("48_overview", "overview", "Overview",
-             "Após o envio, acompanhe o status no Overview.",
-             "", (0.12, 0.22), click=True, section="Overview", evidence="DashboardScreen"),
-        Step("49_close", "card:close", "Resumo",
-             "Na aba New Job você define, revisa e inicia o job.",
-             "", (0.50, 0.50), section="Encerramento", evidence="closing"),
-        Step("49b_close_b", "card:close", "Depois do envio",
-             "Acompanhe o resultado no Overview.\nRevise os campos antes de Launch Job.",
-             "", (0.50, 0.50), section="Encerramento", evidence="closing"),
-    ]
+             evidence="#table-name-suffix", spotlight_group="mj-table"),
+        Step("66_mj_start", "monthly_fields", "Start Date",
+             "Data inicial (AAAA-MM-DD).\nDefine o início do período do MonthlyJob.",
+             "Obrigatório", (0.58, 0.80), section="MonthlyJob campos", evidence="#start-date",
+             spotlight_group="mj-start"),
+        Step("66b_mj_start_ex", "monthly_fields", "Exemplo",
+             "Exemplo seguro: 2024-07-01.",
+             "Obrigatório", (0.58, 0.80), section="MonthlyJob campos", evidence="#start-date",
+             spotlight_group="mj-start"),
+        Step("67_mj_end", "monthly_fields", "End Date",
+             "Data final (AAAA-MM-DD).\nDefine o fim do período do MonthlyJob.",
+             "Obrigatório", (0.58, 0.86), section="MonthlyJob campos", evidence="#end-date",
+             spotlight_group="mj-end"),
+        Step("67b_mj_end_ex", "monthly_fields", "Exemplo",
+             "Exemplo seguro: 2024-07-31.",
+             "Obrigatório", (0.58, 0.86), section="MonthlyJob campos", evidence="#end-date",
+             spotlight_group="mj-end"),
+        Step("68_mj_dates_rel", "monthly_fields", "Start Date e End Date",
+             "Juntas, delimitam o intervalo\nprocessado mês a mês.",
+             "Obrigatório", (0.58, 0.82), section="MonthlyJob campos",
+             evidence="monthly_preview", spotlight_group="mj-dates"),
 
+        # --- ExistingTable (positive only) ---
+        Step("70_et_what", "existing", "O que é",
+             "ExistingTable exporta dados de uma\ntabela já existente, sem .sql.",
+             "", (0.38, 0.36), click=True, section="ExistingTable",
+             evidence="src-existingtable", spotlight_group="existing"),
+        Step("70b_et_decide", "existing", "O que você decide aqui",
+             "Use quando a origem é uma tabela\ne o destino desejado é Csv.",
+             "", (0.38, 0.36), section="ExistingTable",
+             evidence="LEGAL ExistingTable/Csv", spotlight_group="existing"),
+        Step("71_et_dest", "existing", "Destination = Csv",
+             "Com ExistingTable, selecione Csv\npara gerar o arquivo de saída.",
+             "Obrigatório", (0.70, 0.30), section="ExistingTable",
+             evidence="LEGAL ExistingTable/Csv", spotlight_group="et-dest"),
+        Step("72_et_schema", "existing_fields", "Schema",
+             "Informe o schema da tabela\nque será exportada.",
+             "Obrigatório", (0.55, 0.68), click=True, section="ExistingTable",
+             evidence="esc-aa-enc", spotlight_group="et-schema"),
+        Step("72b_et_other", "existing_other", "Custom Schema",
+             "Se marcar other, digite o schema\npersonalizado no campo Custom Schema.",
+             "Obrigatório", (0.60, 0.72), section="ExistingTable",
+             evidence="#existing-schema-custom", spotlight_group="et-custom"),
+        Step("73_et_table", "existing_fields", "Existing Table",
+             "Informe o nome da tabela\n(sem o schema).",
+             "Obrigatório", (0.58, 0.78), click=True, section="ExistingTable",
+             evidence="#existing-table", spotlight_group="et-table"),
+        Step("73b_et_effect", "existing_fields", "Efeito",
+             "Com schema e tabela, o Dispatch\nexporta schema.tabela para CSV.",
+             "Obrigatório", (0.58, 0.78), section="ExistingTable",
+             evidence="validate_full_table", spotlight_group="et-table"),
+
+        # --- Status / validation / launch ---
+        Step("80_status", "ready_review", "Status do formulário",
+             "Ready to launch = sem problemas\nbloqueantes para o envio.",
+             "", (0.72, 0.92), section="Status", evidence="validation-summary",
+             spotlight_group="status"),
+        Step("81_val_bad", "email_bad", "Validação",
+             "Se um campo estiver inválido,\no status mostra o problema.",
+             "", (0.58, 0.78), section="Validação", evidence="Invalid email",
+             spotlight_group="val-bad"),
+        Step("82_val_ok", "ready_review", "Formulário pronto",
+             "Com os dados corrigidos,\nvolta Ready to launch.",
+             "", (0.72, 0.92), section="Validação", evidence="Ready to launch",
+             spotlight_group="status"),
+        Step("83_preview", "ready_review", "Preview SQL",
+             "Mostra o conteúdo que será\nusado no job.",
+             "", (0.78, 0.92), click=True, section="Preview", evidence="Preview SQL [P]",
+             spotlight_group="preview-btn"),
+        Step("83b_preview_check", "preview", "O que conferir",
+             "Confira a consulta e o destino\nantes do envio.",
+             "", (0.55, 0.35), section="Preview", evidence="preview screen",
+             spotlight_group="preview-body"),
+        Step("84_check_a", "card:checklist", "Antes de iniciar, confirme",
+             "Origem, destino e arquivo\nou tabela estão corretos.",
+             "", (0.50, 0.50), section="Revisão", evidence="checklist",
+             spotlight_group="checklist"),
+        Step("84b_check_b", "card:checklist", "Também confira",
+             "Fila, opções e e-mail\nde notificação.",
+             "", (0.50, 0.50), section="Revisão", evidence="checklist",
+             spotlight_group="checklist"),
+        Step("85_launch", "ready_review", "Launch",
+             "Envia o job com as configurações\nrevisadas.",
+             "", (0.88, 0.92), section="Envio", evidence="#launch",
+             spotlight_group="launch"),
+        Step("86_confirm", "confirm", "Confirmação",
+             "Leia o resumo e confirme\nsó se estiver correto.",
+             "", (0.42, 0.72), click=True, section="Envio", evidence="ConfirmScreen",
+             spotlight_group="confirm"),
+        Step("87_launched", "launched", "Job enviado",
+             "O job foi enviado pelo Dispatch.\nAcompanhe o status em seguida.",
+             "", (0.55, 0.88), section="Envio", evidence="Launched Job",
+             spotlight_group="launched"),
+        Step("88_overview", "overview", "Overview",
+             "Após o envio, acompanhe o status\nno Overview.",
+             "", (0.12, 0.22), click=True, section="Overview", evidence="DashboardScreen",
+             spotlight_group="overview"),
+        Step("89_close", "card:close", "Resumo",
+             "Na aba New Job você define,\nrevisa e inicia o job.",
+             "", (0.50, 0.50), section="Encerramento", evidence="closing",
+             spotlight_group="close"),
+        Step("89b_close_b", "card:close", "Depois do envio",
+             "Acompanhe o resultado no Overview.",
+             "", (0.50, 0.50), section="Encerramento", evidence="closing",
+             spotlight_group="close"),
+    ]
 
 
 
 def _apply_targets(steps: list[Step]) -> list[Step]:
     """Attach precise Textual widget ids for element-based spotlights."""
     mapping: dict[str, list[str]] = {
-        "02_purpose_a": ["radio-panel"],
-        "02_purpose_b": ["source", "destination"],
-        "03_matrix": ["matrix-collapsible"],
-        "04_detected": ["info-detected"],
-        "05_source_intro": ["source"],
-        "06_source_sqlfile": ["src-sqlfile"],
-        "06b_source_sqlfile_effect": ["src-sqlfile"],
-        "07_dest_intro": ["destination"],
-        "08_dest_table": ["dst-table"],
-        "09_dest_csv": ["dst-csv"],
-        "09b_dest_csv_when": ["dst-csv"],
-        "10_dest_tablecsv": ["dst-table-csv"],
-        "11_queue_a": ["lbl-queue", "queue"],
-        "12_queue_b": ["lbl-queue", "queue"],
-        "12b_queue_order": ["queue-panel"],
-        "13_sql_intro": ["lbl-sql-file", "sql-file"],
-        "13b_sql_when": ["lbl-sql-file", "sql-file"],
-        "14_sql_picker": ["sql-file-picker"],
-        "15_sql_verify": ["sql-file-picker"],
-        "15b_sql_path": ["lbl-sql-file", "sql-file"],
-        "16_sql_role": ["lbl-sql-file", "sql-file"],
-        "16b_sql_role_dest": ["source", "destination"],
-        "17_email": ["lbl-email", "email"],
-        "18_subject": ["lbl-subject", "subject"],
-        "19_status_bar": ["validation-summary"],
-        "19b_actions": ["preview", "launch"],
-        "20_mj_intro": ["src-sqltemplate"],
-        "21_mj_dest": ["src-sqltemplate", "dst-table"],
-        "21b_mj_dest_blocked": ["dst-csv", "dst-table-csv"],
-        "22_mj_sql_rule_a": [],
-        "23_mj_sql_rule_b": [],
-        "23b_mj_sql_missing": [],
-        "24_mj_sql_rule_c": [],
-        "24b_mj_sql_fill": [],
-        "25_mj_picker": ["sql-file-picker"],
-        "25b_mj_picker_confirm": ["sql-file-picker"],
-        "26_mj_schema": ["lbl-schema", "schema"],
-        "27_mj_table": ["lbl-table-name", "table-name-prefix", "table-name-suffix"],
-        "27b_mj_table_suffix": ["table-name-prefix", "table-name-suffix"],
-        "28_mj_start": ["lbl-start-date", "start-date"],
-        "29_mj_end": ["lbl-end-date", "end-date"],
-        "30_et_intro": ["src-existingtable"],
-        "31_et_dest": ["src-existingtable", "dst-csv"],
-        "31b_et_dest_blocked": ["dst-table", "dst-table-csv"],
-        "32_et_no_sql": ["src-existingtable", "dest-hint"],
-        "33_et_schema_coe": ["esc-coe-enc"],
-        "34_et_schema_aa": ["esc-aa-enc"],
-        "35_et_schema_other": ["esc-other"],
-        "35b_et_other_field": ["lbl-existing-schema-custom", "existing-schema-custom"],
-        "36_et_custom": ["lbl-existing-schema-custom", "existing-schema-custom"],
-        "37_et_table": ["lbl-existing-table", "existing-table"],
-        "37b_et_full": [
-            "lbl-existing-schema", "existing-schema",
-            "lbl-existing-table", "existing-table",
-        ],
-        "38_rel_standard": ["src-sqlfile", "dst-csv"],
-        "38b_rel_standard_use": ["src-sqlfile", "dst-csv"],
-        "39_rel_monthly": ["src-sqltemplate", "dst-table"],
-        "39b_rel_monthly_fields": [
-            "lbl-schema", "schema", "lbl-table-name", "table-name-prefix", "table-name-suffix",
-        ],
-        "39c_rel_monthly_dates": [
-            "lbl-start-date", "start-date", "lbl-end-date", "end-date",
-        ],
-        "40_rel_existing": ["src-existingtable", "dst-csv"],
-        "40b_rel_existing_no_sql": ["src-existingtable"],
-        "41_rel_incompat": ["matrix-table"],
-        "41b_rel_incompat_et": ["matrix-table"],
-        "42_val_bad": ["lbl-email", "email", "validation-summary"],
-        "43_val_ok": ["validation-summary"],
-        "43b_val_review": ["source", "destination"],
-        "44_preview": ["preview"],
-        "44b_preview_check": ["preview-header", "preview-body"],
-        "45_checklist": [],
-        "45b_checklist_b": [],
-        "46_confirm": ["confirm-dialog"],
-        "46b_confirm_read": ["confirm-dialog"],
-        "47_launched": ["warning-text"],
-        "48_overview": ["sidebar-nav"],
-        "49_close": [],
-        "49b_close_b": [],
+        "02_purpose": ["radio-panel"],
+        "10_source_what": ["source"],
+        "10b_source_decide": ["source"],
+        "11_source_sqlfile": ["src-sqlfile"],
+        "11b_source_sqlfile_effect": ["src-sqlfile"],
+        "20_dest_what": ["destination"],
+        "20b_dest_decide": ["destination"],
+        "21_dest_csv": ["dst-csv"],
+        "21b_dest_csv_effect": ["dst-csv"],
+        "30_sql_what": ["lbl-sql-file", "sql-file"],
+        "30b_sql_decide": ["lbl-sql-file", "sql-file"],
+        "31_sql_picker": ["sql-file-picker"],
+        "31b_sql_path": ["lbl-sql-file", "sql-file"],
+        "32_sql_dest": ["sql-file", "destination"],
+        "35_detected": ["info-detected"],
+        "36_matrix": ["matrix-collapsible"],
+        "40_queue_what": ["lbl-queue", "queue"],
+        "40b_queue_none": ["queue-panel"],
+        "40c_queue_decide": ["queue-panel"],
+        "41_queue_example": ["queue"],
+        "50_email": ["lbl-email", "email"],
+        "51_subject": ["lbl-subject", "subject"],
+        "60_mj_what": ["src-sqltemplate"],
+        "60b_mj_decide": ["src-sqltemplate"],
+        "61_mj_dest": ["dst-table"],
+        "62_mj_sql_a": [],
+        "62b_mj_sql_b": [],
+        "62c_mj_sql_c": [],
+        "63_mj_picker": ["sql-file-picker"],
+        "64_mj_schema": ["lbl-schema", "schema"],
+        "65_mj_table": ["lbl-table-name", "table-name-prefix", "table-name-suffix"],
+        "66_mj_start": ["lbl-start-date", "start-date"],
+        "66b_mj_start_ex": ["lbl-start-date", "start-date"],
+        "67_mj_end": ["lbl-end-date", "end-date"],
+        "67b_mj_end_ex": ["lbl-end-date", "end-date"],
+        "68_mj_dates_rel": ["lbl-start-date", "start-date", "lbl-end-date", "end-date"],
+        "70_et_what": ["src-existingtable"],
+        "70b_et_decide": ["src-existingtable"],
+        "71_et_dest": ["dst-csv"],
+        "72_et_schema": ["lbl-existing-schema", "existing-schema"],
+        "72b_et_other": ["lbl-existing-schema-custom", "existing-schema-custom"],
+        "73_et_table": ["lbl-existing-table", "existing-table"],
+        "73b_et_effect": ["lbl-existing-table", "existing-table"],
+        "80_status": ["validation-summary"],
+        "81_val_bad": ["validation-summary"],
+        "82_val_ok": ["validation-summary"],
+        "83_preview": ["preview"],
+        "83b_preview_check": ["preview-header", "preview-body"],
+        "84_check_a": [],
+        "84b_check_b": [],
+        "85_launch": ["launch"],
+        "86_confirm": ["confirm-dialog"],
+        "87_launched": ["warning-text"],
+        "88_overview": ["sidebar-nav"],
+        "89_close": [],
+        "89b_close_b": [],
     }
     out = []
     for s in steps:
@@ -464,8 +445,10 @@ def _apply_targets(steps: list[Step]) -> list[Step]:
             id=s.id, capture=s.capture, title=s.title, body=s.body, badge=s.badge,
             cursor=s.cursor, click=s.click, section=s.section, evidence=s.evidence,
             instructional=s.instructional, spotlight=s.spotlight, targets=list(targets),
+            spotlight_group=s.spotlight_group,
         ))
     return out
+
 
 
 REGION_WIDGET_IDS = [
@@ -685,6 +668,24 @@ async def _setups():
         await p.pause(0.2)
         s.query_one("#queue", SelectionList).focus()
 
+    async def queues_selected(p, a):
+        s = a.screen
+        s.query_one("#matrix-collapsible").collapsed = True
+        s.query_one("#src-sqlfile", RadioButton).value = True
+        s.query_one("#dst-csv", RadioButton).value = True
+        await p.pause(0.2)
+        q = s.query_one("#queue", SelectionList)
+        q.focus()
+        # Select adhoc_fast as a deliberate simple-query example.
+        try:
+            q.select("adhoc_fast")
+        except Exception:
+            try:
+                await p.press("space")
+            except Exception:
+                pass
+        await p.pause(0.25)
+
     async def picker(p, a):
         s = a.screen
         s.query_one("#matrix-collapsible").collapsed = True
@@ -841,6 +842,7 @@ async def _setups():
         "dest_table": dest_table,
         "dest_tablecsv": dest_tablecsv,
         "queues": queues,
+        "queues_selected": queues_selected,
         "picker": picker,
         "email_ok": email_ok,
         "monthly": monthly,
@@ -988,11 +990,19 @@ def _spotlights_for_step(step: Step) -> list[tuple[float, float, float, float]]:
 
     # Clamp oversized SQL preview logs so the cutout stays on the query, not
     # the whole preview chrome / findings area.
+    # validation-summary is width:1fr and stretches empty space up to the
+    # Preview/Launch buttons — keep only the status text cluster.
+    preview_box = _cell_to_norm(regions, "preview")
     clamped: list[tuple[str, tuple[float, float, float, float]]] = []
     for wid, n in items:
         l, t, r, b = n
         if wid in {"preview-body", "sql-display"}:
             b = min(b, t + 0.40)
+        if wid == "validation-summary":
+            if preview_box is not None:
+                r = min(r, preview_box[0] - 0.012)
+            # Status line is a short left-aligned message, not the full 1fr cell.
+            r = min(r, l + 0.42)
         clamped.append((wid, (l, t, r, b)))
     items = clamped
 
@@ -1055,16 +1065,18 @@ def _card(title: str, body: str, dest: Path, *, accent: str | None = None) -> No
     from PIL import Image, ImageDraw
     img = Image.new("RGB", (VIDEO_W, VIDEO_H), (16, 22, 32))
     draw = ImageDraw.Draw(img)
-    draw.rectangle((0, 0, 12, VIDEO_H), fill=(64, 156, 255))
+    # Content safe area with generous margins from edges/outlines
+    left, top, right, bottom = 120, 140, VIDEO_W - 120, VIDEO_H - DIALOGUE_H - 80
+    draw.rounded_rectangle((left, top, right, bottom), radius=16, outline=(64, 156, 255), width=3)
     title_f = _ui_font(48, bold=True)
     body_f = _ui_font(34)
-    y = 160
-    draw.text((80, y), title, fill=(245, 245, 245), font=title_f)
-    y += 90
+    y = top + 56
+    draw.text((left + 56, y), title, fill=(245, 245, 245), font=title_f)
+    y += 88
     for line in body.split("\n"):
         color = (255, 220, 120) if "{" in line else (210, 220, 235)
-        draw.text((80, y), line, fill=color, font=body_f)
-        y += 52
+        draw.text((left + 56, y), line, fill=color, font=body_f)
+        y += 56
     img.save(dest)
 
 
@@ -1117,22 +1129,25 @@ def _draw_dialogue_box(canvas, *, title: str, body: str, badge: str,
     body_f = _ui_font(BODY_FONT_PX, bold=False)
     badge_f = _ui_font(BADGE_FONT_PX, bold=True)
     vis_title, vis_body = _visible_parts(title, body, reveal_chars)
-    pad_x, pad_y = 56, 32
+    # Never show "Opcional" badges.
+    if badge.strip().lower() == "opcional":
+        badge = ""
+    pad_x, pad_y = PAD_X, PAD_Y
     y = top + pad_y
     if vis_title:
         draw.text((left + pad_x, y), vis_title, fill=(10, 10, 10, 255), font=title_f)
     if badge and reveal_chars >= len(title):
         bw = 28 + len(badge) * 11
-        bx = right - bw - 64
+        bx = right - bw - 72
         draw.rectangle((bx, y + 4, bx + bw, y + 34), outline=(0, 0, 0), width=2)
         draw.text((bx + 10, y + 8), badge, fill=(10, 10, 10, 255), font=badge_f)
-    y = top + pad_y + 52
-    line_gap = int(BODY_FONT_PX * 1.2)
+    y = top + pad_y + 56
+    line_gap = int(BODY_FONT_PX * 1.22)
     for line in vis_body.split("\n")[:2]:
         draw.text((left + pad_x, y), line, fill=(20, 20, 20, 255), font=body_f)
         y += line_gap
     if show_arrow:
-        _draw_red_arrow(draw, right - 12, bottom - 8, offset=arrow_offset)
+        _draw_red_arrow(draw, right - 16, bottom - 12, offset=arrow_offset)
 
 
 def _apply_spotlights(canvas, new, ox, oy, spotlights: list[tuple[float, float, float, float]],
@@ -1294,35 +1309,40 @@ def _fmt_ts(seconds: float) -> str:
 
 def _validate_timing(rows: list[dict]) -> None:
     lines = [
-        "# Instructional scene timing validation (exactly 8.0s @ 1920×1080)",
+        "# Dialogue timing validation (typing + exactly 5.0s complete-text hold)",
         "",
-        f"Font: **{FONT_NAME}** (`{FONT_REGULAR.name}` / `{FONT_BOLD.name}`). {FONT_REASON}",
-        f"Body size: {BODY_FONT_PX}px. Dim alpha={DIM_ALPHA}.",
+        f"Font: **{FONT_NAME}** (`{FONT_REGULAR.name}`). {FONT_REASON}",
+        f"Body size: {BODY_FONT_PX}px. Hold complete: {HOLD_COMPLETE_S}s. Dim alpha={DIM_ALPHA}.",
         "",
-        "| Scene | Element | Start | Type end | Arrow | End | Type | Total | Cutouts | Result |",
-        "|---|---|---|---|---|---|---|---|---|---|",
+        "| Scene | Element | Type start | Type end | Hold start | Hold end | Hold | Reused spot | Cue | Duck | Result |",
+        "|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     failed = []
     for row in rows:
         if not row["instructional"]:
             continue
-        total = row["scene_duration"]
+        hold = row["static_duration"]
         anim = row["anim_duration"]
         ok = True
         reasons = []
-        if abs(total - SCENE_SECONDS) > (1.0 / FPS) + 1e-6:
-            ok = False; reasons.append("not-8s")
+        if abs(hold - HOLD_COMPLETE_S) > (1.0 / FPS) + 1e-6:
+            ok = False; reasons.append("hold-not-5s")
+        if abs(row["scene_duration"] - (anim + hold)) > (1.0 / FPS) + 1e-6:
+            ok = False; reasons.append("scene!=type+hold")
         if anim > TYPING_MAX_S + (1.0 / FPS) + 1e-6:
             ok = False; reasons.append("typing>1.5")
         if row["arrow_at"] + 1e-6 < row["anim_end"]:
             ok = False; reasons.append("arrow-early")
+        if row.get("badge", "").strip().lower() == "opcional":
+            ok = False; reasons.append("opcional-badge")
         status = "PASS" if ok else "FAIL"
         if not ok:
             failed.append(f"{row['id']}({','.join(reasons)})")
         lines.append(
-            f"| `{row['id']}` | {row['title'][:24]} | {_fmt_ts(row['anim_start'])} | "
-            f"{_fmt_ts(row['anim_end'])} | {_fmt_ts(row['arrow_at'])} | {_fmt_ts(row['scene_end'])} | "
-            f"{anim:.2f}s | {total:.2f}s | {row['n_cutouts']} | **{status}** |"
+            f"| `{row['id']}` | {row['title'][:22]} | {_fmt_ts(row['anim_start'])} | "
+            f"{_fmt_ts(row['anim_end'])} | {_fmt_ts(row['hold_start'])} | {_fmt_ts(row['hold_end'])} | "
+            f"{hold:.2f}s | {row.get('spotlight_reused', False)} | {_fmt_ts(row.get('sfx_at', row['anim_start']))} | "
+            f"{_fmt_ts(row.get('duck_at', row['anim_start']))} | **{status}** |"
         )
     lines.append("")
     lines.append(f"Instructional scenes: {sum(1 for r in rows if r['instructional'])}")
@@ -1351,10 +1371,11 @@ def _write_srt(rows: list[dict]) -> None:
 def _write_storyboard(rows: list[dict], steps: list[Step]) -> None:
     by_id = {s.id: s for s in steps}
     lines = [
-        "# Storyboard — New Job (8.0s, Carlito, 1920×1080, element spotlights)",
+        "# Storyboard — New Job (typing + 5.0s hold, Carlito, 1920×1080)",
         "",
         f"Font: {FONT_NAME} ({FONT_REGULAR.name}). Body {BODY_FONT_PX}px / title {TITLE_FONT_PX}px.",
         f"{FONT_REASON}",
+        f"Complete-text hold: exactly {HOLD_COMPLETE_S}s after typing. Original chiptune BGM + UI blip.",
         "",
     ]
     for row in rows:
@@ -1371,8 +1392,11 @@ def _write_storyboard(rows: list[dict], steps: list[Step]) -> None:
             f"- **Overlay opacity:** {DIM_ALPHA}/255",
             f"- **Diálogo:** {step.title} — {step.body.replace(chr(10), ' / ')}",
             f"- **Typing:** {_fmt_ts(row['anim_start'])} → {_fmt_ts(row['anim_end'])} ({row['anim_duration']:.2f}s)",
+            f"- **Hold complete:** {_fmt_ts(row['hold_start'])} → {_fmt_ts(row['hold_end'])} ({row['static_duration']:.2f}s)",
+            f"- **Spotlight group:** {step.spotlight_group or '(none)'} (reused={row.get('spotlight_reused', False)})",
+            f"- **SFX / duck:** {_fmt_ts(row.get('sfx_at', row['anim_start']))}",
             f"- **Seta:** {_fmt_ts(row['arrow_at'])}",
-            f"- **Duração:** {row['scene_duration']:.2f}s",
+            f"- **Duração cena:** {row['scene_duration']:.2f}s",
             f"- **Manual review:** {row.get('manual_review', 'pending')}",
             f"- **Evidência:** {step.evidence}",
             "",
@@ -1393,9 +1417,8 @@ def _manual_review_spotlight(
     app_h = VIDEO_H - DIALOGUE_H
     app_area = VIDEO_W * app_h
     allow_large = {
-        "46_confirm", "46b_confirm_read", "03_matrix", "14_sql_picker",
-        "15_sql_verify", "25_mj_picker", "25b_mj_picker_confirm",
-        "48_overview", "02_purpose_a",
+        "86_confirm", "36_matrix", "31_sql_picker", "63_mj_picker",
+        "88_overview", "02_purpose", "83b_preview_check",
     }
     for b in boxes_px:
         if b[3] > VIDEO_H - DIALOGUE_H + 2:
@@ -1572,27 +1595,42 @@ async def main() -> int:
           FRAMES_DIR / "card_close.png")
     bases["card:close"] = FRAMES_DIR / "card_close.png"
 
-    print("Building 8.0s Carlito dialogue + element spotlight segments @ 1080p…")
+    print("Building Carlito dialogue + spotlights (typing + 5.0s hold) @ 1080p…")
     segment_paths: list[Path] = []
     timing_rows: list[dict] = []
     hold_pngs: list[Path] = []
     t = 0.0
     prev_cur: tuple[float, float] | None = None
+    prev_group = ""
+    group_cache: dict[str, tuple[list, list[int], tuple[float, float]]] = {}
+    sfx_events: list[float] = []  # dialogue-appearance cue timestamps
 
     for step in steps:
+        if step.badge.strip().lower() == "opcional":
+            raise AssertionError(f"Opcional badge still present on {step.id}")
         base = bases[step.capture]
-        spots = _spotlights_for_step(step)
-        margins = [_margin_for(w) for w in step.targets] if step.targets else [MARGIN_FIELD_PX] * len(spots)
-        while len(margins) < len(spots):
-            margins.append(MARGIN_FIELD_PX)
-        cursor = _cursor_for_step(step, spots)
-        anim_frames, anim_s = _typing_plan(step)
-        static_s = SCENE_SECONDS - anim_s
         is_card = step.capture.startswith("card:")
+        reused = bool(step.spotlight_group and step.spotlight_group == prev_group
+                      and step.spotlight_group in group_cache)
+        if reused:
+            spots, margins, cursor = group_cache[step.spotlight_group]
+        else:
+            spots = _spotlights_for_step(step)
+            margins = [_margin_for(w) for w in step.targets] if step.targets else [MARGIN_FIELD_PX] * len(spots)
+            while len(margins) < len(spots):
+                margins.append(MARGIN_FIELD_PX)
+            cursor = _cursor_for_step(step, spots)
+            if step.spotlight_group:
+                group_cache[step.spotlight_group] = (list(spots), list(margins), cursor)
+
+        anim_frames, anim_s = _typing_plan(step)
+        static_s = HOLD_COMPLETE_S
+        scene_s = anim_s + static_s
         n_full = _char_count(step.title, step.body)
 
         move_dur = 0.0
-        if not is_card:
+        # Skip cursor move when reusing the same spotlight group.
+        if not is_card and not reused:
             move_pngs = []
             start = prev_cur or cursor
             for i in range(MOVE_FRAMES):
@@ -1608,20 +1646,6 @@ async def main() -> int:
             _encode_seq(move_pngs, move_mp4)
             segment_paths.append(move_mp4)
             move_dur = MOVE_FRAMES / FPS
-
-        click_mp4_path = None
-        click_dur = 0.0
-        if not is_card and step.click:
-            click_pngs = []
-            for i in range(CLICK_FRAMES):
-                path = anim / f"{step.id}_c{i:02d}.png"
-                _compose(base, path, title=step.title, body=step.body, badge=step.badge,
-                         cursor=cursor, spotlights=spots, margins_px=margins, clicking=True,
-                         reveal_chars=n_full, show_spotlight=True, show_dialogue=True, show_arrow=True)
-                click_pngs.append(path)
-            click_mp4_path = CLIPS_DIR / f"{step.id}_click.mp4"
-            _encode_seq(click_pngs, click_mp4_path)
-            click_dur = CLICK_FRAMES / FPS
 
         type_pngs = []
         for i in range(anim_frames):
@@ -1662,16 +1686,30 @@ async def main() -> int:
 
         anim_start = t + move_dur
         anim_end = anim_start + anim_s
+        hold_start = anim_end
+        hold_end = hold_start + static_s
         arrow_at = anim_end
-        scene_end = anim_start + SCENE_SECONDS
+        scene_end = hold_end
+        sfx_at = anim_start
+        sfx_events.append(sfx_at)
 
         post = 0.0
-        if click_mp4_path is not None:
-            segment_paths.append(click_mp4_path)
+        if not is_card and step.click:
+            # Click only after the full dialogue card (typing + 5s hold).
+            click_pngs = []
+            for i in range(CLICK_FRAMES):
+                path = anim / f"{step.id}_c{i:02d}.png"
+                _compose(base, path, title=step.title, body=step.body, badge=step.badge,
+                         cursor=cursor, spotlights=spots, margins_px=margins, clicking=True,
+                         reveal_chars=n_full, show_spotlight=True, show_dialogue=True, show_arrow=True)
+                click_pngs.append(path)
+            click_mp4 = CLIPS_DIR / f"{step.id}_click.mp4"
+            _encode_seq(click_pngs, click_mp4)
+            segment_paths.append(click_mp4)
             outcome = CLIPS_DIR / f"{step.id}_outcome.mp4"
             _encode_still(hold_a, OUTCOME_S, outcome)
             segment_paths.append(outcome)
-            post = click_dur + OUTCOME_S
+            post = CLICK_FRAMES / FPS + OUTCOME_S
 
         review_status, fail_reason = _manual_review_spotlight(step, spots, boxes)
         timing_rows.append({
@@ -1680,24 +1718,33 @@ async def main() -> int:
             "body": step.body.replace("\n", " / "),
             "badge": step.badge,
             "instructional": step.instructional,
+            "spotlight_group": step.spotlight_group,
+            "spotlight_reused": reused,
+            "targets": list(step.targets),
             "anim_start": anim_start,
             "anim_end": anim_end,
+            "hold_start": hold_start,
+            "hold_end": hold_end,
             "arrow_at": arrow_at,
+            "sfx_at": sfx_at,
+            "duck_at": sfx_at,
+            "restore_at": sfx_at + DUCK_FADE_DOWN_S + 0.14 + DUCK_FADE_UP_S,
             "anim_duration": anim_s,
             "static_duration": static_s,
-            "scene_duration": SCENE_SECONDS,
+            "scene_duration": scene_s,
             "scene_end": scene_end,
             "spotlights_norm": [[round(v, 4) for v in s] for s in spots],
             "spotlights_px": [list(b) for b in boxes],
             "n_cutouts": max(1, len(boxes)),
             "margins": margins,
-            "review_ts": anim_end + min(2.0, static_s / 2),
+            "review_ts": hold_start + min(2.0, static_s / 2),
             "manual_review": review_status,
             "fail_reason": fail_reason,
         })
         t = scene_end + post
         prev_cur = cursor
-        print(f"  {step.id}: cutouts={len(boxes)} review={review_status} type={anim_s:.2f}s end={t:.1f}s", flush=True)
+        prev_group = step.spotlight_group
+        print(f"  {step.id}: cutouts={len(boxes)} reused={reused} hold={static_s:.1f}s type={anim_s:.2f}s end={t:.1f}s", flush=True)
 
     _validate_timing(timing_rows)
     fails = [r["id"] for r in timing_rows if r.get("manual_review") == "FAIL"]
@@ -1708,10 +1755,10 @@ async def main() -> int:
 
     concat = CLIPS_DIR / "concat.txt"
     concat.write_text("".join(f"file '{p.resolve()}'\n" for p in segment_paths), encoding="utf-8")
-    muxed = CLIPS_DIR / "muxed.mp4"
-    subprocess.run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat), "-c", "copy", str(muxed)],
+    silent_mux = CLIPS_DIR / "muxed_silent.mp4"
+    subprocess.run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat), "-c", "copy", str(silent_mux)],
                    check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    shutil.copy2(muxed, VIDEO_OUT)
+    audio_meta = _mix_audio(silent_mux, VIDEO_OUT, sfx_events, total_duration=t)
     _make_zip()
 
     probe = subprocess.run(
@@ -1723,6 +1770,7 @@ async def main() -> int:
     vol = subprocess.run(["ffmpeg", "-i", str(VIDEO_OUT), "-af", "volumedetect", "-f", "null", "-"],
                          check=True, capture_output=True, text=True)
     print(vol.stderr)
+    reused_groups = len({r["spotlight_group"] for r in timing_rows if r.get("spotlight_reused")})
     meta = {
         "font_name": FONT_NAME,
         "font_regular": str(FONT_REGULAR),
@@ -1731,19 +1779,24 @@ async def main() -> int:
         "body_font_px": BODY_FONT_PX,
         "title_font_px": TITLE_FONT_PX,
         "resolution": [VIDEO_W, VIDEO_H],
-        "scene_seconds": SCENE_SECONDS,
+        "hold_complete_s": HOLD_COMPLETE_S,
         "instructional_scenes": len(timing_rows),
         "min_scene_s": min(r["scene_duration"] for r in timing_rows),
         "max_scene_s": max(r["scene_duration"] for r in timing_rows),
+        "min_hold_s": min(r["static_duration"] for r in timing_rows),
+        "max_hold_s": max(r["static_duration"] for r in timing_rows),
         "min_typing_s": min(r["anim_duration"] for r in timing_rows),
         "max_typing_s": max(r["anim_duration"] for r in timing_rows),
         "dim_alpha": DIM_ALPHA,
         "scenes_multi_cutout": sum(1 for r in timing_rows if r["n_cutouts"] > 1),
+        "spotlighted_cards": sum(1 for r in timing_rows if r["n_cutouts"] >= 1),
+        "reused_spotlight_groups": reused_groups,
         "duration_s": t,
         "monthly_sql_requirement": "{date_inicio} and {date_fim}",
         "timing_validation_passed": True,
         "spotlight_validation_passed": len(fails) == 0,
         "spotlight_failures": fails,
+        "audio": audio_meta,
         "holds": timing_rows,
     }
     (OUT_DIR / "validation_meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
@@ -1756,6 +1809,102 @@ async def main() -> int:
         print(f"SPOTLIGHT_FAILS={fails}")
         return 2
     return 0
+
+
+def _mix_audio(silent_mp4: Path, out_mp4: Path, sfx_times: list[float], *, total_duration: float) -> dict:
+    """Mux looping original BGM + dialogue cues with ducking (NumPy SFX bed)."""
+    import numpy as np
+    import wave
+
+    if not BGM_WAV.exists() or not SFX_WAV.exists():
+        gen = OUT_DIR / "generate_original_audio.py"
+        if gen.exists():
+            import runpy
+            runpy.run_path(str(gen), run_name="__main__")
+        if not BGM_WAV.exists() or not SFX_WAV.exists():
+            raise SystemExit(f"Missing original audio: {BGM_WAV} / {SFX_WAV}")
+
+    sr = 44100
+    n_total = max(sr, int(round(total_duration * sr)))
+
+    def _read_wav(path: Path) -> np.ndarray:
+        with wave.open(str(path), "rb") as w:
+            assert w.getnchannels() == 1
+            assert w.getsampwidth() == 2
+            data = np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16).astype(np.float64) / 32767.0
+            if w.getframerate() != sr:
+                # nearest-neighbor resample
+                idx = (np.arange(int(len(data) * sr / w.getframerate())) * (w.getframerate() / sr)).astype(int)
+                idx = np.clip(idx, 0, len(data) - 1)
+                data = data[idx]
+            return data
+
+    bgm = _read_wav(BGM_WAV)
+    sfx = _read_wav(SFX_WAV)
+    # Loop BGM
+    reps = int(np.ceil(n_total / max(1, len(bgm))))
+    bed = np.tile(bgm, reps)[:n_total] * BGM_LEVEL
+    # Place SFX and build duck envelope
+    sfx_track = np.zeros(n_total, dtype=np.float64)
+    duck = np.ones(n_total, dtype=np.float64)
+    fade_down = max(1, int(DUCK_FADE_DOWN_S * sr))
+    fade_up = max(1, int(DUCK_FADE_UP_S * sr))
+    hold = max(1, len(sfx))
+    for ts in sfx_times:
+        start = max(0, int(round(ts * sr)))
+        end = min(n_total, start + len(sfx))
+        if end <= start:
+            continue
+        sfx_track[start:end] += sfx[: end - start] * SFX_LEVEL
+        # Duck window: fade down before cue, stay low during cue, fade up after
+        d0 = max(0, start - fade_down)
+        d1 = start
+        d2 = min(n_total, start + hold)
+        d3 = min(n_total, d2 + fade_up)
+        if d1 > d0:
+            duck[d0:d1] = np.minimum(duck[d0:d1], np.linspace(1.0, DUCK_LEVEL / max(BGM_LEVEL, 1e-6), d1 - d0))
+        duck[d1:d2] = np.minimum(duck[d1:d2], DUCK_LEVEL / max(BGM_LEVEL, 1e-6))
+        if d3 > d2:
+            duck[d2:d3] = np.minimum(duck[d2:d3], np.linspace(DUCK_LEVEL / max(BGM_LEVEL, 1e-6), 1.0, d3 - d2))
+
+    mixed = bed * duck + sfx_track
+    peak = float(np.max(np.abs(mixed)) or 1.0)
+    if peak > 0.98:
+        mixed *= 0.95 / peak
+        peak = float(np.max(np.abs(mixed)))
+    pcm = np.clip(mixed * 32767.0, -32767, 32767).astype(np.int16)
+    mixed_wav = CLIPS_DIR / "mixed_audio.wav"
+    with wave.open(str(mixed_wav), "w") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(sr)
+        w.writeframes(pcm.tobytes())
+
+    peak_probe = subprocess.run(
+        ["ffmpeg", "-i", str(mixed_wav), "-af", "volumedetect", "-f", "null", "-"],
+        check=True, capture_output=True, text=True)
+
+    subprocess.run(
+        ["ffmpeg", "-y", "-i", str(silent_mp4), "-i", str(mixed_wav),
+         "-c:v", "copy", "-c:a", "aac", "-b:a", "128k", "-shortest",
+         "-map", "0:v:0", "-map", "1:a:0", str(out_mp4)],
+        check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    return {
+        "bgm_source": str(BGM_WAV.relative_to(OUT_DIR)),
+        "sfx_source": str(SFX_WAV.relative_to(OUT_DIR)),
+        "license": "Original generated composition for this package (not Pokémon-derived).",
+        "generation": "NumPy square/triangle oscillators; seed 20260727; BPM 96; G-centered.",
+        "bgm_level": BGM_LEVEL,
+        "sfx_level": SFX_LEVEL,
+        "duck_level": DUCK_LEVEL,
+        "fade_down_s": DUCK_FADE_DOWN_S,
+        "fade_up_s": DUCK_FADE_UP_S,
+        "cue_count": len(sfx_times),
+        "peak_abs": peak,
+        "volumedetect": peak_probe.stderr[-800:],
+        "validation": "PASS" if peak <= 1.0 else "FAIL",
+    }
 
 
 if __name__ == "__main__":

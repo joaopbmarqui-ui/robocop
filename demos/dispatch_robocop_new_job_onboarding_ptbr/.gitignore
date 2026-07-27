@@ -1,6 +1,8 @@
 # Intermediate production artifacts (regenerate with generate_onboarding_video.py)
 frames/
-audio/
+audio/**
+!audio/original/
+!audio/original/**
 clips/
 *.svg
 *_raw.png

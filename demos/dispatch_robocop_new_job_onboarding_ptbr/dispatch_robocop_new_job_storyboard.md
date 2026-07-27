@@ -1,7 +1,8 @@
-# Storyboard — New Job (8.0s, Carlito, 1920×1080, element spotlights)
+# Storyboard — New Job (typing + 5.0s hold, Carlito, 1920×1080)
 
 Font: Carlito (Carlito-Regular.ttf). Body 38px / title 42px.
 Calibri is not installed in this Linux environment. Using Carlito (fonts-crosextra-carlito), the OFL metric-compatible substitute.
+Complete-text hold: exactly 5.0s after typing. Original chiptune BGM + UI blip.
 
 ## 01_open — Abertura
 
@@ -14,60 +15,186 @@ Calibri is not installed in this Linux environment. Using Carlito (fonts-crosext
 - **Overlay opacity:** 170/255
 - **Diálogo:** Dispatch (Robocop) — Como utilizar a aba New Job. / Configure e inicie um job passo a passo.
 - **Typing:** 00:00:00,000 → 00:00:01,267 (1.27s)
+- **Hold complete:** 00:00:01,267 → 00:00:06,267 (5.00s)
+- **Spotlight group:** open (reused=False)
+- **SFX / duck:** 00:00:00,000
 - **Seta:** 00:00:01,267
-- **Duração:** 8.00s
+- **Duração cena:** 6.27s
 - **Manual review:** PASS
 - **Evidência:** opening card
 
-## 02_purpose_a — Propósito
+## 02_purpose — Abertura
 
-- **Elemento:** Para que serve New Job
+- **Elemento:** O que é New Job
 - **Targets:** radio-panel
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.14, 0.1857, 0.99, 0.3143]]
 - **Final px boxes:** [[532, 130, 1534, 274]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Para que serve New Job — Configure e inicie uma nova execução no Dispatch.
-- **Typing:** 00:00:08,300 → 00:00:09,333 (1.03s)
-- **Seta:** 00:00:09,333
-- **Duração:** 8.00s
+- **Diálogo:** O que é New Job — Tela para configurar e iniciar / uma nova execução no Dispatch.
+- **Typing:** 00:00:06,567 → 00:00:07,667 (1.10s)
+- **Hold complete:** 00:00:07,667 → 00:00:12,667 (5.00s)
+- **Spotlight group:** purpose (reused=False)
+- **SFX / duck:** 00:00:06,567
+- **Seta:** 00:00:07,667
+- **Duração cena:** 6.10s
 - **Manual review:** PASS
 - **Evidência:** NewJobScreen
 
-## 02_purpose_b — Propósito
+## 10_source_what — Source
 
-- **Elemento:** O que você decide aqui
-- **Targets:** source, destination
+- **Elemento:** O que é
+- **Targets:** source
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.15, 0.2286, 0.555, 0.3], [0.575, 0.2286, 0.98, 0.3]]
-- **Final px boxes:** [[543, 165, 1042, 263], [1024, 165, 1523, 263]]
-- **Cutouts:** 2
-- **Overlay opacity:** 170/255
-- **Diálogo:** O que você decide aqui — Origem, destino, consulta e opções do job.
-- **Typing:** 00:00:16,600 → 00:00:17,600 (1.00s)
-- **Seta:** 00:00:17,600
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** NewJobScreen form
-
-## 03_matrix — Matriz
-
-- **Elemento:** Source × Destination
-- **Targets:** matrix-collapsible
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.135, 0.0571, 0.995, 0.1714]]
-- **Final px boxes:** [[526, 26, 1540, 158]]
+- **Norm cutouts:** [[0.15, 0.1571, 0.555, 0.2286]]
+- **Final px boxes:** [[543, 107, 1042, 205]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Source × Destination — Mostra as combinações permitidas. / Consulte antes de escolher origem e destino.
-- **Typing:** 00:00:24,900 → 00:00:26,300 (1.40s)
-- **Seta:** 00:00:26,300
-- **Duração:** 8.00s
+- **Diálogo:** O que é — Source define de onde vêm / os dados do job.
+- **Typing:** 00:00:12,967 → 00:00:13,967 (1.00s)
+- **Hold complete:** 00:00:13,967 → 00:00:18,967 (5.00s)
+- **Spotlight group:** source (reused=False)
+- **SFX / duck:** 00:00:12,967
+- **Seta:** 00:00:13,967
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
-- **Evidência:** matrix-collapsible + LEGAL_CELLS
+- **Evidência:** #source
 
-## 04_detected — Detecção
+## 10b_source_decide — Source
+
+- **Elemento:** O que você decide aqui
+- **Targets:** source
+- **Font:** Carlito 38px
+- **Norm cutouts:** [[0.15, 0.1571, 0.555, 0.2286]]
+- **Final px boxes:** [[543, 107, 1042, 205]]
+- **Cutouts:** 1
+- **Overlay opacity:** 170/255
+- **Diálogo:** O que você decide aqui — Escolha SqlFile, MonthlyJob / ou ExistingTable.
+- **Typing:** 00:00:18,967 → 00:00:19,967 (1.00s)
+- **Hold complete:** 00:00:19,967 → 00:00:24,967 (5.00s)
+- **Spotlight group:** source (reused=True)
+- **SFX / duck:** 00:00:18,967
+- **Seta:** 00:00:19,967
+- **Duração cena:** 6.00s
+- **Manual review:** PASS
+- **Evidência:** #source
+
+## 11_source_sqlfile — Source
+
+- **Elemento:** SqlFile
+- **Targets:** src-sqlfile
+- **Font:** Carlito 38px
+- **Norm cutouts:** [[0.16, 0.1714, 0.545, 0.1857]]
+- **Final px boxes:** [[559, 130, 1026, 158]]
+- **Cutouts:** 1
+- **Overlay opacity:** 170/255
+- **Diálogo:** SqlFile — Use quando a consulta está / em um arquivo .sql simples.
+- **Typing:** 00:00:25,267 → 00:00:26,267 (1.00s)
+- **Hold complete:** 00:00:26,267 → 00:00:31,267 (5.00s)
+- **Spotlight group:** src-sqlfile (reused=False)
+- **SFX / duck:** 00:00:25,267
+- **Seta:** 00:00:26,267
+- **Duração cena:** 6.00s
+- **Manual review:** PASS
+- **Evidência:** src-sqlfile
+
+## 11b_source_sqlfile_effect — Source
+
+- **Elemento:** Efeito
+- **Targets:** src-sqlfile
+- **Font:** Carlito 38px
+- **Norm cutouts:** [[0.16, 0.1714, 0.545, 0.1857]]
+- **Final px boxes:** [[559, 130, 1026, 158]]
+- **Cutouts:** 1
+- **Overlay opacity:** 170/255
+- **Diálogo:** Efeito — O Dispatch executa esse .sql / conforme o Destination escolhido.
+- **Typing:** 00:00:32,200 → 00:00:33,200 (1.00s)
+- **Hold complete:** 00:00:33,200 → 00:00:38,200 (5.00s)
+- **Spotlight group:** src-sqlfile (reused=True)
+- **SFX / duck:** 00:00:32,200
+- **Seta:** 00:00:33,200
+- **Duração cena:** 6.00s
+- **Manual review:** PASS
+- **Evidência:** LEGAL SqlFile
+
+## 20_dest_what — Destination
+
+- **Elemento:** O que é
+- **Targets:** destination
+- **Font:** Carlito 38px
+- **Norm cutouts:** [[0.575, 0.1571, 0.98, 0.2286]]
+- **Final px boxes:** [[1024, 107, 1523, 205]]
+- **Cutouts:** 1
+- **Overlay opacity:** 170/255
+- **Diálogo:** O que é — Destination define onde o / resultado será armazenado.
+- **Typing:** 00:00:38,500 → 00:00:39,500 (1.00s)
+- **Hold complete:** 00:00:39,500 → 00:00:44,500 (5.00s)
+- **Spotlight group:** destination (reused=False)
+- **SFX / duck:** 00:00:38,500
+- **Seta:** 00:00:39,500
+- **Duração cena:** 6.00s
+- **Manual review:** PASS
+- **Evidência:** #destination
+
+## 20b_dest_decide — Destination
+
+- **Elemento:** O que você decide aqui
+- **Targets:** destination
+- **Font:** Carlito 38px
+- **Norm cutouts:** [[0.575, 0.1571, 0.98, 0.2286]]
+- **Final px boxes:** [[1024, 107, 1523, 205]]
+- **Cutouts:** 1
+- **Overlay opacity:** 170/255
+- **Diálogo:** O que você decide aqui — Table, Csv ou Table+Csv, / conforme a origem escolhida.
+- **Typing:** 00:00:44,500 → 00:00:45,600 (1.10s)
+- **Hold complete:** 00:00:45,600 → 00:00:50,600 (5.00s)
+- **Spotlight group:** destination (reused=True)
+- **SFX / duck:** 00:00:44,500
+- **Seta:** 00:00:45,600
+- **Duração cena:** 6.10s
+- **Manual review:** PASS
+- **Evidência:** #destination
+
+## 21_dest_csv — Destination
+
+- **Elemento:** Csv
+- **Targets:** dst-csv
+- **Font:** Carlito 38px
+- **Norm cutouts:** [[0.585, 0.1857, 0.97, 0.2]]
+- **Final px boxes:** [[1040, 142, 1508, 170]]
+- **Cutouts:** 1
+- **Overlay opacity:** 170/255
+- **Diálogo:** Csv — Gera um CSV na pasta em que / você abriu o Dispatch.
+- **Typing:** 00:00:50,900 → 00:00:51,900 (1.00s)
+- **Hold complete:** 00:00:51,900 → 00:00:56,900 (5.00s)
+- **Spotlight group:** dst-csv (reused=False)
+- **SFX / duck:** 00:00:50,900
+- **Seta:** 00:00:51,900
+- **Duração cena:** 6.00s
+- **Manual review:** PASS
+- **Evidência:** dst-csv
+
+## 21b_dest_csv_effect — Destination
+
+- **Elemento:** Efeito
+- **Targets:** dst-csv
+- **Font:** Carlito 38px
+- **Norm cutouts:** [[0.585, 0.1857, 0.97, 0.2]]
+- **Final px boxes:** [[1040, 142, 1508, 170]]
+- **Cutouts:** 1
+- **Overlay opacity:** 170/255
+- **Diálogo:** Efeito — Use para baixar ou compartilhar / o resultado como arquivo.
+- **Typing:** 00:00:57,833 → 00:00:58,833 (1.00s)
+- **Hold complete:** 00:00:58,833 → 00:01:03,833 (5.00s)
+- **Spotlight group:** dst-csv (reused=True)
+- **SFX / duck:** 00:00:57,833
+- **Seta:** 00:00:58,833
+- **Duração cena:** 6.00s
+- **Manual review:** PASS
+- **Evidência:** ADR-0003
+
+## 35_detected — Detecção
 
 - **Elemento:** Detected source
 - **Targets:** info-detected
@@ -76,222 +203,150 @@ Calibri is not installed in this Linux environment. Using Carlito (fonts-crosext
 - **Final px boxes:** [[532, 130, 1534, 158]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Detected source — Tipo identificado no arquivo SQL. / Confirme se é o job que você quer executar.
-- **Typing:** 00:00:34,133 → 00:00:35,467 (1.33s)
-- **Seta:** 00:00:35,467
-- **Duração:** 8.00s
+- **Diálogo:** Detected source — Tipo identificado no arquivo SQL. / Confirme se é o job desejado.
+- **Typing:** 00:01:04,133 → 00:01:05,267 (1.13s)
+- **Hold complete:** 00:01:05,267 → 00:01:10,267 (5.00s)
+- **Spotlight group:** detected (reused=False)
+- **SFX / duck:** 00:01:04,133
+- **Seta:** 00:01:05,267
+- **Duração cena:** 6.13s
 - **Manual review:** PASS
 - **Evidência:** info-detected
 
-## 05_source_intro — Source
+## 36_matrix — Matriz
 
-- **Elemento:** Source
-- **Targets:** source
+- **Elemento:** Source × Destination
+- **Targets:** matrix-collapsible
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.15, 0.1571, 0.555, 0.2286]]
-- **Final px boxes:** [[543, 107, 1042, 205]]
+- **Norm cutouts:** [[0.135, 0.0571, 0.995, 0.1714]]
+- **Final px boxes:** [[526, 26, 1540, 158]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Source — Define de onde vêm os dados do job. / É a primeira decisão do formulário.
-- **Typing:** 00:00:42,433 → 00:00:43,533 (1.10s)
-- **Seta:** 00:00:43,533
-- **Duração:** 8.00s
+- **Diálogo:** Source × Destination — Mostra as combinações permitidas / antes de escolher origem e destino.
+- **Typing:** 00:01:10,567 → 00:01:11,833 (1.27s)
+- **Hold complete:** 00:01:11,833 → 00:01:16,833 (5.00s)
+- **Spotlight group:** matrix (reused=False)
+- **SFX / duck:** 00:01:10,567
+- **Seta:** 00:01:11,833
+- **Duração cena:** 6.27s
 - **Manual review:** PASS
-- **Evidência:** RadioSet #source
+- **Evidência:** matrix-collapsible
 
-## 06_source_sqlfile — Source
+## 40_queue_what — Fila
 
-- **Elemento:** Source → SqlFile
-- **Targets:** src-sqlfile
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.16, 0.1714, 0.545, 0.1857]]
-- **Final px boxes:** [[559, 130, 1026, 158]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** Source → SqlFile — Use quando a consulta está em um .sql simples.
-- **Typing:** 00:00:50,733 → 00:00:51,733 (1.00s)
-- **Seta:** 00:00:51,733
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** src-sqlfile
-
-## 06b_source_sqlfile_effect — Source
-
-- **Elemento:** SqlFile — efeito
-- **Targets:** src-sqlfile
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.16, 0.1714, 0.545, 0.1857]]
-- **Final px boxes:** [[559, 130, 1026, 158]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** SqlFile — efeito — O Dispatch executa esse arquivo conforme o destino.
-- **Typing:** 00:00:59,967 → 00:01:00,967 (1.00s)
-- **Seta:** 00:01:00,967
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** LEGAL SqlFile
-
-## 07_dest_intro — Destination
-
-- **Elemento:** Destination
-- **Targets:** destination
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.575, 0.1571, 0.98, 0.2286]]
-- **Final px boxes:** [[1024, 107, 1523, 205]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** Destination — Define onde o resultado será armazenado. / Depende da origem escolhida.
-- **Typing:** 00:01:08,267 → 00:01:09,433 (1.17s)
-- **Seta:** 00:01:09,433
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** #destination
-
-## 08_dest_table — Destination
-
-- **Elemento:** Destination → Table
-- **Targets:** dst-table
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.585, 0.1714, 0.97, 0.1857]]
-- **Final px boxes:** [[1040, 130, 1508, 158]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** Destination → Table — Salva o resultado em uma tabela. / Use para consultar depois no ambiente.
-- **Typing:** 00:01:16,567 → 00:01:17,867 (1.30s)
-- **Seta:** 00:01:17,867
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** dst-table
-
-## 09_dest_csv — Destination
-
-- **Elemento:** Destination → Csv
-- **Targets:** dst-csv
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.585, 0.1857, 0.97, 0.2]]
-- **Final px boxes:** [[1040, 142, 1508, 170]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** Destination → Csv — Gera um CSV na pasta em que você abriu o Dispatch.
-- **Typing:** 00:01:25,800 → 00:01:26,800 (1.00s)
-- **Seta:** 00:01:26,800
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** dst-csv
-
-## 09b_dest_csv_when — Destination
-
-- **Elemento:** Csv — quando usar
-- **Targets:** dst-csv
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.585, 0.1857, 0.97, 0.2]]
-- **Final px boxes:** [[1040, 142, 1508, 170]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** Csv — quando usar — Use para baixar ou compartilhar o resultado como arquivo.
-- **Typing:** 00:01:35,033 → 00:01:36,100 (1.07s)
-- **Seta:** 00:01:36,100
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** ADR-0003
-
-## 10_dest_tablecsv — Destination
-
-- **Elemento:** Destination → Table+Csv
-- **Targets:** dst-table-csv
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.585, 0.2, 0.97, 0.2143]]
-- **Final px boxes:** [[1040, 154, 1508, 181]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** Destination → Table+Csv — Cria a tabela e também gera o CSV. / Use quando precisa dos dois formatos.
-- **Typing:** 00:01:43,333 → 00:01:44,700 (1.37s)
-- **Seta:** 00:01:44,700
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** dst-table-csv
-
-## 11_queue_a — Fila
-
-- **Elemento:** Execution Queue
+- **Elemento:** O que é
 - **Targets:** lbl-queue, queue
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.15, 0.2714, 0.98, 0.3714]]
 - **Final px boxes:** [[549, 205, 1517, 314]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Execution Queue — Fila de processamento do job. / Sem marcação, a escolha é automática.
-- **Typing:** 00:01:52,567 → 00:01:53,767 (1.20s)
-- **Seta:** 00:01:53,767
-- **Duração:** 8.00s
+- **Diálogo:** O que é — Execution Queue define em qual fila / o job tentará executar.
+- **Typing:** 00:01:18,067 → 00:01:19,067 (1.00s)
+- **Hold complete:** 00:01:19,067 → 00:01:24,067 (5.00s)
+- **Spotlight group:** queue (reused=False)
+- **SFX / duck:** 00:01:18,067
+- **Seta:** 00:01:19,067
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** #queue
 
-## 12_queue_b — Fila
+## 40b_queue_none — Fila
 
-- **Elemento:** Execution Queue — marcar
-- **Targets:** lbl-queue, queue
+- **Elemento:** Sem marcação
+- **Targets:** queue-panel
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.15, 0.2714, 0.98, 0.3714]]
 - **Final px boxes:** [[549, 205, 1517, 314]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Execution Queue — marcar — Marque filas só se o projeto indicar qual usar.
-- **Typing:** 00:02:00,867 → 00:02:01,900 (1.03s)
-- **Seta:** 00:02:01,900
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** _QUEUE_CHOICES
-
-## 12b_queue_order — Fila
-
-- **Elemento:** Várias filas
-- **Targets:** queue-panel
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.14, 0.2571, 0.99, 0.4143]]
-- **Final px boxes:** [[532, 188, 1534, 355]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** Várias filas — Se marcar várias, são tentadas na ordem da lista.
-- **Typing:** 00:02:10,100 → 00:02:11,100 (1.00s)
-- **Seta:** 00:02:11,100
-- **Duração:** 8.00s
+- **Diálogo:** Sem marcação — Sem marcar uma fila, o Dispatch / tentará as filas na ordem configurada.
+- **Typing:** 00:01:24,067 → 00:01:25,267 (1.20s)
+- **Hold complete:** 00:01:25,267 → 00:01:30,267 (5.00s)
+- **Spotlight group:** queue (reused=True)
+- **SFX / duck:** 00:01:24,067
+- **Seta:** 00:01:25,267
+- **Duração cena:** 6.20s
 - **Manual review:** PASS
 - **Evidência:** _QUEUE_AUTO_HINT
 
-## 13_sql_intro — SQL File
+## 40c_queue_decide — Fila
 
-- **Elemento:** SQL File
+- **Elemento:** O que você decide aqui
+- **Targets:** queue-panel
+- **Font:** Carlito 38px
+- **Norm cutouts:** [[0.15, 0.2714, 0.98, 0.3714]]
+- **Final px boxes:** [[549, 205, 1517, 314]]
+- **Cutouts:** 1
+- **Overlay opacity:** 170/255
+- **Diálogo:** O que você decide aqui — Marque uma fila só se souber onde / a query rende melhor (simples/complexa).
+- **Typing:** 00:01:30,267 → 00:01:31,667 (1.40s)
+- **Hold complete:** 00:01:31,667 → 00:01:36,667 (5.00s)
+- **Spotlight group:** queue (reused=True)
+- **SFX / duck:** 00:01:30,267
+- **Seta:** 00:01:31,667
+- **Duração cena:** 6.40s
+- **Manual review:** PASS
+- **Evidência:** _QUEUE_HINTS
+
+## 41_queue_example — Fila
+
+- **Elemento:** Exemplo de escolha
+- **Targets:** queue
+- **Font:** Carlito 38px
+- **Norm cutouts:** [[0.15, 0.3, 0.98, 0.3714]]
+- **Final px boxes:** [[543, 223, 1523, 320]]
+- **Cutouts:** 1
+- **Overlay opacity:** 170/255
+- **Diálogo:** Exemplo de escolha — Ex.: adhoc_fast para consultas / curtas ou mais simples.
+- **Typing:** 00:01:36,967 → 00:01:38,000 (1.03s)
+- **Hold complete:** 00:01:38,000 → 00:01:43,000 (5.00s)
+- **Spotlight group:** queue-selected (reused=False)
+- **SFX / duck:** 00:01:36,967
+- **Seta:** 00:01:38,000
+- **Duração cena:** 6.03s
+- **Manual review:** PASS
+- **Evidência:** adhoc_fast hint
+
+## 30_sql_what — SQL File
+
+- **Elemento:** O que é
 - **Targets:** lbl-sql-file, sql-file
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.14, 0.5, 0.99, 0.5429]]
 - **Final px boxes:** [[538, 391, 1528, 453]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** SQL File — É a consulta que o job vai executar.
-- **Typing:** 00:02:18,400 → 00:02:19,400 (1.00s)
-- **Seta:** 00:02:19,400
-- **Duração:** 8.00s
+- **Diálogo:** O que é — SQL File é a consulta que / o job vai executar.
+- **Typing:** 00:01:44,233 → 00:01:45,233 (1.00s)
+- **Hold complete:** 00:01:45,233 → 00:01:50,233 (5.00s)
+- **Spotlight group:** sql-file (reused=False)
+- **SFX / duck:** 00:01:44,233
+- **Seta:** 00:01:45,233
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** row-sql-file
 
-## 13b_sql_when — SQL File
+## 30b_sql_decide — SQL File
 
-- **Elemento:** SQL File — quando
+- **Elemento:** O que você decide aqui
 - **Targets:** lbl-sql-file, sql-file
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.14, 0.5, 0.99, 0.5429]]
 - **Final px boxes:** [[538, 391, 1528, 453]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** SQL File — quando — Obrigatório para SqlFile e MonthlyJob.
-- **Typing:** 00:02:26,700 → 00:02:27,700 (1.00s)
-- **Seta:** 00:02:27,700
-- **Duração:** 8.00s
+- **Diálogo:** O que você decide aqui — Obrigatório para SqlFile e MonthlyJob. / Selecione o .sql do seu job.
+- **Typing:** 00:01:50,233 → 00:01:51,533 (1.30s)
+- **Hold complete:** 00:01:51,533 → 00:01:56,533 (5.00s)
+- **Spotlight group:** sql-file (reused=True)
+- **SFX / duck:** 00:01:50,233
+- **Seta:** 00:01:51,533
+- **Duração cena:** 6.30s
 - **Manual review:** PASS
 - **Evidência:** required sources
 
-## 14_sql_picker — SQL File
+## 31_sql_picker — SQL File
 
 - **Elemento:** Lista de arquivos SQL
 - **Targets:** sql-file-picker
@@ -300,78 +355,55 @@ Calibri is not installed in this Linux environment. Using Carlito (fonts-crosext
 - **Final px boxes:** [[532, 343, 1534, 408]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Lista de arquivos SQL — Mostra os .sql da pasta atual. / Selecione o arquivo do seu job.
-- **Typing:** 00:02:35,000 → 00:02:36,200 (1.20s)
-- **Seta:** 00:02:36,200
-- **Duração:** 8.00s
+- **Diálogo:** Lista de arquivos SQL — Mostra os .sql da pasta atual. / Selecione o arquivo do job.
+- **Typing:** 00:01:56,833 → 00:01:57,967 (1.13s)
+- **Hold complete:** 00:01:57,967 → 00:02:02,967 (5.00s)
+- **Spotlight group:** sql-picker (reused=False)
+- **SFX / duck:** 00:01:56,833
+- **Seta:** 00:01:57,967
+- **Duração cena:** 6.13s
 - **Manual review:** PASS
 - **Evidência:** sql-file-picker
 
-## 15_sql_verify — SQL File
+## 31b_sql_path — SQL File
 
-- **Elemento:** O que conferir
-- **Targets:** sql-file-picker
+- **Elemento:** Efeito
+- **Targets:** lbl-sql-file, sql-file
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.14, 0.4429, 0.99, 0.4857]]
 - **Final px boxes:** [[532, 343, 1534, 408]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** O que conferir — Confirme o nome e o tipo Detected na lista.
-- **Typing:** 00:02:44,233 → 00:02:45,233 (1.00s)
-- **Seta:** 00:02:45,233
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** Detected column
-
-## 15b_sql_path — SQL File
-
-- **Elemento:** Caminho do SQL File
-- **Targets:** lbl-sql-file, sql-file
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.14, 0.5, 0.99, 0.5429]]
-- **Final px boxes:** [[538, 391, 1528, 453]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** Caminho do SQL File — Após a seleção, o caminho preenche o campo SQL File.
-- **Typing:** 00:02:52,533 → 00:02:53,567 (1.03s)
-- **Seta:** 00:02:53,567
-- **Duração:** 8.00s
+- **Diálogo:** Efeito — Após a seleção, o caminho / preenche o campo SQL File.
+- **Typing:** 00:02:03,900 → 00:02:04,900 (1.00s)
+- **Hold complete:** 00:02:04,900 → 00:02:09,900 (5.00s)
+- **Spotlight group:** sql-picker (reused=True)
+- **SFX / duck:** 00:02:03,900
+- **Seta:** 00:02:04,900
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** path-hint
 
-## 16_sql_role — SQL File
+## 32_sql_dest — SQL File
 
-- **Elemento:** Papel do SQL File
-- **Targets:** lbl-sql-file, sql-file
+- **Elemento:** SQL File e Destination
+- **Targets:** sql-file, destination
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.14, 0.5, 0.99, 0.5429]]
-- **Final px boxes:** [[538, 391, 1528, 453]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** Papel do SQL File — Define quais dados serão lidos ou calculados.
-- **Typing:** 00:03:00,833 → 00:03:01,833 (1.00s)
-- **Seta:** 00:03:01,833
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** manifest sql_path
-
-## 16b_sql_role_dest — SQL File
-
-- **Elemento:** SQL + destino
-- **Targets:** source, destination
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.15, 0.1571, 0.555, 0.2286], [0.575, 0.1571, 0.98, 0.2286]]
-- **Final px boxes:** [[543, 107, 1042, 205], [1024, 107, 1523, 205]]
+- **Norm cutouts:** [[0.25, 0.5, 0.99, 0.5429], [0.575, 0.1571, 0.98, 0.2286]]
+- **Final px boxes:** [[657, 390, 1534, 454], [1024, 107, 1523, 205]]
 - **Cutouts:** 2
 - **Overlay opacity:** 170/255
-- **Diálogo:** SQL + destino — Source e Destination decidem como entregar o resultado.
-- **Typing:** 00:03:09,133 → 00:03:10,133 (1.00s)
-- **Seta:** 00:03:10,133
-- **Duração:** 8.00s
+- **Diálogo:** SQL File e Destination — O .sql fornece os dados; / o Destination define a entrega.
+- **Typing:** 00:02:10,200 → 00:02:11,333 (1.13s)
+- **Hold complete:** 00:02:11,333 → 00:02:16,333 (5.00s)
+- **Spotlight group:** sql-dest-rel (reused=False)
+- **SFX / duck:** 00:02:10,200
+- **Seta:** 00:02:11,333
+- **Duração cena:** 6.13s
 - **Manual review:** PASS
 - **Evidência:** LEGAL_CELLS
 
-## 17_email — Notificação
+## 50_email — Notificação
 
 - **Elemento:** Email (notifications)
 - **Targets:** lbl-email, email
@@ -381,13 +413,16 @@ Calibri is not installed in this Linux environment. Using Carlito (fonts-crosext
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Email (notifications) — Recebe aviso quando o job terminar. / Deixe em branco se não quiser.
-- **Typing:** 00:03:17,433 → 00:03:18,700 (1.27s)
-- **Seta:** 00:03:18,700
-- **Duração:** 8.00s
+- **Typing:** 00:02:16,633 → 00:02:17,900 (1.27s)
+- **Hold complete:** 00:02:17,900 → 00:02:22,900 (5.00s)
+- **Spotlight group:** email (reused=False)
+- **SFX / duck:** 00:02:16,633
+- **Seta:** 00:02:17,900
+- **Duração cena:** 6.27s
 - **Manual review:** PASS
 - **Evidência:** #email
 
-## 18_subject — Notificação
+## 51_subject — Notificação
 
 - **Elemento:** Subject (email)
 - **Targets:** lbl-subject, subject
@@ -396,174 +431,131 @@ Calibri is not installed in this Linux environment. Using Carlito (fonts-crosext
 - **Final px boxes:** [[538, 495, 1528, 557]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Subject (email) — Assunto do e-mail de notificação. / Use um texto curto que identifique o job.
-- **Typing:** 00:03:26,667 → 00:03:27,967 (1.30s)
-- **Seta:** 00:03:27,967
-- **Duração:** 8.00s
+- **Diálogo:** Subject (email) — Assunto do e-mail de notificação. / Use um texto curto e claro.
+- **Typing:** 00:02:24,133 → 00:02:25,233 (1.10s)
+- **Hold complete:** 00:02:25,233 → 00:02:30,233 (5.00s)
+- **Spotlight group:** subject (reused=False)
+- **SFX / duck:** 00:02:24,133
+- **Seta:** 00:02:25,233
+- **Duração cena:** 6.10s
 - **Manual review:** PASS
 - **Evidência:** #subject
 
-## 19_status_bar — Status
+## 60_mj_what — MonthlyJob
 
-- **Elemento:** Status do formulário
-- **Targets:** validation-summary
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.135, 0.9429, 0.85, 0.9857]]
-- **Final px boxes:** [[526, 748, 1376, 806]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** Status do formulário — Ready to launch = sem problemas bloqueantes.
-- **Typing:** 00:03:35,900 → 00:03:36,900 (1.00s)
-- **Seta:** 00:03:36,900
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** validation-summary
-
-## 19b_actions — Status
-
-- **Elemento:** Preview SQL e Launch
-- **Targets:** preview, launch
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.855, 0.9429, 0.925, 0.9857], [0.93, 0.9429, 0.99, 0.9857]]
-- **Final px boxes:** [[1345, 748, 1457, 806], [1430, 748, 1530, 806]]
-- **Cutouts:** 2
-- **Overlay opacity:** 170/255
-- **Diálogo:** Preview SQL e Launch — Ficam na barra inferior para revisão e envio.
-- **Typing:** 00:03:44,200 → 00:03:45,200 (1.00s)
-- **Seta:** 00:03:45,200
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** action bar
-
-## 20_mj_intro — MonthlyJob
-
-- **Elemento:** MonthlyJob
+- **Elemento:** O que é
 - **Targets:** src-sqltemplate
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.16, 0.1857, 0.54, 0.2]]
 - **Final px boxes:** [[559, 142, 1021, 170]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** MonthlyJob — Use para cobrir um intervalo de datas, / executando o período mês a mês.
-- **Typing:** 00:03:52,500 → 00:03:53,667 (1.17s)
-- **Seta:** 00:03:53,667
-- **Duração:** 8.00s
+- **Diálogo:** O que é — MonthlyJob cobre um intervalo de datas, / executando o período mês a mês.
+- **Typing:** 00:02:31,467 → 00:02:32,600 (1.13s)
+- **Hold complete:** 00:02:32,600 → 00:02:37,600 (5.00s)
+- **Spotlight group:** monthly (reused=False)
+- **SFX / duck:** 00:02:31,467
+- **Seta:** 00:02:32,600
+- **Duração cena:** 6.13s
 - **Manual review:** PASS
-- **Evidência:** SqlTemplate labeled MonthlyJob
+- **Evidência:** SqlTemplate
 
-## 21_mj_dest — MonthlyJob
+## 60b_mj_decide — MonthlyJob
 
-- **Elemento:** MonthlyJob → Destination
-- **Targets:** src-sqltemplate, dst-table
+- **Elemento:** O que você decide aqui
+- **Targets:** src-sqltemplate
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.16, 0.1857, 0.54, 0.2], [0.58, 0.1714, 0.96, 0.1857]]
-- **Final px boxes:** [[559, 142, 1021, 170], [1034, 130, 1496, 158]]
-- **Cutouts:** 2
+- **Norm cutouts:** [[0.16, 0.1857, 0.54, 0.2]]
+- **Final px boxes:** [[559, 142, 1021, 170]]
+- **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** MonthlyJob → Destination — Com MonthlyJob, o destino permitido é só Table.
-- **Typing:** 00:04:01,733 → 00:04:02,767 (1.03s)
-- **Seta:** 00:04:02,767
-- **Duração:** 8.00s
+- **Diálogo:** O que você decide aqui — Use com Destination = Table / e um .sql preparado para o período.
+- **Typing:** 00:02:38,533 → 00:02:39,767 (1.23s)
+- **Hold complete:** 00:02:39,767 → 00:02:44,767 (5.00s)
+- **Spotlight group:** monthly (reused=True)
+- **SFX / duck:** 00:02:38,533
+- **Seta:** 00:02:39,767
+- **Duração cena:** 6.23s
 - **Manual review:** PASS
 - **Evidência:** LEGAL SqlTemplate/Table
 
-## 21b_mj_dest_blocked — MonthlyJob
+## 61_mj_dest — MonthlyJob
 
-- **Elemento:** Csv e Table+Csv
-- **Targets:** dst-csv, dst-table-csv
+- **Elemento:** Destination = Table
+- **Targets:** dst-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.58, 0.1857, 0.96, 0.2], [0.58, 0.2, 0.96, 0.2143]]
-- **Final px boxes:** [[1034, 142, 1496, 170], [1034, 154, 1496, 181]]
-- **Cutouts:** 2
+- **Norm cutouts:** [[0.58, 0.1714, 0.96, 0.1857]]
+- **Final px boxes:** [[1034, 130, 1496, 158]]
+- **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Csv e Table+Csv — Ficam indisponíveis neste modo.
-- **Typing:** 00:04:10,033 → 00:04:11,033 (1.00s)
-- **Seta:** 00:04:11,033
-- **Duração:** 8.00s
+- **Diálogo:** Destination = Table — Com MonthlyJob, selecione Table / como destino do resultado.
+- **Typing:** 00:02:45,067 → 00:02:46,167 (1.10s)
+- **Hold complete:** 00:02:46,167 → 00:02:51,167 (5.00s)
+- **Spotlight group:** mj-dest (reused=False)
+- **SFX / duck:** 00:02:45,067
+- **Seta:** 00:02:46,167
+- **Duração cena:** 6.10s
 - **Manual review:** PASS
-- **Evidência:** dest hint
+- **Evidência:** LEGAL SqlTemplate/Table
 
-## 22_mj_sql_rule_a — MonthlyJob SQL
+## 62_mj_sql_a — MonthlyJob SQL
 
-- **Elemento:** SQL no MonthlyJob — regra
+- **Elemento:** Regra do arquivo SQL
 - **Targets:** (card)
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.12, 0.14, 0.88, 0.7]]
 - **Final px boxes:** [[80, 100, 1840, 786]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** SQL no MonthlyJob — regra — O .sql precisa conter os dois marcadores: / {date_inicio} e {date_fim}
-- **Typing:** 00:04:18,033 → 00:04:19,367 (1.33s)
-- **Seta:** 00:04:19,367
-- **Duração:** 8.00s
+- **Diálogo:** Regra do arquivo SQL — O .sql precisa conter os dois marcadores:
+- **Typing:** 00:02:51,167 → 00:02:52,167 (1.00s)
+- **Hold complete:** 00:02:52,167 → 00:02:57,167 (5.00s)
+- **Spotlight group:** mj-sql (reused=False)
+- **SFX / duck:** 00:02:51,167
+- **Seta:** 00:02:52,167
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** dispatch/sql.py:DATE_INICIO_TOKEN/DATE_FIM_TOKEN, detect_source, template_is_complete, is_malformed_template, monthly_preview; dispatch/screens/new_job.py:_sql_content_issues (requires both tokens for SqlTemplate/MonthlyJob); scr/monthly_query_processor.py:render_monthly_sql; CONTEXT.md (SqlTemplate placeholders); tests/test_monthly_query_processor.py, tools/prod_tui/job_specs.py SMOKE_TEMPLATE_SQL
 
-## 23_mj_sql_rule_b — MonthlyJob SQL
+## 62b_mj_sql_b — MonthlyJob SQL
 
-- **Elemento:** Como conferir no arquivo
+- **Elemento:** Marcadores obrigatórios
 - **Targets:** (card)
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.12, 0.14, 0.88, 0.7]]
 - **Final px boxes:** [[80, 100, 1840, 786]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Como conferir no arquivo — Abra o .sql e busque exatamente / {date_inicio} e {date_fim}.
-- **Typing:** 00:04:26,033 → 00:04:27,233 (1.20s)
-- **Seta:** 00:04:27,233
-- **Duração:** 8.00s
+- **Diálogo:** Marcadores obrigatórios — {date_inicio} e {date_fim}
+- **Typing:** 00:02:57,167 → 00:02:58,167 (1.00s)
+- **Hold complete:** 00:02:58,167 → 00:03:03,167 (5.00s)
+- **Spotlight group:** mj-sql (reused=True)
+- **SFX / duck:** 00:02:57,167
+- **Seta:** 00:02:58,167
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** _sql_content_issues
 
-## 23b_mj_sql_missing — MonthlyJob SQL
+## 62c_mj_sql_c — MonthlyJob SQL
 
-- **Elemento:** Se faltar um marcador
+- **Elemento:** Como conferir
 - **Targets:** (card)
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.12, 0.14, 0.88, 0.7]]
 - **Final px boxes:** [[80, 100, 1840, 786]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Se faltar um marcador — O job não pode ser iniciado como MonthlyJob.
-- **Typing:** 00:04:34,033 → 00:04:35,033 (1.00s)
-- **Seta:** 00:04:35,033
-- **Duração:** 8.00s
+- **Diálogo:** Como conferir — Abra o .sql e busque exatamente / esses dois textos.
+- **Typing:** 00:03:03,167 → 00:03:04,167 (1.00s)
+- **Hold complete:** 00:03:04,167 → 00:03:09,167 (5.00s)
+- **Spotlight group:** mj-sql (reused=True)
+- **SFX / duck:** 00:03:03,167
+- **Seta:** 00:03:04,167
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** is_malformed_template
 
-## 24_mj_sql_rule_c — MonthlyJob SQL
-
-- **Elemento:** O que os marcadores fazem
-- **Targets:** (card)
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.12, 0.14, 0.88, 0.7]]
-- **Final px boxes:** [[80, 100, 1840, 786]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** O que os marcadores fazem — Reservam início e fim de cada mês do período.
-- **Typing:** 00:04:42,033 → 00:04:43,033 (1.00s)
-- **Seta:** 00:04:43,033
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** render_monthly_sql
-
-## 24b_mj_sql_fill — MonthlyJob SQL
-
-- **Elemento:** Preenchimento das datas
-- **Targets:** (card)
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.12, 0.14, 0.88, 0.7]]
-- **Final px boxes:** [[80, 100, 1840, 786]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** Preenchimento das datas — O Dispatch preenche conforme Start Date e End Date.
-- **Typing:** 00:04:50,033 → 00:04:51,100 (1.07s)
-- **Seta:** 00:04:51,100
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** monthly_preview
-
-## 25_mj_picker — MonthlyJob SQL
+## 63_mj_picker — MonthlyJob SQL
 
 - **Elemento:** SQL do MonthlyJob
 - **Targets:** sql-file-picker
@@ -573,77 +565,54 @@ Calibri is not installed in this Linux environment. Using Carlito (fonts-crosext
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** SQL do MonthlyJob — Na lista, escolha Detected = MonthlyJob.
-- **Typing:** 00:04:58,333 → 00:04:59,333 (1.00s)
-- **Seta:** 00:04:59,333
-- **Duração:** 8.00s
+- **Typing:** 00:03:09,467 → 00:03:10,467 (1.00s)
+- **Hold complete:** 00:03:10,467 → 00:03:15,467 (5.00s)
+- **Spotlight group:** mj-picker (reused=False)
+- **SFX / duck:** 00:03:09,467
+- **Seta:** 00:03:10,467
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** detect_source
 
-## 25b_mj_picker_confirm — MonthlyJob SQL
+## 64_mj_schema — MonthlyJob campos
 
-- **Elemento:** Detected = MonthlyJob
-- **Targets:** sql-file-picker
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.14, 0.4571, 0.98, 0.5]]
-- **Final px boxes:** [[532, 355, 1523, 420]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** Detected = MonthlyJob — Confirma que os dois marcadores foram encontrados.
-- **Typing:** 00:05:07,567 → 00:05:08,600 (1.03s)
-- **Seta:** 00:05:08,600
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** picker Detected
-
-## 26_mj_schema — MonthlyJob campos
-
-- **Elemento:** Schema (MonthlyJob)
+- **Elemento:** Schema
 - **Targets:** lbl-schema, schema
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.14, 0.5857, 0.98, 0.6286]]
 - **Final px boxes:** [[538, 460, 1517, 523]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Schema (MonthlyJob) — Schema da tabela de resultado. / Informe o schema correto do seu trabalho.
-- **Typing:** 00:05:15,867 → 00:05:17,167 (1.30s)
-- **Seta:** 00:05:17,167
-- **Duração:** 8.00s
+- **Diálogo:** Schema — Schema da tabela de resultado. / Informe o schema do seu trabalho.
+- **Typing:** 00:03:16,700 → 00:03:17,700 (1.00s)
+- **Hold complete:** 00:03:17,700 → 00:03:22,700 (5.00s)
+- **Spotlight group:** mj-schema (reused=False)
+- **SFX / duck:** 00:03:16,700
+- **Seta:** 00:03:17,700
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** #schema
 
-## 27_mj_table — MonthlyJob campos
+## 65_mj_table — MonthlyJob campos
 
-- **Elemento:** Table Name (MonthlyJob)
+- **Elemento:** Table Name
 - **Targets:** lbl-table-name, table-name-prefix, table-name-suffix
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.14, 0.6429, 0.98, 0.6857]]
 - **Final px boxes:** [[538, 506, 1517, 569]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Table Name (MonthlyJob) — Nome da tabela com o prefixo do usuário.
-- **Typing:** 00:05:24,167 → 00:05:25,167 (1.00s)
-- **Seta:** 00:05:25,167
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** #table-name-prefix
-
-## 27b_mj_table_suffix — MonthlyJob campos
-
-- **Elemento:** Sufixo da tabela
-- **Targets:** table-name-prefix, table-name-suffix
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.25, 0.6429, 0.98, 0.6857]]
-- **Final px boxes:** [[657, 505, 1523, 570]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** Sufixo da tabela — Complete só o sufixo; o prefixo já vem preenchido.
-- **Typing:** 00:05:32,467 → 00:05:33,467 (1.00s)
-- **Seta:** 00:05:33,467
-- **Duração:** 8.00s
+- **Diálogo:** Table Name — Nome da tabela; complete o sufixo / com o prefixo já preenchido.
+- **Typing:** 00:03:23,000 → 00:03:24,033 (1.03s)
+- **Hold complete:** 00:03:24,033 → 00:03:29,033 (5.00s)
+- **Spotlight group:** mj-table (reused=False)
+- **SFX / duck:** 00:03:23,000
+- **Seta:** 00:03:24,033
+- **Duração cena:** 6.03s
 - **Manual review:** PASS
 - **Evidência:** #table-name-suffix
 
-## 28_mj_start — MonthlyJob campos
+## 66_mj_start — MonthlyJob campos
 
 - **Elemento:** Start Date
 - **Targets:** lbl-start-date, start-date
@@ -652,14 +621,36 @@ Calibri is not installed in this Linux environment. Using Carlito (fonts-crosext
 - **Final px boxes:** [[538, 553, 1517, 615]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Start Date — Data inicial (AAAA-MM-DD). / Define o primeiro mês a processar.
-- **Typing:** 00:05:40,767 → 00:05:41,800 (1.03s)
-- **Seta:** 00:05:41,800
-- **Duração:** 8.00s
+- **Diálogo:** Start Date — Data inicial (AAAA-MM-DD). / Define o início do período do MonthlyJob.
+- **Typing:** 00:03:29,333 → 00:03:30,467 (1.13s)
+- **Hold complete:** 00:03:30,467 → 00:03:35,467 (5.00s)
+- **Spotlight group:** mj-start (reused=False)
+- **SFX / duck:** 00:03:29,333
+- **Seta:** 00:03:30,467
+- **Duração cena:** 6.13s
 - **Manual review:** PASS
 - **Evidência:** #start-date
 
-## 29_mj_end — MonthlyJob campos
+## 66b_mj_start_ex — MonthlyJob campos
+
+- **Elemento:** Exemplo
+- **Targets:** lbl-start-date, start-date
+- **Font:** Carlito 38px
+- **Norm cutouts:** [[0.14, 0.7, 0.98, 0.7429]]
+- **Final px boxes:** [[538, 553, 1517, 615]]
+- **Cutouts:** 1
+- **Overlay opacity:** 170/255
+- **Diálogo:** Exemplo — Exemplo seguro: 2024-07-01.
+- **Typing:** 00:03:35,467 → 00:03:36,467 (1.00s)
+- **Hold complete:** 00:03:36,467 → 00:03:41,467 (5.00s)
+- **Spotlight group:** mj-start (reused=True)
+- **SFX / duck:** 00:03:35,467
+- **Seta:** 00:03:36,467
+- **Duração cena:** 6.00s
+- **Manual review:** PASS
+- **Evidência:** #start-date
+
+## 67_mj_end — MonthlyJob campos
 
 - **Elemento:** End Date
 - **Targets:** lbl-end-date, end-date
@@ -668,142 +659,131 @@ Calibri is not installed in this Linux environment. Using Carlito (fonts-crosext
 - **Final px boxes:** [[538, 599, 1517, 662]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** End Date — Data final (AAAA-MM-DD). / Deve ser igual ou posterior à Start Date.
-- **Typing:** 00:05:49,067 → 00:05:50,133 (1.07s)
-- **Seta:** 00:05:50,133
-- **Duração:** 8.00s
+- **Diálogo:** End Date — Data final (AAAA-MM-DD). / Define o fim do período do MonthlyJob.
+- **Typing:** 00:03:41,767 → 00:03:42,800 (1.03s)
+- **Hold complete:** 00:03:42,800 → 00:03:47,800 (5.00s)
+- **Spotlight group:** mj-end (reused=False)
+- **SFX / duck:** 00:03:41,767
+- **Seta:** 00:03:42,800
+- **Duração cena:** 6.03s
 - **Manual review:** PASS
 - **Evidência:** #end-date
 
-## 30_et_intro — ExistingTable
+## 67b_mj_end_ex — MonthlyJob campos
 
-- **Elemento:** ExistingTable
+- **Elemento:** Exemplo
+- **Targets:** lbl-end-date, end-date
+- **Font:** Carlito 38px
+- **Norm cutouts:** [[0.14, 0.7571, 0.98, 0.8]]
+- **Final px boxes:** [[538, 599, 1517, 662]]
+- **Cutouts:** 1
+- **Overlay opacity:** 170/255
+- **Diálogo:** Exemplo — Exemplo seguro: 2024-07-31.
+- **Typing:** 00:03:47,800 → 00:03:48,800 (1.00s)
+- **Hold complete:** 00:03:48,800 → 00:03:53,800 (5.00s)
+- **Spotlight group:** mj-end (reused=True)
+- **SFX / duck:** 00:03:47,800
+- **Seta:** 00:03:48,800
+- **Duração cena:** 6.00s
+- **Manual review:** PASS
+- **Evidência:** #end-date
+
+## 68_mj_dates_rel — MonthlyJob campos
+
+- **Elemento:** Start Date e End Date
+- **Targets:** lbl-start-date, start-date, lbl-end-date, end-date
+- **Font:** Carlito 38px
+- **Norm cutouts:** [[0.14, 0.7, 0.98, 0.7429], [0.14, 0.7571, 0.98, 0.8]]
+- **Final px boxes:** [[538, 553, 1517, 615], [532, 598, 1523, 663]]
+- **Cutouts:** 2
+- **Overlay opacity:** 170/255
+- **Diálogo:** Start Date e End Date — Juntas, delimitam o intervalo / processado mês a mês.
+- **Typing:** 00:03:54,100 → 00:03:55,133 (1.03s)
+- **Hold complete:** 00:03:55,133 → 00:04:00,133 (5.00s)
+- **Spotlight group:** mj-dates (reused=False)
+- **SFX / duck:** 00:03:54,100
+- **Seta:** 00:03:55,133
+- **Duração cena:** 6.03s
+- **Manual review:** PASS
+- **Evidência:** monthly_preview
+
+## 70_et_what — ExistingTable
+
+- **Elemento:** O que é
 - **Targets:** src-existingtable
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.16, 0.2, 0.545, 0.2143]]
 - **Final px boxes:** [[559, 154, 1026, 181]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** ExistingTable — Use quando os dados já estão em uma tabela / e você quer exportá-los sem .sql.
-- **Typing:** 00:05:57,367 → 00:05:58,667 (1.30s)
-- **Seta:** 00:05:58,667
-- **Duração:** 8.00s
+- **Diálogo:** O que é — ExistingTable exporta dados de uma / tabela já existente, sem .sql.
+- **Typing:** 00:04:00,433 → 00:04:01,467 (1.03s)
+- **Hold complete:** 00:04:01,467 → 00:04:06,467 (5.00s)
+- **Spotlight group:** existing (reused=False)
+- **SFX / duck:** 00:04:00,433
+- **Seta:** 00:04:01,467
+- **Duração cena:** 6.03s
 - **Manual review:** PASS
 - **Evidência:** src-existingtable
 
-## 31_et_dest — ExistingTable
+## 70b_et_decide — ExistingTable
 
-- **Elemento:** ExistingTable → Destination
-- **Targets:** src-existingtable, dst-csv
+- **Elemento:** O que você decide aqui
+- **Targets:** src-existingtable
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.16, 0.2, 0.545, 0.2143], [0.585, 0.1857, 0.97, 0.2]]
-- **Final px boxes:** [[559, 154, 1026, 181], [1040, 142, 1508, 170]]
-- **Cutouts:** 2
+- **Norm cutouts:** [[0.16, 0.2, 0.545, 0.2143]]
+- **Final px boxes:** [[559, 154, 1026, 181]]
+- **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** ExistingTable → Destination — Neste modo o destino permitido é apenas Csv.
-- **Typing:** 00:06:06,600 → 00:06:07,633 (1.03s)
-- **Seta:** 00:06:07,633
-- **Duração:** 8.00s
+- **Diálogo:** O que você decide aqui — Use quando a origem é uma tabela / e o destino desejado é Csv.
+- **Typing:** 00:04:07,400 → 00:04:08,600 (1.20s)
+- **Hold complete:** 00:04:08,600 → 00:04:13,600 (5.00s)
+- **Spotlight group:** existing (reused=True)
+- **SFX / duck:** 00:04:07,400
+- **Seta:** 00:04:08,600
+- **Duração cena:** 6.20s
 - **Manual review:** PASS
 - **Evidência:** LEGAL ExistingTable/Csv
 
-## 31b_et_dest_blocked — ExistingTable
+## 71_et_dest — ExistingTable
 
-- **Elemento:** Table e Table+Csv
-- **Targets:** dst-table, dst-table-csv
+- **Elemento:** Destination = Csv
+- **Targets:** dst-csv
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.585, 0.1714, 0.97, 0.1857], [0.585, 0.2, 0.97, 0.2143]]
-- **Final px boxes:** [[1040, 130, 1508, 158], [1040, 154, 1508, 181]]
-- **Cutouts:** 2
-- **Overlay opacity:** 170/255
-- **Diálogo:** Table e Table+Csv — Ficam indisponíveis com ExistingTable.
-- **Typing:** 00:06:14,900 → 00:06:15,900 (1.00s)
-- **Seta:** 00:06:15,900
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** dest hint
-
-## 32_et_no_sql — ExistingTable
-
-- **Elemento:** Sem SQL File
-- **Targets:** src-existingtable, dest-hint
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.16, 0.2, 0.545, 0.2143], [0.14, 0.2429, 0.99, 0.2571]]
-- **Final px boxes:** [[559, 154, 1026, 181], [538, 188, 1528, 216]]
-- **Cutouts:** 2
-- **Overlay opacity:** 170/255
-- **Diálogo:** Sem SQL File — A lista e o campo SQL File ficam ocultos. / A origem é a tabela existente.
-- **Typing:** 00:06:23,200 → 00:06:24,400 (1.20s)
-- **Seta:** 00:06:24,400
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** picker display=False
-
-## 33_et_schema_coe — ExistingTable Schema
-
-- **Elemento:** Schema → coe_enc
-- **Targets:** esc-coe-enc
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.26, 0.4714, 0.97, 0.4857]]
-- **Final px boxes:** [[672, 373, 1508, 401]]
+- **Norm cutouts:** [[0.585, 0.1857, 0.97, 0.2]]
+- **Final px boxes:** [[1040, 142, 1508, 170]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Schema → coe_enc — Seleciona o schema coe_enc da tabela existente.
-- **Typing:** 00:06:31,500 → 00:06:32,500 (1.00s)
-- **Seta:** 00:06:32,500
-- **Duração:** 8.00s
+- **Diálogo:** Destination = Csv — Com ExistingTable, selecione Csv / para gerar o arquivo de saída.
+- **Typing:** 00:04:13,900 → 00:04:15,067 (1.17s)
+- **Hold complete:** 00:04:15,067 → 00:04:20,067 (5.00s)
+- **Spotlight group:** et-dest (reused=False)
+- **SFX / duck:** 00:04:13,900
+- **Seta:** 00:04:15,067
+- **Duração cena:** 6.17s
 - **Manual review:** PASS
-- **Evidência:** esc-coe-enc
+- **Evidência:** LEGAL ExistingTable/Csv
 
-## 34_et_schema_aa — ExistingTable Schema
+## 72_et_schema — ExistingTable
 
-- **Elemento:** Schema → aa_enc
-- **Targets:** esc-aa-enc
+- **Elemento:** Schema
+- **Targets:** lbl-existing-schema, existing-schema
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.26, 0.4857, 0.97, 0.5]]
-- **Final px boxes:** [[672, 385, 1508, 413]]
+- **Norm cutouts:** [[0.14, 0.4571, 0.99, 0.5]]
+- **Final px boxes:** [[538, 356, 1528, 419]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Schema → aa_enc — Seleciona o schema aa_enc. / É a opção padrão nesse schema.
-- **Typing:** 00:06:40,733 → 00:06:41,767 (1.03s)
-- **Seta:** 00:06:41,767
-- **Duração:** 8.00s
+- **Diálogo:** Schema — Informe o schema da tabela / que será exportada.
+- **Typing:** 00:04:20,367 → 00:04:21,367 (1.00s)
+- **Hold complete:** 00:04:21,367 → 00:04:26,367 (5.00s)
+- **Spotlight group:** et-schema (reused=False)
+- **SFX / duck:** 00:04:20,367
+- **Seta:** 00:04:21,367
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** esc-aa-enc
 
-## 35_et_schema_other — ExistingTable Schema
-
-- **Elemento:** Schema → other
-- **Targets:** esc-other
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.26, 0.5, 0.97, 0.5143]]
-- **Final px boxes:** [[672, 397, 1508, 424]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** Schema → other — Use quando o schema não é coe_enc nem aa_enc.
-- **Typing:** 00:06:49,967 → 00:06:50,967 (1.00s)
-- **Seta:** 00:06:50,967
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** esc-other
-
-## 35b_et_other_field — ExistingTable Schema
-
-- **Elemento:** other → Custom Schema
-- **Targets:** lbl-existing-schema-custom, existing-schema-custom
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.14, 0.5143, 0.99, 0.5571]]
-- **Final px boxes:** [[538, 402, 1528, 465]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** other → Custom Schema — Ao marcar other, aparece o campo Custom Schema.
-- **Typing:** 00:06:59,200 → 00:07:00,200 (1.00s)
-- **Seta:** 00:07:00,200
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** #existing-schema-custom
-
-## 36_et_custom — ExistingTable Schema
+## 72b_et_other — ExistingTable
 
 - **Elemento:** Custom Schema
 - **Targets:** lbl-existing-schema-custom, existing-schema-custom
@@ -812,14 +792,17 @@ Calibri is not installed in this Linux environment. Using Carlito (fonts-crosext
 - **Final px boxes:** [[538, 402, 1528, 465]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Custom Schema — Digite o nome do schema personalizado. / Só aparece com Schema = other.
-- **Typing:** 00:07:07,500 → 00:07:08,700 (1.20s)
-- **Seta:** 00:07:08,700
-- **Duração:** 8.00s
+- **Diálogo:** Custom Schema — Se marcar other, digite o schema / personalizado no campo Custom Schema.
+- **Typing:** 00:04:27,600 → 00:04:28,800 (1.20s)
+- **Hold complete:** 00:04:28,800 → 00:04:33,800 (5.00s)
+- **Spotlight group:** et-custom (reused=False)
+- **SFX / duck:** 00:04:27,600
+- **Seta:** 00:04:28,800
+- **Duração cena:** 6.20s
 - **Manual review:** PASS
-- **Evidência:** row-existing-schema-custom
+- **Evidência:** #existing-schema-custom
 
-## 37_et_table — ExistingTable
+## 73_et_table — ExistingTable
 
 - **Elemento:** Existing Table
 - **Targets:** lbl-existing-table, existing-table
@@ -828,222 +811,93 @@ Calibri is not installed in this Linux environment. Using Carlito (fonts-crosext
 - **Final px boxes:** [[538, 402, 1528, 465]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Existing Table — Informe só o nome da tabela (sem o schema).
-- **Typing:** 00:07:15,800 → 00:07:16,800 (1.00s)
-- **Seta:** 00:07:16,800
-- **Duração:** 8.00s
+- **Diálogo:** Existing Table — Informe o nome da tabela / (sem o schema).
+- **Typing:** 00:04:34,100 → 00:04:35,100 (1.00s)
+- **Hold complete:** 00:04:35,100 → 00:04:40,100 (5.00s)
+- **Spotlight group:** et-table (reused=False)
+- **SFX / duck:** 00:04:34,100
+- **Seta:** 00:04:35,100
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** #existing-table
 
-## 37b_et_full — ExistingTable
+## 73b_et_effect — ExistingTable
 
-- **Elemento:** Origem completa
-- **Targets:** lbl-existing-schema, existing-schema, lbl-existing-table, existing-table
+- **Elemento:** Efeito
+- **Targets:** lbl-existing-table, existing-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.14, 0.4571, 0.99, 0.5], [0.14, 0.5143, 0.99, 0.5571]]
-- **Final px boxes:** [[538, 356, 1528, 419], [532, 401, 1534, 466]]
-- **Cutouts:** 2
+- **Norm cutouts:** [[0.14, 0.5143, 0.99, 0.5571]]
+- **Final px boxes:** [[538, 402, 1528, 465]]
+- **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Origem completa — Com o schema, forma schema.tabela.
-- **Typing:** 00:07:25,033 → 00:07:26,033 (1.00s)
-- **Seta:** 00:07:26,033
-- **Duração:** 8.00s
+- **Diálogo:** Efeito — Com schema e tabela, o Dispatch / exporta schema.tabela para CSV.
+- **Typing:** 00:04:41,033 → 00:04:42,033 (1.00s)
+- **Hold complete:** 00:04:42,033 → 00:04:47,033 (5.00s)
+- **Spotlight group:** et-table (reused=True)
+- **SFX / duck:** 00:04:41,033
+- **Seta:** 00:04:42,033
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** validate_full_table
 
-## 38_rel_standard — Relações
+## 80_status — Status
 
-- **Elemento:** Combinação comum
-- **Targets:** src-sqlfile, dst-csv
+- **Elemento:** Status do formulário
+- **Targets:** validation-summary
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.16, 0.1714, 0.545, 0.1857], [0.585, 0.1857, 0.97, 0.2]]
-- **Final px boxes:** [[559, 130, 1026, 158], [1040, 142, 1508, 170]]
-- **Cutouts:** 2
-- **Overlay opacity:** 170/255
-- **Diálogo:** Combinação comum — SqlFile + Csv + .sql sem marcadores de data.
-- **Typing:** 00:07:33,333 → 00:07:34,333 (1.00s)
-- **Seta:** 00:07:34,333
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** LEGAL SqlFile/Csv
-
-## 38b_rel_standard_use — Relações
-
-- **Elemento:** Fluxo típico
-- **Targets:** src-sqlfile, dst-csv
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.16, 0.1714, 0.545, 0.1857], [0.585, 0.1857, 0.97, 0.2]]
-- **Final px boxes:** [[559, 130, 1026, 158], [1040, 142, 1508, 170]]
-- **Cutouts:** 2
-- **Overlay opacity:** 170/255
-- **Diálogo:** Fluxo típico — Gera um CSV a partir de uma consulta.
-- **Typing:** 00:07:42,567 → 00:07:43,567 (1.00s)
-- **Seta:** 00:07:43,567
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** detect_source
-
-## 39_rel_monthly — Relações
-
-- **Elemento:** Combinação MonthlyJob
-- **Targets:** src-sqltemplate, dst-table
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.16, 0.1857, 0.54, 0.2], [0.58, 0.1714, 0.96, 0.1857]]
-- **Final px boxes:** [[559, 142, 1021, 170], [1034, 130, 1496, 158]]
-- **Cutouts:** 2
-- **Overlay opacity:** 170/255
-- **Diálogo:** Combinação MonthlyJob — MonthlyJob + Table + .sql com / {date_inicio} e {date_fim}.
-- **Typing:** 00:07:50,867 → 00:07:52,000 (1.13s)
-- **Seta:** 00:07:52,000
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** LEGAL SqlTemplate/Table
-
-## 39b_rel_monthly_fields — Relações
-
-- **Elemento:** Campos do MonthlyJob
-- **Targets:** lbl-schema, schema, lbl-table-name, table-name-prefix, table-name-suffix
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.14, 0.5857, 0.98, 0.6286], [0.14, 0.6429, 0.98, 0.6857]]
-- **Final px boxes:** [[538, 460, 1517, 523], [532, 505, 1523, 570]]
-- **Cutouts:** 2
-- **Overlay opacity:** 170/255
-- **Diálogo:** Campos do MonthlyJob — Schema e Table Name entram no nome da tabela.
-- **Typing:** 00:07:59,167 → 00:08:00,167 (1.00s)
-- **Seta:** 00:08:00,167
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** date fields
-
-## 39c_rel_monthly_dates — Relações
-
-- **Elemento:** Datas do MonthlyJob
-- **Targets:** lbl-start-date, start-date, lbl-end-date, end-date
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.14, 0.7, 0.98, 0.7429], [0.14, 0.7571, 0.98, 0.8]]
-- **Final px boxes:** [[538, 553, 1517, 615], [532, 598, 1523, 663]]
-- **Cutouts:** 2
-- **Overlay opacity:** 170/255
-- **Diálogo:** Datas do MonthlyJob — Start Date e End Date definem o intervalo mês a mês.
-- **Typing:** 00:08:07,467 → 00:08:08,500 (1.03s)
-- **Seta:** 00:08:08,500
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** monthly dates
-
-## 40_rel_existing — Relações
-
-- **Elemento:** Combinação ExistingTable
-- **Targets:** src-existingtable, dst-csv
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.16, 0.2, 0.545, 0.2143], [0.585, 0.1857, 0.97, 0.2]]
-- **Final px boxes:** [[559, 154, 1026, 181], [1040, 142, 1508, 170]]
-- **Cutouts:** 2
-- **Overlay opacity:** 170/255
-- **Diálogo:** Combinação ExistingTable — ExistingTable + Csv + Schema + Existing Table.
-- **Typing:** 00:08:15,767 → 00:08:16,767 (1.00s)
-- **Seta:** 00:08:16,767
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** ExistingTable flow
-
-## 40b_rel_existing_no_sql — Relações
-
-- **Elemento:** Sem SQL neste modo
-- **Targets:** src-existingtable
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.16, 0.2, 0.545, 0.2143]]
-- **Final px boxes:** [[559, 154, 1026, 181]]
+- **Norm cutouts:** [[0.135, 0.9429, 0.555, 0.9857]]
+- **Final px boxes:** [[526, 748, 1042, 806]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Sem SQL neste modo — Não usa SQL File nem MonthlyJob ao mesmo tempo.
-- **Typing:** 00:08:24,067 → 00:08:25,067 (1.00s)
-- **Seta:** 00:08:25,067
-- **Duração:** 8.00s
+- **Diálogo:** Status do formulário — Ready to launch = sem problemas / bloqueantes para o envio.
+- **Typing:** 00:04:47,333 → 00:04:48,433 (1.10s)
+- **Hold complete:** 00:04:48,433 → 00:04:53,433 (5.00s)
+- **Spotlight group:** status (reused=False)
+- **SFX / duck:** 00:04:47,333
+- **Seta:** 00:04:48,433
+- **Duração cena:** 6.10s
 - **Manual review:** PASS
-- **Evidência:** source exclusive
+- **Evidência:** validation-summary
 
-## 41_rel_incompat — Relações
+## 81_val_bad — Validação
 
-- **Elemento:** Combinações indisponíveis
-- **Targets:** matrix-table
+- **Elemento:** Validação
+- **Targets:** validation-summary
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.155, 0.1, 0.995, 0.1571]]
-- **Final px boxes:** [[549, 61, 1540, 147]]
+- **Norm cutouts:** [[0.135, 0.9429, 0.555, 0.9857]]
+- **Final px boxes:** [[526, 748, 1042, 806]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Combinações indisponíveis — MonthlyJob não aceita Csv ou Table+Csv.
-- **Typing:** 00:08:32,367 → 00:08:33,367 (1.00s)
-- **Seta:** 00:08:33,367
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** LEGAL_CELLS
-
-## 41b_rel_incompat_et — Relações
-
-- **Elemento:** ExistingTable — limite
-- **Targets:** matrix-table
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.155, 0.1, 0.995, 0.1571]]
-- **Final px boxes:** [[549, 61, 1540, 147]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** ExistingTable — limite — ExistingTable não aceita Table ou Table+Csv.
-- **Typing:** 00:08:40,667 → 00:08:41,667 (1.00s)
-- **Seta:** 00:08:41,667
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** LEGAL_CELLS
-
-## 42_val_bad — Validação
-
-- **Elemento:** E-mail inválido
-- **Targets:** lbl-email, email, validation-summary
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.14, 0.5714, 0.99, 0.6143], [0.135, 0.9429, 0.85, 0.9857]]
-- **Final px boxes:** [[538, 448, 1528, 511], [526, 748, 1376, 806]]
-- **Cutouts:** 2
-- **Overlay opacity:** 170/255
-- **Diálogo:** E-mail inválido — Se o formato estiver errado, o status mostra o problema.
-- **Typing:** 00:08:48,967 → 00:08:50,000 (1.03s)
-- **Seta:** 00:08:50,000
-- **Duração:** 8.00s
+- **Diálogo:** Validação — Se um campo estiver inválido, / o status mostra o problema.
+- **Typing:** 00:04:53,733 → 00:04:54,733 (1.00s)
+- **Hold complete:** 00:04:54,733 → 00:04:59,733 (5.00s)
+- **Spotlight group:** val-bad (reused=False)
+- **SFX / duck:** 00:04:53,733
+- **Seta:** 00:04:54,733
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** Invalid email
 
-## 43_val_ok — Validação
+## 82_val_ok — Validação
 
 - **Elemento:** Formulário pronto
 - **Targets:** validation-summary
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.135, 0.9429, 0.85, 0.9857]]
-- **Final px boxes:** [[526, 748, 1376, 806]]
+- **Norm cutouts:** [[0.135, 0.9429, 0.555, 0.9857]]
+- **Final px boxes:** [[526, 748, 1042, 806]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Formulário pronto — Com os dados corrigidos, volta Ready to launch.
-- **Typing:** 00:08:57,267 → 00:08:58,267 (1.00s)
-- **Seta:** 00:08:58,267
-- **Duração:** 8.00s
+- **Diálogo:** Formulário pronto — Com os dados corrigidos, / volta Ready to launch.
+- **Typing:** 00:05:00,033 → 00:05:01,033 (1.00s)
+- **Hold complete:** 00:05:01,033 → 00:05:06,033 (5.00s)
+- **Spotlight group:** status (reused=False)
+- **SFX / duck:** 00:05:00,033
+- **Seta:** 00:05:01,033
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** Ready to launch
 
-## 43b_val_review — Validação
-
-- **Elemento:** Revise antes de enviar
-- **Targets:** source, destination
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.15, 0.1571, 0.555, 0.2286], [0.575, 0.1571, 0.98, 0.2286]]
-- **Final px boxes:** [[543, 107, 1042, 205], [1024, 107, 1523, 205]]
-- **Cutouts:** 2
-- **Overlay opacity:** 170/255
-- **Diálogo:** Revise antes de enviar — Confira origem, destino, arquivo e fila.
-- **Typing:** 00:09:05,567 → 00:09:06,567 (1.00s)
-- **Seta:** 00:09:06,567
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** form review
-
-## 44_preview — Preview
+## 83_preview — Preview
 
 - **Elemento:** Preview SQL
 - **Targets:** preview
@@ -1052,30 +906,36 @@ Calibri is not installed in this Linux environment. Using Carlito (fonts-crosext
 - **Final px boxes:** [[1345, 748, 1457, 806]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Preview SQL — Mostra o conteúdo que será usado no job.
-- **Typing:** 00:09:13,867 → 00:09:14,867 (1.00s)
-- **Seta:** 00:09:14,867
-- **Duração:** 8.00s
+- **Diálogo:** Preview SQL — Mostra o conteúdo que será / usado no job.
+- **Typing:** 00:05:06,333 → 00:05:07,333 (1.00s)
+- **Hold complete:** 00:05:07,333 → 00:05:12,333 (5.00s)
+- **Spotlight group:** preview-btn (reused=False)
+- **SFX / duck:** 00:05:06,333
+- **Seta:** 00:05:07,333
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** Preview SQL [P]
 
-## 44b_preview_check — Preview
+## 83b_preview_check — Preview
 
-- **Elemento:** O que conferir no Preview
+- **Elemento:** O que conferir
 - **Targets:** preview-header, preview-body
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.13, 0.0571, 1.0, 0.1], [0.14, 0.1143, 0.99, 0.5143]]
 - **Final px boxes:** [[521, 31, 1546, 96], [532, 72, 1534, 436]]
 - **Cutouts:** 2
 - **Overlay opacity:** 170/255
-- **Diálogo:** O que conferir no Preview — Confira a consulta e o destino antes do envio.
-- **Typing:** 00:09:23,100 → 00:09:24,133 (1.03s)
-- **Seta:** 00:09:24,133
-- **Duração:** 8.00s
+- **Diálogo:** O que conferir — Confira a consulta e o destino / antes do envio.
+- **Typing:** 00:05:13,567 → 00:05:14,567 (1.00s)
+- **Hold complete:** 00:05:14,567 → 00:05:19,567 (5.00s)
+- **Spotlight group:** preview-body (reused=False)
+- **SFX / duck:** 00:05:13,567
+- **Seta:** 00:05:14,567
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** preview screen
 
-## 45_checklist — Revisão
+## 84_check_a — Revisão
 
 - **Elemento:** Antes de iniciar, confirme
 - **Targets:** (card)
@@ -1084,14 +944,17 @@ Calibri is not installed in this Linux environment. Using Carlito (fonts-crosext
 - **Final px boxes:** [[80, 100, 1840, 786]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Antes de iniciar, confirme — Origem, destino, arquivo ou tabela, / e fila de execução.
-- **Typing:** 00:09:31,100 → 00:09:32,267 (1.17s)
-- **Seta:** 00:09:32,267
-- **Duração:** 8.00s
+- **Diálogo:** Antes de iniciar, confirme — Origem, destino e arquivo / ou tabela estão corretos.
+- **Typing:** 00:05:19,567 → 00:05:20,667 (1.10s)
+- **Hold complete:** 00:05:20,667 → 00:05:25,667 (5.00s)
+- **Spotlight group:** checklist (reused=False)
+- **SFX / duck:** 00:05:19,567
+- **Seta:** 00:05:20,667
+- **Duração cena:** 6.10s
 - **Manual review:** PASS
 - **Evidência:** checklist
 
-## 45b_checklist_b — Revisão
+## 84b_check_b — Revisão
 
 - **Elemento:** Também confira
 - **Targets:** (card)
@@ -1100,46 +963,55 @@ Calibri is not installed in this Linux environment. Using Carlito (fonts-crosext
 - **Final px boxes:** [[80, 100, 1840, 786]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Também confira — Opções adicionais e e-mail de notificação.
-- **Typing:** 00:09:39,100 → 00:09:40,100 (1.00s)
-- **Seta:** 00:09:40,100
-- **Duração:** 8.00s
+- **Diálogo:** Também confira — Fila, opções e e-mail / de notificação.
+- **Typing:** 00:05:25,667 → 00:05:26,667 (1.00s)
+- **Hold complete:** 00:05:26,667 → 00:05:31,667 (5.00s)
+- **Spotlight group:** checklist (reused=True)
+- **SFX / duck:** 00:05:25,667
+- **Seta:** 00:05:26,667
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** checklist
 
-## 46_confirm — Envio
+## 85_launch — Envio
 
-- **Elemento:** Launch Job
+- **Elemento:** Launch
+- **Targets:** launch
+- **Font:** Carlito 38px
+- **Norm cutouts:** [[0.93, 0.9429, 0.99, 0.9857]]
+- **Final px boxes:** [[1430, 748, 1530, 806]]
+- **Cutouts:** 1
+- **Overlay opacity:** 170/255
+- **Diálogo:** Launch — Envia o job com as configurações / revisadas.
+- **Typing:** 00:05:31,967 → 00:05:32,967 (1.00s)
+- **Hold complete:** 00:05:32,967 → 00:05:37,967 (5.00s)
+- **Spotlight group:** launch (reused=False)
+- **SFX / duck:** 00:05:31,967
+- **Seta:** 00:05:32,967
+- **Duração cena:** 6.00s
+- **Manual review:** PASS
+- **Evidência:** #launch
+
+## 86_confirm — Envio
+
+- **Elemento:** Confirmação
 - **Targets:** confirm-dialog
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.34, 0.3571, 0.66, 0.6714]]
 - **Final px boxes:** [[758, 269, 1161, 563]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Launch Job — Inicia o job com as configurações revisadas.
-- **Typing:** 00:09:47,400 → 00:09:48,400 (1.00s)
-- **Seta:** 00:09:48,400
-- **Duração:** 8.00s
+- **Diálogo:** Confirmação — Leia o resumo e confirme / só se estiver correto.
+- **Typing:** 00:05:38,267 → 00:05:39,267 (1.00s)
+- **Hold complete:** 00:05:39,267 → 00:05:44,267 (5.00s)
+- **Spotlight group:** confirm (reused=False)
+- **SFX / duck:** 00:05:38,267
+- **Seta:** 00:05:39,267
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** ConfirmScreen
 
-## 46b_confirm_read — Envio
-
-- **Elemento:** Confirme só se estiver correto
-- **Targets:** confirm-dialog
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.34, 0.3571, 0.66, 0.6714]]
-- **Final px boxes:** [[758, 269, 1161, 563]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** Confirme só se estiver correto — Leia o resumo antes de confirmar o envio.
-- **Typing:** 00:09:56,633 → 00:09:57,667 (1.03s)
-- **Seta:** 00:09:57,667
-- **Duração:** 8.00s
-- **Manual review:** PASS
-- **Evidência:** Launch Job
-
-## 47_launched — Envio
+## 87_launched — Envio
 
 - **Elemento:** Job enviado
 - **Targets:** warning-text
@@ -1148,14 +1020,17 @@ Calibri is not installed in this Linux environment. Using Carlito (fonts-crosext
 - **Final px boxes:** [[526, 616, 1540, 644]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Job enviado — O job foi enviado pelo Dispatch. / Acompanhe na tela de monitoramento.
-- **Typing:** 00:10:04,933 → 00:10:06,067 (1.13s)
-- **Seta:** 00:10:06,067
-- **Duração:** 8.00s
+- **Diálogo:** Job enviado — O job foi enviado pelo Dispatch. / Acompanhe o status em seguida.
+- **Typing:** 00:05:45,500 → 00:05:46,567 (1.07s)
+- **Hold complete:** 00:05:46,567 → 00:05:51,567 (5.00s)
+- **Spotlight group:** launched (reused=False)
+- **SFX / duck:** 00:05:45,500
+- **Seta:** 00:05:46,567
+- **Duração cena:** 6.07s
 - **Manual review:** PASS
 - **Evidência:** Launched Job
 
-## 48_overview — Overview
+## 88_overview — Overview
 
 - **Elemento:** Overview
 - **Targets:** sidebar-nav
@@ -1164,14 +1039,17 @@ Calibri is not installed in this Linux environment. Using Carlito (fonts-crosext
 - **Final px boxes:** [[374, 26, 555, 263]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Overview — Após o envio, acompanhe o status no Overview.
-- **Typing:** 00:10:13,233 → 00:10:14,233 (1.00s)
-- **Seta:** 00:10:14,233
-- **Duração:** 8.00s
+- **Diálogo:** Overview — Após o envio, acompanhe o status / no Overview.
+- **Typing:** 00:05:51,867 → 00:05:52,867 (1.00s)
+- **Hold complete:** 00:05:52,867 → 00:05:57,867 (5.00s)
+- **Spotlight group:** overview (reused=False)
+- **SFX / duck:** 00:05:51,867
+- **Seta:** 00:05:52,867
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** DashboardScreen
 
-## 49_close — Encerramento
+## 89_close — Encerramento
 
 - **Elemento:** Resumo
 - **Targets:** (card)
@@ -1180,14 +1058,17 @@ Calibri is not installed in this Linux environment. Using Carlito (fonts-crosext
 - **Final px boxes:** [[80, 100, 1840, 786]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Resumo — Na aba New Job você define, revisa e inicia o job.
-- **Typing:** 00:10:22,167 → 00:10:23,167 (1.00s)
-- **Seta:** 00:10:23,167
-- **Duração:** 8.00s
+- **Diálogo:** Resumo — Na aba New Job você define, / revisa e inicia o job.
+- **Typing:** 00:05:58,800 → 00:05:59,800 (1.00s)
+- **Hold complete:** 00:05:59,800 → 00:06:04,800 (5.00s)
+- **Spotlight group:** close (reused=False)
+- **SFX / duck:** 00:05:58,800
+- **Seta:** 00:05:59,800
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** closing
 
-## 49b_close_b — Encerramento
+## 89b_close_b — Encerramento
 
 - **Elemento:** Depois do envio
 - **Targets:** (card)
@@ -1196,9 +1077,12 @@ Calibri is not installed in this Linux environment. Using Carlito (fonts-crosext
 - **Final px boxes:** [[80, 100, 1840, 786]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Depois do envio — Acompanhe o resultado no Overview. / Revise os campos antes de Launch Job.
-- **Typing:** 00:10:30,167 → 00:10:31,433 (1.27s)
-- **Seta:** 00:10:31,433
-- **Duração:** 8.00s
+- **Diálogo:** Depois do envio — Acompanhe o resultado no Overview.
+- **Typing:** 00:06:04,800 → 00:06:05,800 (1.00s)
+- **Hold complete:** 00:06:05,800 → 00:06:10,800 (5.00s)
+- **Spotlight group:** close (reused=True)
+- **SFX / duck:** 00:06:04,800
+- **Seta:** 00:06:05,800
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** closing

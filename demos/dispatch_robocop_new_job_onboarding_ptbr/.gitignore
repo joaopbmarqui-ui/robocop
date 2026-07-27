@@ -4,3 +4,6 @@ audio/
 clips/
 *.svg
 *_raw.png
+
+# Keep the downloadable video ZIP
+!dispatch_robocop_new_job_video_download.zip

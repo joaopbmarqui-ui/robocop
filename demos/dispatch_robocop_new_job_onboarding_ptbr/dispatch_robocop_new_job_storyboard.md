@@ -1,192 +1,228 @@
-# Storyboard — Dispatch (Robocop) | New Job (pt-BR)
+# Storyboard — New Job (silencioso, pt-BR)
 
-Mapa seção → tela/ação → narração → texto na tela → destaque → resultado esperado.
+Vídeo sem narração e sem música. Explicações on-screen + cursor/cliques.
 
-## 01_title — Abertura
+## 01_open — Abertura
 
-- **Tempo:** 00:00:00,000 → 00:00:09,494 (9.5s)
-- **Tela / ação:** `title` — Cartão de título
-- **Narração:** Bem-vindo ao Dispatch, também conhecido como Robocop. Neste vídeo, você vai aprender a usar a aba New Job, do início ao envio.
-- **Texto na tela:** Dispatch (Robocop) | Como utilizar a aba New Job
-- **Destaque visual:** Cartão de título
-- **Resultado esperado:** O espectador entende o tema do vídeo
+- **Tempo:** 00:00:00,000 → 00:00:03,500 (3.5s)
+- **Tela:** `card:open`
+- **Destaque / cursor:** (0.5, 0.5)
+- **Badge:** —
+- **Texto na tela:** Dispatch (Robocop) — Como utilizar a aba New Job / Configure e inicie um novo job passo a passo.
+- **Resultado esperado:** analista entende o uso prático de “Dispatch (Robocop)”
 
-## 02_objective — Abertura
+## 02_purpose — Propósito
 
-- **Tempo:** 00:00:09,494 → 00:00:24,340 (14.8s)
-- **Tela / ação:** `section` — Texto de objetivo
-- **Narração:** A aba New Job serve para configurar e lançar um job no Impala: uma execução de consulta SQL supervisionada pelo Dispatch. Ao final, você saberá preencher o formulário, corrigir erros e enviar o job.
-- **Texto na tela:** Objetivo: configurar e lançar um job
-- **Destaque visual:** Texto de objetivo
-- **Resultado esperado:** Entendimento do propósito da aba
+- **Tempo:** 00:00:03,500 → 00:00:08,300 (4.8s)
+- **Tela:** `arrive`
+- **Destaque / cursor:** (0.55, 0.12)
+- **Badge:** —
+- **Texto na tela:** Para que serve — A aba New Job permite configurar e iniciar uma nova execução no Dispatch. / Você define a origem, o destino, a consulta e as opções de execução do job.
+- **Resultado esperado:** analista entende o uso prático de “Para que serve”
 
-## 03_prereq — Antes de começar
+## 03_ready — Antes de começar
 
-- **Tempo:** 00:00:24,340 → 00:00:48,834 (24.5s)
-- **Tela / ação:** `section` — Lista de pré-requisitos
-- **Narração:** Antes de começar, tenha pronto: um arquivo SQL na pasta de onde você abriu o Dispatch; um ticket Kerberos válido — o indicador K R B na barra lateral deve mostrar tempo restante; e, se quiser notificação, um e-mail no formato nome arroba domínio. O campo Email (notifications) é opcional; Kerberos e o arquivo SQL são necessários para lançar.
-- **Texto na tela:** Antes de começar
-- **Destaque visual:** Lista de pré-requisitos
-- **Resultado esperado:** Usuário sabe o que preparar
+- **Tempo:** 00:00:08,300 → 00:00:12,800 (4.5s)
+- **Tela:** `card:ready`
+- **Destaque / cursor:** (0.5, 0.45)
+- **Badge:** —
+- **Texto na tela:** Antes de começar — Tenha pronto: / • o arquivo SQL do seu job (quando usar SqlFile ou MonthlyJob); / • a origem e o destino desejados; / • e-mail de notificação, se quiser receber aviso.
+- **Resultado esperado:** analista entende o uso prático de “Antes de começar”
 
-## 04_arrive — Preenchimento dos campos
+## 04_matrix — Matriz
 
-- **Tempo:** 00:00:48,834 → 00:01:07,280 (18.4s)
-- **Tela / ação:** `arrive` — Tela New Job completa
-- **Narração:** Você chegou à aba New Job. À esquerda está a navegação; New Job fica destacado. No rodapé da barra lateral, o indicador K R B mostra se a autenticação Kerberos está ok. O formulário começa no topo e desce até os botões Preview SQL e Launch.
-- **Texto na tela:** Aba New Job
-- **Destaque visual:** Tela New Job completa
-- **Resultado esperado:** Orientação espacial da tela
+- **Tempo:** 00:00:12,800 → 00:00:17,400 (4.6s)
+- **Tela:** `matrix`
+- **Destaque / cursor:** (0.52, 0.18) + clique
+- **Badge:** Opcional
+- **Texto na tela:** Source × Destination — Mostra quais combinações de origem e destino são permitidas. / Use como referência rápida antes de escolher as opções.
+- **Resultado esperado:** analista entende o uso prático de “Source × Destination”
 
-## 05_matrix — Preenchimento dos campos
+## 05_detected — Detecção
 
-- **Tempo:** 00:01:07,280 → 00:01:28,438 (21.2s)
-- **Tela / ação:** `matrix` — Tabela de células legais
-- **Narração:** No topo, a matriz Source vezes Destination legal cells mostra quais combinações são permitidas. SqlFile pode ir para Table, Csv ou Table mais Csv. MonthlyJob só pode ir para Table. ExistingTable só pode ir para Csv. Pressione M para expandir ou recolher essa matriz.
-- **Texto na tela:** Matriz Source × Destination
-- **Destaque visual:** Tabela de células legais
-- **Resultado esperado:** Entende restrições de combinação
+- **Tempo:** 00:00:17,400 → 00:00:21,500 (4.1s)
+- **Tela:** `arrive`
+- **Destaque / cursor:** (0.55, 0.28)
+- **Badge:** —
+- **Texto na tela:** Detected source — Indica o tipo detectado no arquivo SQL selecionado. / Confira se corresponde ao que você pretende executar.
+- **Resultado esperado:** analista entende o uso prático de “Detected source”
 
-## 06_detected — Preenchimento dos campos
+## 06_source — Source
 
-- **Tempo:** 00:01:28,438 → 00:01:45,540 (17.1s)
-- **Tela / ação:** `arrive` — Linha Detected source
-- **Narração:** A linha Detected source informa o tipo detectado no arquivo SQL selecionado. Se o arquivo tiver os marcadores date_inicio e date_fim, o Dispatch trata como MonthlyJob e desativa automaticamente destinos ilegais.
-- **Texto na tela:** Detected source
-- **Destaque visual:** Linha Detected source
-- **Resultado esperado:** Entende detecção automática
+- **Tempo:** 00:00:21,500 → 00:00:27,300 (5.8s)
+- **Tela:** `source_sqlfile`
+- **Destaque / cursor:** (0.38, 0.36) + clique
+- **Badge:** Obrigatório
+- **Texto na tela:** Source — Define de onde os dados serão obtidos. / SqlFile: consulta em arquivo SQL. / MonthlyJob: consulta com período de datas. / ExistingTable: exporta uma tabela já existente.
+- **Resultado esperado:** analista entende o uso prático de “Source”
 
-## 07_source — Preenchimento dos campos
+## 07_destination — Destination
 
-- **Tempo:** 00:01:45,540 → 00:02:05,786 (20.2s)
-- **Tela / ação:** `source_dest` — Radio Source
-- **Narração:** O campo Source é obrigatório. SqlFile: consulta SQL comum em um arquivo. MonthlyJob: consulta com intervalo de datas, usando os marcadores date_inicio e date_fim. ExistingTable: exporta uma tabela que já existe no Impala, sem arquivo SQL.
-- **Texto na tela:** Source — obrigatório
-- **Destaque visual:** Radio Source
-- **Resultado esperado:** Escolhe a origem correta
+- **Tempo:** 00:00:27,300 → 00:00:32,900 (5.6s)
+- **Tela:** `source_sqlfile`
+- **Destaque / cursor:** (0.68, 0.36) + clique
+- **Badge:** Obrigatório
+- **Texto na tela:** Destination — Define onde o resultado do job será armazenado. / Table: salva em tabela. / Csv: gera arquivo CSV. / Table+Csv: faz os dois.
+- **Resultado esperado:** analista entende o uso prático de “Destination”
 
-## 08_destination — Preenchimento dos campos
+## 08_queue — Fila
 
-- **Tempo:** 00:02:05,786 → 00:02:24,160 (18.4s)
-- **Tela / ação:** `source_dest` — Radio Destination
-- **Narração:** Destination também é obrigatório e depende do Source. Table grava o resultado em uma tabela Impala. Csv grava um arquivo C S V na pasta de lançamento. Table mais Csv faz os dois. Opções ilegais ficam desabilitadas automaticamente.
-- **Texto na tela:** Destination — obrigatório
-- **Destaque visual:** Radio Destination
-- **Resultado esperado:** Escolhe destino permitido
+- **Tempo:** 00:00:32,900 → 00:00:38,200 (5.3s)
+- **Tela:** `queues`
+- **Destaque / cursor:** (0.55, 0.52) + clique
+- **Badge:** Opcional
+- **Texto na tela:** Execution Queue — Define a fila em que o job será processado. / Sem seleção = automático. / Escolha conforme a orientação do seu projeto.
+- **Resultado esperado:** analista entende o uso prático de “Execution Queue”
 
-## 09_queue — Preenchimento dos campos
+## 09_picker — SQL
 
-- **Tempo:** 00:02:24,160 → 00:02:40,110 (15.9s)
-- **Tela / ação:** `queues` — Lista de filas
-- **Narração:** Execution Queue é opcional. Sem seleção, o modo Auto tenta as filas até uma aceitar o job. Você pode marcar uma ou mais filas para restringir; várias são tentadas na ordem da lista. Use Auto se não tiver preferência.
-- **Texto na tela:** Execution Queue — opcional
-- **Destaque visual:** Lista de filas
-- **Resultado esperado:** Entende Auto versus seleção manual
+- **Tempo:** 00:00:38,200 → 00:00:43,000 (4.8s)
+- **Tela:** `picker`
+- **Destaque / cursor:** (0.55, 0.62) + clique
+- **Badge:** Obrigatório
+- **Texto na tela:** Lista de arquivos SQL — Lista os arquivos .sql da pasta atual. / Selecione o arquivo do job para preencher o caminho.
+- **Resultado esperado:** analista entende o uso prático de “Lista de arquivos SQL”
 
-## 10_picker — Preenchimento dos campos
+## 10_sql_file — SQL
 
-- **Tempo:** 00:02:40,110 → 00:03:00,428 (20.3s)
-- **Tela / ação:** `picker` — Picker e campo SQL File
-- **Narração:** A lista SQL files mostra os arquivos ponto sql da pasta de lançamento. Selecione um para preencher o caminho. O campo SQL File é obrigatório para SqlFile e MonthlyJob; o arquivo precisa existir. Abaixo, um indicador confirma se o arquivo foi encontrado.
-- **Texto na tela:** SQL File — obrigatório para SqlFile/MonthlyJob
-- **Destaque visual:** Picker e campo SQL File
-- **Resultado esperado:** Seleciona o SQL correto
+- **Tempo:** 00:00:43,000 → 00:00:47,200 (4.2s)
+- **Tela:** `picker`
+- **Destaque / cursor:** (0.58, 0.72)
+- **Badge:** Obrigatório
+- **Texto na tela:** SQL File — Caminho do arquivo SQL que será usado no job. / Confirme se o arquivo indicado é o correto.
+- **Resultado esperado:** analista entende o uso prático de “SQL File”
 
-## 11_email_subject — Preenchimento dos campos
+## 11_email — Notificação
 
-- **Tempo:** 00:03:00,428 → 00:03:18,874 (18.4s)
-- **Tela / ação:** `email_ok` — Campos Email e Subject
-- **Narração:** O campo Email (notifications) é opcional. Se preencher, use um endereço válido com arroba e domínio. Vários e-mails podem ser separados por vírgula. Subject (email) também é opcional; o padrão é Dispatch Job. Define o assunto da notificação.
-- **Texto na tela:** Email (notifications) e Subject — opcionais
-- **Destaque visual:** Campos Email e Subject
-- **Resultado esperado:** Preenche notificação se desejar
+- **Tempo:** 00:00:47,200 → 00:00:52,000 (4.8s)
+- **Tela:** `email_ok`
+- **Destaque / cursor:** (0.58, 0.78) + clique
+- **Badge:** Opcional
+- **Texto na tela:** Email (notifications) — Envia aviso quando o job terminar. / Deixe em branco se não precisar de notificação.
+- **Resultado esperado:** analista entende o uso prático de “Email (notifications)”
 
-## 12_status — Preenchimento dos campos
+## 12_subject — Notificação
 
-- **Tempo:** 00:03:18,874 → 00:03:37,296 (18.4s)
-- **Tela / ação:** `ready_actions` — Validation summary e botões
-- **Narração:** Na área de status, o Dispatch mostra checagens ao vivo: arquivo SQL encontrado, formato de e-mail e Kerberos. Na barra de ações, a mensagem Ready to launch aparece quando não há problemas. Os botões são Preview SQL tecla P, e Launch tecla L.
-- **Texto na tela:** Status e ações
-- **Destaque visual:** Validation summary e botões
-- **Resultado esperado:** Lê indicadores antes de enviar
+- **Tempo:** 00:00:52,000 → 00:00:56,400 (4.4s)
+- **Tela:** `email_ok`
+- **Destaque / cursor:** (0.58, 0.84) + clique
+- **Badge:** Opcional
+- **Texto na tela:** Subject (email) — Define o assunto do e-mail de notificação. / Use um texto curto que identifique o job.
+- **Resultado esperado:** analista entende o uso prático de “Subject (email)”
 
-## 13_monthly — Preenchimento dos campos
+## 13_monthly — MonthlyJob
 
-- **Tempo:** 00:03:37,296 → 00:03:55,022 (17.7s)
-- **Tela / ação:** `monthly` — Campos Schema, Table, datas
-- **Narração:** Ao escolher MonthlyJob, o destino fica limitado a Table. Aparecem campos obrigatórios extras: Schema, Table Name com o prefixo do seu usuário, Start Date e End Date no formato ano-mês-dia. As datas definem o período da consulta mensal.
-- **Texto na tela:** MonthlyJob → Table
-- **Destaque visual:** Campos Schema, Table, datas
-- **Resultado esperado:** Vê dependências do MonthlyJob
+- **Tempo:** 00:00:56,400 → 00:01:02,400 (6.0s)
+- **Tela:** `monthly`
+- **Destaque / cursor:** (0.38, 0.4) + clique
+- **Badge:** Use apenas quando...
+- **Texto na tela:** MonthlyJob — Use quando o job precisa rodar com um intervalo de datas. / Neste modo o destino fica em Table e aparecem Schema, / Table Name, Start Date e End Date.
+- **Resultado esperado:** analista entende o uso prático de “MonthlyJob”
 
-## 14_existing — Preenchimento dos campos
+## 14_monthly_fields — MonthlyJob
 
-- **Tempo:** 00:03:55,022 → 00:04:12,388 (17.4s)
-- **Tela / ação:** `existing` — Schema e Existing Table
-- **Narração:** Com ExistingTable, o destino fica só em Csv. Escolha o Schema — coe_enc, aa_enc ou other — e informe o nome da tabela existente. Se usar other, aparece Custom Schema. Não há Preview SQL nesse modo.
-- **Texto na tela:** ExistingTable → Csv
-- **Destaque visual:** Schema e Existing Table
-- **Resultado esperado:** Vê dependências do ExistingTable
+- **Tempo:** 00:01:02,400 → 00:01:07,800 (5.4s)
+- **Tela:** `monthly_fields`
+- **Destaque / cursor:** (0.58, 0.78)
+- **Badge:** Obrigatório
+- **Texto na tela:** Campos do MonthlyJob — Schema e Table Name: onde o resultado será salvo. / Start Date e End Date: período da consulta. / Revise as datas antes de continuar.
+- **Resultado esperado:** analista entende o uso prático de “Campos do MonthlyJob”
 
-## 15_validation_bad — Revisão
+## 15_existing — ExistingTable
 
-- **Tempo:** 00:04:12,388 → 00:04:29,202 (16.8s)
-- **Tela / ação:** `email_bad` — Campo Email + validation summary
-- **Narração:** Vamos demonstrar um erro comum. No fluxo SqlFile para Csv, se o e-mail for inválido, como apenas a palavra invalido, o resumo mostra issue Invalid email format, e o indicador de e-mail fica vermelho. Corrija antes de lançar.
-- **Texto na tela:** Erro: Invalid email format
-- **Destaque visual:** Campo Email + validation summary
-- **Resultado esperado:** Reconhece e interpreta validação
+- **Tempo:** 00:01:07,800 → 00:01:13,600 (5.8s)
+- **Tela:** `existing`
+- **Destaque / cursor:** (0.38, 0.44) + clique
+- **Badge:** Use apenas quando...
+- **Texto na tela:** ExistingTable — Use quando os dados já estão em uma tabela e você / só precisa exportar o resultado em CSV. / Neste modo o destino fica limitado a Csv.
+- **Resultado esperado:** analista entende o uso prático de “ExistingTable”
 
-## 16_validation_fix — Revisão
+## 16_existing_fields — ExistingTable
 
-- **Tempo:** 00:04:29,202 → 00:04:48,008 (18.8s)
-- **Tela / ação:** `ready_review` — Formulário pronto
-- **Narração:** Corrigindo para analyst arroba example ponto com, o erro some. O status volta a Ready to launch. Revise: Source SqlFile, Destination Csv, arquivo export_sales ponto sql, fila em Auto, e-mail válido e Kerberos ok.
-- **Texto na tela:** ✓ Ready to launch
-- **Destaque visual:** Formulário pronto
-- **Resultado esperado:** Confirma configuração válida
+- **Tempo:** 00:01:13,600 → 00:01:18,400 (4.8s)
+- **Tela:** `existing_fields`
+- **Destaque / cursor:** (0.58, 0.72)
+- **Badge:** Obrigatório
+- **Texto na tela:** Schema e Existing Table — Escolha o schema e informe o nome da tabela existente. / Se o schema não estiver na lista, use other.
+- **Resultado esperado:** analista entende o uso prático de “Schema e Existing Table”
 
-## 17_preview — Revisão
+## 17_back_sqlfile — Exemplo
 
-- **Tempo:** 00:04:48,008 → 00:05:01,942 (13.9s)
-- **Tela / ação:** `preview` — Tela de preview
-- **Narração:** Antes de enviar, use Preview SQL com a tecla P para ver o SQL que será executado. Confirme se a consulta está correta e volte com Esc. Preview não está disponível para ExistingTable.
-- **Texto na tela:** SQL Preview
-- **Destaque visual:** Tela de preview
-- **Resultado esperado:** Revisa SQL antes do envio
+- **Tempo:** 00:01:18,400 → 00:01:23,200 (4.8s)
+- **Tela:** `ready_review`
+- **Destaque / cursor:** (0.55, 0.36) + clique
+- **Badge:** —
+- **Texto na tela:** Exemplo prático — Voltamos para SqlFile → Csv com o arquivo export_sales.sql. / Este é o fluxo mais comum para gerar um CSV.
+- **Resultado esperado:** analista entende o uso prático de “Exemplo prático”
 
-## 18_confirm — Envio do job
+## 18_validation_bad — Validação
 
-- **Tempo:** 00:05:01,942 → 00:05:19,380 (17.4s)
-- **Tela / ação:** `confirm` — Modal de confirmação
-- **Narração:** Ao pressionar Launch ou a tecla L, abre a confirmação Launch Job. Ela resume Source, Destination, tabela alvo, fila, caminho do C S V e e-mail. Launch confirma; Review cancela para ajustar. Confirme com Y ou Enter.
-- **Texto na tela:** Confirmação Launch Job
-- **Destaque visual:** Modal de confirmação
-- **Resultado esperado:** Lê o resumo antes de confirmar
+- **Tempo:** 00:01:23,200 → 00:01:27,800 (4.6s)
+- **Tela:** `email_bad`
+- **Destaque / cursor:** (0.58, 0.78)
+- **Badge:** —
+- **Texto na tela:** E-mail inválido — Revise o formato antes de continuar. / O status mostra o problema até a correção.
+- **Resultado esperado:** analista entende o uso prático de “E-mail inválido”
 
-## 19_launched — Envio do job
+## 19_validation_fix — Validação
 
-- **Tempo:** 00:05:19,380 → 00:05:33,074 (13.7s)
-- **Tela / ação:** `launched` — Mensagem de sucesso
-- **Narração:** Após confirmar, o Dispatch cria o job e inicia o runner em segundo plano, mostrando a mensagem Launched Job com o identificador. A interface não fica responsável pela execução durável do job.
-- **Texto na tela:** ✓ Launched Job …
-- **Destaque visual:** Mensagem de sucesso
-- **Resultado esperado:** Vê confirmação imediata do envio
+- **Tempo:** 00:01:27,800 → 00:01:32,600 (4.8s)
+- **Tela:** `ready_review`
+- **Destaque / cursor:** (0.72, 0.92)
+- **Badge:** —
+- **Texto na tela:** Pronto para enviar — Com o e-mail corrigido, o status volta a Ready to launch. / Confira origem, destino, arquivo e fila antes do envio.
+- **Resultado esperado:** analista entende o uso prático de “Pronto para enviar”
 
-## 20_next — Próximos passos
+## 20_preview — Preview
 
-- **Tempo:** 00:05:33,074 → 00:05:48,136 (15.1s)
-- **Tela / ação:** `overview` — Tela Overview para monitorar
-- **Narração:** Para acompanhar, volte à Overview com Esc ou B. Nessa tela você monitora jobs em execução e recentes, além dos logs. O status final no Impala depende do ambiente real; use Overview e View Logs para acompanhar.
-- **Texto na tela:** Próximo: Overview
-- **Destaque visual:** Tela Overview para monitorar
-- **Resultado esperado:** Sabe para onde ir depois
+- **Tempo:** 00:01:32,600 → 00:01:37,900 (5.3s)
+- **Tela:** `preview`
+- **Destaque / cursor:** (0.78, 0.92) + clique
+- **Badge:** —
+- **Texto na tela:** Preview — Revise a configuração e o conteúdo do job antes do envio. / Confirme se a consulta e o destino estão corretos.
+- **Resultado esperado:** analista entende o uso prático de “Preview”
 
-## 21_checklist — Próximos passos
+## 21_checklist — Revisão
 
-- **Tempo:** 00:05:48,136 → 00:06:09,486 (21.4s)
-- **Tela / ação:** `checklist` — Lista de verificação
-- **Narração:** Checklist final: Kerberos válido; combinação Source e Destination permitida; arquivo SQL existente quando necessário; campos extras do MonthlyJob ou ExistingTable preenchidos; e-mail vazio ou válido; status Ready to launch; revise no Preview e na confirmação Launch Job. Até a próxima!
-- **Texto na tela:** Checklist antes de enviar
-- **Destaque visual:** Lista de verificação
-- **Resultado esperado:** Memoriza checagens-chave
+- **Tempo:** 00:01:37,900 → 00:01:42,900 (5.0s)
+- **Tela:** `card:checklist`
+- **Destaque / cursor:** (0.5, 0.5)
+- **Badge:** —
+- **Texto na tela:** Antes de iniciar, confirme: — • origem e destino; / • arquivo selecionado; / • fila de execução; / • opções adicionais; / • e-mail de notificação.
+- **Resultado esperado:** analista entende o uso prático de “Antes de iniciar, confirme:”
+
+## 22_confirm — Envio
+
+- **Tempo:** 00:01:42,900 → 00:01:48,200 (5.3s)
+- **Tela:** `confirm`
+- **Destaque / cursor:** (0.42, 0.72) + clique
+- **Badge:** —
+- **Texto na tela:** Launch Job — Inicia o job com as configurações revisadas. / Leia o resumo e confirme apenas se estiver correto.
+- **Resultado esperado:** analista entende o uso prático de “Launch Job”
+
+## 23_launched — Envio
+
+- **Tempo:** 00:01:48,200 → 00:01:52,800 (4.6s)
+- **Tela:** `launched`
+- **Destaque / cursor:** (0.55, 0.88)
+- **Badge:** —
+- **Texto na tela:** Job enviado — O job foi enviado pelo Dispatch. / Acompanhe o andamento na tela de monitoramento.
+- **Resultado esperado:** analista entende o uso prático de “Job enviado”
+
+## 24_overview — Overview
+
+- **Tempo:** 00:01:52,800 → 00:01:57,400 (4.6s)
+- **Tela:** `overview`
+- **Destaque / cursor:** (0.12, 0.22) + clique
+- **Badge:** —
+- **Texto na tela:** Próximo passo — Após o envio, acompanhe o status do job no Overview.
+- **Resultado esperado:** analista entende o uso prático de “Próximo passo”
+
+## 25_close — Encerramento
+
+- **Tempo:** 00:01:57,400 → 00:02:03,400 (6.0s)
+- **Tela:** `card:close`
+- **Destaque / cursor:** (0.5, 0.5)
+- **Badge:** —
+- **Texto na tela:** Resumo — Na aba New Job, você: / 1. define a execução; / 2. revisa as configurações; / 3. inicia o job; / 4. acompanha o resultado no Overview. /  / Em caso de dúvida, revise os campos antes de selecionar Launch Job.
+- **Resultado esperado:** analista entende o uso prático de “Resumo”

@@ -1,364 +1,256 @@
 1
-00:00:00,000 --> 00:00:04,747
-Bem-vindo ao Dispatch, também conhecido como
-Robocop. Neste vídeo, você vai aprender
+00:00:00,000 --> 00:00:01,750
+Dispatch (Robocop)
+Como utilizar a aba New Job
 
 2
-00:00:04,747 --> 00:00:09,494
-a usar a aba New Job, do início ao envio.
+00:00:01,750 --> 00:00:03,500
+Configure e inicie um novo job passo a passo.
 
 3
-00:00:09,494 --> 00:00:14,443
-A aba New Job serve para configurar e lançar um job
-no
+00:00:03,500 --> 00:00:05,900
+Para que serve
+A aba New Job permite configurar e iniciar uma nova execução no Dispatch.
 
 4
-00:00:14,443 --> 00:00:19,391
-Impala: uma execução de consulta SQL supervisionada
-pelo Dispatch. Ao final, você
+00:00:05,900 --> 00:00:08,300
+Você define a origem, o destino, a consulta e as opções de execução do job.
 
 5
-00:00:19,391 --> 00:00:24,340
-saberá preencher o formulário, corrigir erros e
-enviar o job.
+00:00:08,300 --> 00:00:09,800
+Antes de começar
+Tenha pronto:
 
 6
-00:00:24,340 --> 00:00:29,239
-Antes de começar, tenha pronto: um arquivo SQL na
-pasta de onde
+00:00:09,800 --> 00:00:11,300
+• o arquivo SQL do seu job (quando usar SqlFile ou MonthlyJob);
+• a origem e o destino desejados;
 
 7
-00:00:29,239 --> 00:00:34,138
-você abriu o Dispatch; um ticket Kerberos válido — o
-indicador K
+00:00:11,300 --> 00:00:12,800
+• e-mail de notificação, se quiser receber aviso.
 
 8
-00:00:34,138 --> 00:00:39,036
-R B na barra lateral deve mostrar tempo restante; e,
-se quiser
+00:00:12,800 --> 00:00:15,100
+[Opcional] Source × Destination
+Mostra quais combinações de origem e destino são permitidas.
 
 9
-00:00:39,036 --> 00:00:43,935
-notificação, um e-mail no formato nome arroba
-domínio. O campo Email (notifications)
+00:00:15,100 --> 00:00:17,400
+Use como referência rápida antes de escolher as opções.
 
 10
-00:00:43,935 --> 00:00:48,834
-é opcional; Kerberos e o arquivo SQL são necessários
-para lançar.
+00:00:17,400 --> 00:00:19,450
+Detected source
+Indica o tipo detectado no arquivo SQL selecionado.
 
 11
-00:00:48,834 --> 00:00:53,446
-Você chegou à aba New Job. À esquerda está a
-navegação; New
+00:00:19,450 --> 00:00:21,500
+Confira se corresponde ao que você pretende executar.
 
 12
-00:00:53,446 --> 00:00:58,057
-Job fica destacado. No rodapé da barra lateral, o
-indicador K R
+00:00:21,500 --> 00:00:23,433
+[Obrigatório] Source
+Define de onde os dados serão obtidos.
 
 13
-00:00:58,057 --> 00:01:02,669
-B mostra se a autenticação Kerberos está ok. O
-formulário começa no
+00:00:23,433 --> 00:00:25,367
+SqlFile: consulta em arquivo SQL.
+MonthlyJob: consulta com período de datas.
 
 14
-00:01:02,669 --> 00:01:07,280
-topo e desce até os botões Preview SQL e Launch.
+00:00:25,367 --> 00:00:27,300
+ExistingTable: exporta uma tabela já existente.
 
 15
-00:01:07,280 --> 00:01:12,570
-No topo, a matriz Source vezes Destination legal
-cells mostra quais combinações
+00:00:27,300 --> 00:00:29,167
+[Obrigatório] Destination
+Define onde o resultado do job será armazenado.
 
 16
-00:01:12,570 --> 00:01:17,859
-são permitidas. SqlFile pode ir para Table, Csv ou
-Table mais Csv.
+00:00:29,167 --> 00:00:31,033
+Table: salva em tabela.
+Csv: gera arquivo CSV.
 
 17
-00:01:17,859 --> 00:01:23,149
-MonthlyJob só pode ir para Table. ExistingTable só
-pode ir para Csv.
+00:00:31,033 --> 00:00:32,900
+Table+Csv: faz os dois.
 
 18
-00:01:23,149 --> 00:01:28,438
-Pressione M para expandir ou recolher essa matriz.
+00:00:32,900 --> 00:00:35,550
+[Opcional] Execution Queue
+Define a fila em que o job será processado.
 
 19
-00:01:28,438 --> 00:01:34,139
-A linha Detected source informa o tipo detectado no
-arquivo SQL selecionado.
+00:00:35,550 --> 00:00:38,200
+Sem seleção = automático.
+Escolha conforme a orientação do seu projeto.
 
 20
-00:01:34,139 --> 00:01:39,839
-Se o arquivo tiver os marcadores date_inicio e
-date_fim, o Dispatch trata
+00:00:38,200 --> 00:00:40,600
+[Obrigatório] Lista de arquivos SQL
+Lista os arquivos .sql da pasta atual.
 
 21
-00:01:39,839 --> 00:01:45,540
-como MonthlyJob e desativa automaticamente destinos
-ilegais.
+00:00:40,600 --> 00:00:43,000
+Selecione o arquivo do job para preencher o caminho.
 
 22
-00:01:45,540 --> 00:01:52,289
-O campo Source é obrigatório. SqlFile: consulta SQL
-comum em um arquivo.
+00:00:43,000 --> 00:00:45,100
+[Obrigatório] SQL File
+Caminho do arquivo SQL que será usado no job.
 
 23
-00:01:52,289 --> 00:01:59,037
-MonthlyJob: consulta com intervalo de datas, usando
-os marcadores date_inicio e date_fim.
+00:00:45,100 --> 00:00:47,200
+Confirme se o arquivo indicado é o correto.
 
 24
-00:01:59,037 --> 00:02:05,786
-ExistingTable: exporta uma tabela que já existe no
-Impala, sem arquivo SQL.
+00:00:47,200 --> 00:00:49,600
+[Opcional] Email (notifications)
+Envia aviso quando o job terminar.
 
 25
-00:02:05,786 --> 00:02:10,380
-Destination também é obrigatório e depende do
-Source. Table grava o resultado
+00:00:49,600 --> 00:00:52,000
+Deixe em branco se não precisar de notificação.
 
 26
-00:02:10,380 --> 00:02:14,973
-em uma tabela Impala. Csv grava um arquivo C S V na
+00:00:52,000 --> 00:00:54,200
+[Opcional] Subject (email)
+Define o assunto do e-mail de notificação.
 
 27
-00:02:14,973 --> 00:02:19,567
-pasta de lançamento. Table mais Csv faz os dois.
-Opções ilegais ficam
+00:00:54,200 --> 00:00:56,400
+Use um texto curto que identifique o job.
 
 28
-00:02:19,567 --> 00:02:24,160
-desabilitadas automaticamente.
+00:00:56,400 --> 00:00:59,400
+[Use apenas quando...] MonthlyJob
+Use quando o job precisa rodar com um intervalo de datas.
 
 29
-00:02:24,160 --> 00:02:28,148
-Execution Queue é opcional. Sem seleção, o modo Auto
-tenta as filas
+00:00:59,400 --> 00:01:02,400
+Neste modo o destino fica em Table e aparecem Schema,
+Table Name, Start Date e End Date.
 
 30
-00:02:28,148 --> 00:02:32,135
-até uma aceitar o job. Você pode marcar uma ou mais
-filas
+00:01:02,400 --> 00:01:05,100
+[Obrigatório] Campos do MonthlyJob
+Schema e Table Name: onde o resultado será salvo.
 
 31
-00:02:32,135 --> 00:02:36,123
-para restringir; várias são tentadas na ordem da
-lista. Use Auto se
+00:01:05,100 --> 00:01:07,800
+Start Date e End Date: período da consulta.
+Revise as datas antes de continuar.
 
 32
-00:02:36,123 --> 00:02:40,110
-não tiver preferência.
+00:01:07,800 --> 00:01:10,700
+[Use apenas quando...] ExistingTable
+Use quando os dados já estão em uma tabela e você
 
 33
-00:02:40,110 --> 00:02:45,190
-A lista SQL files mostra os arquivos ponto sql da
-pasta de
+00:01:10,700 --> 00:01:13,600
+só precisa exportar o resultado em CSV.
+Neste modo o destino fica limitado a Csv.
 
 34
-00:02:45,190 --> 00:02:50,269
-lançamento. Selecione um para preencher o caminho. O
-campo SQL File é
+00:01:13,600 --> 00:01:16,000
+[Obrigatório] Schema e Existing Table
+Escolha o schema e informe o nome da tabela existente.
 
 35
-00:02:50,269 --> 00:02:55,349
-obrigatório para SqlFile e MonthlyJob; o arquivo
-precisa existir. Abaixo, um indicador
+00:01:16,000 --> 00:01:18,400
+Se o schema não estiver na lista, use other.
 
 36
-00:02:55,349 --> 00:03:00,428
-confirma se o arquivo foi encontrado.
+00:01:18,400 --> 00:01:20,800
+Exemplo prático
+Voltamos para SqlFile → Csv com o arquivo export_sales.sql.
 
 37
-00:03:00,428 --> 00:03:05,040
-O campo Email (notifications) é opcional. Se
-preencher, use um endereço válido
+00:01:20,800 --> 00:01:23,200
+Este é o fluxo mais comum para gerar um CSV.
 
 38
-00:03:05,040 --> 00:03:09,651
-com arroba e domínio. Vários e-mails podem ser
-separados por vírgula. Subject
+00:01:23,200 --> 00:01:25,500
+E-mail inválido
+Revise o formato antes de continuar.
 
 39
-00:03:09,651 --> 00:03:14,263
-(email) também é opcional; o padrão é Dispatch Job.
-Define o assunto
+00:01:25,500 --> 00:01:27,800
+O status mostra o problema até a correção.
 
 40
-00:03:14,263 --> 00:03:18,874
-da notificação.
+00:01:27,800 --> 00:01:30,200
+Pronto para enviar
+Com o e-mail corrigido, o status volta a Ready to launch.
 
 41
-00:03:18,874 --> 00:03:23,480
-Na área de status, o Dispatch mostra checagens ao
-vivo: arquivo SQL
+00:01:30,200 --> 00:01:32,600
+Confira origem, destino, arquivo e fila antes do envio.
 
 42
-00:03:23,480 --> 00:03:28,085
-encontrado, formato de e-mail e Kerberos. Na barra
-de ações, a mensagem
+00:01:32,600 --> 00:01:35,250
+Preview
+Revise a configuração e o conteúdo do job antes do envio.
 
 43
-00:03:28,085 --> 00:03:32,691
-Ready to launch aparece quando não há problemas. Os
-botões são Preview
+00:01:35,250 --> 00:01:37,900
+Confirme se a consulta e o destino estão corretos.
 
 44
-00:03:32,691 --> 00:03:37,296
-SQL tecla P, e Launch tecla L.
+00:01:37,900 --> 00:01:39,567
+Antes de iniciar, confirme:
+• origem e destino;
 
 45
-00:03:37,296 --> 00:03:41,728
-Ao escolher MonthlyJob, o destino fica limitado a
-Table. Aparecem campos obrigatórios
+00:01:39,567 --> 00:01:41,233
+• arquivo selecionado;
+• fila de execução;
 
 46
-00:03:41,728 --> 00:03:46,159
-extras: Schema, Table Name com o prefixo do seu
-usuário, Start Date
+00:01:41,233 --> 00:01:42,900
+• opções adicionais;
+• e-mail de notificação.
 
 47
-00:03:46,159 --> 00:03:50,591
-e End Date no formato ano-mês-dia. As datas definem
-o período da
+00:01:42,900 --> 00:01:45,550
+Launch Job
+Inicia o job com as configurações revisadas.
 
 48
-00:03:50,591 --> 00:03:55,022
-consulta mensal.
+00:01:45,550 --> 00:01:48,200
+Leia o resumo e confirme apenas se estiver correto.
 
 49
-00:03:55,022 --> 00:04:00,811
-Com ExistingTable, o destino fica só em Csv. Escolha
-o Schema —
+00:01:48,200 --> 00:01:50,500
+Job enviado
+O job foi enviado pelo Dispatch.
 
 50
-00:04:00,811 --> 00:04:06,599
-coe_enc, aa_enc ou other — e informe o nome da
-tabela existente.
+00:01:50,500 --> 00:01:52,800
+Acompanhe o andamento na tela de monitoramento.
 
 51
-00:04:06,599 --> 00:04:12,388
-Se usar other, aparece Custom Schema. Não há Preview
-SQL nesse modo.
+00:01:52,800 --> 00:01:57,400
+Próximo passo
+Após o envio, acompanhe o status do job no Overview.
 
 52
-00:04:12,388 --> 00:04:16,592
-Vamos demonstrar um erro comum. No fluxo SqlFile
-para Csv, se o
+00:01:57,400 --> 00:01:58,900
+Resumo
+Na aba New Job, você:
 
 53
-00:04:16,592 --> 00:04:20,795
-e-mail for inválido, como apenas a palavra invalido,
-o resumo mostra issue
+00:01:58,900 --> 00:02:00,400
+1. define a execução;
+2. revisa as configurações;
 
 54
-00:04:20,795 --> 00:04:24,999
-Invalid email format, e o indicador de e-mail fica
-vermelho. Corrija antes
+00:02:00,400 --> 00:02:01,900
+3. inicia o job;
+4. acompanha o resultado no Overview.
 
 55
-00:04:24,999 --> 00:04:29,202
-de lançar.
+00:02:01,900 --> 00:02:03,400
 
-56
-00:04:29,202 --> 00:04:35,471
-Corrigindo para analyst arroba example ponto com, o
-erro some. O status
-
-57
-00:04:35,471 --> 00:04:41,739
-volta a Ready to launch. Revise: Source SqlFile,
-Destination Csv, arquivo export_sales
-
-58
-00:04:41,739 --> 00:04:48,008
-ponto sql, fila em Auto, e-mail válido e Kerberos
-ok.
-
-59
-00:04:48,008 --> 00:04:52,653
-Antes de enviar, use Preview SQL com a tecla P para
-ver
-
-60
-00:04:52,653 --> 00:04:57,298
-o SQL que será executado. Confirme se a consulta
-está correta e
-
-61
-00:04:57,298 --> 00:05:01,942
-volte com Esc. Preview não está disponível para
-ExistingTable.
-
-62
-00:05:01,942 --> 00:05:06,302
-Ao pressionar Launch ou a tecla L, abre a
-confirmação Launch Job.
-
-63
-00:05:06,302 --> 00:05:10,661
-Ela resume Source, Destination, tabela alvo, fila,
-caminho do C S V
-
-64
-00:05:10,661 --> 00:05:15,021
-e e-mail. Launch confirma; Review cancela para
-ajustar. Confirme com Y ou
-
-65
-00:05:15,021 --> 00:05:19,380
-Enter.
-
-66
-00:05:19,380 --> 00:05:23,945
-Após confirmar, o Dispatch cria o job e inicia o
-runner em
-
-67
-00:05:23,945 --> 00:05:28,510
-segundo plano, mostrando a mensagem Launched Job com
-o identificador. A interface
-
-68
-00:05:28,510 --> 00:05:33,074
-não fica responsável pela execução durável do job.
-
-69
-00:05:33,074 --> 00:05:36,840
-Para acompanhar, volte à Overview com Esc ou B.
-Nessa tela você
-
-70
-00:05:36,840 --> 00:05:40,605
-monitora jobs em execução e recentes, além dos logs.
-O status final
-
-71
-00:05:40,605 --> 00:05:44,371
-no Impala depende do ambiente real; use Overview e
-View Logs para
-
-72
-00:05:44,371 --> 00:05:48,136
-acompanhar.
-
-73
-00:05:48,136 --> 00:05:53,474
-Checklist final: Kerberos válido; combinação Source
-e Destination permitida; arquivo SQL existente
-
-74
-00:05:53,474 --> 00:05:58,811
-quando necessário; campos extras do MonthlyJob ou
-ExistingTable preenchidos; e-mail vazio ou
-
-75
-00:05:58,811 --> 00:06:04,149
-válido; status Ready to launch; revise no Preview e
-na confirmação Launch
-
-76
-00:06:04,149 --> 00:06:09,486
-Job. Até a próxima!
+Em caso de dúvida, revise os campos antes de selecionar Launch Job.

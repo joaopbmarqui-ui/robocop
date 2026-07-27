@@ -1,0 +1,368 @@
+{
+  "footer_hold_seconds": 15.0,
+  "instructional_footers": 50,
+  "min_hold": 15.0,
+  "duration_s": 810.266666666666,
+  "antes_de_comecar_removed": true,
+  "timing_validation_passed": true,
+  "monthly_sql_requirement": "{date_inicio} and {date_fim}",
+  "monthly_sql_evidence": [
+    "dispatch/sql.py:DATE_INICIO_TOKEN/DATE_FIM_TOKEN, detect_source, template_is_complete, is_malformed_template, monthly_preview",
+    "dispatch/screens/new_job.py:_sql_content_issues (requires both tokens for SqlTemplate/MonthlyJob)",
+    "scr/monthly_query_processor.py:render_monthly_sql",
+    "CONTEXT.md (SqlTemplate placeholders)",
+    "tests/test_monthly_query_processor.py, tools/prod_tui/job_specs.py SMOKE_TEMPLATE_SQL"
+  ],
+  "holds": [
+    {
+      "id": "01_open",
+      "start_s": 0.0,
+      "end_s": 15.0,
+      "duration_s": 15.0,
+      "footer": "Dispatch (Robocop) \u2014 Como utilizar a aba New Job / Configure e inicie um novo job passo a passo."
+    },
+    {
+      "id": "02_purpose_a",
+      "start_s": 15.4,
+      "end_s": 30.4,
+      "duration_s": 15.0,
+      "footer": "Para que serve a aba New Job \u2014 Ela permite configurar e iniciar uma nova execu\u00e7\u00e3o no Dispatch."
+    },
+    {
+      "id": "02_purpose_b",
+      "start_s": 30.799999999999997,
+      "end_s": 45.8,
+      "duration_s": 15.0,
+      "footer": "O que voc\u00ea decide aqui \u2014 Voc\u00ea escolhe a origem dos dados, o destino do resultado, / a consulta e as op\u00e7\u00f5es de execu\u00e7\u00e3o do job."
+    },
+    {
+      "id": "03_matrix",
+      "start_s": 46.199999999999996,
+      "end_s": 61.199999999999996,
+      "duration_s": 15.0,
+      "footer": "Source \u00d7 Destination \u2014 Tabela de refer\u00eancia com as combina\u00e7\u00f5es permitidas. / Consulte-a antes de escolher origem e destino."
+    },
+    {
+      "id": "04_detected",
+      "start_s": 63.73333333333333,
+      "end_s": 78.73333333333332,
+      "duration_s": 15.0,
+      "footer": "Detected source \u2014 Mostra o tipo identificado no arquivo SQL selecionado. / Confirme se corresponde ao job que voc\u00ea quer executar."
+    },
+    {
+      "id": "05_source_intro",
+      "start_s": 79.13333333333333,
+      "end_s": 94.13333333333333,
+      "duration_s": 15.0,
+      "footer": "Source \u2014 Define de onde os dados do job ser\u00e3o obtidos. / \u00c9 a primeira decis\u00e3o do formul\u00e1rio."
+    },
+    {
+      "id": "06_source_sqlfile",
+      "start_s": 94.53333333333333,
+      "end_s": 109.53333333333333,
+      "duration_s": 15.0,
+      "footer": "Source \u2192 SqlFile \u2014 Use quando a consulta est\u00e1 em um arquivo .sql simples. / O Dispatch executa essa consulta conforme o destino escolhido."
+    },
+    {
+      "id": "07_dest_intro",
+      "start_s": 112.06666666666668,
+      "end_s": 127.06666666666668,
+      "duration_s": 15.0,
+      "footer": "Destination \u2014 Define onde o resultado do job ser\u00e1 armazenado. / A escolha depende da origem selecionada."
+    },
+    {
+      "id": "08_dest_table",
+      "start_s": 127.46666666666668,
+      "end_s": 142.4666666666667,
+      "duration_s": 15.0,
+      "footer": "Destination \u2192 Table \u2014 Salva o resultado em uma tabela. / Use quando precisar consultar o resultado depois no ambiente."
+    },
+    {
+      "id": "09_dest_csv",
+      "start_s": 145.00000000000003,
+      "end_s": 160.00000000000003,
+      "duration_s": 15.0,
+      "footer": "Destination \u2192 Csv \u2014 Gera um arquivo CSV na pasta de onde voc\u00ea abriu o Dispatch. / Use quando o resultado precisa ser baixado ou compartilhado como arquivo."
+    },
+    {
+      "id": "10_dest_tablecsv",
+      "start_s": 162.53333333333336,
+      "end_s": 177.53333333333336,
+      "duration_s": 15.0,
+      "footer": "Destination \u2192 Table+Csv \u2014 Cria a tabela e tamb\u00e9m gera o CSV. / Use quando precisa dos dois formatos na mesma execu\u00e7\u00e3o."
+    },
+    {
+      "id": "11_queue_a",
+      "start_s": 180.0666666666667,
+      "end_s": 195.0666666666667,
+      "duration_s": 15.0,
+      "footer": "Execution Queue \u2014 Indica a fila de processamento do job. / Sem marca\u00e7\u00e3o, o Dispatch escolhe automaticamente."
+    },
+    {
+      "id": "12_queue_b",
+      "start_s": 195.4666666666667,
+      "end_s": 210.4666666666667,
+      "duration_s": 15.0,
+      "footer": "Execution Queue \u2014 quando marcar \u2014 Marque uma ou mais filas s\u00f3 se o seu projeto indicar qual usar. / V\u00e1rias filas s\u00e3o tentadas na ordem da lista."
+    },
+    {
+      "id": "13_sql_intro",
+      "start_s": 213.00000000000003,
+      "end_s": 228.00000000000003,
+      "duration_s": 15.0,
+      "footer": "SQL File \u2014 \u00c9 a consulta que o job vai executar. / Para SqlFile e MonthlyJob, voc\u00ea precisa selecionar um arquivo .sql."
+    },
+    {
+      "id": "14_sql_picker",
+      "start_s": 228.40000000000003,
+      "end_s": 243.40000000000003,
+      "duration_s": 15.0,
+      "footer": "Lista de arquivos SQL \u2014 Mostra os arquivos .sql da pasta atual. / Selecione o arquivo do job para preencher o caminho automaticamente."
+    },
+    {
+      "id": "15_sql_verify",
+      "start_s": 245.93333333333337,
+      "end_s": 260.9333333333334,
+      "duration_s": 15.0,
+      "footer": "O que conferir no arquivo \u2014 Confirme o nome do arquivo e o tipo Detected na lista. / O caminho aparece no campo SQL File ap\u00f3s a sele\u00e7\u00e3o."
+    },
+    {
+      "id": "16_sql_role",
+      "start_s": 261.33333333333337,
+      "end_s": 276.33333333333337,
+      "duration_s": 15.0,
+      "footer": "Papel do SQL File no job \u2014 Esse arquivo define quais dados ser\u00e3o lidos ou calculados. / Source e Destination decidem como o resultado ser\u00e1 entregue."
+    },
+    {
+      "id": "17_email",
+      "start_s": 276.73333333333335,
+      "end_s": 291.73333333333335,
+      "duration_s": 15.0,
+      "footer": "Email (notifications) \u2014 Recebe aviso quando o job terminar. / Deixe em branco se n\u00e3o quiser notifica\u00e7\u00e3o."
+    },
+    {
+      "id": "18_subject",
+      "start_s": 294.26666666666665,
+      "end_s": 309.26666666666665,
+      "duration_s": 15.0,
+      "footer": "Subject (email) \u2014 Assunto do e-mail de notifica\u00e7\u00e3o. / Use um texto curto que identifique o job."
+    },
+    {
+      "id": "19_status_bar",
+      "start_s": 311.79999999999995,
+      "end_s": 326.79999999999995,
+      "duration_s": 15.0,
+      "footer": "Status do formul\u00e1rio \u2014 Ready to launch indica que n\u00e3o h\u00e1 problemas bloqueantes. / Preview SQL e Launch ficam na barra inferior."
+    },
+    {
+      "id": "20_mj_intro",
+      "start_s": 327.19999999999993,
+      "end_s": 342.19999999999993,
+      "duration_s": 15.0,
+      "footer": "MonthlyJob \u2014 Use quando a consulta precisa cobrir um intervalo de datas, / executando o per\u00edodo m\u00eas a m\u00eas."
+    },
+    {
+      "id": "21_mj_dest",
+      "start_s": 344.73333333333323,
+      "end_s": 359.73333333333323,
+      "duration_s": 15.0,
+      "footer": "MonthlyJob \u2192 Destination \u2014 Com MonthlyJob, o destino permitido \u00e9 apenas Table. / Csv e Table+Csv ficam indispon\u00edveis."
+    },
+    {
+      "id": "22_mj_sql_rule_a",
+      "start_s": 359.73333333333323,
+      "end_s": 374.73333333333323,
+      "duration_s": 15.0,
+      "footer": "SQL File no MonthlyJob \u2014 regra \u2014 O arquivo .sql precisa conter os dois marcadores: / {date_inicio} e {date_fim}"
+    },
+    {
+      "id": "23_mj_sql_rule_b",
+      "start_s": 374.73333333333323,
+      "end_s": 389.73333333333323,
+      "duration_s": 15.0,
+      "footer": "Como conferir no arquivo \u2014 Abra o .sql e busque exatamente {date_inicio} e {date_fim}. / Se faltar um deles, o job n\u00e3o pode ser iniciado como MonthlyJob."
+    },
+    {
+      "id": "24_mj_sql_rule_c",
+      "start_s": 389.73333333333323,
+      "end_s": 404.73333333333323,
+      "duration_s": 15.0,
+      "footer": "O que esses marcadores fazem \u2014 Eles reservam o in\u00edcio e o fim de cada m\u00eas no per\u00edodo informado. / O Dispatch preenche as datas conforme Start Date e End Date."
+    },
+    {
+      "id": "25_mj_picker",
+      "start_s": 405.1333333333332,
+      "end_s": 420.1333333333332,
+      "duration_s": 15.0,
+      "footer": "Selecionar o SQL do MonthlyJob \u2014 Na lista, escolha o arquivo com Detected = MonthlyJob. / Isso confirma que os dois marcadores foram encontrados."
+    },
+    {
+      "id": "26_mj_schema",
+      "start_s": 422.6666666666665,
+      "end_s": 437.6666666666665,
+      "duration_s": 15.0,
+      "footer": "Schema (MonthlyJob) \u2014 Define o schema da tabela de resultado. / Informe o schema correto do seu trabalho."
+    },
+    {
+      "id": "27_mj_table",
+      "start_s": 438.0666666666665,
+      "end_s": 453.0666666666665,
+      "duration_s": 15.0,
+      "footer": "Table Name (MonthlyJob) \u2014 Nome da tabela de resultado, com o prefixo do seu usu\u00e1rio. / Complete apenas o sufixo; o prefixo j\u00e1 vem preenchido."
+    },
+    {
+      "id": "28_mj_start",
+      "start_s": 453.46666666666647,
+      "end_s": 468.46666666666647,
+      "duration_s": 15.0,
+      "footer": "Start Date \u2014 Data inicial do per\u00edodo do job (formato AAAA-MM-DD). / Define o primeiro m\u00eas a processar."
+    },
+    {
+      "id": "29_mj_end",
+      "start_s": 468.86666666666645,
+      "end_s": 483.86666666666645,
+      "duration_s": 15.0,
+      "footer": "End Date \u2014 Data final do per\u00edodo (formato AAAA-MM-DD). / Deve ser igual ou posterior \u00e0 Start Date."
+    },
+    {
+      "id": "30_et_intro",
+      "start_s": 484.2666666666664,
+      "end_s": 499.2666666666664,
+      "duration_s": 15.0,
+      "footer": "ExistingTable \u2014 Use quando os dados j\u00e1 est\u00e3o em uma tabela e voc\u00ea / quer export\u00e1-los, sem rodar um arquivo SQL."
+    },
+    {
+      "id": "31_et_dest",
+      "start_s": 501.7999999999997,
+      "end_s": 516.7999999999997,
+      "duration_s": 15.0,
+      "footer": "ExistingTable \u2192 Destination \u2014 Neste modo o destino permitido \u00e9 apenas Csv. / Table e Table+Csv ficam indispon\u00edveis."
+    },
+    {
+      "id": "32_et_no_sql",
+      "start_s": 517.1999999999997,
+      "end_s": 532.1999999999997,
+      "duration_s": 15.0,
+      "footer": "Sem SQL File \u2014 A lista e o campo SQL File ficam ocultos. / A origem \u00e9 a tabela existente, n\u00e3o um arquivo .sql."
+    },
+    {
+      "id": "33_et_schema_coe",
+      "start_s": 532.5999999999997,
+      "end_s": 547.5999999999997,
+      "duration_s": 15.0,
+      "footer": "Schema \u2192 coe_enc \u2014 Seleciona o schema coe_enc da tabela existente. / Use quando a tabela estiver nesse schema."
+    },
+    {
+      "id": "34_et_schema_aa",
+      "start_s": 550.133333333333,
+      "end_s": 565.133333333333,
+      "duration_s": 15.0,
+      "footer": "Schema \u2192 aa_enc \u2014 Seleciona o schema aa_enc da tabela existente. / \u00c9 a op\u00e7\u00e3o padr\u00e3o quando a tabela est\u00e1 em aa_enc."
+    },
+    {
+      "id": "35_et_schema_other",
+      "start_s": 567.6666666666663,
+      "end_s": 582.6666666666663,
+      "duration_s": 15.0,
+      "footer": "Schema \u2192 other \u2014 Use quando o schema n\u00e3o \u00e9 coe_enc nem aa_enc. / Ao marcar other, aparece o campo Custom Schema."
+    },
+    {
+      "id": "36_et_custom",
+      "start_s": 585.1999999999996,
+      "end_s": 600.1999999999996,
+      "duration_s": 15.0,
+      "footer": "Custom Schema \u2014 Digite o nome do schema personalizado. / S\u00f3 aparece quando Schema = other."
+    },
+    {
+      "id": "37_et_table",
+      "start_s": 600.5999999999996,
+      "end_s": 615.5999999999996,
+      "duration_s": 15.0,
+      "footer": "Existing Table \u2014 Informe s\u00f3 o nome da tabela (sem o schema). / Junto com o schema, forma a origem completa schema.tabela."
+    },
+    {
+      "id": "38_rel_standard",
+      "start_s": 618.1333333333329,
+      "end_s": 633.1333333333329,
+      "duration_s": 15.0,
+      "footer": "Combina\u00e7\u00e3o comum \u2014 SqlFile + Csv + arquivo .sql sem marcadores de data. / Fluxo t\u00edpico para gerar um CSV a partir de uma consulta."
+    },
+    {
+      "id": "39_rel_monthly",
+      "start_s": 635.6666666666662,
+      "end_s": 650.6666666666662,
+      "duration_s": 15.0,
+      "footer": "Combina\u00e7\u00e3o MonthlyJob \u2014 MonthlyJob + Table + .sql com {date_inicio} e {date_fim} / + Schema, Table Name, Start Date e End Date."
+    },
+    {
+      "id": "40_rel_existing",
+      "start_s": 651.0666666666662,
+      "end_s": 666.0666666666662,
+      "duration_s": 15.0,
+      "footer": "Combina\u00e7\u00e3o ExistingTable \u2014 ExistingTable + Csv + Schema + Existing Table. / N\u00e3o usa SQL File nem MonthlyJob ao mesmo tempo."
+    },
+    {
+      "id": "41_rel_incompat",
+      "start_s": 666.4666666666661,
+      "end_s": 681.4666666666661,
+      "duration_s": 15.0,
+      "footer": "Combina\u00e7\u00f5es indispon\u00edveis \u2014 MonthlyJob n\u00e3o aceita Csv ou Table+Csv. / ExistingTable n\u00e3o aceita Table ou Table+Csv."
+    },
+    {
+      "id": "42_val_bad",
+      "start_s": 681.8666666666661,
+      "end_s": 696.8666666666661,
+      "duration_s": 15.0,
+      "footer": "E-mail inv\u00e1lido \u2014 Se o formato estiver incorreto, o status mostra o problema. / Corrija antes de continuar."
+    },
+    {
+      "id": "43_val_ok",
+      "start_s": 697.2666666666661,
+      "end_s": 712.2666666666661,
+      "duration_s": 15.0,
+      "footer": "Formul\u00e1rio pronto \u2014 Com os dados corrigidos, o status volta a Ready to launch. / Revise origem, destino, arquivo e fila."
+    },
+    {
+      "id": "44_preview",
+      "start_s": 712.6666666666661,
+      "end_s": 727.6666666666661,
+      "duration_s": 15.0,
+      "footer": "Preview SQL \u2014 Mostra o conte\u00fado que ser\u00e1 usado no job. / Confira se a consulta e o destino est\u00e3o corretos antes do envio."
+    },
+    {
+      "id": "45_checklist",
+      "start_s": 729.7999999999994,
+      "end_s": 744.7999999999994,
+      "duration_s": 15.0,
+      "footer": "Antes de iniciar, confirme: \u2014 \u2022 origem e destino; / \u2022 arquivo ou tabela selecionados; / \u2022 fila de execu\u00e7\u00e3o; / \u2022 op\u00e7\u00f5es adicionais; / \u2022 e-mail de notifica\u00e7\u00e3o."
+    },
+    {
+      "id": "46_confirm",
+      "start_s": 745.1999999999994,
+      "end_s": 760.1999999999994,
+      "duration_s": 15.0,
+      "footer": "Launch Job \u2014 Inicia o job com as configura\u00e7\u00f5es revisadas. / Leia o resumo e confirme apenas se estiver correto."
+    },
+    {
+      "id": "47_launched",
+      "start_s": 762.7333333333327,
+      "end_s": 777.7333333333327,
+      "duration_s": 15.0,
+      "footer": "Job enviado \u2014 O job foi enviado pelo Dispatch. / Acompanhe o andamento na tela de monitoramento."
+    },
+    {
+      "id": "48_overview",
+      "start_s": 778.1333333333326,
+      "end_s": 793.1333333333326,
+      "duration_s": 15.0,
+      "footer": "Overview \u2014 Ap\u00f3s o envio, acompanhe o status do job no Overview."
+    },
+    {
+      "id": "49_close",
+      "start_s": 795.266666666666,
+      "end_s": 810.266666666666,
+      "duration_s": 15.0,
+      "footer": "Resumo \u2014 Na aba New Job, voc\u00ea: / 1. define a execu\u00e7\u00e3o; / 2. revisa as configura\u00e7\u00f5es; / 3. inicia o job; / 4. acompanha o resultado no Overview. /  / Em caso de d\u00favida, revise os campos antes de selecionar Launch Job."
+    }
+  ]
+}

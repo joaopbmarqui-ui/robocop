@@ -1,256 +1,249 @@
 1
-00:00:00,000 --> 00:00:01,750
+00:00:00,000 --> 00:00:15,000
 Dispatch (Robocop)
-Como utilizar a aba New Job
+Como utilizar a aba New Job / Configure e inicie um novo job passo a passo.
 
 2
-00:00:01,750 --> 00:00:03,500
-Configure e inicie um novo job passo a passo.
+00:00:15,400 --> 00:00:30,400
+Para que serve a aba New Job
+Ela permite configurar e iniciar uma nova execução no Dispatch.
 
 3
-00:00:03,500 --> 00:00:05,900
-Para que serve
-A aba New Job permite configurar e iniciar uma nova execução no Dispatch.
+00:00:30,800 --> 00:00:45,800
+O que você decide aqui
+Você escolhe a origem dos dados, o destino do resultado, / a consulta e as opções de execução do job.
 
 4
-00:00:05,900 --> 00:00:08,300
-Você define a origem, o destino, a consulta e as opções de execução do job.
+00:00:46,200 --> 00:01:01,200
+[Opcional] Source × Destination
+Tabela de referência com as combinações permitidas. / Consulte-a antes de escolher origem e destino.
 
 5
-00:00:08,300 --> 00:00:09,800
-Antes de começar
-Tenha pronto:
+00:01:03,733 --> 00:01:18,733
+Detected source
+Mostra o tipo identificado no arquivo SQL selecionado. / Confirme se corresponde ao job que você quer executar.
 
 6
-00:00:09,800 --> 00:00:11,300
-• o arquivo SQL do seu job (quando usar SqlFile ou MonthlyJob);
-• a origem e o destino desejados;
+00:01:19,133 --> 00:01:34,133
+[Obrigatório] Source
+Define de onde os dados do job serão obtidos. / É a primeira decisão do formulário.
 
 7
-00:00:11,300 --> 00:00:12,800
-• e-mail de notificação, se quiser receber aviso.
+00:01:34,533 --> 00:01:49,533
+[Obrigatório] Source → SqlFile
+Use quando a consulta está em um arquivo .sql simples. / O Dispatch executa essa consulta conforme o destino escolhido.
 
 8
-00:00:12,800 --> 00:00:15,100
-[Opcional] Source × Destination
-Mostra quais combinações de origem e destino são permitidas.
+00:01:52,067 --> 00:02:07,067
+[Obrigatório] Destination
+Define onde o resultado do job será armazenado. / A escolha depende da origem selecionada.
 
 9
-00:00:15,100 --> 00:00:17,400
-Use como referência rápida antes de escolher as opções.
+00:02:07,467 --> 00:02:22,467
+[Obrigatório] Destination → Table
+Salva o resultado em uma tabela. / Use quando precisar consultar o resultado depois no ambiente.
 
 10
-00:00:17,400 --> 00:00:19,450
-Detected source
-Indica o tipo detectado no arquivo SQL selecionado.
+00:02:25,000 --> 00:02:40,000
+[Obrigatório] Destination → Csv
+Gera um arquivo CSV na pasta de onde você abriu o Dispatch. / Use quando o resultado precisa ser baixado ou compartilhado como arquivo.
 
 11
-00:00:19,450 --> 00:00:21,500
-Confira se corresponde ao que você pretende executar.
+00:02:42,533 --> 00:02:57,533
+[Obrigatório] Destination → Table+Csv
+Cria a tabela e também gera o CSV. / Use quando precisa dos dois formatos na mesma execução.
 
 12
-00:00:21,500 --> 00:00:23,433
-[Obrigatório] Source
-Define de onde os dados serão obtidos.
+00:03:00,067 --> 00:03:15,067
+[Opcional] Execution Queue
+Indica a fila de processamento do job. / Sem marcação, o Dispatch escolhe automaticamente.
 
 13
-00:00:23,433 --> 00:00:25,367
-SqlFile: consulta em arquivo SQL.
-MonthlyJob: consulta com período de datas.
+00:03:15,467 --> 00:03:30,467
+[Opcional] Execution Queue — quando marcar
+Marque uma ou mais filas só se o seu projeto indicar qual usar. / Várias filas são tentadas na ordem da lista.
 
 14
-00:00:25,367 --> 00:00:27,300
-ExistingTable: exporta uma tabela já existente.
+00:03:33,000 --> 00:03:48,000
+[Obrigatório] SQL File
+É a consulta que o job vai executar. / Para SqlFile e MonthlyJob, você precisa selecionar um arquivo .sql.
 
 15
-00:00:27,300 --> 00:00:29,167
-[Obrigatório] Destination
-Define onde o resultado do job será armazenado.
+00:03:48,400 --> 00:04:03,400
+[Obrigatório] Lista de arquivos SQL
+Mostra os arquivos .sql da pasta atual. / Selecione o arquivo do job para preencher o caminho automaticamente.
 
 16
-00:00:29,167 --> 00:00:31,033
-Table: salva em tabela.
-Csv: gera arquivo CSV.
+00:04:05,933 --> 00:04:20,933
+[Obrigatório] O que conferir no arquivo
+Confirme o nome do arquivo e o tipo Detected na lista. / O caminho aparece no campo SQL File após a seleção.
 
 17
-00:00:31,033 --> 00:00:32,900
-Table+Csv: faz os dois.
+00:04:21,333 --> 00:04:36,333
+[Obrigatório] Papel do SQL File no job
+Esse arquivo define quais dados serão lidos ou calculados. / Source e Destination decidem como o resultado será entregue.
 
 18
-00:00:32,900 --> 00:00:35,550
-[Opcional] Execution Queue
-Define a fila em que o job será processado.
+00:04:36,733 --> 00:04:51,733
+[Opcional] Email (notifications)
+Recebe aviso quando o job terminar. / Deixe em branco se não quiser notificação.
 
 19
-00:00:35,550 --> 00:00:38,200
-Sem seleção = automático.
-Escolha conforme a orientação do seu projeto.
+00:04:54,267 --> 00:05:09,267
+[Opcional] Subject (email)
+Assunto do e-mail de notificação. / Use um texto curto que identifique o job.
 
 20
-00:00:38,200 --> 00:00:40,600
-[Obrigatório] Lista de arquivos SQL
-Lista os arquivos .sql da pasta atual.
+00:05:11,800 --> 00:05:26,800
+Status do formulário
+Ready to launch indica que não há problemas bloqueantes. / Preview SQL e Launch ficam na barra inferior.
 
 21
-00:00:40,600 --> 00:00:43,000
-Selecione o arquivo do job para preencher o caminho.
+00:05:27,200 --> 00:05:42,200
+[Use apenas quando...] MonthlyJob
+Use quando a consulta precisa cobrir um intervalo de datas, / executando o período mês a mês.
 
 22
-00:00:43,000 --> 00:00:45,100
-[Obrigatório] SQL File
-Caminho do arquivo SQL que será usado no job.
+00:05:44,733 --> 00:05:59,733
+[Obrigatório] MonthlyJob → Destination
+Com MonthlyJob, o destino permitido é apenas Table. / Csv e Table+Csv ficam indisponíveis.
 
 23
-00:00:45,100 --> 00:00:47,200
-Confirme se o arquivo indicado é o correto.
+00:05:59,733 --> 00:06:14,733
+[Obrigatório] SQL File no MonthlyJob — regra
+O arquivo .sql precisa conter os dois marcadores: / {date_inicio} e {date_fim}
 
 24
-00:00:47,200 --> 00:00:49,600
-[Opcional] Email (notifications)
-Envia aviso quando o job terminar.
+00:06:14,733 --> 00:06:29,733
+[Obrigatório] Como conferir no arquivo
+Abra o .sql e busque exatamente {date_inicio} e {date_fim}. / Se faltar um deles, o job não pode ser iniciado como MonthlyJob.
 
 25
-00:00:49,600 --> 00:00:52,000
-Deixe em branco se não precisar de notificação.
+00:06:29,733 --> 00:06:44,733
+[Obrigatório] O que esses marcadores fazem
+Eles reservam o início e o fim de cada mês no período informado. / O Dispatch preenche as datas conforme Start Date e End Date.
 
 26
-00:00:52,000 --> 00:00:54,200
-[Opcional] Subject (email)
-Define o assunto do e-mail de notificação.
+00:06:45,133 --> 00:07:00,133
+[Obrigatório] Selecionar o SQL do MonthlyJob
+Na lista, escolha o arquivo com Detected = MonthlyJob. / Isso confirma que os dois marcadores foram encontrados.
 
 27
-00:00:54,200 --> 00:00:56,400
-Use um texto curto que identifique o job.
+00:07:02,667 --> 00:07:17,667
+[Obrigatório] Schema (MonthlyJob)
+Define o schema da tabela de resultado. / Informe o schema correto do seu trabalho.
 
 28
-00:00:56,400 --> 00:00:59,400
-[Use apenas quando...] MonthlyJob
-Use quando o job precisa rodar com um intervalo de datas.
+00:07:18,067 --> 00:07:33,067
+[Obrigatório] Table Name (MonthlyJob)
+Nome da tabela de resultado, com o prefixo do seu usuário. / Complete apenas o sufixo; o prefixo já vem preenchido.
 
 29
-00:00:59,400 --> 00:01:02,400
-Neste modo o destino fica em Table e aparecem Schema,
-Table Name, Start Date e End Date.
+00:07:33,467 --> 00:07:48,467
+[Obrigatório] Start Date
+Data inicial do período do job (formato AAAA-MM-DD). / Define o primeiro mês a processar.
 
 30
-00:01:02,400 --> 00:01:05,100
-[Obrigatório] Campos do MonthlyJob
-Schema e Table Name: onde o resultado será salvo.
+00:07:48,867 --> 00:08:03,867
+[Obrigatório] End Date
+Data final do período (formato AAAA-MM-DD). / Deve ser igual ou posterior à Start Date.
 
 31
-00:01:05,100 --> 00:01:07,800
-Start Date e End Date: período da consulta.
-Revise as datas antes de continuar.
+00:08:04,267 --> 00:08:19,267
+[Use apenas quando...] ExistingTable
+Use quando os dados já estão em uma tabela e você / quer exportá-los, sem rodar um arquivo SQL.
 
 32
-00:01:07,800 --> 00:01:10,700
-[Use apenas quando...] ExistingTable
-Use quando os dados já estão em uma tabela e você
+00:08:21,800 --> 00:08:36,800
+[Obrigatório] ExistingTable → Destination
+Neste modo o destino permitido é apenas Csv. / Table e Table+Csv ficam indisponíveis.
 
 33
-00:01:10,700 --> 00:01:13,600
-só precisa exportar o resultado em CSV.
-Neste modo o destino fica limitado a Csv.
+00:08:37,200 --> 00:08:52,200
+[Use apenas quando...] Sem SQL File
+A lista e o campo SQL File ficam ocultos. / A origem é a tabela existente, não um arquivo .sql.
 
 34
-00:01:13,600 --> 00:01:16,000
-[Obrigatório] Schema e Existing Table
-Escolha o schema e informe o nome da tabela existente.
+00:08:52,600 --> 00:09:07,600
+[Obrigatório] Schema → coe_enc
+Seleciona o schema coe_enc da tabela existente. / Use quando a tabela estiver nesse schema.
 
 35
-00:01:16,000 --> 00:01:18,400
-Se o schema não estiver na lista, use other.
+00:09:10,133 --> 00:09:25,133
+[Obrigatório] Schema → aa_enc
+Seleciona o schema aa_enc da tabela existente. / É a opção padrão quando a tabela está em aa_enc.
 
 36
-00:01:18,400 --> 00:01:20,800
-Exemplo prático
-Voltamos para SqlFile → Csv com o arquivo export_sales.sql.
+00:09:27,667 --> 00:09:42,667
+[Use apenas quando...] Schema → other
+Use quando o schema não é coe_enc nem aa_enc. / Ao marcar other, aparece o campo Custom Schema.
 
 37
-00:01:20,800 --> 00:01:23,200
-Este é o fluxo mais comum para gerar um CSV.
+00:09:45,200 --> 00:10:00,200
+[Obrigatório] Custom Schema
+Digite o nome do schema personalizado. / Só aparece quando Schema = other.
 
 38
-00:01:23,200 --> 00:01:25,500
-E-mail inválido
-Revise o formato antes de continuar.
+00:10:00,600 --> 00:10:15,600
+[Obrigatório] Existing Table
+Informe só o nome da tabela (sem o schema). / Junto com o schema, forma a origem completa schema.tabela.
 
 39
-00:01:25,500 --> 00:01:27,800
-O status mostra o problema até a correção.
+00:10:18,133 --> 00:10:33,133
+Combinação comum
+SqlFile + Csv + arquivo .sql sem marcadores de data. / Fluxo típico para gerar um CSV a partir de uma consulta.
 
 40
-00:01:27,800 --> 00:01:30,200
-Pronto para enviar
-Com o e-mail corrigido, o status volta a Ready to launch.
+00:10:35,667 --> 00:10:50,667
+Combinação MonthlyJob
+MonthlyJob + Table + .sql com {date_inicio} e {date_fim} / + Schema, Table Name, Start Date e End Date.
 
 41
-00:01:30,200 --> 00:01:32,600
-Confira origem, destino, arquivo e fila antes do envio.
+00:10:51,067 --> 00:11:06,067
+Combinação ExistingTable
+ExistingTable + Csv + Schema + Existing Table. / Não usa SQL File nem MonthlyJob ao mesmo tempo.
 
 42
-00:01:32,600 --> 00:01:35,250
-Preview
-Revise a configuração e o conteúdo do job antes do envio.
+00:11:06,467 --> 00:11:21,467
+Combinações indisponíveis
+MonthlyJob não aceita Csv ou Table+Csv. / ExistingTable não aceita Table ou Table+Csv.
 
 43
-00:01:35,250 --> 00:01:37,900
-Confirme se a consulta e o destino estão corretos.
+00:11:21,867 --> 00:11:36,867
+E-mail inválido
+Se o formato estiver incorreto, o status mostra o problema. / Corrija antes de continuar.
 
 44
-00:01:37,900 --> 00:01:39,567
-Antes de iniciar, confirme:
-• origem e destino;
+00:11:37,267 --> 00:11:52,267
+Formulário pronto
+Com os dados corrigidos, o status volta a Ready to launch. / Revise origem, destino, arquivo e fila.
 
 45
-00:01:39,567 --> 00:01:41,233
-• arquivo selecionado;
-• fila de execução;
+00:11:52,667 --> 00:12:07,667
+Preview SQL
+Mostra o conteúdo que será usado no job. / Confira se a consulta e o destino estão corretos antes do envio.
 
 46
-00:01:41,233 --> 00:01:42,900
-• opções adicionais;
-• e-mail de notificação.
+00:12:09,800 --> 00:12:24,800
+Antes de iniciar, confirme:
+• origem e destino; / • arquivo ou tabela selecionados; / • fila de execução; / • opções adicionais; / • e-mail de notificação.
 
 47
-00:01:42,900 --> 00:01:45,550
+00:12:25,200 --> 00:12:40,200
 Launch Job
-Inicia o job com as configurações revisadas.
+Inicia o job com as configurações revisadas. / Leia o resumo e confirme apenas se estiver correto.
 
 48
-00:01:45,550 --> 00:01:48,200
-Leia o resumo e confirme apenas se estiver correto.
+00:12:42,733 --> 00:12:57,733
+Job enviado
+O job foi enviado pelo Dispatch. / Acompanhe o andamento na tela de monitoramento.
 
 49
-00:01:48,200 --> 00:01:50,500
-Job enviado
-O job foi enviado pelo Dispatch.
-
-50
-00:01:50,500 --> 00:01:52,800
-Acompanhe o andamento na tela de monitoramento.
-
-51
-00:01:52,800 --> 00:01:57,400
-Próximo passo
+00:12:58,133 --> 00:13:13,133
+Overview
 Após o envio, acompanhe o status do job no Overview.
 
-52
-00:01:57,400 --> 00:01:58,900
+50
+00:13:15,267 --> 00:13:30,267
 Resumo
-Na aba New Job, você:
-
-53
-00:01:58,900 --> 00:02:00,400
-1. define a execução;
-2. revisa as configurações;
-
-54
-00:02:00,400 --> 00:02:01,900
-3. inicia o job;
-4. acompanha o resultado no Overview.
-
-55
-00:02:01,900 --> 00:02:03,400
-
-Em caso de dúvida, revise os campos antes de selecionar Launch Job.
+Na aba New Job, você: / 1. define a execução; / 2. revisa as configurações; / 3. inicia o job; / 4. acompanha o resultado no Overview. /  / Em caso de dúvida, revise os campos antes de selecionar Launch Job.

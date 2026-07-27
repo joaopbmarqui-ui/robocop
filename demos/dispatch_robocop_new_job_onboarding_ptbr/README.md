@@ -1,30 +1,33 @@
 # Onboarding video — New Job (pt-BR, silencioso)
 
-Silent screen-recording-style walkthrough of the **New Job** tab for first-time analysts.
+Silent walkthrough of the **New Job** tab for first-time analysts.
 
 ## Deliverables
 
 | File | Description |
 |------|-------------|
-| `dispatch_robocop_new_job_onboarding_ptbr.mp4` | Silent visual walkthrough (PT-BR on-screen text, no voice/music) |
-| `dispatch_robocop_new_job_captions_ptbr.srt` | Same explanations synchronized as captions |
-| `dispatch_robocop_new_job_storyboard.md` | Step map |
-| `dispatch_robocop_new_job_video_download.zip` | ZIP containing only the MP4 |
+| `dispatch_robocop_new_job_onboarding_ptbr.mp4` | Silent visual walkthrough |
+| `dispatch_robocop_new_job_captions_ptbr.srt` | Synchronized PT-BR captions |
+| `dispatch_robocop_new_job_storyboard.md` | Scene map + verification evidence |
+| `footer_timing_report.md` | Automated ≥15s footer timing PASS/FAIL |
+| `dispatch_robocop_new_job_video_download.zip` | ZIP with the MP4 only |
 
-There is **no** narration audio file.
+No narration audio. No “Antes de começar” section.
 
-## How footage is produced
+## Pacing rule
 
-Frames come from the real Dispatch Textual UI (`DispatchApp` → Overview → `n` → `NewJobScreen`).
-Overlays add cursor movement, click indicators, field highlights, and Portuguese callouts.
-Audio is a silent track only (playable, no voice, no music).
+Every instructional footer remains fully visible and static for **at least 15 seconds** before the next click or scene change.
+
+## MonthlyJob SQL rule (verified)
+
+The `.sql` file must contain both placeholders `{date_inicio}` and `{date_fim}`.
+
+Evidence: `dispatch/sql.py`, `dispatch/screens/new_job.py`, `scr/monthly_query_processor.py`, `CONTEXT.md`, tests.
 
 ## Regenerate
 
 ```bash
 source mocks/dev-env.sh
-/workspace/.venv/bin/pip install -r requirements.txt cairosvg pillow
-/workspace/.venv/bin/python demos/dispatch_robocop_new_job_onboarding_ptbr/generate_onboarding_video.py
+.venv/bin/pip install -r requirements.txt cairosvg pillow
+.venv/bin/python demos/dispatch_robocop_new_job_onboarding_ptbr/generate_onboarding_video.py
 ```
-
-Requires system `ffmpeg`.

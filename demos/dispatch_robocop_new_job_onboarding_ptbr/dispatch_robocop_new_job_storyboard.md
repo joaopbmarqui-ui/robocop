@@ -1,228 +1,603 @@
-# Storyboard — New Job (silencioso, pt-BR)
+# Storyboard — New Job (silencioso, pt-BR, footers ≥15s)
 
-Vídeo sem narração e sem música. Explicações on-screen + cursor/cliques.
+Sem narração e sem música. Sem seção “Antes de começar”.
 
 ## 01_open — Abertura
 
-- **Tempo:** 00:00:00,000 → 00:00:03,500 (3.5s)
-- **Tela:** `card:open`
-- **Destaque / cursor:** (0.5, 0.5)
+- **Elemento:** Dispatch (Robocop)
+- **Capture:** `card:open`
+- **Cursor:** move → stop em (0.5, 0.5)
+- **Footer:** Dispatch (Robocop) — Como utilizar a aba New Job / Configure e inicie um novo job passo a passo.
 - **Badge:** —
-- **Texto na tela:** Dispatch (Robocop) — Como utilizar a aba New Job / Configure e inicie um novo job passo a passo.
-- **Resultado esperado:** analista entende o uso prático de “Dispatch (Robocop)”
+- **Footer start/end:** 00:00:00,000 → 00:00:15,000
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Dispatch (Robocop)”
+- **Evidência de verificação:** opening card
 
-## 02_purpose — Propósito
+## 02_purpose_a — Propósito
 
-- **Tempo:** 00:00:03,500 → 00:00:08,300 (4.8s)
-- **Tela:** `arrive`
-- **Destaque / cursor:** (0.55, 0.12)
+- **Elemento:** Para que serve a aba New Job
+- **Capture:** `arrive`
+- **Cursor:** move → stop em (0.55, 0.12)
+- **Footer:** Para que serve a aba New Job — Ela permite configurar e iniciar uma nova execução no Dispatch.
 - **Badge:** —
-- **Texto na tela:** Para que serve — A aba New Job permite configurar e iniciar uma nova execução no Dispatch. / Você define a origem, o destino, a consulta e as opções de execução do job.
-- **Resultado esperado:** analista entende o uso prático de “Para que serve”
+- **Footer start/end:** 00:00:15,400 → 00:00:30,400
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Para que serve a aba New Job”
+- **Evidência de verificação:** NewJobScreen title + form
 
-## 03_ready — Antes de começar
+## 02_purpose_b — Propósito
 
-- **Tempo:** 00:00:08,300 → 00:00:12,800 (4.5s)
-- **Tela:** `card:ready`
-- **Destaque / cursor:** (0.5, 0.45)
+- **Elemento:** O que você decide aqui
+- **Capture:** `arrive`
+- **Cursor:** move → stop em (0.55, 0.2)
+- **Footer:** O que você decide aqui — Você escolhe a origem dos dados, o destino do resultado, / a consulta e as opções de execução do job.
 - **Badge:** —
-- **Texto na tela:** Antes de começar — Tenha pronto: / • o arquivo SQL do seu job (quando usar SqlFile ou MonthlyJob); / • a origem e o destino desejados; / • e-mail de notificação, se quiser receber aviso.
-- **Resultado esperado:** analista entende o uso prático de “Antes de começar”
+- **Footer start/end:** 00:00:30,800 → 00:00:45,800
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “O que você decide aqui”
+- **Evidência de verificação:** NewJobScreen compose()
 
-## 04_matrix — Matriz
+## 03_matrix — Matriz
 
-- **Tempo:** 00:00:12,800 → 00:00:17,400 (4.6s)
-- **Tela:** `matrix`
-- **Destaque / cursor:** (0.52, 0.18) + clique
+- **Elemento:** Source × Destination
+- **Capture:** `matrix`
+- **Cursor:** move → stop em (0.52, 0.18) → clique
+- **Footer:** Source × Destination — Tabela de referência com as combinações permitidas. / Consulte-a antes de escolher origem e destino.
 - **Badge:** Opcional
-- **Texto na tela:** Source × Destination — Mostra quais combinações de origem e destino são permitidas. / Use como referência rápida antes de escolher as opções.
-- **Resultado esperado:** analista entende o uso prático de “Source × Destination”
+- **Footer start/end:** 00:00:46,200 → 00:01:01,200
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Source × Destination”
+- **Evidência de verificação:** matrix-collapsible + LEGAL_CELLS
 
-## 05_detected — Detecção
+## 04_detected — Detecção
 
-- **Tempo:** 00:00:17,400 → 00:00:21,500 (4.1s)
-- **Tela:** `arrive`
-- **Destaque / cursor:** (0.55, 0.28)
+- **Elemento:** Detected source
+- **Capture:** `arrive`
+- **Cursor:** move → stop em (0.55, 0.28)
+- **Footer:** Detected source — Mostra o tipo identificado no arquivo SQL selecionado. / Confirme se corresponde ao job que você quer executar.
 - **Badge:** —
-- **Texto na tela:** Detected source — Indica o tipo detectado no arquivo SQL selecionado. / Confira se corresponde ao que você pretende executar.
-- **Resultado esperado:** analista entende o uso prático de “Detected source”
+- **Footer start/end:** 00:01:03,733 → 00:01:18,733
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Detected source”
+- **Evidência de verificação:** info-detected + sql.detect_source
 
-## 06_source — Source
+## 05_source_intro — Source
 
-- **Tempo:** 00:00:21,500 → 00:00:27,300 (5.8s)
-- **Tela:** `source_sqlfile`
-- **Destaque / cursor:** (0.38, 0.36) + clique
+- **Elemento:** Source
+- **Capture:** `source_sqlfile`
+- **Cursor:** move → stop em (0.38, 0.34)
+- **Footer:** Source — Define de onde os dados do job serão obtidos. / É a primeira decisão do formulário.
 - **Badge:** Obrigatório
-- **Texto na tela:** Source — Define de onde os dados serão obtidos. / SqlFile: consulta em arquivo SQL. / MonthlyJob: consulta com período de datas. / ExistingTable: exporta uma tabela já existente.
-- **Resultado esperado:** analista entende o uso prático de “Source”
+- **Footer start/end:** 00:01:19,133 → 00:01:34,133
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Source”
+- **Evidência de verificação:** RadioSet #source
 
-## 07_destination — Destination
+## 06_source_sqlfile — Source
 
-- **Tempo:** 00:00:27,300 → 00:00:32,900 (5.6s)
-- **Tela:** `source_sqlfile`
-- **Destaque / cursor:** (0.68, 0.36) + clique
+- **Elemento:** Source → SqlFile
+- **Capture:** `source_sqlfile`
+- **Cursor:** move → stop em (0.38, 0.34) → clique
+- **Footer:** Source → SqlFile — Use quando a consulta está em um arquivo .sql simples. / O Dispatch executa essa consulta conforme o destino escolhido.
 - **Badge:** Obrigatório
-- **Texto na tela:** Destination — Define onde o resultado do job será armazenado. / Table: salva em tabela. / Csv: gera arquivo CSV. / Table+Csv: faz os dois.
-- **Resultado esperado:** analista entende o uso prático de “Destination”
+- **Footer start/end:** 00:01:34,533 → 00:01:49,533
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Source → SqlFile”
+- **Evidência de verificação:** src-sqlfile; LEGAL SqlFile→Table/Csv/Table+Csv
 
-## 08_queue — Fila
+## 07_dest_intro — Destination
 
-- **Tempo:** 00:00:32,900 → 00:00:38,200 (5.3s)
-- **Tela:** `queues`
-- **Destaque / cursor:** (0.55, 0.52) + clique
+- **Elemento:** Destination
+- **Capture:** `source_sqlfile`
+- **Cursor:** move → stop em (0.7, 0.28)
+- **Footer:** Destination — Define onde o resultado do job será armazenado. / A escolha depende da origem selecionada.
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:01:52,067 → 00:02:07,067
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Destination”
+- **Evidência de verificação:** RadioSet #destination
+
+## 08_dest_table — Destination
+
+- **Elemento:** Destination → Table
+- **Capture:** `dest_table`
+- **Cursor:** move → stop em (0.7, 0.26) → clique
+- **Footer:** Destination → Table — Salva o resultado em uma tabela. / Use quando precisar consultar o resultado depois no ambiente.
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:02:07,467 → 00:02:22,467
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Destination → Table”
+- **Evidência de verificação:** dst-table
+
+## 09_dest_csv — Destination
+
+- **Elemento:** Destination → Csv
+- **Capture:** `source_sqlfile`
+- **Cursor:** move → stop em (0.7, 0.3) → clique
+- **Footer:** Destination → Csv — Gera um arquivo CSV na pasta de onde você abriu o Dispatch. / Use quando o resultado precisa ser baixado ou compartilhado como arquivo.
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:02:25,000 → 00:02:40,000
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Destination → Csv”
+- **Evidência de verificação:** dst-csv; ADR-0003 CSV in launch cwd
+
+## 10_dest_tablecsv — Destination
+
+- **Elemento:** Destination → Table+Csv
+- **Capture:** `dest_tablecsv`
+- **Cursor:** move → stop em (0.7, 0.34) → clique
+- **Footer:** Destination → Table+Csv — Cria a tabela e também gera o CSV. / Use quando precisa dos dois formatos na mesma execução.
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:02:42,533 → 00:02:57,533
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Destination → Table+Csv”
+- **Evidência de verificação:** dst-table-csv
+
+## 11_queue_a — Fila
+
+- **Elemento:** Execution Queue
+- **Capture:** `queues`
+- **Cursor:** move → stop em (0.55, 0.5)
+- **Footer:** Execution Queue — Indica a fila de processamento do job. / Sem marcação, o Dispatch escolhe automaticamente.
 - **Badge:** Opcional
-- **Texto na tela:** Execution Queue — Define a fila em que o job será processado. / Sem seleção = automático. / Escolha conforme a orientação do seu projeto.
-- **Resultado esperado:** analista entende o uso prático de “Execution Queue”
+- **Footer start/end:** 00:03:00,067 → 00:03:15,067
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Execution Queue”
+- **Evidência de verificação:** SelectionList #queue + Auto hint
 
-## 09_picker — SQL
+## 12_queue_b — Fila
 
-- **Tempo:** 00:00:38,200 → 00:00:43,000 (4.8s)
-- **Tela:** `picker`
-- **Destaque / cursor:** (0.55, 0.62) + clique
-- **Badge:** Obrigatório
-- **Texto na tela:** Lista de arquivos SQL — Lista os arquivos .sql da pasta atual. / Selecione o arquivo do job para preencher o caminho.
-- **Resultado esperado:** analista entende o uso prático de “Lista de arquivos SQL”
-
-## 10_sql_file — SQL
-
-- **Tempo:** 00:00:43,000 → 00:00:47,200 (4.2s)
-- **Tela:** `picker`
-- **Destaque / cursor:** (0.58, 0.72)
-- **Badge:** Obrigatório
-- **Texto na tela:** SQL File — Caminho do arquivo SQL que será usado no job. / Confirme se o arquivo indicado é o correto.
-- **Resultado esperado:** analista entende o uso prático de “SQL File”
-
-## 11_email — Notificação
-
-- **Tempo:** 00:00:47,200 → 00:00:52,000 (4.8s)
-- **Tela:** `email_ok`
-- **Destaque / cursor:** (0.58, 0.78) + clique
+- **Elemento:** Execution Queue — quando marcar
+- **Capture:** `queues`
+- **Cursor:** move → stop em (0.55, 0.54) → clique
+- **Footer:** Execution Queue — quando marcar — Marque uma ou mais filas só se o seu projeto indicar qual usar. / Várias filas são tentadas na ordem da lista.
 - **Badge:** Opcional
-- **Texto na tela:** Email (notifications) — Envia aviso quando o job terminar. / Deixe em branco se não precisar de notificação.
-- **Resultado esperado:** analista entende o uso prático de “Email (notifications)”
+- **Footer start/end:** 00:03:15,467 → 00:03:30,467
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Execution Queue — quando marcar”
+- **Evidência de verificação:** _QUEUE_CHOICES / _QUEUE_AUTO_HINT
 
-## 12_subject — Notificação
+## 13_sql_intro — SQL File
 
-- **Tempo:** 00:00:52,000 → 00:00:56,400 (4.4s)
-- **Tela:** `email_ok`
-- **Destaque / cursor:** (0.58, 0.84) + clique
+- **Elemento:** SQL File
+- **Capture:** `picker`
+- **Cursor:** move → stop em (0.55, 0.62)
+- **Footer:** SQL File — É a consulta que o job vai executar. / Para SqlFile e MonthlyJob, você precisa selecionar um arquivo .sql.
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:03:33,000 → 00:03:48,000
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “SQL File”
+- **Evidência de verificação:** row-sql-file + picker; required for SqlFile/SqlTemplate
+
+## 14_sql_picker — SQL File
+
+- **Elemento:** Lista de arquivos SQL
+- **Capture:** `picker`
+- **Cursor:** move → stop em (0.55, 0.62) → clique
+- **Footer:** Lista de arquivos SQL — Mostra os arquivos .sql da pasta atual. / Selecione o arquivo do job para preencher o caminho automaticamente.
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:03:48,400 → 00:04:03,400
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Lista de arquivos SQL”
+- **Evidência de verificação:** sql-file-picker scans launch_cwd/*.sql
+
+## 15_sql_verify — SQL File
+
+- **Elemento:** O que conferir no arquivo
+- **Capture:** `picker`
+- **Cursor:** move → stop em (0.58, 0.72)
+- **Footer:** O que conferir no arquivo — Confirme o nome do arquivo e o tipo Detected na lista. / O caminho aparece no campo SQL File após a seleção.
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:04:05,933 → 00:04:20,933
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “O que conferir no arquivo”
+- **Evidência de verificação:** picker columns File/Detected/Modified + path-hint
+
+## 16_sql_role — SQL File
+
+- **Elemento:** Papel do SQL File no job
+- **Capture:** `picker`
+- **Cursor:** move → stop em (0.58, 0.72)
+- **Footer:** Papel do SQL File no job — Esse arquivo define quais dados serão lidos ou calculados. / Source e Destination decidem como o resultado será entregue.
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:04:21,333 → 00:04:36,333
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Papel do SQL File no job”
+- **Evidência de verificação:** manifest source sql_path_at_launch
+
+## 17_email — Notificação
+
+- **Elemento:** Email (notifications)
+- **Capture:** `email_ok`
+- **Cursor:** move → stop em (0.58, 0.78) → clique
+- **Footer:** Email (notifications) — Recebe aviso quando o job terminar. / Deixe em branco se não quiser notificação.
 - **Badge:** Opcional
-- **Texto na tela:** Subject (email) — Define o assunto do e-mail de notificação. / Use um texto curto que identifique o job.
-- **Resultado esperado:** analista entende o uso prático de “Subject (email)”
+- **Footer start/end:** 00:04:36,733 → 00:04:51,733
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Email (notifications)”
+- **Evidência de verificação:** #email; validation only if filled
 
-## 13_monthly — MonthlyJob
+## 18_subject — Notificação
 
-- **Tempo:** 00:00:56,400 → 00:01:02,400 (6.0s)
-- **Tela:** `monthly`
-- **Destaque / cursor:** (0.38, 0.4) + clique
+- **Elemento:** Subject (email)
+- **Capture:** `email_ok`
+- **Cursor:** move → stop em (0.58, 0.84) → clique
+- **Footer:** Subject (email) — Assunto do e-mail de notificação. / Use um texto curto que identifique o job.
+- **Badge:** Opcional
+- **Footer start/end:** 00:04:54,267 → 00:05:09,267
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Subject (email)”
+- **Evidência de verificação:** #subject default Dispatch Job
+
+## 19_status_bar — Status
+
+- **Elemento:** Status do formulário
+- **Capture:** `ready_review`
+- **Cursor:** move → stop em (0.72, 0.92)
+- **Footer:** Status do formulário — Ready to launch indica que não há problemas bloqueantes. / Preview SQL e Launch ficam na barra inferior.
+- **Badge:** —
+- **Footer start/end:** 00:05:11,800 → 00:05:26,800
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Status do formulário”
+- **Evidência de verificação:** validation-summary + action bar
+
+## 20_mj_intro — MonthlyJob
+
+- **Elemento:** MonthlyJob
+- **Capture:** `monthly`
+- **Cursor:** move → stop em (0.38, 0.38) → clique
+- **Footer:** MonthlyJob — Use quando a consulta precisa cobrir um intervalo de datas, / executando o período mês a mês.
 - **Badge:** Use apenas quando...
-- **Texto na tela:** MonthlyJob — Use quando o job precisa rodar com um intervalo de datas. / Neste modo o destino fica em Table e aparecem Schema, / Table Name, Start Date e End Date.
-- **Resultado esperado:** analista entende o uso prático de “MonthlyJob”
+- **Footer start/end:** 00:05:27,200 → 00:05:42,200
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “MonthlyJob”
+- **Evidência de verificação:** Source SqlTemplate labeled MonthlyJob; CONTEXT.md
 
-## 14_monthly_fields — MonthlyJob
+## 21_mj_dest — MonthlyJob
 
-- **Tempo:** 00:01:02,400 → 00:01:07,800 (5.4s)
-- **Tela:** `monthly_fields`
-- **Destaque / cursor:** (0.58, 0.78)
+- **Elemento:** MonthlyJob → Destination
+- **Capture:** `monthly`
+- **Cursor:** move → stop em (0.7, 0.28)
+- **Footer:** MonthlyJob → Destination — Com MonthlyJob, o destino permitido é apenas Table. / Csv e Table+Csv ficam indisponíveis.
 - **Badge:** Obrigatório
-- **Texto na tela:** Campos do MonthlyJob — Schema e Table Name: onde o resultado será salvo. / Start Date e End Date: período da consulta. / Revise as datas antes de continuar.
-- **Resultado esperado:** analista entende o uso prático de “Campos do MonthlyJob”
+- **Footer start/end:** 00:05:44,733 → 00:05:59,733
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “MonthlyJob → Destination”
+- **Evidência de verificação:** LEGAL_CELLS (SqlTemplate, Table) only; dest hint
 
-## 15_existing — ExistingTable
+## 22_mj_sql_rule_a — MonthlyJob SQL
 
-- **Tempo:** 00:01:07,800 → 00:01:13,600 (5.8s)
-- **Tela:** `existing`
-- **Destaque / cursor:** (0.38, 0.44) + clique
+- **Elemento:** SQL File no MonthlyJob — regra
+- **Capture:** `card:sql_tokens`
+- **Cursor:** move → stop em (0.5, 0.45)
+- **Footer:** SQL File no MonthlyJob — regra — O arquivo .sql precisa conter os dois marcadores: / {date_inicio} e {date_fim}
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:05:59,733 → 00:06:14,733
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “SQL File no MonthlyJob — regra”
+- **Evidência de verificação:** dispatch/sql.py:DATE_INICIO_TOKEN/DATE_FIM_TOKEN, detect_source, template_is_complete, is_malformed_template, monthly_preview; dispatch/screens/new_job.py:_sql_content_issues (requires both tokens for SqlTemplate/MonthlyJob); scr/monthly_query_processor.py:render_monthly_sql; CONTEXT.md (SqlTemplate placeholders); tests/test_monthly_query_processor.py, tools/prod_tui/job_specs.py SMOKE_TEMPLATE_SQL
+
+## 23_mj_sql_rule_b — MonthlyJob SQL
+
+- **Elemento:** Como conferir no arquivo
+- **Capture:** `card:sql_tokens`
+- **Cursor:** move → stop em (0.5, 0.5)
+- **Footer:** Como conferir no arquivo — Abra o .sql e busque exatamente {date_inicio} e {date_fim}. / Se faltar um deles, o job não pode ser iniciado como MonthlyJob.
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:06:14,733 → 00:06:29,733
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Como conferir no arquivo”
+- **Evidência de verificação:** new_job._sql_content_issues + is_malformed_template
+
+## 24_mj_sql_rule_c — MonthlyJob SQL
+
+- **Elemento:** O que esses marcadores fazem
+- **Capture:** `card:sql_tokens`
+- **Cursor:** move → stop em (0.5, 0.55)
+- **Footer:** O que esses marcadores fazem — Eles reservam o início e o fim de cada mês no período informado. / O Dispatch preenche as datas conforme Start Date e End Date.
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:06:29,733 → 00:06:44,733
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “O que esses marcadores fazem”
+- **Evidência de verificação:** monthly_preview / render_monthly_sql substitution
+
+## 25_mj_picker — MonthlyJob SQL
+
+- **Elemento:** Selecionar o SQL do MonthlyJob
+- **Capture:** `monthly_picker`
+- **Cursor:** move → stop em (0.55, 0.6) → clique
+- **Footer:** Selecionar o SQL do MonthlyJob — Na lista, escolha o arquivo com Detected = MonthlyJob. / Isso confirma que os dois marcadores foram encontrados.
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:06:45,133 → 00:07:00,133
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Selecionar o SQL do MonthlyJob”
+- **Evidência de verificação:** picker Detected column via detect_source
+
+## 26_mj_schema — MonthlyJob campos
+
+- **Elemento:** Schema (MonthlyJob)
+- **Capture:** `monthly_fields`
+- **Cursor:** move → stop em (0.58, 0.68)
+- **Footer:** Schema (MonthlyJob) — Define o schema da tabela de resultado. / Informe o schema correto do seu trabalho.
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:07:02,667 → 00:07:17,667
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Schema (MonthlyJob)”
+- **Evidência de verificação:** #schema visible when needs_table
+
+## 27_mj_table — MonthlyJob campos
+
+- **Elemento:** Table Name (MonthlyJob)
+- **Capture:** `monthly_fields`
+- **Cursor:** move → stop em (0.58, 0.74)
+- **Footer:** Table Name (MonthlyJob) — Nome da tabela de resultado, com o prefixo do seu usuário. / Complete apenas o sufixo; o prefixo já vem preenchido.
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:07:18,067 → 00:07:33,067
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Table Name (MonthlyJob)”
+- **Evidência de verificação:** #table-name-prefix + #table-name-suffix
+
+## 28_mj_start — MonthlyJob campos
+
+- **Elemento:** Start Date
+- **Capture:** `monthly_fields`
+- **Cursor:** move → stop em (0.58, 0.8)
+- **Footer:** Start Date — Data inicial do período do job (formato AAAA-MM-DD). / Define o primeiro mês a processar.
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:07:33,467 → 00:07:48,467
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Start Date”
+- **Evidência de verificação:** #start-date; validate_date_range
+
+## 29_mj_end — MonthlyJob campos
+
+- **Elemento:** End Date
+- **Capture:** `monthly_fields`
+- **Cursor:** move → stop em (0.58, 0.86)
+- **Footer:** End Date — Data final do período (formato AAAA-MM-DD). / Deve ser igual ou posterior à Start Date.
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:07:48,867 → 00:08:03,867
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “End Date”
+- **Evidência de verificação:** #end-date; validate_date_range
+
+## 30_et_intro — ExistingTable
+
+- **Elemento:** ExistingTable
+- **Capture:** `existing`
+- **Cursor:** move → stop em (0.38, 0.36) → clique
+- **Footer:** ExistingTable — Use quando os dados já estão em uma tabela e você / quer exportá-los, sem rodar um arquivo SQL.
 - **Badge:** Use apenas quando...
-- **Texto na tela:** ExistingTable — Use quando os dados já estão em uma tabela e você / só precisa exportar o resultado em CSV. / Neste modo o destino fica limitado a Csv.
-- **Resultado esperado:** analista entende o uso prático de “ExistingTable”
+- **Footer start/end:** 00:08:04,267 → 00:08:19,267
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “ExistingTable”
+- **Evidência de verificação:** src-existingtable; no SQL path
 
-## 16_existing_fields — ExistingTable
+## 31_et_dest — ExistingTable
 
-- **Tempo:** 00:01:13,600 → 00:01:18,400 (4.8s)
-- **Tela:** `existing_fields`
-- **Destaque / cursor:** (0.58, 0.72)
+- **Elemento:** ExistingTable → Destination
+- **Capture:** `existing`
+- **Cursor:** move → stop em (0.7, 0.3)
+- **Footer:** ExistingTable → Destination — Neste modo o destino permitido é apenas Csv. / Table e Table+Csv ficam indisponíveis.
 - **Badge:** Obrigatório
-- **Texto na tela:** Schema e Existing Table — Escolha o schema e informe o nome da tabela existente. / Se o schema não estiver na lista, use other.
-- **Resultado esperado:** analista entende o uso prático de “Schema e Existing Table”
+- **Footer start/end:** 00:08:21,800 → 00:08:36,800
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “ExistingTable → Destination”
+- **Evidência de verificação:** LEGAL (ExistingTable, Csv); dest hint
 
-## 17_back_sqlfile — Exemplo
+## 32_et_no_sql — ExistingTable
 
-- **Tempo:** 00:01:18,400 → 00:01:23,200 (4.8s)
-- **Tela:** `ready_review`
-- **Destaque / cursor:** (0.55, 0.36) + clique
+- **Elemento:** Sem SQL File
+- **Capture:** `existing`
+- **Cursor:** move → stop em (0.55, 0.48)
+- **Footer:** Sem SQL File — A lista e o campo SQL File ficam ocultos. / A origem é a tabela existente, não um arquivo .sql.
+- **Badge:** Use apenas quando...
+- **Footer start/end:** 00:08:37,200 → 00:08:52,200
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Sem SQL File”
+- **Evidência de verificação:** row-sql-file/picker display=False
+
+## 33_et_schema_coe — ExistingTable Schema
+
+- **Elemento:** Schema → coe_enc
+- **Capture:** `existing_coe`
+- **Cursor:** move → stop em (0.5, 0.68) → clique
+- **Footer:** Schema → coe_enc — Seleciona o schema coe_enc da tabela existente. / Use quando a tabela estiver nesse schema.
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:08:52,600 → 00:09:07,600
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Schema → coe_enc”
+- **Evidência de verificação:** RadioButton esc-coe-enc
+
+## 34_et_schema_aa — ExistingTable Schema
+
+- **Elemento:** Schema → aa_enc
+- **Capture:** `existing_fields`
+- **Cursor:** move → stop em (0.55, 0.68) → clique
+- **Footer:** Schema → aa_enc — Seleciona o schema aa_enc da tabela existente. / É a opção padrão quando a tabela está em aa_enc.
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:09:10,133 → 00:09:25,133
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Schema → aa_enc”
+- **Evidência de verificação:** RadioButton esc-aa-enc
+
+## 35_et_schema_other — ExistingTable Schema
+
+- **Elemento:** Schema → other
+- **Capture:** `existing_other`
+- **Cursor:** move → stop em (0.6, 0.68) → clique
+- **Footer:** Schema → other — Use quando o schema não é coe_enc nem aa_enc. / Ao marcar other, aparece o campo Custom Schema.
+- **Badge:** Use apenas quando...
+- **Footer start/end:** 00:09:27,667 → 00:09:42,667
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Schema → other”
+- **Evidência de verificação:** esc-other enables #existing-schema-custom
+
+## 36_et_custom — ExistingTable Schema
+
+- **Elemento:** Custom Schema
+- **Capture:** `existing_other`
+- **Cursor:** move → stop em (0.58, 0.74)
+- **Footer:** Custom Schema — Digite o nome do schema personalizado. / Só aparece quando Schema = other.
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:09:45,200 → 00:10:00,200
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Custom Schema”
+- **Evidência de verificação:** row-existing-schema-custom
+
+## 37_et_table — ExistingTable
+
+- **Elemento:** Existing Table
+- **Capture:** `existing_fields`
+- **Cursor:** move → stop em (0.58, 0.78) → clique
+- **Footer:** Existing Table — Informe só o nome da tabela (sem o schema). / Junto com o schema, forma a origem completa schema.tabela.
+- **Badge:** Obrigatório
+- **Footer start/end:** 00:10:00,600 → 00:10:15,600
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Existing Table”
+- **Evidência de verificação:** #existing-table; validate_full_table
+
+## 38_rel_standard — Relações
+
+- **Elemento:** Combinação comum
+- **Capture:** `ready_review`
+- **Cursor:** move → stop em (0.55, 0.36) → clique
+- **Footer:** Combinação comum — SqlFile + Csv + arquivo .sql sem marcadores de data. / Fluxo típico para gerar um CSV a partir de uma consulta.
 - **Badge:** —
-- **Texto na tela:** Exemplo prático — Voltamos para SqlFile → Csv com o arquivo export_sales.sql. / Este é o fluxo mais comum para gerar um CSV.
-- **Resultado esperado:** analista entende o uso prático de “Exemplo prático”
+- **Footer start/end:** 00:10:18,133 → 00:10:33,133
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Combinação comum”
+- **Evidência de verificação:** LEGAL SqlFile/Csv; detect_source without tokens
 
-## 18_validation_bad — Validação
+## 39_rel_monthly — Relações
 
-- **Tempo:** 00:01:23,200 → 00:01:27,800 (4.6s)
-- **Tela:** `email_bad`
-- **Destaque / cursor:** (0.58, 0.78)
+- **Elemento:** Combinação MonthlyJob
+- **Capture:** `monthly_fields`
+- **Cursor:** move → stop em (0.55, 0.4)
+- **Footer:** Combinação MonthlyJob — MonthlyJob + Table + .sql com {date_inicio} e {date_fim} / + Schema, Table Name, Start Date e End Date.
 - **Badge:** —
-- **Texto na tela:** E-mail inválido — Revise o formato antes de continuar. / O status mostra o problema até a correção.
-- **Resultado esperado:** analista entende o uso prático de “E-mail inválido”
+- **Footer start/end:** 00:10:35,667 → 00:10:50,667
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Combinação MonthlyJob”
+- **Evidência de verificação:** LEGAL SqlTemplate/Table + date fields
 
-## 19_validation_fix — Validação
+## 40_rel_existing — Relações
 
-- **Tempo:** 00:01:27,800 → 00:01:32,600 (4.8s)
-- **Tela:** `ready_review`
-- **Destaque / cursor:** (0.72, 0.92)
+- **Elemento:** Combinação ExistingTable
+- **Capture:** `existing_fields`
+- **Cursor:** move → stop em (0.55, 0.42)
+- **Footer:** Combinação ExistingTable — ExistingTable + Csv + Schema + Existing Table. / Não usa SQL File nem MonthlyJob ao mesmo tempo.
 - **Badge:** —
-- **Texto na tela:** Pronto para enviar — Com o e-mail corrigido, o status volta a Ready to launch. / Confira origem, destino, arquivo e fila antes do envio.
-- **Resultado esperado:** analista entende o uso prático de “Pronto para enviar”
+- **Footer start/end:** 00:10:51,067 → 00:11:06,067
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Combinação ExistingTable”
+- **Evidência de verificação:** Source radio exclusive; ExistingTable hides SQL
 
-## 20_preview — Preview
+## 41_rel_incompat — Relações
 
-- **Tempo:** 00:01:32,600 → 00:01:37,900 (5.3s)
-- **Tela:** `preview`
-- **Destaque / cursor:** (0.78, 0.92) + clique
+- **Elemento:** Combinações indisponíveis
+- **Capture:** `matrix`
+- **Cursor:** move → stop em (0.52, 0.2)
+- **Footer:** Combinações indisponíveis — MonthlyJob não aceita Csv ou Table+Csv. / ExistingTable não aceita Table ou Table+Csv.
 - **Badge:** —
-- **Texto na tela:** Preview — Revise a configuração e o conteúdo do job antes do envio. / Confirme se a consulta e o destino estão corretos.
-- **Resultado esperado:** analista entende o uso prático de “Preview”
+- **Footer start/end:** 00:11:06,467 → 00:11:21,467
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Combinações indisponíveis”
+- **Evidência de verificação:** LEGAL_CELLS matrix
 
-## 21_checklist — Revisão
+## 42_val_bad — Validação
 
-- **Tempo:** 00:01:37,900 → 00:01:42,900 (5.0s)
-- **Tela:** `card:checklist`
-- **Destaque / cursor:** (0.5, 0.5)
+- **Elemento:** E-mail inválido
+- **Capture:** `email_bad`
+- **Cursor:** move → stop em (0.58, 0.78)
+- **Footer:** E-mail inválido — Se o formato estiver incorreto, o status mostra o problema. / Corrija antes de continuar.
 - **Badge:** —
-- **Texto na tela:** Antes de iniciar, confirme: — • origem e destino; / • arquivo selecionado; / • fila de execução; / • opções adicionais; / • e-mail de notificação.
-- **Resultado esperado:** analista entende o uso prático de “Antes de iniciar, confirme:”
+- **Footer start/end:** 00:11:21,867 → 00:11:36,867
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “E-mail inválido”
+- **Evidência de verificação:** Invalid email format in validation-summary
 
-## 22_confirm — Envio
+## 43_val_ok — Validação
 
-- **Tempo:** 00:01:42,900 → 00:01:48,200 (5.3s)
-- **Tela:** `confirm`
-- **Destaque / cursor:** (0.42, 0.72) + clique
+- **Elemento:** Formulário pronto
+- **Capture:** `ready_review`
+- **Cursor:** move → stop em (0.72, 0.92)
+- **Footer:** Formulário pronto — Com os dados corrigidos, o status volta a Ready to launch. / Revise origem, destino, arquivo e fila.
 - **Badge:** —
-- **Texto na tela:** Launch Job — Inicia o job com as configurações revisadas. / Leia o resumo e confirme apenas se estiver correto.
-- **Resultado esperado:** analista entende o uso prático de “Launch Job”
+- **Footer start/end:** 00:11:37,267 → 00:11:52,267
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Formulário pronto”
+- **Evidência de verificação:** Ready to launch
 
-## 23_launched — Envio
+## 44_preview — Preview
 
-- **Tempo:** 00:01:48,200 → 00:01:52,800 (4.6s)
-- **Tela:** `launched`
-- **Destaque / cursor:** (0.55, 0.88)
+- **Elemento:** Preview SQL
+- **Capture:** `preview`
+- **Cursor:** move → stop em (0.78, 0.92) → clique
+- **Footer:** Preview SQL — Mostra o conteúdo que será usado no job. / Confira se a consulta e o destino estão corretos antes do envio.
 - **Badge:** —
-- **Texto na tela:** Job enviado — O job foi enviado pelo Dispatch. / Acompanhe o andamento na tela de monitoramento.
-- **Resultado esperado:** analista entende o uso prático de “Job enviado”
+- **Footer start/end:** 00:11:52,667 → 00:12:07,667
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Preview SQL”
+- **Evidência de verificação:** Preview SQL [P]; unavailable for ExistingTable
 
-## 24_overview — Overview
+## 45_checklist — Revisão
 
-- **Tempo:** 00:01:52,800 → 00:01:57,400 (4.6s)
-- **Tela:** `overview`
-- **Destaque / cursor:** (0.12, 0.22) + clique
+- **Elemento:** Antes de iniciar, confirme:
+- **Capture:** `card:checklist`
+- **Cursor:** move → stop em (0.5, 0.5)
+- **Footer:** Antes de iniciar, confirme: — • origem e destino; / • arquivo ou tabela selecionados; / • fila de execução; / • opções adicionais; / • e-mail de notificação.
 - **Badge:** —
-- **Texto na tela:** Próximo passo — Após o envio, acompanhe o status do job no Overview.
-- **Resultado esperado:** analista entende o uso prático de “Próximo passo”
+- **Footer start/end:** 00:12:09,800 → 00:12:24,800
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Antes de iniciar, confirme:”
+- **Evidência de verificação:** analyst checklist from form fields
 
-## 25_close — Encerramento
+## 46_confirm — Envio
 
-- **Tempo:** 00:01:57,400 → 00:02:03,400 (6.0s)
-- **Tela:** `card:close`
-- **Destaque / cursor:** (0.5, 0.5)
+- **Elemento:** Launch Job
+- **Capture:** `confirm`
+- **Cursor:** move → stop em (0.42, 0.72) → clique
+- **Footer:** Launch Job — Inicia o job com as configurações revisadas. / Leia o resumo e confirme apenas se estiver correto.
 - **Badge:** —
-- **Texto na tela:** Resumo — Na aba New Job, você: / 1. define a execução; / 2. revisa as configurações; / 3. inicia o job; / 4. acompanha o resultado no Overview. /  / Em caso de dúvida, revise os campos antes de selecionar Launch Job.
-- **Resultado esperado:** analista entende o uso prático de “Resumo”
+- **Footer start/end:** 00:12:25,200 → 00:12:40,200
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Launch Job”
+- **Evidência de verificação:** ConfirmScreen Launch Job
+
+## 47_launched — Envio
+
+- **Elemento:** Job enviado
+- **Capture:** `launched`
+- **Cursor:** move → stop em (0.55, 0.88)
+- **Footer:** Job enviado — O job foi enviado pelo Dispatch. / Acompanhe o andamento na tela de monitoramento.
+- **Badge:** —
+- **Footer start/end:** 00:12:42,733 → 00:12:57,733
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Job enviado”
+- **Evidência de verificação:** Launched Job message; no Impala success claim
+
+## 48_overview — Overview
+
+- **Elemento:** Overview
+- **Capture:** `overview`
+- **Cursor:** move → stop em (0.12, 0.22) → clique
+- **Footer:** Overview — Após o envio, acompanhe o status do job no Overview.
+- **Badge:** —
+- **Footer start/end:** 00:12:58,133 → 00:13:13,133
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Overview”
+- **Evidência de verificação:** DashboardScreen / Overview nav
+
+## 49_close — Encerramento
+
+- **Elemento:** Resumo
+- **Capture:** `card:close`
+- **Cursor:** move → stop em (0.5, 0.5)
+- **Footer:** Resumo — Na aba New Job, você: / 1. define a execução; / 2. revisa as configurações; / 3. inicia o job; / 4. acompanha o resultado no Overview. /  / Em caso de dúvida, revise os campos antes de selecionar Launch Job.
+- **Badge:** —
+- **Footer start/end:** 00:13:15,267 → 00:13:30,267
+- **Footer duração (hold estático):** 15.00s
+- **Resultado esperado:** analista entende decisão em “Resumo”
+- **Evidência de verificação:** closing summary

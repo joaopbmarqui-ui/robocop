@@ -8,15 +8,25 @@ Silent walkthrough of the **New Job** tab for first-time analysts.
 |------|-------------|
 | `dispatch_robocop_new_job_onboarding_ptbr.mp4` | Silent visual walkthrough |
 | `dispatch_robocop_new_job_captions_ptbr.srt` | Synchronized PT-BR captions |
-| `dispatch_robocop_new_job_storyboard.md` | Scene map + verification evidence |
-| `footer_timing_report.md` | Automated ≥15s footer timing PASS/FAIL |
+| `dispatch_robocop_new_job_storyboard.md` | Scene map + spotlight + timing |
+| `footer_timing_report.md` | Automated 10–12s timing PASS/FAIL |
 | `dispatch_robocop_new_job_video_download.zip` | ZIP with the MP4 only |
 
 No narration audio. No “Antes de começar” section.
 
 ## Pacing rule
 
-Every instructional footer remains fully visible and static for **at least 15 seconds** before the next click or scene change.
+Each instructional scene lasts **exactly 10 seconds** (or **up to 12 seconds** only for longer messages). That total includes:
+
+1. Fast character-by-character footer reveal (~1.5–2s, ≤25% of the scene)
+2. Static reading time with the complete message
+3. Stable spotlight on the explained interface element
+
+No click, cursor move, or UI change during the instructional period.
+
+## Visual focus
+
+The rest of the UI is dimmed while the current field/option stays bright in a spotlight cutout. The cursor remains visible but is not the only indicator.
 
 ## MonthlyJob SQL rule (verified)
 

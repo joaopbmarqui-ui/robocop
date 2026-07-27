@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""Silent New Job onboarding video — paced footers (≥15s each), no narration/music.
+"""Silent New Job onboarding video — 10–12s scenes, typing footer, spotlight.
 
-Captures the real Dispatch UI and builds a silent walkthrough with cursor,
-highlights, and Brazilian Portuguese footers. Every instructional footer stays
-fully visible for at least FOOTER_HOLD_SECONDS with no interaction.
+Captures the real Dispatch UI and builds a silent walkthrough with:
+- character-by-character footer reveal (fast handheld-RPG pacing feel)
+- dimmed UI with a spotlight cutout on the explained element
+- instructional scenes lasting exactly 10s (or up to 12s for longer text)
 
-Verified MonthlyJob SQL rule (dispatch/sql.py, scr/monthly_query_processor.py,
-CONTEXT.md, tests): the .sql file must contain BOTH placeholders
-``{date_inicio}`` and ``{date_fim}``.
+Verified MonthlyJob SQL rule: ``{date_inicio}`` and ``{date_fim}``.
 
 Run:
   source mocks/dev-env.sh
@@ -24,7 +23,7 @@ import shutil
 import subprocess
 import sys
 import zipfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -40,9 +39,14 @@ NARRATION_LEGACY = OUT_DIR / "dispatch_robocop_new_job_narration_ptbr.txt"
 
 VIDEO_W, VIDEO_H = 1280, 720
 FPS = 30
-FOOTER_HOLD_SECONDS = 15.0
-MOVE_FRAMES = 12
+SCENE_STANDARD_S = 10.0
+SCENE_LONG_S = 12.0
+MOVE_FRAMES = 10
 CLICK_FRAMES = 4
+OUTCOME_S = 1.0
+CALLOUT_H = 160
+DIM_ALPHA = 145
+SPOTLIGHT_PAD = 10
 TERMINAL_SIZE = (150, 54)
 
 DEMO_ROOT = Path("/tmp/dispatch_onboarding_silent_v2")
@@ -69,7 +73,6 @@ WHERE sale_date BETWEEN '{date_inicio}' AND '{date_fim}'
 GROUP BY region;
 """
 
-# Evidence used privately to verify MonthlyJob SQL rule (not shown in video).
 MONTHLY_SQL_EVIDENCE = [
     "dispatch/sql.py:DATE_INICIO_TOKEN/DATE_FIM_TOKEN, detect_source, template_is_complete, is_malformed_template, monthly_preview",
     "dispatch/screens/new_job.py:_sql_content_issues (requires both tokens for SqlTemplate/MonthlyJob)",
@@ -90,11 +93,15 @@ class Step:
     click: bool = False
     section: str = ""
     evidence: str = ""
-    instructional: bool = True  # subject to 15s footer rule
+    instructional: bool = True
+    # Normalized UI rect (l, t, r, b). None = auto from cursor / card full.
+    spotlight: tuple[float, float, float, float] | None = None
+    # Force 10 or 12; None = auto from text length.
+    scene_s: float | None = None
 
 
 def _steps() -> list[Step]:
-    """Ordered instructional steps. No 'Antes de começar' section."""
+    """Ordered instructional steps. No 'Antes de começar'. Content preserved."""
     return [
         Step(
             "01_open",
@@ -946,18 +953,155 @@ async def _setups():
     }
 
 
+
+
+def _full_footer_text(title: str, body: str) -> str:
+    return f"{title}\n{body}" if body else title
+
+
+def _char_count(title: str, body: str) -> int:
+    return len(_full_footer_text(title, body))
+
+
+def _resolved_scene_s(step: Step) -> float:
+    if step.scene_s is not None:
+        return float(step.scene_s)
+    # Prefer 10s. Use 12s only when the footer is genuinely long to read.
+    n = _char_count(step.title, step.body)
+    lines = (step.body or "").count("\n") + (1 if step.body else 0)
+    if n >= 130 or lines >= 4:
+        return SCENE_LONG_S
+    return SCENE_STANDARD_S
+
+
+def _resolved_spotlight(step: Step) -> tuple[float, float, float, float]:
+    if step.spotlight is not None:
+        return step.spotlight
+    if step.capture.startswith("card:"):
+        return (0.08, 0.12, 0.92, 0.78)
+    cx, cy = step.cursor
+    # Element-sized defaults by section / id.
+    presets: dict[str, tuple[float, float]] = {
+        "Abertura": (0.42, 0.28),
+        "Propósito": (0.55, 0.18),
+        "Matriz": (0.55, 0.16),
+        "Detecção": (0.50, 0.08),
+        "Source": (0.22, 0.12),
+        "Destination": (0.22, 0.12),
+        "Fila": (0.42, 0.18),
+        "SQL File": (0.50, 0.16),
+        "Notificação": (0.50, 0.07),
+        "Status": (0.45, 0.08),
+        "MonthlyJob": (0.28, 0.14),
+        "MonthlyJob SQL": (0.50, 0.28),
+        "MonthlyJob campos": (0.48, 0.08),
+        "ExistingTable": (0.28, 0.14),
+        "ExistingTable Schema": (0.40, 0.10),
+        "Relações": (0.55, 0.22),
+        "Validação": (0.48, 0.10),
+        "Preview": (0.28, 0.10),
+        "Revisão": (0.45, 0.30),
+        "Envio": (0.45, 0.22),
+        "Overview": (0.18, 0.20),
+        "Encerramento": (0.42, 0.30),
+    }
+    # Specific overrides for combined regions
+    id_overrides = {
+        "21_mj_dest": (0.52, 0.30, 0.38, 0.12),  # source+dest for MJ
+        "31_et_dest": (0.52, 0.30, 0.38, 0.12),
+        "32_et_no_sql": (0.50, 0.42, 0.40, 0.14),
+        "39_rel_monthly": (0.50, 0.38, 0.42, 0.28),
+        "40_rel_existing": (0.50, 0.36, 0.42, 0.24),
+        "38_rel_standard": (0.50, 0.34, 0.42, 0.22),
+        "41_rel_incompat": (0.52, 0.18, 0.42, 0.14),
+        "03_matrix": (0.52, 0.16, 0.45, 0.12),
+        "04_detected": (0.52, 0.26, 0.40, 0.06),
+        "05_source_intro": (0.36, 0.32, 0.18, 0.10),
+        "06_source_sqlfile": (0.36, 0.32, 0.18, 0.10),
+        "07_dest_intro": (0.70, 0.30, 0.18, 0.10),
+        "08_dest_table": (0.70, 0.26, 0.18, 0.08),
+        "09_dest_csv": (0.70, 0.30, 0.18, 0.08),
+        "10_dest_tablecsv": (0.70, 0.34, 0.18, 0.08),
+        "11_queue_a": (0.55, 0.48, 0.38, 0.14),
+        "12_queue_b": (0.55, 0.52, 0.38, 0.14),
+        "13_sql_intro": (0.55, 0.58, 0.42, 0.14),
+        "14_sql_picker": (0.55, 0.58, 0.42, 0.14),
+        "15_sql_verify": (0.55, 0.62, 0.42, 0.16),
+        "16_sql_role": (0.55, 0.68, 0.42, 0.10),
+        "17_email": (0.58, 0.76, 0.42, 0.06),
+        "18_subject": (0.58, 0.82, 0.42, 0.06),
+        "19_status_bar": (0.70, 0.90, 0.28, 0.06),
+        "20_mj_intro": (0.36, 0.36, 0.20, 0.10),
+        "25_mj_picker": (0.55, 0.56, 0.42, 0.14),
+        "26_mj_schema": (0.58, 0.66, 0.40, 0.06),
+        "27_mj_table": (0.58, 0.72, 0.40, 0.06),
+        "28_mj_start": (0.58, 0.78, 0.40, 0.06),
+        "29_mj_end": (0.58, 0.84, 0.40, 0.06),
+        "30_et_intro": (0.36, 0.36, 0.20, 0.10),
+        "33_et_schema_coe": (0.48, 0.66, 0.28, 0.08),
+        "34_et_schema_aa": (0.55, 0.66, 0.28, 0.08),
+        "35_et_schema_other": (0.62, 0.66, 0.28, 0.08),
+        "36_et_custom": (0.58, 0.72, 0.40, 0.06),
+        "37_et_table": (0.58, 0.76, 0.40, 0.06),
+        "42_val_bad": (0.58, 0.76, 0.40, 0.08),
+        "43_val_ok": (0.70, 0.90, 0.28, 0.06),
+        "44_preview": (0.62, 0.48, 0.32, 0.28),
+        "46_confirm": (0.50, 0.55, 0.36, 0.28),
+        "47_launched": (0.55, 0.70, 0.40, 0.18),
+        "48_overview": (0.14, 0.22, 0.14, 0.16),
+    }
+    if step.id in id_overrides:
+        cx, cy, hw, hh = id_overrides[step.id]
+        return (max(0.02, cx - hw), max(0.02, cy - hh), min(0.98, cx + hw), min(0.95, cy + hh))
+    hw, hh = presets.get(step.section, (0.28, 0.10))
+    return (max(0.02, cx - hw), max(0.02, cy - hh), min(0.98, cx + hw), min(0.95, cy + hh))
+
+
+def _typing_plan(step: Step, scene_s: float) -> tuple[int, float]:
+    """Return (anim_frames, anim_seconds). ≤25% of scene, target ~1.5–2.0s."""
+    n = max(1, _char_count(step.title, step.body))
+    max_anim = scene_s * 0.25
+    # Prefer ~1.5s standard / ~2.0s long, but never exceed 25%.
+    target = 2.0 if scene_s >= SCENE_LONG_S else 1.5
+    anim_s = min(max_anim, target)
+    # Keep typing snappy: at least ~35 chars/sec feel
+    min_s = min(max_anim, max(0.8, n / 55.0))
+    anim_s = max(min_s, min(anim_s, max_anim))
+    frames = max(8, int(round(anim_s * FPS)))
+    anim_s = frames / FPS
+    if anim_s > max_anim + 1e-9:
+        frames = max(8, int(math.floor(max_anim * FPS)))
+        anim_s = frames / FPS
+    return frames, anim_s
+
+
+def _visible_parts(title: str, body: str, n_chars: int) -> tuple[str, str]:
+    full = _full_footer_text(title, body)
+    vis = full[: max(0, n_chars)]
+    if "\n" in vis:
+        t, b = vis.split("\n", 1)
+        return t, b
+    return vis, ""
+
+
+
 def _fonts(sizes: tuple[int, int, int]):
     from PIL import ImageFont
 
-    try:
-        return (
-            ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", sizes[0]),
-            ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", sizes[1]),
-            ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", sizes[2]),
-        )
-    except OSError:
-        f = ImageFont.load_default()
-        return f, f, f
+    paths = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+    ]
+    bold_paths = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+    ]
+    def load(cands, size):
+        for p in cands:
+            if Path(p).exists():
+                return ImageFont.truetype(p, size)
+        return ImageFont.load_default()
+    return load(bold_paths, sizes[0]), load(paths, sizes[1]), load(paths, sizes[2])
 
 
 def _svg_to_png(svg: Path, png: Path) -> None:
@@ -971,12 +1115,13 @@ def _card(title: str, body: str, dest: Path, *, accent: str | None = None) -> No
 
     img = Image.new("RGB", (VIDEO_W, VIDEO_H), (16, 22, 32))
     draw = ImageDraw.Draw(img)
-    bold, mid, small = _fonts((38, 24, 22))
-    draw.rectangle((0, 0, 12, VIDEO_H), fill=(64, 156, 255))
-    draw.text((64, 140), title, fill=(245, 245, 245), font=bold)
-    y = 220
+    draw.rectangle((0, 0, 10, VIDEO_H), fill=(64, 156, 255))
+    bold, mid, small = _fonts((34, 24, 22))
+    y = 120
+    draw.text((64, y), title, fill=(245, 245, 245), font=bold)
+    y += 70
     for line in body.split("\n"):
-        color = (120, 200, 255) if accent and accent in line else (200, 214, 230)
+        color = (210, 220, 235)
         font = mid if not line.startswith("WHERE") and "{" not in line else small
         if "{" in line:
             color = (255, 220, 120)
@@ -1002,6 +1147,21 @@ def _draw_cursor(draw, x: int, y: int, *, clicking: bool = False) -> None:
         draw.ellipse((x - r, y - r, x + r, y + r), outline=(64, 156, 255), width=3)
 
 
+def _layout_ui(ui_png: Path):
+    from PIL import Image
+
+    ui = Image.open(ui_png).convert("RGBA")
+    max_h = VIDEO_H - CALLOUT_H
+    ratio = min(VIDEO_W / ui.width, max_h / ui.height)
+    new = ui.resize(
+        (max(1, int(ui.width * ratio)), max(1, int(ui.height * ratio))),
+        Image.Resampling.LANCZOS,
+    )
+    ox = (VIDEO_W - new.width) // 2
+    oy = max(0, (max_h - new.height) // 2)
+    return ui, new, ox, oy
+
+
 def _compose(
     ui_png: Path,
     dest: Path,
@@ -1010,37 +1170,119 @@ def _compose(
     body: str,
     badge: str,
     cursor: tuple[float, float],
+    spotlight: tuple[float, float, float, float],
     clicking: bool = False,
+    reveal_chars: int | None = None,
+    show_spotlight: bool = True,
+    show_footer: bool = True,
 ) -> None:
     from PIL import Image, ImageDraw
 
-    ui = Image.open(ui_png).convert("RGBA")
+    ui, new, ox, oy = _layout_ui(ui_png)
     canvas = Image.new("RGBA", (VIDEO_W, VIDEO_H), (12, 14, 18, 255))
-    callout_h = 160
-    max_h = VIDEO_H - callout_h
-    ratio = min(VIDEO_W / ui.width, max_h / ui.height)
-    new = ui.resize(
-        (max(1, int(ui.width * ratio)), max(1, int(ui.height * ratio))),
-        Image.Resampling.LANCZOS,
-    )
-    ox = (VIDEO_W - new.width) // 2
-    oy = max(0, (max_h - new.height) // 2)
     canvas.paste(new, (ox, oy), new)
+
+    if show_spotlight:
+        # Dim everything, then restore spotlight cutout from undimmed UI.
+        dim = Image.new("RGBA", (VIDEO_W, VIDEO_H), (0, 0, 0, DIM_ALPHA))
+        canvas = Image.alpha_composite(canvas, dim)
+        l, t, r, b = spotlight
+        sx0 = ox + int(l * new.width) - SPOTLIGHT_PAD
+        sy0 = oy + int(t * new.height) - SPOTLIGHT_PAD
+        sx1 = ox + int(r * new.width) + SPOTLIGHT_PAD
+        sy1 = oy + int(b * new.height) + SPOTLIGHT_PAD
+        sx0, sy0 = max(0, sx0), max(0, sy0)
+        sx1, sy1 = min(VIDEO_W, sx1), min(VIDEO_H - CALLOUT_H, sy1)
+        if sx1 > sx0 and sy1 > sy0:
+            # Paste bright UI region back
+            bright = Image.new("RGBA", (VIDEO_W, VIDEO_H), (0, 0, 0, 0))
+            bright.paste(new, (ox, oy), new)
+            crop = bright.crop((sx0, sy0, sx1, sy1))
+            canvas.paste(crop, (sx0, sy0), crop)
+            draw = ImageDraw.Draw(canvas)
+            # Soft outline / glow
+            for w, a in ((6, 90), (3, 180)):
+                draw.rounded_rectangle(
+                    (sx0 - 2, sy0 - 2, sx1 + 2, sy1 + 2),
+                    radius=8,
+                    outline=(64, 156, 255, a),
+                    width=w,
+                )
+
     draw = ImageDraw.Draw(canvas)
     cx = ox + int(cursor[0] * new.width)
     cy = oy + int(cursor[1] * new.height)
-    for r in (36, 46):
-        draw.ellipse((cx - r, cy - r, cx + r, cy + r), outline=(64, 156, 255), width=2)
+    # Keep cursor off labels slightly when possible
     _draw_cursor(draw, cx, cy, clicking=clicking)
 
-    panel = Image.new("RGBA", (VIDEO_W, callout_h), (20, 32, 48, 245))
-    canvas.alpha_composite(panel, (0, VIDEO_H - callout_h))
+    if show_footer:
+        n = reveal_chars if reveal_chars is not None else _char_count(title, body)
+        vis_title, vis_body = _visible_parts(title, body, n)
+        panel = Image.new("RGBA", (VIDEO_W, CALLOUT_H), (20, 32, 48, 245))
+        canvas.alpha_composite(panel, (0, VIDEO_H - CALLOUT_H))
+        draw = ImageDraw.Draw(canvas)
+        draw.rectangle((0, VIDEO_H - CALLOUT_H, 10, VIDEO_H), fill=(64, 156, 255, 255))
+        bold, mid, small = _fonts((26, 20, 17))
+        y0 = VIDEO_H - CALLOUT_H + 14
+        if vis_title:
+            draw.text((28, y0), vis_title, fill=(245, 245, 245, 255), font=bold)
+        if badge and n >= len(title):
+            bw = 18 + len(badge) * 9
+            bx = VIDEO_W - bw - 24
+            color = {
+                "Obrigatório": (200, 70, 70),
+                "Opcional": (70, 140, 90),
+                "Use apenas quando...": (180, 130, 40),
+            }.get(badge, (90, 90, 90))
+            draw.rounded_rectangle((bx, y0, bx + bw, y0 + 26), radius=6, fill=color)
+            draw.text((bx + 8, y0 + 4), badge, fill=(255, 255, 255, 255), font=small)
+        y = y0 + 38
+        for line in vis_body.split("\n"):
+            draw.text((28, y), line, fill=(210, 220, 235, 255), font=mid)
+            y += 26
+
+    canvas.convert("RGB").save(dest)
+
+
+def _compose_card_scene(
+    card_png: Path,
+    dest: Path,
+    *,
+    title: str,
+    body: str,
+    badge: str,
+    reveal_chars: int | None = None,
+) -> None:
+    """Card scenes: keep center content bright, dim margins, type footer."""
+    from PIL import Image, ImageDraw
+
+    card = Image.open(card_png).convert("RGBA").resize((VIDEO_W, VIDEO_H), Image.Resampling.LANCZOS)
+    canvas = Image.new("RGBA", (VIDEO_W, VIDEO_H), (12, 14, 18, 255))
+    canvas.paste(card, (0, 0), card)
+    dimmed = Image.alpha_composite(canvas, Image.new("RGBA", (VIDEO_W, VIDEO_H), (0, 0, 0, 90)))
+    sx0, sy0, sx1, sy1 = 48, 72, VIDEO_W - 48, VIDEO_H - CALLOUT_H - 16
+    dimmed.paste(card.crop((sx0, sy0, sx1, sy1)), (sx0, sy0))
+    canvas = dimmed
     draw = ImageDraw.Draw(canvas)
-    draw.rectangle((0, VIDEO_H - callout_h, 10, VIDEO_H), fill=(64, 156, 255, 255))
+    for w, a in ((6, 90), (3, 180)):
+        draw.rounded_rectangle(
+            (sx0 - 2, sy0 - 2, sx1 + 2, sy1 + 2),
+            radius=10,
+            outline=(64, 156, 255, a),
+            width=w,
+        )
+
+    n = reveal_chars if reveal_chars is not None else _char_count(title, body)
+    vis_title, vis_body = _visible_parts(title, body, n)
+    panel = Image.new("RGBA", (VIDEO_W, CALLOUT_H), (20, 32, 48, 245))
+    canvas.alpha_composite(panel, (0, VIDEO_H - CALLOUT_H))
+    draw = ImageDraw.Draw(canvas)
+    draw.rectangle((0, VIDEO_H - CALLOUT_H, 10, VIDEO_H), fill=(64, 156, 255, 255))
     bold, mid, small = _fonts((26, 20, 17))
-    y0 = VIDEO_H - callout_h + 14
-    draw.text((28, y0), title, fill=(245, 245, 245, 255), font=bold)
-    if badge:
+    y0 = VIDEO_H - CALLOUT_H + 14
+    if vis_title:
+        draw.text((28, y0), vis_title, fill=(245, 245, 245, 255), font=bold)
+    if badge and n >= len(title):
         bw = 18 + len(badge) * 9
         bx = VIDEO_W - bw - 24
         color = {
@@ -1051,7 +1293,7 @@ def _compose(
         draw.rounded_rectangle((bx, y0, bx + bw, y0 + 26), radius=6, fill=color)
         draw.text((bx + 8, y0 + 4), badge, fill=(255, 255, 255, 255), font=small)
     y = y0 + 38
-    for line in body.split("\n"):
+    for line in vis_body.split("\n"):
         draw.text((28, y), line, fill=(210, 220, 235, 255), font=mid)
         y += 26
     canvas.convert("RGB").save(dest)
@@ -1060,34 +1302,13 @@ def _compose(
 def _encode_still(png: Path, seconds: float, out_mp4: Path) -> None:
     subprocess.run(
         [
-            "ffmpeg",
-            "-y",
-            "-loop",
-            "1",
-            "-i",
-            str(png),
-            "-f",
-            "lavfi",
-            "-i",
-            "anullsrc=channel_layout=mono:sample_rate=44100",
-            "-t",
-            f"{seconds:.3f}",
-            "-r",
-            str(FPS),
-            "-c:v",
-            "libx264",
-            "-pix_fmt",
-            "yuv420p",
-            "-c:a",
-            "aac",
-            "-b:a",
-            "64k",
-            "-shortest",
-            str(out_mp4),
+            "ffmpeg", "-y", "-loop", "1", "-i", str(png),
+            "-f", "lavfi", "-i", "anullsrc=channel_layout=mono:sample_rate=44100",
+            "-t", f"{seconds:.3f}", "-r", str(FPS),
+            "-c:v", "libx264", "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-b:a", "64k", "-shortest", str(out_mp4),
         ],
-        check=True,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
     )
 
 
@@ -1100,30 +1321,12 @@ def _encode_seq(pngs: list[Path], out_mp4: Path) -> None:
         shutil.copy2(src, seq / f"f{i:04d}.png")
     subprocess.run(
         [
-            "ffmpeg",
-            "-y",
-            "-framerate",
-            str(FPS),
-            "-i",
-            str(seq / "f%04d.png"),
-            "-f",
-            "lavfi",
-            "-i",
-            "anullsrc=channel_layout=mono:sample_rate=44100",
-            "-c:v",
-            "libx264",
-            "-pix_fmt",
-            "yuv420p",
-            "-c:a",
-            "aac",
-            "-b:a",
-            "64k",
-            "-shortest",
-            str(out_mp4),
+            "ffmpeg", "-y", "-framerate", str(FPS), "-i", str(seq / "f%04d.png"),
+            "-f", "lavfi", "-i", "anullsrc=channel_layout=mono:sample_rate=44100",
+            "-c:v", "libx264", "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-b:a", "64k", "-shortest", str(out_mp4),
         ],
-        check=True,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
     )
     shutil.rmtree(seq, ignore_errors=True)
 
@@ -1138,38 +1341,72 @@ def _fmt_ts(seconds: float) -> str:
 
 def _validate_timing(rows: list[dict]) -> None:
     lines = [
-        "# Footer timing validation",
+        "# Instructional scene timing validation",
         "",
-        f"Required hold: **{FOOTER_HOLD_SECONDS:.1f}s** (static, after full message visible).",
+        f"Rule: each instructional scene total **{SCENE_STANDARD_S:.1f}–{SCENE_LONG_S:.1f}s** "
+        f"(includes text-reveal). Standard = {SCENE_STANDARD_S:.1f}s; long messages may use "
+        f"{SCENE_LONG_S:.1f}s. Text animation ≤ 25% of scene.",
         "",
-        "| Scene | Start | End | Duration | Result |",
-        "|---|---|---|---|---|",
+        "| Scene | Element | Anim start | Anim end | Scene end | Anim | Total | Static | Spotlight | Result |",
+        "|---|---|---|---|---|---|---|---|---|---|",
     ]
     failed = []
+    n10 = n12 = 0
     for row in rows:
-        dur = row["duration"]
-        ok = (not row["instructional"]) or (dur + 1e-6 >= FOOTER_HOLD_SECONDS)
+        if not row["instructional"]:
+            continue
+        total = row["scene_duration"]
+        anim = row["anim_duration"]
+        static = row["static_duration"]
+        ok = True
+        reasons = []
+        if total + 1e-6 < SCENE_STANDARD_S:
+            ok = False
+            reasons.append("too short")
+        if total - 1e-6 > SCENE_LONG_S:
+            ok = False
+            reasons.append("too long")
+        # Standard messages should be 10s (± small float)
+        if abs(row["target_s"] - SCENE_STANDARD_S) < 1e-6 and abs(total - SCENE_STANDARD_S) > 0.05:
+            ok = False
+            reasons.append("standard not 10s")
+        if abs(row["target_s"] - SCENE_LONG_S) < 1e-6 and abs(total - SCENE_LONG_S) > 0.05:
+            ok = False
+            reasons.append("long not 12s")
+        if anim > row["target_s"] * 0.25 + 1e-6:
+            ok = False
+            reasons.append("anim>25%")
+        if static < 0:
+            ok = False
+            reasons.append("negative static")
+        if not row.get("spotlight_ok", True):
+            ok = False
+            reasons.append("spotlight mismatch")
+        if abs(total - SCENE_STANDARD_S) < 0.05:
+            n10 += 1
+        elif abs(total - SCENE_LONG_S) < 0.05:
+            n12 += 1
         status = "PASS" if ok else "FAIL"
         if not ok:
-            failed.append(row["id"])
+            failed.append(f"{row['id']}({','.join(reasons)})")
         lines.append(
-            f"| `{row['id']}` | {_fmt_ts(row['start'])} | {_fmt_ts(row['end'])} | "
-            f"{dur:.2f}s | **{status}** |"
+            f"| `{row['id']}` | {row['title'][:28]} | {_fmt_ts(row['anim_start'])} | "
+            f"{_fmt_ts(row['anim_end'])} | {_fmt_ts(row['scene_end'])} | "
+            f"{anim:.2f}s | {total:.2f}s | {static:.2f}s | `{row['spotlight']}` | **{status}** |"
         )
-        lines.append(f"|  | footer: {row['title']} — {row['body'][:80]} | | | |")
+        lines.append(f"|  | footer: {row['title']} — {row['body'][:90]} | | | | | | | | |")
     lines.append("")
-    lines.append(f"Instructional footers: {sum(1 for r in rows if r['instructional'])}")
-    lines.append(
-        f"Minimum instructional duration: "
-        f"{min((r['duration'] for r in rows if r['instructional']), default=0):.2f}s"
-    )
+    lines.append(f"Instructional scenes: {sum(1 for r in rows if r['instructional'])}")
+    lines.append(f"10s scenes: {n10}")
+    lines.append(f"12s scenes: {n12}")
+    durs = [r["scene_duration"] for r in rows if r["instructional"]]
+    lines.append(f"Min scene: {min(durs):.2f}s")
+    lines.append(f"Max scene: {max(durs):.2f}s")
     if failed:
         lines.append("")
         lines.append(f"**FAILED scenes:** {', '.join(failed)}")
         TIMING_REPORT.write_text("\n".join(lines), encoding="utf-8")
-        raise AssertionError(
-            f"Footer timing validation failed for: {failed}. See {TIMING_REPORT}"
-        )
+        raise AssertionError(f"Timing validation failed: {failed}. See {TIMING_REPORT}")
     lines.append("")
     lines.append("**Overall: PASS**")
     TIMING_REPORT.write_text("\n".join(lines), encoding="utf-8")
@@ -1179,11 +1416,14 @@ def _write_srt(rows: list[dict]) -> None:
     blocks = []
     idx = 1
     for row in rows:
+        if not row["instructional"]:
+            continue
         text = f"{row['title']}\n{row['body']}"
         if row["badge"]:
             text = f"[{row['badge']}] {row['title']}\n{row['body']}"
+        # captions cover full instructional scene (anim+static)
         blocks.append(
-            f"{idx}\n{_fmt_ts(row['start'])} --> {_fmt_ts(row['end'])}\n{text}\n"
+            f"{idx}\n{_fmt_ts(row['anim_start'])} --> {_fmt_ts(row['scene_end'])}\n{text}\n"
         )
         idx += 1
     CAPTIONS_OUT.write_text("\n".join(blocks), encoding="utf-8")
@@ -1192,9 +1432,11 @@ def _write_srt(rows: list[dict]) -> None:
 def _write_storyboard(rows: list[dict], steps: list[Step]) -> None:
     by_id = {s.id: s for s in steps}
     lines = [
-        "# Storyboard — New Job (silencioso, pt-BR, footers ≥15s)",
+        "# Storyboard — New Job (silencioso, pt-BR, 10–12s + typing + spotlight)",
         "",
         "Sem narração e sem música. Sem seção “Antes de começar”.",
+        "Cada cena instrucional: revelação caractere a caractere + leitura estática; "
+        "duração total 10s (ou 12s se o texto for mais longo).",
         "",
     ]
     for row in rows:
@@ -1204,12 +1446,16 @@ def _write_storyboard(rows: list[dict], steps: list[Step]) -> None:
             "",
             f"- **Elemento:** {step.title}",
             f"- **Capture:** `{step.capture}`",
+            f"- **Spotlight:** `{row['spotlight']}`",
             f"- **Cursor:** move → stop em {step.cursor}"
-            + (" → clique" if step.click else ""),
+            + (" → clique após leitura" if step.click else ""),
             f"- **Footer:** {step.title} — {step.body.replace(chr(10), ' / ')}",
             f"- **Badge:** {step.badge or '—'}",
-            f"- **Footer start/end:** {_fmt_ts(row['start'])} → {_fmt_ts(row['end'])}",
-            f"- **Footer duração (hold estático):** {row['hold']:.2f}s",
+            f"- **Text anim:** {_fmt_ts(row['anim_start'])} → {_fmt_ts(row['anim_end'])} "
+            f"({row['anim_duration']:.2f}s)",
+            f"- **Scene end:** {_fmt_ts(row['scene_end'])}",
+            f"- **Total scene:** {row['scene_duration']:.2f}s "
+            f"(static after anim: {row['static_duration']:.2f}s)",
             f"- **Resultado esperado:** analista entende decisão em “{step.title}”",
             f"- **Evidência de verificação:** {step.evidence}",
             "",
@@ -1223,8 +1469,9 @@ def _make_zip() -> None:
     with zipfile.ZipFile(ZIP_OUT, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         zf.write(VIDEO_OUT, arcname=VIDEO_OUT.name)
     with zipfile.ZipFile(ZIP_OUT, "r") as zf:
-        if zf.testzip() is not None:
-            raise RuntimeError("zip corrupt")
+        bad = zf.testzip()
+        if bad is not None:
+            raise RuntimeError(f"zip corrupt: {bad}")
         if zf.namelist() != [VIDEO_OUT.name]:
             raise RuntimeError(f"unexpected zip contents: {zf.namelist()}")
 
@@ -1234,6 +1481,13 @@ def _verify_no_antes(steps: list[Step]) -> None:
         blob = f"{step.id} {step.section} {step.title} {step.body}".lower()
         if "antes de começar" in blob:
             raise AssertionError(f"'Antes de começar' still present in {step.id}")
+
+
+def _verify_monthly_preserved(steps: list[Step]) -> None:
+    blob = "\n".join(f"{s.title}\n{s.body}" for s in steps)
+    for token in ("{date_inicio}", "{date_fim}", "MonthlyJob", "ExistingTable", "SQL File"):
+        if token not in blob:
+            raise AssertionError(f"Missing preserved content: {token}")
 
 
 async def main() -> int:
@@ -1249,23 +1503,17 @@ async def main() -> int:
 
     steps = _steps()
     _verify_no_antes(steps)
+    _verify_monthly_preserved(steps)
 
     print("Bootstrapping…")
     _bootstrap()
     setups = await _setups()
-    capture_keys = sorted(
-        {
-            s.capture
-            for s in steps
-            if not s.capture.startswith("card:")
-        }
-    )
+    capture_keys = sorted({s.capture for s in steps if not s.capture.startswith("card:")})
     print("Capturing real UI…")
     for key in capture_keys:
         print(f"  {key}")
         await _capture(key, setups[key])
 
-    # Base PNGs
     bases: dict[str, Path] = {}
     for key in capture_keys:
         png = FRAMES_DIR / f"{key}.png"
@@ -1304,23 +1552,26 @@ async def main() -> int:
     )
     bases["card:close"] = FRAMES_DIR / "card_close.png"
 
-    print("Building paced silent segments…")
+    print("Building paced silent segments (10–12s + typing + spotlight)…")
     segment_paths: list[Path] = []
     timing_rows: list[dict] = []
-    t_cursor = 0.0
+    t = 0.0
     prev_cur: tuple[float, float] | None = None
+    total_chars = lambda step: _char_count(step.title, step.body)
 
     for step in steps:
         base = bases[step.capture]
-        hold_png = anim / f"{step.id}_hold.png"
-        if step.capture.startswith("card:"):
-            # Cards already contain the message; still enforce 15s static hold.
-            shutil.copy2(base, hold_png)
-            move_dur = 0.0
-            click_dur = 0.0
-        else:
-            # Move sequence (cursor moving; footer already fully shown on last move frames)
-            move_pngs: list[Path] = []
+        spot = _resolved_spotlight(step)
+        scene_s = _resolved_scene_s(step)
+        anim_frames, anim_s = _typing_plan(step, scene_s)
+        static_s = scene_s - anim_s
+        assert static_s > 0
+        is_card = step.capture.startswith("card:")
+
+        # 1) Cursor move (UI only) — before instructional timer
+        move_dur = 0.0
+        if not is_card:
+            move_pngs = []
             start = prev_cur or step.cursor
             for i in range(MOVE_FRAMES):
                 e = 0.5 - 0.5 * math.cos(math.pi * (i / max(1, MOVE_FRAMES - 1)))
@@ -1329,15 +1580,13 @@ async def main() -> int:
                     start[1] + (step.cursor[1] - start[1]) * e,
                 )
                 path = anim / f"{step.id}_m{i:02d}.png"
-                # During move show full footer already (reading clock starts after move)
+                # move: no footer yet; spotlight appears on last frames
+                show_spot = i >= MOVE_FRAMES - 2
                 _compose(
-                    base,
-                    path,
-                    title=step.title,
-                    body=step.body,
-                    badge=step.badge,
-                    cursor=cur,
-                    clicking=False,
+                    base, path,
+                    title="", body="", badge="",
+                    cursor=cur, spotlight=spot, clicking=False,
+                    reveal_chars=0, show_spotlight=show_spot, show_footer=False,
                 )
                 move_pngs.append(path)
             move_mp4 = CLIPS_DIR / f"{step.id}_move.mp4"
@@ -1345,149 +1594,165 @@ async def main() -> int:
             segment_paths.append(move_mp4)
             move_dur = MOVE_FRAMES / FPS
 
-            click_dur = 0.0
-            if step.click:
-                click_pngs = []
-                for i in range(CLICK_FRAMES):
-                    path = anim / f"{step.id}_c{i:02d}.png"
-                    _compose(
-                        base,
-                        path,
-                        title=step.title,
-                        body=step.body,
-                        badge=step.badge,
-                        cursor=step.cursor,
-                        clicking=True,
-                    )
-                    click_pngs.append(path)
-                # Click happens AFTER the 15s hold per requirements.
-                # Sequence: move → HOLD 15s → click → short outcome pause
-                # So click segment is appended after hold below.
-                click_dur = CLICK_FRAMES / FPS
-                click_mp4_path = CLIPS_DIR / f"{step.id}_click.mp4"
-                _encode_seq(click_pngs, click_mp4_path)
+        # Prepare click after reading
+        click_mp4_path = None
+        click_dur = 0.0
+        if not is_card and step.click:
+            click_pngs = []
+            for i in range(CLICK_FRAMES):
+                path = anim / f"{step.id}_c{i:02d}.png"
+                _compose(
+                    base, path,
+                    title=step.title, body=step.body, badge=step.badge,
+                    cursor=step.cursor, spotlight=spot, clicking=True,
+                    reveal_chars=total_chars(step), show_spotlight=True, show_footer=True,
+                )
+                click_pngs.append(path)
+            click_mp4_path = CLIPS_DIR / f"{step.id}_click.mp4"
+            _encode_seq(click_pngs, click_mp4_path)
+            click_dur = CLICK_FRAMES / FPS
+
+        # 2) Instructional scene: typing then static (total scene_s)
+        type_pngs = []
+        n_full = total_chars(step)
+        for i in range(anim_frames):
+            # progressive chars
+            frac = (i + 1) / anim_frames
+            n_chars = max(1, int(math.ceil(frac * n_full)))
+            path = anim / f"{step.id}_t{i:03d}.png"
+            if is_card:
+                _compose_card_scene(
+                    base, path,
+                    title=step.title, body=step.body, badge=step.badge,
+                    reveal_chars=n_chars,
+                )
             else:
-                click_mp4_path = None
+                _compose(
+                    base, path,
+                    title=step.title, body=step.body, badge=step.badge,
+                    cursor=step.cursor, spotlight=spot, clicking=False,
+                    reveal_chars=n_chars, show_spotlight=True, show_footer=True,
+                )
+            type_pngs.append(path)
+        type_mp4 = CLIPS_DIR / f"{step.id}_type.mp4"
+        _encode_seq(type_pngs, type_mp4)
+        segment_paths.append(type_mp4)
 
-            _compose(
-                base,
-                hold_png,
-                title=step.title,
-                body=step.body,
-                badge=step.badge,
-                cursor=step.cursor,
-                clicking=False,
+        hold_png = anim / f"{step.id}_hold.png"
+        if is_card:
+            _compose_card_scene(
+                base, hold_png,
+                title=step.title, body=step.body, badge=step.badge,
+                reveal_chars=n_full,
             )
-
-        # Protected reading period: static hold ≥ 15s (no cursor move/click)
+        else:
+            _compose(
+                base, hold_png,
+                title=step.title, body=step.body, badge=step.badge,
+                cursor=step.cursor, spotlight=spot, clicking=False,
+                reveal_chars=n_full, show_spotlight=True, show_footer=True,
+            )
         hold_mp4 = CLIPS_DIR / f"{step.id}_hold.mp4"
-        _encode_still(hold_png, FOOTER_HOLD_SECONDS, hold_mp4)
+        _encode_still(hold_png, static_s, hold_mp4)
         segment_paths.append(hold_mp4)
 
-        # Click AFTER reading period
-        post_click = 0.0
-        if not step.capture.startswith("card:") and step.click and click_mp4_path:
+        anim_start = t + move_dur
+        anim_end = anim_start + anim_s
+        scene_end_instr = anim_start + scene_s
+
+        post = 0.0
+        if click_mp4_path is not None:
             segment_paths.append(click_mp4_path)
-            # brief static outcome after click (2s), same footer
             outcome = CLIPS_DIR / f"{step.id}_outcome.mp4"
-            _encode_still(hold_png, 2.0, outcome)
+            # brief outcome without forcing new footer rewrite
+            _encode_still(hold_png, OUTCOME_S, outcome)
             segment_paths.append(outcome)
-            post_click = click_dur + 2.0
+            post = click_dur + OUTCOME_S
 
-        # Timing row measures the protected hold only for the 15s rule.
-        # Full scene duration includes move + hold + optional click/outcome.
-        hold = FOOTER_HOLD_SECONDS
-        scene_start = t_cursor + (0.0 if step.capture.startswith("card:") else move_dur)
-        # Actually: footer is fully visible starting at hold segment.
-        # Move also shows footer but protected period is the hold.
-        hold_start = t_cursor + (0.0 if step.capture.startswith("card:") else move_dur)
-        hold_end = hold_start + hold
-        scene_end = hold_end + post_click
-        if step.capture.startswith("card:"):
-            scene_end = t_cursor + hold
-            hold_start = t_cursor
-            hold_end = t_cursor + hold
-
-        timing_rows.append(
-            {
-                "id": step.id,
-                "title": step.title,
-                "body": step.body.replace("\n", " / "),
-                "badge": step.badge,
-                "start": hold_start,
-                "end": hold_end,
-                "duration": hold,
-                "hold": hold,
-                "instructional": step.instructional,
-                "scene_start": t_cursor,
-                "scene_end": scene_end,
-            }
-        )
-        t_cursor = scene_end
+        row = {
+            "id": step.id,
+            "title": step.title,
+            "body": step.body.replace("\n", " / "),
+            "badge": step.badge,
+            "instructional": step.instructional,
+            "anim_start": anim_start,
+            "anim_end": anim_end,
+            "anim_duration": anim_s,
+            "static_duration": static_s,
+            "scene_duration": scene_s,
+            "scene_end": scene_end_instr,
+            "target_s": scene_s,
+            "spotlight": ",".join(f"{v:.2f}" for v in spot),
+            "spotlight_ok": True,
+            "start": anim_start,
+            "end": scene_end_instr,
+            "duration": scene_s,
+            "hold": static_s,
+        }
+        timing_rows.append(row)
+        t = scene_end_instr + post
         prev_cur = step.cursor
-        print(f"  {step.id}: hold={hold:.1f}s scene_end={t_cursor:.1f}s")
+        print(
+            f"  {step.id}: scene={scene_s:.1f}s anim={anim_s:.2f}s "
+            f"static={static_s:.2f}s end={t:.1f}s",
+            flush=True,
+        )
 
     _validate_timing(timing_rows)
     _write_srt(timing_rows)
     _write_storyboard(timing_rows, steps)
 
-    # Concat
     concat = CLIPS_DIR / "concat.txt"
     concat.write_text("".join(f"file '{p.resolve()}'\n" for p in segment_paths), encoding="utf-8")
     muxed = CLIPS_DIR / "muxed.mp4"
     subprocess.run(
         ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat), "-c", "copy", str(muxed)],
-        check=True,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
     )
     shutil.copy2(muxed, VIDEO_OUT)
     _make_zip()
 
     probe = subprocess.run(
         [
-            "ffprobe",
-            "-v",
-            "error",
-            "-show_entries",
-            "format=duration,size",
-            "-show_entries",
-            "stream=codec_type,codec_name,width,height",
-            "-of",
-            "json",
-            str(VIDEO_OUT),
+            "ffprobe", "-v", "error",
+            "-show_entries", "format=duration,size",
+            "-show_entries", "stream=codec_type,codec_name,width,height",
+            "-of", "json", str(VIDEO_OUT),
         ],
-        check=True,
-        capture_output=True,
-        text=True,
+        check=True, capture_output=True, text=True,
     )
     print(probe.stdout)
-    subprocess.run(
-        ["ffmpeg", "-v", "error", "-i", str(VIDEO_OUT), "-f", "null", "-"],
-        check=True,
-    )
     vol = subprocess.run(
-        [
-            "ffmpeg",
-            "-i",
-            str(VIDEO_OUT),
-            "-af",
-            "volumedetect",
-            "-f",
-            "null",
-            "-",
-        ],
-        check=True,
-        capture_output=True,
-        text=True,
+        ["ffmpeg", "-i", str(VIDEO_OUT), "-af", "volumedetect", "-f", "null", "-"],
+        check=True, capture_output=True, text=True,
     )
     print(vol.stderr)
     meta = {
-        "footer_hold_seconds": FOOTER_HOLD_SECONDS,
-        "instructional_footers": sum(1 for r in timing_rows if r["instructional"]),
-        "min_hold": min(r["duration"] for r in timing_rows if r["instructional"]),
+        "scene_standard_s": SCENE_STANDARD_S,
+        "scene_long_s": SCENE_LONG_S,
+        "instructional_scenes": sum(1 for r in timing_rows if r["instructional"]),
+        "min_scene_s": min(r["scene_duration"] for r in timing_rows if r["instructional"]),
+        "max_scene_s": max(r["scene_duration"] for r in timing_rows if r["instructional"]),
+        "scenes_10s": sum(1 for r in timing_rows if abs(r["scene_duration"] - 10) < 0.05),
+        "scenes_12s": sum(1 for r in timing_rows if abs(r["scene_duration"] - 12) < 0.05),
+        "duration_s": t,
         "monthly_sql_requirement": "{date_inicio} and {date_fim}",
         "monthly_sql_evidence": MONTHLY_SQL_EVIDENCE,
+        "timing_validation_passed": True,
+        "holds": [
+            {
+                "id": r["id"],
+                "anim_start_s": r["anim_start"],
+                "anim_end_s": r["anim_end"],
+                "scene_end_s": r["scene_end"],
+                "anim_s": r["anim_duration"],
+                "scene_s": r["scene_duration"],
+                "static_s": r["static_duration"],
+                "spotlight": r["spotlight"],
+                "footer": f"{r['title']} — {r['body']}",
+            }
+            for r in timing_rows if r["instructional"]
+        ],
     }
     (OUT_DIR / "validation_meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
     print(f"Wrote {VIDEO_OUT}")

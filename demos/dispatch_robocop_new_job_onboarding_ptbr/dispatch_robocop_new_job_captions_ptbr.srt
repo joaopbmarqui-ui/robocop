@@ -281,89 +281,94 @@ MonthlyJob + Table + .sql com / {date_inicio} e {date_fim}.
 57
 00:07:59,167 --> 00:08:07,167
 Campos do MonthlyJob
-Também: Schema, Table Name, Start Date e End Date.
+Schema e Table Name entram no nome da tabela.
 
 58
 00:08:07,467 --> 00:08:15,467
-Combinação ExistingTable
-ExistingTable + Csv + Schema + Existing Table.
+Datas do MonthlyJob
+Start Date e End Date definem o intervalo mês a mês.
 
 59
 00:08:15,767 --> 00:08:23,767
-Sem SQL neste modo
-Não usa SQL File nem MonthlyJob ao mesmo tempo.
+Combinação ExistingTable
+ExistingTable + Csv + Schema + Existing Table.
 
 60
 00:08:24,067 --> 00:08:32,067
-Combinações indisponíveis
-MonthlyJob não aceita Csv ou Table+Csv.
+Sem SQL neste modo
+Não usa SQL File nem MonthlyJob ao mesmo tempo.
 
 61
 00:08:32,367 --> 00:08:40,367
-ExistingTable — limite
-ExistingTable não aceita Table ou Table+Csv.
+Combinações indisponíveis
+MonthlyJob não aceita Csv ou Table+Csv.
 
 62
 00:08:40,667 --> 00:08:48,667
-E-mail inválido
-Se o formato estiver errado, o status mostra o problema.
+ExistingTable — limite
+ExistingTable não aceita Table ou Table+Csv.
 
 63
 00:08:48,967 --> 00:08:56,967
-Formulário pronto
-Com os dados corrigidos, volta Ready to launch.
+E-mail inválido
+Se o formato estiver errado, o status mostra o problema.
 
 64
 00:08:57,267 --> 00:09:05,267
-Revise antes de enviar
-Confira origem, destino, arquivo e fila.
+Formulário pronto
+Com os dados corrigidos, volta Ready to launch.
 
 65
 00:09:05,567 --> 00:09:13,567
+Revise antes de enviar
+Confira origem, destino, arquivo e fila.
+
+66
+00:09:13,867 --> 00:09:21,867
 Preview SQL
 Mostra o conteúdo que será usado no job.
 
-66
-00:09:14,800 --> 00:09:22,800
+67
+00:09:23,100 --> 00:09:31,100
 O que conferir no Preview
 Confira a consulta e o destino antes do envio.
 
-67
-00:09:22,800 --> 00:09:30,800
+68
+00:09:31,100 --> 00:09:39,100
 Antes de iniciar, confirme
 Origem, destino, arquivo ou tabela, / e fila de execução.
 
-68
-00:09:30,800 --> 00:09:38,800
+69
+00:09:39,100 --> 00:09:47,100
 Também confira
 Opções adicionais e e-mail de notificação.
 
-69
-00:09:39,100 --> 00:09:47,100
+70
+00:09:47,400 --> 00:09:55,400
 Launch Job
 Inicia o job com as configurações revisadas.
 
-70
-00:09:48,333 --> 00:09:56,333
+71
+00:09:56,633 --> 00:10:04,633
 Confirme só se estiver correto
 Leia o resumo antes de confirmar o envio.
 
-71
-00:09:56,633 --> 00:10:04,633
+72
+00:10:04,933 --> 00:10:12,933
 Job enviado
 O job foi enviado pelo Dispatch. / Acompanhe na tela de monitoramento.
 
-72
-00:10:04,933 --> 00:10:12,933
+73
+00:10:13,233 --> 00:10:21,233
 Overview
 Após o envio, acompanhe o status no Overview.
 
-73
-00:10:13,867 --> 00:10:21,867
+74
+00:10:22,167 --> 00:10:30,167
 Resumo
 Na aba New Job você define, revisa e inicia o job.
 
-74
-00:10:21,867 --> 00:10:29,867
+75
+00:10:30,167 --> 00:10:38,167
 Depois do envio
 Acompanhe o resultado no Overview. / Revise os campos antes de Launch Job.

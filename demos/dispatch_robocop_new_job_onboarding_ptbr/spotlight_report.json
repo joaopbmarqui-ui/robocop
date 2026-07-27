@@ -1,0 +1,2609 @@
+[
+  {
+    "id": "01_open",
+    "topic": "Dispatch (Robocop)",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 3.2666666666666666,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  },
+  {
+    "id": "02_purpose_a",
+    "topic": "Para que serve New Job",
+    "targets": [
+      "radio-panel"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.1857,
+        0.99,
+        0.3143
+      ]
+    ],
+    "final_boxes": [
+      [
+        532,
+        130,
+        1534,
+        274
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 11.333333333333334,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "02_purpose_b",
+    "topic": "O que voc\u00ea decide aqui",
+    "targets": [
+      "source",
+      "destination"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.15,
+        0.2286,
+        0.555,
+        0.3
+      ],
+      [
+        0.575,
+        0.2286,
+        0.98,
+        0.3
+      ]
+    ],
+    "final_boxes": [
+      [
+        543,
+        165,
+        1042,
+        263
+      ],
+      [
+        1024,
+        165,
+        1523,
+        263
+      ]
+    ],
+    "margins": [
+      20,
+      20
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 19.6,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "03_matrix",
+    "topic": "Source \u00d7 Destination",
+    "targets": [
+      "matrix-collapsible"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.0571,
+        0.995,
+        0.1714
+      ]
+    ],
+    "final_boxes": [
+      [
+        526,
+        26,
+        1540,
+        158
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 28.3,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "04_detected",
+    "topic": "Detected source",
+    "targets": [
+      "info-detected"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.1714,
+        0.995,
+        0.1857
+      ]
+    ],
+    "final_boxes": [
+      [
+        532,
+        130,
+        1534,
+        158
+      ]
+    ],
+    "margins": [
+      14
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 37.46666666666667,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "05_source_intro",
+    "topic": "Source",
+    "targets": [
+      "source"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.15,
+        0.1571,
+        0.555,
+        0.2286
+      ]
+    ],
+    "final_boxes": [
+      [
+        543,
+        107,
+        1042,
+        205
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 45.53333333333333,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "06_source_sqlfile",
+    "topic": "Source \u2192 SqlFile",
+    "targets": [
+      "src-sqlfile"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.16,
+        0.1714,
+        0.545,
+        0.1857
+      ]
+    ],
+    "final_boxes": [
+      [
+        559,
+        130,
+        1026,
+        158
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 53.73333333333333,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "06b_source_sqlfile_effect",
+    "topic": "SqlFile \u2014 efeito",
+    "targets": [
+      "src-sqlfile"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.16,
+        0.1714,
+        0.545,
+        0.1857
+      ]
+    ],
+    "final_boxes": [
+      [
+        559,
+        130,
+        1026,
+        158
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 62.966666666666654,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "07_dest_intro",
+    "topic": "Destination",
+    "targets": [
+      "destination"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.575,
+        0.1571,
+        0.98,
+        0.2286
+      ]
+    ],
+    "final_boxes": [
+      [
+        1024,
+        107,
+        1523,
+        205
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 71.43333333333332,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "08_dest_table",
+    "topic": "Destination \u2192 Table",
+    "targets": [
+      "dst-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.585,
+        0.1714,
+        0.97,
+        0.1857
+      ]
+    ],
+    "final_boxes": [
+      [
+        1040,
+        130,
+        1508,
+        158
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 79.86666666666665,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "09_dest_csv",
+    "topic": "Destination \u2192 Csv",
+    "targets": [
+      "dst-csv"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.585,
+        0.1857,
+        0.97,
+        0.2
+      ]
+    ],
+    "final_boxes": [
+      [
+        1040,
+        142,
+        1508,
+        170
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 88.79999999999998,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "09b_dest_csv_when",
+    "topic": "Csv \u2014 quando usar",
+    "targets": [
+      "dst-csv"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.585,
+        0.1857,
+        0.97,
+        0.2
+      ]
+    ],
+    "final_boxes": [
+      [
+        1040,
+        142,
+        1508,
+        170
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 98.09999999999998,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "10_dest_tablecsv",
+    "topic": "Destination \u2192 Table+Csv",
+    "targets": [
+      "dst-table-csv"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.585,
+        0.2,
+        0.97,
+        0.2143
+      ]
+    ],
+    "final_boxes": [
+      [
+        1040,
+        154,
+        1508,
+        181
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 106.69999999999997,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "11_queue_a",
+    "topic": "Execution Queue",
+    "targets": [
+      "lbl-queue",
+      "queue"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.15,
+        0.2714,
+        0.98,
+        0.3714
+      ]
+    ],
+    "final_boxes": [
+      [
+        549,
+        205,
+        1517,
+        314
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 115.76666666666665,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "12_queue_b",
+    "topic": "Execution Queue \u2014 marcar",
+    "targets": [
+      "lbl-queue",
+      "queue"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.15,
+        0.2714,
+        0.98,
+        0.3714
+      ]
+    ],
+    "final_boxes": [
+      [
+        549,
+        205,
+        1517,
+        314
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 123.89999999999998,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "12b_queue_order",
+    "topic": "V\u00e1rias filas",
+    "targets": [
+      "queue-panel"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.2571,
+        0.99,
+        0.4143
+      ]
+    ],
+    "final_boxes": [
+      [
+        532,
+        188,
+        1534,
+        355
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 133.1,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "13_sql_intro",
+    "topic": "SQL File",
+    "targets": [
+      "lbl-sql-file",
+      "sql-file"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.5,
+        0.99,
+        0.5429
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        391,
+        1528,
+        453
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 141.4,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "13b_sql_when",
+    "topic": "SQL File \u2014 quando",
+    "targets": [
+      "lbl-sql-file",
+      "sql-file"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.5,
+        0.99,
+        0.5429
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        391,
+        1528,
+        453
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 149.70000000000002,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "14_sql_picker",
+    "topic": "Lista de arquivos SQL",
+    "targets": [
+      "sql-file-picker"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.4429,
+        0.99,
+        0.4857
+      ]
+    ],
+    "final_boxes": [
+      [
+        532,
+        343,
+        1534,
+        408
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 158.20000000000002,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "15_sql_verify",
+    "topic": "O que conferir",
+    "targets": [
+      "sql-file-picker"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.4429,
+        0.99,
+        0.4857
+      ]
+    ],
+    "final_boxes": [
+      [
+        532,
+        343,
+        1534,
+        408
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 167.23333333333338,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "15b_sql_path",
+    "topic": "Caminho do SQL File",
+    "targets": [
+      "lbl-sql-file",
+      "sql-file"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.5,
+        0.99,
+        0.5429
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        391,
+        1528,
+        453
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 175.56666666666672,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "16_sql_role",
+    "topic": "Papel do SQL File",
+    "targets": [
+      "lbl-sql-file",
+      "sql-file"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.5,
+        0.99,
+        0.5429
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        391,
+        1528,
+        453
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 183.8333333333334,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "16b_sql_role_dest",
+    "topic": "SQL + destino",
+    "targets": [
+      "source",
+      "destination"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.15,
+        0.1571,
+        0.555,
+        0.2286
+      ],
+      [
+        0.575,
+        0.1571,
+        0.98,
+        0.2286
+      ]
+    ],
+    "final_boxes": [
+      [
+        543,
+        107,
+        1042,
+        205
+      ],
+      [
+        1024,
+        107,
+        1523,
+        205
+      ]
+    ],
+    "margins": [
+      20,
+      20
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 192.1333333333334,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "17_email",
+    "topic": "Email (notifications)",
+    "targets": [
+      "lbl-email",
+      "email"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.5714,
+        0.99,
+        0.6143
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        448,
+        1528,
+        511
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 200.7000000000001,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "18_subject",
+    "topic": "Subject (email)",
+    "targets": [
+      "lbl-subject",
+      "subject"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.6286,
+        0.99,
+        0.6714
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        495,
+        1528,
+        557
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 209.96666666666678,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "19_status_bar",
+    "topic": "Status do formul\u00e1rio",
+    "targets": [
+      "validation-summary"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.9429,
+        0.85,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        526,
+        748,
+        1376,
+        806
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 218.90000000000012,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "19b_actions",
+    "topic": "Preview SQL e Launch",
+    "targets": [
+      "preview",
+      "launch"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.855,
+        0.9429,
+        0.925,
+        0.9857
+      ],
+      [
+        0.93,
+        0.9429,
+        0.99,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        1345,
+        748,
+        1457,
+        806
+      ],
+      [
+        1430,
+        748,
+        1530,
+        806
+      ]
+    ],
+    "margins": [
+      16,
+      16
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 227.20000000000013,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "20_mj_intro",
+    "topic": "MonthlyJob",
+    "targets": [
+      "src-sqltemplate"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.16,
+        0.1857,
+        0.54,
+        0.2
+      ]
+    ],
+    "final_boxes": [
+      [
+        559,
+        142,
+        1021,
+        170
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 235.6666666666668,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "21_mj_dest",
+    "topic": "MonthlyJob \u2192 Destination",
+    "targets": [
+      "src-sqltemplate",
+      "dst-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.16,
+        0.1857,
+        0.54,
+        0.2
+      ],
+      [
+        0.58,
+        0.1714,
+        0.96,
+        0.1857
+      ]
+    ],
+    "final_boxes": [
+      [
+        559,
+        142,
+        1021,
+        170
+      ],
+      [
+        1034,
+        130,
+        1496,
+        158
+      ]
+    ],
+    "margins": [
+      16,
+      16
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 244.76666666666682,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "21b_mj_dest_blocked",
+    "topic": "Csv e Table+Csv",
+    "targets": [
+      "dst-csv",
+      "dst-table-csv"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.58,
+        0.1857,
+        0.96,
+        0.2
+      ],
+      [
+        0.58,
+        0.2,
+        0.96,
+        0.2143
+      ]
+    ],
+    "final_boxes": [
+      [
+        1034,
+        142,
+        1496,
+        170
+      ],
+      [
+        1034,
+        154,
+        1496,
+        181
+      ]
+    ],
+    "margins": [
+      16,
+      16
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 253.0333333333335,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "22_mj_sql_rule_a",
+    "topic": "SQL no MonthlyJob \u2014 regra",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 261.36666666666684,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  },
+  {
+    "id": "23_mj_sql_rule_b",
+    "topic": "Como conferir no arquivo",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 269.2333333333335,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  },
+  {
+    "id": "23b_mj_sql_missing",
+    "topic": "Se faltar um marcador",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 277.03333333333353,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  },
+  {
+    "id": "24_mj_sql_rule_c",
+    "topic": "O que os marcadores fazem",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 285.03333333333353,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  },
+  {
+    "id": "24b_mj_sql_fill",
+    "topic": "Preenchimento das datas",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 293.1000000000002,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  },
+  {
+    "id": "25_mj_picker",
+    "topic": "SQL do MonthlyJob",
+    "targets": [
+      "sql-file-picker"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.4571,
+        0.98,
+        0.5
+      ]
+    ],
+    "final_boxes": [
+      [
+        532,
+        355,
+        1523,
+        420
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 301.33333333333354,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "25b_mj_picker_confirm",
+    "topic": "Detected = MonthlyJob",
+    "targets": [
+      "sql-file-picker"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.4571,
+        0.98,
+        0.5
+      ]
+    ],
+    "final_boxes": [
+      [
+        532,
+        355,
+        1523,
+        420
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 310.60000000000025,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "26_mj_schema",
+    "topic": "Schema (MonthlyJob)",
+    "targets": [
+      "lbl-schema",
+      "schema"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.5857,
+        0.98,
+        0.6286
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        460,
+        1517,
+        523
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 319.1666666666669,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "27_mj_table",
+    "topic": "Table Name (MonthlyJob)",
+    "targets": [
+      "lbl-table-name",
+      "table-name-prefix",
+      "table-name-suffix"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.6429,
+        0.98,
+        0.6857
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        506,
+        1517,
+        569
+      ]
+    ],
+    "margins": [
+      14,
+      20,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 327.1666666666669,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "27b_mj_table_suffix",
+    "topic": "Sufixo da tabela",
+    "targets": [
+      "table-name-prefix",
+      "table-name-suffix"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.25,
+        0.6429,
+        0.98,
+        0.6857
+      ]
+    ],
+    "final_boxes": [
+      [
+        657,
+        505,
+        1523,
+        570
+      ]
+    ],
+    "margins": [
+      20,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 335.4666666666669,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "28_mj_start",
+    "topic": "Start Date",
+    "targets": [
+      "lbl-start-date",
+      "start-date"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.7,
+        0.98,
+        0.7429
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        553,
+        1517,
+        615
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 343.8000000000003,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "29_mj_end",
+    "topic": "End Date",
+    "targets": [
+      "lbl-end-date",
+      "end-date"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.7571,
+        0.98,
+        0.8
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        599,
+        1517,
+        662
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 352.1333333333336,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "30_et_intro",
+    "topic": "ExistingTable",
+    "targets": [
+      "src-existingtable"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.16,
+        0.2,
+        0.545,
+        0.2143
+      ]
+    ],
+    "final_boxes": [
+      [
+        559,
+        154,
+        1026,
+        181
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 360.66666666666697,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "31_et_dest",
+    "topic": "ExistingTable \u2192 Destination",
+    "targets": [
+      "src-existingtable",
+      "dst-csv"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.16,
+        0.2,
+        0.545,
+        0.2143
+      ],
+      [
+        0.585,
+        0.1857,
+        0.97,
+        0.2
+      ]
+    ],
+    "final_boxes": [
+      [
+        559,
+        154,
+        1026,
+        181
+      ],
+      [
+        1040,
+        142,
+        1508,
+        170
+      ]
+    ],
+    "margins": [
+      16,
+      16
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 369.63333333333367,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "31b_et_dest_blocked",
+    "topic": "Table e Table+Csv",
+    "targets": [
+      "dst-table",
+      "dst-table-csv"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.585,
+        0.1714,
+        0.97,
+        0.1857
+      ],
+      [
+        0.585,
+        0.2,
+        0.97,
+        0.2143
+      ]
+    ],
+    "final_boxes": [
+      [
+        1040,
+        130,
+        1508,
+        158
+      ],
+      [
+        1040,
+        154,
+        1508,
+        181
+      ]
+    ],
+    "margins": [
+      16,
+      16
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 377.9000000000003,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "32_et_no_sql",
+    "topic": "Sem SQL File",
+    "targets": [
+      "src-existingtable",
+      "dest-hint"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.16,
+        0.2,
+        0.545,
+        0.2143
+      ],
+      [
+        0.14,
+        0.2429,
+        0.99,
+        0.2571
+      ]
+    ],
+    "final_boxes": [
+      [
+        559,
+        154,
+        1026,
+        181
+      ],
+      [
+        538,
+        188,
+        1528,
+        216
+      ]
+    ],
+    "margins": [
+      16,
+      14
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 386.4000000000003,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "33_et_schema_coe",
+    "topic": "Schema \u2192 coe_enc",
+    "targets": [
+      "esc-coe-enc"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.26,
+        0.4714,
+        0.97,
+        0.4857
+      ]
+    ],
+    "final_boxes": [
+      [
+        672,
+        373,
+        1508,
+        401
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 394.50000000000034,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "34_et_schema_aa",
+    "topic": "Schema \u2192 aa_enc",
+    "targets": [
+      "esc-aa-enc"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.26,
+        0.4857,
+        0.97,
+        0.5
+      ]
+    ],
+    "final_boxes": [
+      [
+        672,
+        385,
+        1508,
+        413
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 403.76666666666705,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "35_et_schema_other",
+    "topic": "Schema \u2192 other",
+    "targets": [
+      "esc-other"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.26,
+        0.5,
+        0.97,
+        0.5143
+      ]
+    ],
+    "final_boxes": [
+      [
+        672,
+        397,
+        1508,
+        424
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 412.96666666666704,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "35b_et_other_field",
+    "topic": "other \u2192 Custom Schema",
+    "targets": [
+      "lbl-existing-schema-custom",
+      "existing-schema-custom"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.5143,
+        0.99,
+        0.5571
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        402,
+        1528,
+        465
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 422.2000000000004,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "36_et_custom",
+    "topic": "Custom Schema",
+    "targets": [
+      "lbl-existing-schema-custom",
+      "existing-schema-custom"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.5143,
+        0.99,
+        0.5571
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        402,
+        1528,
+        465
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 430.7000000000004,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "37_et_table",
+    "topic": "Existing Table",
+    "targets": [
+      "lbl-existing-table",
+      "existing-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.5143,
+        0.99,
+        0.5571
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        402,
+        1528,
+        465
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 438.8000000000004,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "37b_et_full",
+    "topic": "Origem completa",
+    "targets": [
+      "lbl-existing-schema",
+      "existing-schema",
+      "lbl-existing-table",
+      "existing-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.4571,
+        0.99,
+        0.5
+      ],
+      [
+        0.14,
+        0.5143,
+        0.99,
+        0.5571
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        356,
+        1528,
+        419
+      ],
+      [
+        532,
+        401,
+        1534,
+        466
+      ]
+    ],
+    "margins": [
+      14,
+      20,
+      14,
+      20
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 448.03333333333376,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "38_rel_standard",
+    "topic": "Combina\u00e7\u00e3o comum",
+    "targets": [
+      "src-sqlfile",
+      "dst-csv"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.16,
+        0.1714,
+        0.545,
+        0.1857
+      ],
+      [
+        0.585,
+        0.1857,
+        0.97,
+        0.2
+      ]
+    ],
+    "final_boxes": [
+      [
+        559,
+        130,
+        1026,
+        158
+      ],
+      [
+        1040,
+        142,
+        1508,
+        170
+      ]
+    ],
+    "margins": [
+      16,
+      16
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 456.33333333333377,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "38b_rel_standard_use",
+    "topic": "Fluxo t\u00edpico",
+    "targets": [
+      "src-sqlfile",
+      "dst-csv"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.16,
+        0.1714,
+        0.545,
+        0.1857
+      ],
+      [
+        0.585,
+        0.1857,
+        0.97,
+        0.2
+      ]
+    ],
+    "final_boxes": [
+      [
+        559,
+        130,
+        1026,
+        158
+      ],
+      [
+        1040,
+        142,
+        1508,
+        170
+      ]
+    ],
+    "margins": [
+      16,
+      16
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 465.5666666666671,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "39_rel_monthly",
+    "topic": "Combina\u00e7\u00e3o MonthlyJob",
+    "targets": [
+      "src-sqltemplate",
+      "dst-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.16,
+        0.1857,
+        0.54,
+        0.2
+      ],
+      [
+        0.58,
+        0.1714,
+        0.96,
+        0.1857
+      ]
+    ],
+    "final_boxes": [
+      [
+        559,
+        142,
+        1021,
+        170
+      ],
+      [
+        1034,
+        130,
+        1496,
+        158
+      ]
+    ],
+    "margins": [
+      16,
+      16
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 474.00000000000045,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "39b_rel_monthly_fields",
+    "topic": "Campos do MonthlyJob",
+    "targets": [
+      "lbl-schema",
+      "schema",
+      "lbl-table-name",
+      "table-name-prefix",
+      "table-name-suffix"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.5857,
+        0.98,
+        0.6286
+      ],
+      [
+        0.14,
+        0.6429,
+        0.98,
+        0.6857
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        460,
+        1517,
+        523
+      ],
+      [
+        532,
+        505,
+        1523,
+        570
+      ]
+    ],
+    "margins": [
+      14,
+      20,
+      14,
+      20,
+      20
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 482.16666666666714,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "39c_rel_monthly_dates",
+    "topic": "Datas do MonthlyJob",
+    "targets": [
+      "lbl-start-date",
+      "start-date",
+      "lbl-end-date",
+      "end-date"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.7,
+        0.98,
+        0.7429
+      ],
+      [
+        0.14,
+        0.7571,
+        0.98,
+        0.8
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        553,
+        1517,
+        615
+      ],
+      [
+        532,
+        598,
+        1523,
+        663
+      ]
+    ],
+    "margins": [
+      14,
+      20,
+      14,
+      20
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 490.5000000000005,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "40_rel_existing",
+    "topic": "Combina\u00e7\u00e3o ExistingTable",
+    "targets": [
+      "src-existingtable",
+      "dst-csv"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.16,
+        0.2,
+        0.545,
+        0.2143
+      ],
+      [
+        0.585,
+        0.1857,
+        0.97,
+        0.2
+      ]
+    ],
+    "final_boxes": [
+      [
+        559,
+        154,
+        1026,
+        181
+      ],
+      [
+        1040,
+        142,
+        1508,
+        170
+      ]
+    ],
+    "margins": [
+      16,
+      16
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 498.76666666666716,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "40b_rel_existing_no_sql",
+    "topic": "Sem SQL neste modo",
+    "targets": [
+      "src-existingtable"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.16,
+        0.2,
+        0.545,
+        0.2143
+      ]
+    ],
+    "final_boxes": [
+      [
+        559,
+        154,
+        1026,
+        181
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 507.0666666666672,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "41_rel_incompat",
+    "topic": "Combina\u00e7\u00f5es indispon\u00edveis",
+    "targets": [
+      "matrix-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.155,
+        0.1,
+        0.995,
+        0.1571
+      ]
+    ],
+    "final_boxes": [
+      [
+        549,
+        61,
+        1540,
+        147
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 515.3666666666671,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "41b_rel_incompat_et",
+    "topic": "ExistingTable \u2014 limite",
+    "targets": [
+      "matrix-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.155,
+        0.1,
+        0.995,
+        0.1571
+      ]
+    ],
+    "final_boxes": [
+      [
+        549,
+        61,
+        1540,
+        147
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 523.6666666666671,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "42_val_bad",
+    "topic": "E-mail inv\u00e1lido",
+    "targets": [
+      "lbl-email",
+      "email",
+      "validation-summary"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.5714,
+        0.99,
+        0.6143
+      ],
+      [
+        0.135,
+        0.9429,
+        0.85,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        448,
+        1528,
+        511
+      ],
+      [
+        526,
+        748,
+        1376,
+        806
+      ]
+    ],
+    "margins": [
+      14,
+      20,
+      20
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 532.0000000000003,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "43_val_ok",
+    "topic": "Formul\u00e1rio pronto",
+    "targets": [
+      "validation-summary"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.9429,
+        0.85,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        526,
+        748,
+        1376,
+        806
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 540.266666666667,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "43b_val_review",
+    "topic": "Revise antes de enviar",
+    "targets": [
+      "source",
+      "destination"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.15,
+        0.1571,
+        0.555,
+        0.2286
+      ],
+      [
+        0.575,
+        0.1571,
+        0.98,
+        0.2286
+      ]
+    ],
+    "final_boxes": [
+      [
+        543,
+        107,
+        1042,
+        205
+      ],
+      [
+        1024,
+        107,
+        1523,
+        205
+      ]
+    ],
+    "margins": [
+      20,
+      20
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 548.566666666667,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "44_preview",
+    "topic": "Preview SQL",
+    "targets": [
+      "preview"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.855,
+        0.9429,
+        0.925,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        1345,
+        748,
+        1457,
+        806
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 556.8666666666669,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "44b_preview_check",
+    "topic": "O que conferir no Preview",
+    "targets": [
+      "preview-header",
+      "preview-body"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.13,
+        0.0571,
+        1.0,
+        0.1
+      ],
+      [
+        0.14,
+        0.1143,
+        0.99,
+        0.5143
+      ]
+    ],
+    "final_boxes": [
+      [
+        521,
+        31,
+        1546,
+        96
+      ],
+      [
+        532,
+        72,
+        1534,
+        436
+      ]
+    ],
+    "margins": [
+      20,
+      20
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 566.1333333333334,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "45_checklist",
+    "topic": "Antes de iniciar, confirme",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 574.2666666666668,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  },
+  {
+    "id": "45b_checklist_b",
+    "topic": "Tamb\u00e9m confira",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 582.1000000000001,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  },
+  {
+    "id": "46_confirm",
+    "topic": "Launch Job",
+    "targets": [
+      "confirm-dialog"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.34,
+        0.3571,
+        0.66,
+        0.6714
+      ]
+    ],
+    "final_boxes": [
+      [
+        758,
+        269,
+        1161,
+        563
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 590.4000000000001,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "46b_confirm_read",
+    "topic": "Confirme s\u00f3 se estiver correto",
+    "targets": [
+      "confirm-dialog"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.34,
+        0.3571,
+        0.66,
+        0.6714
+      ]
+    ],
+    "final_boxes": [
+      [
+        758,
+        269,
+        1161,
+        563
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 599.6666666666666,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "47_launched",
+    "topic": "Job enviado",
+    "targets": [
+      "warning-text"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.7714,
+        0.995,
+        0.7857
+      ]
+    ],
+    "final_boxes": [
+      [
+        526,
+        616,
+        1540,
+        644
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 608.0666666666666,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "48_overview",
+    "topic": "Overview",
+    "targets": [
+      "sidebar-nav"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.0,
+        0.0571,
+        0.125,
+        0.3
+      ]
+    ],
+    "final_boxes": [
+      [
+        374,
+        26,
+        555,
+        263
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 616.2333333333332,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "49_close",
+    "topic": "Resumo",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 625.1666666666665,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  },
+  {
+    "id": "49b_close_b",
+    "topic": "Depois do envio",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 633.4333333333332,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  }
+]

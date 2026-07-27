@@ -1,23 +1,27 @@
 {
+  "font_name": "Carlito",
+  "font_regular": "/workspace/demos/dispatch_robocop_new_job_onboarding_ptbr/fonts/Carlito-Regular.ttf",
+  "font_bold": "/workspace/demos/dispatch_robocop_new_job_onboarding_ptbr/fonts/Carlito-Bold.ttf",
+  "font_reason": "Calibri is not installed in this Linux environment. Using Carlito (fonts-crosextra-carlito), the OFL metric-compatible substitute.",
+  "body_font_px": 38,
+  "title_font_px": 42,
+  "resolution": [
+    1920,
+    1080
+  ],
   "scene_seconds": 8.0,
-  "instructional_scenes": 74,
+  "instructional_scenes": 75,
   "min_scene_s": 8.0,
   "max_scene_s": 8.0,
   "min_typing_s": 1.0,
   "max_typing_s": 1.4,
-  "dim_alpha": 168,
-  "scenes_with_spotlight": 74,
-  "duration_s": 629.8666666666666,
+  "dim_alpha": 170,
+  "scenes_multi_cutout": 18,
+  "duration_s": 638.1666666666665,
   "monthly_sql_requirement": "{date_inicio} and {date_fim}",
-  "monthly_sql_evidence": [
-    "dispatch/sql.py:DATE_INICIO_TOKEN/DATE_FIM_TOKEN, detect_source, template_is_complete, is_malformed_template, monthly_preview",
-    "dispatch/screens/new_job.py:_sql_content_issues (requires both tokens for SqlTemplate/MonthlyJob)",
-    "scr/monthly_query_processor.py:render_monthly_sql",
-    "CONTEXT.md (SqlTemplate placeholders)",
-    "tests/test_monthly_query_processor.py, tools/prod_tui/job_specs.py SMOKE_TEMPLATE_SQL"
-  ],
   "timing_validation_passed": true,
   "spotlight_validation_passed": true,
+  "spotlight_failures": [],
   "holds": [
     {
       "id": "01_open",
@@ -32,9 +36,29 @@
       "static_duration": 6.733333333333333,
       "scene_duration": 8.0,
       "scene_end": 8.0,
-      "spotlight": "0.10,0.14,0.90,0.72",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.12,
+          0.14,
+          0.88,
+          0.7
+        ]
+      ],
+      "spotlights_px": [
+        [
+          80,
+          100,
+          1840,
+          786
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 3.2666666666666666,
+      "manual_review": "PASS",
+      "fail_reason": "card content spotlight"
     },
     {
       "id": "02_purpose_a",
@@ -49,9 +73,29 @@
       "static_duration": 6.966666666666667,
       "scene_duration": 8.0,
       "scene_end": 16.3,
-      "spotlight": "0.27,0.02,0.83,0.22",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.1857,
+          0.99,
+          0.3143
+        ]
+      ],
+      "spotlights_px": [
+        [
+          532,
+          130,
+          1534,
+          274
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 11.333333333333334,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "02_purpose_b",
@@ -66,9 +110,42 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 24.6,
-      "spotlight": "0.27,0.10,0.83,0.30",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.15,
+          0.2286,
+          0.555,
+          0.3
+        ],
+        [
+          0.575,
+          0.2286,
+          0.98,
+          0.3
+        ]
+      ],
+      "spotlights_px": [
+        [
+          543,
+          165,
+          1042,
+          263
+        ],
+        [
+          1024,
+          165,
+          1523,
+          263
+        ]
+      ],
+      "n_cutouts": 2,
+      "margins": [
+        20,
+        20
+      ],
+      "review_ts": 19.6,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "03_matrix",
@@ -83,9 +160,29 @@
       "static_duration": 6.6,
       "scene_duration": 8.0,
       "scene_end": 32.900000000000006,
-      "spotlight": "0.07,0.04,0.97,0.28",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.135,
+          0.0571,
+          0.995,
+          0.1714
+        ]
+      ],
+      "spotlights_px": [
+        [
+          526,
+          26,
+          1540,
+          158
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 28.3,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "04_detected",
@@ -100,9 +197,29 @@
       "static_duration": 6.666666666666667,
       "scene_duration": 8.0,
       "scene_end": 42.13333333333333,
-      "spotlight": "0.12,0.20,0.92,0.32",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.135,
+          0.1714,
+          0.995,
+          0.1857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          532,
+          130,
+          1534,
+          158
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14
+      ],
+      "review_ts": 37.46666666666667,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "05_source_intro",
@@ -117,9 +234,29 @@
       "static_duration": 6.9,
       "scene_duration": 8.0,
       "scene_end": 50.43333333333333,
-      "spotlight": "0.18,0.22,0.54,0.42",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.15,
+          0.1571,
+          0.555,
+          0.2286
+        ]
+      ],
+      "spotlights_px": [
+        [
+          543,
+          107,
+          1042,
+          205
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 45.53333333333333,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "06_source_sqlfile",
@@ -134,9 +271,29 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 58.73333333333333,
-      "spotlight": "0.18,0.22,0.54,0.42",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.16,
+          0.1714,
+          0.545,
+          0.1857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          559,
+          130,
+          1026,
+          158
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        16
+      ],
+      "review_ts": 53.73333333333333,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "06b_source_sqlfile_effect",
@@ -151,9 +308,29 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 67.96666666666665,
-      "spotlight": "0.18,0.22,0.54,0.42",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.16,
+          0.1714,
+          0.545,
+          0.1857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          559,
+          130,
+          1026,
+          158
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        16
+      ],
+      "review_ts": 62.966666666666654,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "07_dest_intro",
@@ -168,9 +345,29 @@
       "static_duration": 6.833333333333333,
       "scene_duration": 8.0,
       "scene_end": 76.26666666666665,
-      "spotlight": "0.52,0.20,0.88,0.40",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.575,
+          0.1571,
+          0.98,
+          0.2286
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1024,
+          107,
+          1523,
+          205
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 71.43333333333332,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "08_dest_table",
@@ -185,9 +382,29 @@
       "static_duration": 6.7,
       "scene_duration": 8.0,
       "scene_end": 84.56666666666665,
-      "spotlight": "0.52,0.18,0.88,0.34",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.585,
+          0.1714,
+          0.97,
+          0.1857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1040,
+          130,
+          1508,
+          158
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        16
+      ],
+      "review_ts": 79.86666666666665,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "09_dest_csv",
@@ -202,9 +419,29 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 93.79999999999998,
-      "spotlight": "0.52,0.22,0.88,0.38",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.585,
+          0.1857,
+          0.97,
+          0.2
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1040,
+          142,
+          1508,
+          170
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        16
+      ],
+      "review_ts": 88.79999999999998,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "09b_dest_csv_when",
@@ -219,9 +456,29 @@
       "static_duration": 6.933333333333334,
       "scene_duration": 8.0,
       "scene_end": 103.03333333333332,
-      "spotlight": "0.52,0.22,0.88,0.38",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.585,
+          0.1857,
+          0.97,
+          0.2
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1040,
+          142,
+          1508,
+          170
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        16
+      ],
+      "review_ts": 98.09999999999998,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "10_dest_tablecsv",
@@ -236,9 +493,29 @@
       "static_duration": 6.633333333333333,
       "scene_duration": 8.0,
       "scene_end": 111.33333333333331,
-      "spotlight": "0.52,0.26,0.88,0.42",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.585,
+          0.2,
+          0.97,
+          0.2143
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1040,
+          154,
+          1508,
+          181
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        16
+      ],
+      "review_ts": 106.69999999999997,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "11_queue_a",
@@ -253,9 +530,30 @@
       "static_duration": 6.8,
       "scene_duration": 8.0,
       "scene_end": 120.56666666666665,
-      "spotlight": "0.17,0.34,0.93,0.62",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.15,
+          0.2714,
+          0.98,
+          0.3714
+        ]
+      ],
+      "spotlights_px": [
+        [
+          549,
+          205,
+          1517,
+          314
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14,
+        20
+      ],
+      "review_ts": 115.76666666666665,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "12_queue_b",
@@ -270,9 +568,30 @@
       "static_duration": 6.966666666666667,
       "scene_duration": 8.0,
       "scene_end": 128.86666666666665,
-      "spotlight": "0.17,0.38,0.93,0.66",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.15,
+          0.2714,
+          0.98,
+          0.3714
+        ]
+      ],
+      "spotlights_px": [
+        [
+          549,
+          205,
+          1517,
+          314
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14,
+        20
+      ],
+      "review_ts": 123.89999999999998,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "12b_queue_order",
@@ -287,9 +606,29 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 138.1,
-      "spotlight": "0.17,0.38,0.93,0.66",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.2571,
+          0.99,
+          0.4143
+        ]
+      ],
+      "spotlights_px": [
+        [
+          532,
+          188,
+          1534,
+          355
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 133.1,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "13_sql_intro",
@@ -304,9 +643,30 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 146.4,
-      "spotlight": "0.13,0.44,0.97,0.72",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.5,
+          0.99,
+          0.5429
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          391,
+          1528,
+          453
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14,
+        20
+      ],
+      "review_ts": 141.4,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "13b_sql_when",
@@ -321,9 +681,30 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 154.70000000000002,
-      "spotlight": "0.13,0.44,0.97,0.72",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.5,
+          0.99,
+          0.5429
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          391,
+          1528,
+          453
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14,
+        20
+      ],
+      "review_ts": 149.70000000000002,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "14_sql_picker",
@@ -338,9 +719,29 @@
       "static_duration": 6.8,
       "scene_duration": 8.0,
       "scene_end": 163.00000000000003,
-      "spotlight": "0.13,0.44,0.97,0.72",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.4429,
+          0.99,
+          0.4857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          532,
+          343,
+          1534,
+          408
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 158.20000000000002,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "15_sql_verify",
@@ -355,9 +756,29 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 172.23333333333338,
-      "spotlight": "0.13,0.46,0.97,0.78",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.4429,
+          0.99,
+          0.4857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          532,
+          343,
+          1534,
+          408
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 167.23333333333338,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "15b_sql_path",
@@ -372,9 +793,30 @@
       "static_duration": 6.966666666666667,
       "scene_duration": 8.0,
       "scene_end": 180.5333333333334,
-      "spotlight": "0.13,0.62,0.97,0.78",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.5,
+          0.99,
+          0.5429
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          391,
+          1528,
+          453
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14,
+        20
+      ],
+      "review_ts": 175.56666666666672,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "16_sql_role",
@@ -389,9 +831,30 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 188.8333333333334,
-      "spotlight": "0.13,0.58,0.97,0.78",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.5,
+          0.99,
+          0.5429
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          391,
+          1528,
+          453
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14,
+        20
+      ],
+      "review_ts": 183.8333333333334,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "16b_sql_role_dest",
@@ -406,9 +869,42 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 197.1333333333334,
-      "spotlight": "0.13,0.22,0.97,0.50",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.15,
+          0.1571,
+          0.555,
+          0.2286
+        ],
+        [
+          0.575,
+          0.1571,
+          0.98,
+          0.2286
+        ]
+      ],
+      "spotlights_px": [
+        [
+          543,
+          107,
+          1042,
+          205
+        ],
+        [
+          1024,
+          107,
+          1523,
+          205
+        ]
+      ],
+      "n_cutouts": 2,
+      "margins": [
+        20,
+        20
+      ],
+      "review_ts": 192.1333333333334,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "17_email",
@@ -423,9 +919,30 @@
       "static_duration": 6.733333333333333,
       "scene_duration": 8.0,
       "scene_end": 205.43333333333342,
-      "spotlight": "0.16,0.70,0.98,0.82",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.5714,
+          0.99,
+          0.6143
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          448,
+          1528,
+          511
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14,
+        20
+      ],
+      "review_ts": 200.7000000000001,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "18_subject",
@@ -440,9 +957,30 @@
       "static_duration": 6.7,
       "scene_duration": 8.0,
       "scene_end": 214.66666666666677,
-      "spotlight": "0.16,0.76,0.98,0.88",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.6286,
+          0.99,
+          0.6714
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          495,
+          1528,
+          557
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14,
+        20
+      ],
+      "review_ts": 209.96666666666678,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "19_status_bar",
@@ -457,9 +995,29 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 223.90000000000012,
-      "spotlight": "0.42,0.84,0.98,0.92",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.135,
+          0.9429,
+          0.85,
+          0.9857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          526,
+          748,
+          1376,
+          806
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 218.90000000000012,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "19b_actions",
@@ -474,9 +1032,42 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 232.20000000000013,
-      "spotlight": "0.58,0.84,0.98,0.92",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.855,
+          0.9429,
+          0.925,
+          0.9857
+        ],
+        [
+          0.93,
+          0.9429,
+          0.99,
+          0.9857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1345,
+          748,
+          1457,
+          806
+        ],
+        [
+          1430,
+          748,
+          1530,
+          806
+        ]
+      ],
+      "n_cutouts": 2,
+      "margins": [
+        16,
+        16
+      ],
+      "review_ts": 227.20000000000013,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "20_mj_intro",
@@ -491,9 +1082,29 @@
       "static_duration": 6.833333333333333,
       "scene_duration": 8.0,
       "scene_end": 240.50000000000014,
-      "spotlight": "0.16,0.26,0.56,0.46",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.16,
+          0.1857,
+          0.54,
+          0.2
+        ]
+      ],
+      "spotlights_px": [
+        [
+          559,
+          142,
+          1021,
+          170
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        16
+      ],
+      "review_ts": 235.6666666666668,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "21_mj_dest",
@@ -508,9 +1119,42 @@
       "static_duration": 6.966666666666667,
       "scene_duration": 8.0,
       "scene_end": 249.7333333333335,
-      "spotlight": "0.14,0.18,0.90,0.42",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.16,
+          0.1857,
+          0.54,
+          0.2
+        ],
+        [
+          0.58,
+          0.1714,
+          0.96,
+          0.1857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          559,
+          142,
+          1021,
+          170
+        ],
+        [
+          1034,
+          130,
+          1496,
+          158
+        ]
+      ],
+      "n_cutouts": 2,
+      "margins": [
+        16,
+        16
+      ],
+      "review_ts": 244.76666666666682,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "21b_mj_dest_blocked",
@@ -525,9 +1169,42 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 258.03333333333353,
-      "spotlight": "0.50,0.24,0.90,0.44",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.58,
+          0.1857,
+          0.96,
+          0.2
+        ],
+        [
+          0.58,
+          0.2,
+          0.96,
+          0.2143
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1034,
+          142,
+          1496,
+          170
+        ],
+        [
+          1034,
+          154,
+          1496,
+          181
+        ]
+      ],
+      "n_cutouts": 2,
+      "margins": [
+        16,
+        16
+      ],
+      "review_ts": 253.0333333333335,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "22_mj_sql_rule_a",
@@ -542,9 +1219,29 @@
       "static_duration": 6.666666666666667,
       "scene_duration": 8.0,
       "scene_end": 266.03333333333353,
-      "spotlight": "0.10,0.14,0.90,0.72",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.12,
+          0.14,
+          0.88,
+          0.7
+        ]
+      ],
+      "spotlights_px": [
+        [
+          80,
+          100,
+          1840,
+          786
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 261.36666666666684,
+      "manual_review": "PASS",
+      "fail_reason": "card content spotlight"
     },
     {
       "id": "23_mj_sql_rule_b",
@@ -559,9 +1256,29 @@
       "static_duration": 6.8,
       "scene_duration": 8.0,
       "scene_end": 274.03333333333353,
-      "spotlight": "0.10,0.14,0.90,0.72",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.12,
+          0.14,
+          0.88,
+          0.7
+        ]
+      ],
+      "spotlights_px": [
+        [
+          80,
+          100,
+          1840,
+          786
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 269.2333333333335,
+      "manual_review": "PASS",
+      "fail_reason": "card content spotlight"
     },
     {
       "id": "23b_mj_sql_missing",
@@ -576,9 +1293,29 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 282.03333333333353,
-      "spotlight": "0.10,0.14,0.90,0.72",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.12,
+          0.14,
+          0.88,
+          0.7
+        ]
+      ],
+      "spotlights_px": [
+        [
+          80,
+          100,
+          1840,
+          786
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 277.03333333333353,
+      "manual_review": "PASS",
+      "fail_reason": "card content spotlight"
     },
     {
       "id": "24_mj_sql_rule_c",
@@ -593,9 +1330,29 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 290.03333333333353,
-      "spotlight": "0.10,0.14,0.90,0.72",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.12,
+          0.14,
+          0.88,
+          0.7
+        ]
+      ],
+      "spotlights_px": [
+        [
+          80,
+          100,
+          1840,
+          786
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 285.03333333333353,
+      "manual_review": "PASS",
+      "fail_reason": "card content spotlight"
     },
     {
       "id": "24b_mj_sql_fill",
@@ -610,9 +1367,29 @@
       "static_duration": 6.933333333333334,
       "scene_duration": 8.0,
       "scene_end": 298.03333333333353,
-      "spotlight": "0.10,0.14,0.90,0.72",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.12,
+          0.14,
+          0.88,
+          0.7
+        ]
+      ],
+      "spotlights_px": [
+        [
+          80,
+          100,
+          1840,
+          786
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 293.1000000000002,
+      "manual_review": "PASS",
+      "fail_reason": "card content spotlight"
     },
     {
       "id": "25_mj_picker",
@@ -627,9 +1404,29 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 306.33333333333354,
-      "spotlight": "0.13,0.42,0.97,0.70",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.4571,
+          0.98,
+          0.5
+        ]
+      ],
+      "spotlights_px": [
+        [
+          532,
+          355,
+          1523,
+          420
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 301.33333333333354,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "25b_mj_picker_confirm",
@@ -644,9 +1441,29 @@
       "static_duration": 6.966666666666667,
       "scene_duration": 8.0,
       "scene_end": 315.5666666666669,
-      "spotlight": "0.13,0.42,0.97,0.70",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.4571,
+          0.98,
+          0.5
+        ]
+      ],
+      "spotlights_px": [
+        [
+          532,
+          355,
+          1523,
+          420
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 310.60000000000025,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "26_mj_schema",
@@ -661,9 +1478,30 @@
       "static_duration": 6.7,
       "scene_duration": 8.0,
       "scene_end": 323.8666666666669,
-      "spotlight": "0.18,0.60,0.98,0.72",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.5857,
+          0.98,
+          0.6286
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          460,
+          1517,
+          523
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14,
+        20
+      ],
+      "review_ts": 319.1666666666669,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "27_mj_table",
@@ -678,9 +1516,31 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 332.1666666666669,
-      "spotlight": "0.18,0.66,0.98,0.78",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.6429,
+          0.98,
+          0.6857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          506,
+          1517,
+          569
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14,
+        20,
+        20
+      ],
+      "review_ts": 327.1666666666669,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "27b_mj_table_suffix",
@@ -695,9 +1555,30 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 340.4666666666669,
-      "spotlight": "0.18,0.66,0.98,0.78",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.25,
+          0.6429,
+          0.98,
+          0.6857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          657,
+          505,
+          1523,
+          570
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20,
+        20
+      ],
+      "review_ts": 335.4666666666669,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "28_mj_start",
@@ -712,9 +1593,30 @@
       "static_duration": 6.966666666666667,
       "scene_duration": 8.0,
       "scene_end": 348.76666666666694,
-      "spotlight": "0.18,0.72,0.98,0.84",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.7,
+          0.98,
+          0.7429
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          553,
+          1517,
+          615
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14,
+        20
+      ],
+      "review_ts": 343.8000000000003,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "29_mj_end",
@@ -729,9 +1631,30 @@
       "static_duration": 6.933333333333334,
       "scene_duration": 8.0,
       "scene_end": 357.06666666666695,
-      "spotlight": "0.18,0.78,0.98,0.90",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.7571,
+          0.98,
+          0.8
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          599,
+          1517,
+          662
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14,
+        20
+      ],
+      "review_ts": 352.1333333333336,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "30_et_intro",
@@ -746,9 +1669,29 @@
       "static_duration": 6.7,
       "scene_duration": 8.0,
       "scene_end": 365.36666666666696,
-      "spotlight": "0.16,0.26,0.56,0.46",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.16,
+          0.2,
+          0.545,
+          0.2143
+        ]
+      ],
+      "spotlights_px": [
+        [
+          559,
+          154,
+          1026,
+          181
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        16
+      ],
+      "review_ts": 360.66666666666697,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "31_et_dest",
@@ -763,9 +1706,42 @@
       "static_duration": 6.966666666666667,
       "scene_duration": 8.0,
       "scene_end": 374.6000000000003,
-      "spotlight": "0.14,0.18,0.90,0.42",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.16,
+          0.2,
+          0.545,
+          0.2143
+        ],
+        [
+          0.585,
+          0.1857,
+          0.97,
+          0.2
+        ]
+      ],
+      "spotlights_px": [
+        [
+          559,
+          154,
+          1026,
+          181
+        ],
+        [
+          1040,
+          142,
+          1508,
+          170
+        ]
+      ],
+      "n_cutouts": 2,
+      "margins": [
+        16,
+        16
+      ],
+      "review_ts": 369.63333333333367,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "31b_et_dest_blocked",
@@ -780,9 +1756,42 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 382.9000000000003,
-      "spotlight": "0.50,0.24,0.90,0.44",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.585,
+          0.1714,
+          0.97,
+          0.1857
+        ],
+        [
+          0.585,
+          0.2,
+          0.97,
+          0.2143
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1040,
+          130,
+          1508,
+          158
+        ],
+        [
+          1040,
+          154,
+          1508,
+          181
+        ]
+      ],
+      "n_cutouts": 2,
+      "margins": [
+        16,
+        16
+      ],
+      "review_ts": 377.9000000000003,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "32_et_no_sql",
@@ -797,9 +1806,42 @@
       "static_duration": 6.8,
       "scene_duration": 8.0,
       "scene_end": 391.20000000000033,
-      "spotlight": "0.10,0.28,0.90,0.56",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.16,
+          0.2,
+          0.545,
+          0.2143
+        ],
+        [
+          0.14,
+          0.2429,
+          0.99,
+          0.2571
+        ]
+      ],
+      "spotlights_px": [
+        [
+          559,
+          154,
+          1026,
+          181
+        ],
+        [
+          538,
+          188,
+          1528,
+          216
+        ]
+      ],
+      "n_cutouts": 2,
+      "margins": [
+        16,
+        14
+      ],
+      "review_ts": 386.4000000000003,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "33_et_schema_coe",
@@ -814,9 +1856,29 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 399.50000000000034,
-      "spotlight": "0.20,0.58,0.76,0.74",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.26,
+          0.4714,
+          0.97,
+          0.4857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          672,
+          373,
+          1508,
+          401
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        16
+      ],
+      "review_ts": 394.50000000000034,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "34_et_schema_aa",
@@ -831,9 +1893,29 @@
       "static_duration": 6.966666666666667,
       "scene_duration": 8.0,
       "scene_end": 408.7333333333337,
-      "spotlight": "0.27,0.58,0.83,0.74",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.26,
+          0.4857,
+          0.97,
+          0.5
+        ]
+      ],
+      "spotlights_px": [
+        [
+          672,
+          385,
+          1508,
+          413
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        16
+      ],
+      "review_ts": 403.76666666666705,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "35_et_schema_other",
@@ -848,9 +1930,29 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 417.96666666666704,
-      "spotlight": "0.34,0.58,0.90,0.74",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.26,
+          0.5,
+          0.97,
+          0.5143
+        ]
+      ],
+      "spotlights_px": [
+        [
+          672,
+          397,
+          1508,
+          424
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        16
+      ],
+      "review_ts": 412.96666666666704,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "35b_et_other_field",
@@ -865,9 +1967,30 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 427.2000000000004,
-      "spotlight": "0.18,0.62,0.98,0.78",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.5143,
+          0.99,
+          0.5571
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          402,
+          1528,
+          465
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14,
+        20
+      ],
+      "review_ts": 422.2000000000004,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "36_et_custom",
@@ -882,9 +2005,30 @@
       "static_duration": 6.8,
       "scene_duration": 8.0,
       "scene_end": 435.5000000000004,
-      "spotlight": "0.18,0.66,0.98,0.78",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.5143,
+          0.99,
+          0.5571
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          402,
+          1528,
+          465
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14,
+        20
+      ],
+      "review_ts": 430.7000000000004,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "37_et_table",
@@ -899,9 +2043,30 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 443.8000000000004,
-      "spotlight": "0.18,0.70,0.98,0.82",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.5143,
+          0.99,
+          0.5571
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          402,
+          1528,
+          465
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14,
+        20
+      ],
+      "review_ts": 438.8000000000004,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "37b_et_full",
@@ -916,9 +2081,44 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 453.03333333333376,
-      "spotlight": "0.18,0.70,0.98,0.82",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.4571,
+          0.99,
+          0.5
+        ],
+        [
+          0.14,
+          0.5143,
+          0.99,
+          0.5571
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          356,
+          1528,
+          419
+        ],
+        [
+          532,
+          401,
+          1534,
+          466
+        ]
+      ],
+      "n_cutouts": 2,
+      "margins": [
+        14,
+        20,
+        14,
+        20
+      ],
+      "review_ts": 448.03333333333376,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "38_rel_standard",
@@ -933,9 +2133,42 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 461.33333333333377,
-      "spotlight": "0.08,0.12,0.92,0.56",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.16,
+          0.1714,
+          0.545,
+          0.1857
+        ],
+        [
+          0.585,
+          0.1857,
+          0.97,
+          0.2
+        ]
+      ],
+      "spotlights_px": [
+        [
+          559,
+          130,
+          1026,
+          158
+        ],
+        [
+          1040,
+          142,
+          1508,
+          170
+        ]
+      ],
+      "n_cutouts": 2,
+      "margins": [
+        16,
+        16
+      ],
+      "review_ts": 456.33333333333377,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "38b_rel_standard_use",
@@ -950,9 +2183,42 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 470.5666666666671,
-      "spotlight": "0.08,0.12,0.92,0.56",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.16,
+          0.1714,
+          0.545,
+          0.1857
+        ],
+        [
+          0.585,
+          0.1857,
+          0.97,
+          0.2
+        ]
+      ],
+      "spotlights_px": [
+        [
+          559,
+          130,
+          1026,
+          158
+        ],
+        [
+          1040,
+          142,
+          1508,
+          170
+        ]
+      ],
+      "n_cutouts": 2,
+      "margins": [
+        16,
+        16
+      ],
+      "review_ts": 465.5666666666671,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "39_rel_monthly",
@@ -967,14 +2233,47 @@
       "static_duration": 6.866666666666667,
       "scene_duration": 8.0,
       "scene_end": 478.86666666666713,
-      "spotlight": "0.08,0.10,0.92,0.66",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.16,
+          0.1857,
+          0.54,
+          0.2
+        ],
+        [
+          0.58,
+          0.1714,
+          0.96,
+          0.1857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          559,
+          142,
+          1021,
+          170
+        ],
+        [
+          1034,
+          130,
+          1496,
+          158
+        ]
+      ],
+      "n_cutouts": 2,
+      "margins": [
+        16,
+        16
+      ],
+      "review_ts": 474.00000000000045,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "39b_rel_monthly_fields",
       "title": "Campos do MonthlyJob",
-      "body": "Tamb\u00e9m: Schema, Table Name, Start Date e End Date.",
+      "body": "Schema e Table Name entram no nome da tabela.",
       "badge": "",
       "instructional": true,
       "anim_start": 479.16666666666714,
@@ -984,31 +2283,102 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 487.16666666666714,
-      "spotlight": "0.15,0.54,0.95,0.86",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.14,
+          0.5857,
+          0.98,
+          0.6286
+        ],
+        [
+          0.14,
+          0.6429,
+          0.98,
+          0.6857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          460,
+          1517,
+          523
+        ],
+        [
+          532,
+          505,
+          1523,
+          570
+        ]
+      ],
+      "n_cutouts": 2,
+      "margins": [
+        14,
+        20,
+        14,
+        20,
+        20
+      ],
+      "review_ts": 482.16666666666714,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "39c_rel_monthly_dates",
+      "title": "Datas do MonthlyJob",
+      "body": "Start Date e End Date definem o intervalo m\u00eas a m\u00eas.",
+      "badge": "",
+      "instructional": true,
+      "anim_start": 487.46666666666715,
+      "anim_end": 488.5000000000005,
+      "arrow_at": 488.5000000000005,
+      "anim_duration": 1.0333333333333334,
+      "static_duration": 6.966666666666667,
+      "scene_duration": 8.0,
+      "scene_end": 495.46666666666715,
+      "spotlights_norm": [
+        [
+          0.14,
+          0.7,
+          0.98,
+          0.7429
+        ],
+        [
+          0.14,
+          0.7571,
+          0.98,
+          0.8
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          553,
+          1517,
+          615
+        ],
+        [
+          532,
+          598,
+          1523,
+          663
+        ]
+      ],
+      "n_cutouts": 2,
+      "margins": [
+        14,
+        20,
+        14,
+        20
+      ],
+      "review_ts": 490.5000000000005,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "40_rel_existing",
       "title": "Combina\u00e7\u00e3o ExistingTable",
       "body": "ExistingTable + Csv + Schema + Existing Table.",
-      "badge": "",
-      "instructional": true,
-      "anim_start": 487.46666666666715,
-      "anim_end": 488.46666666666715,
-      "arrow_at": 488.46666666666715,
-      "anim_duration": 1.0,
-      "static_duration": 7.0,
-      "scene_duration": 8.0,
-      "scene_end": 495.46666666666715,
-      "spotlight": "0.08,0.12,0.92,0.60",
-      "spotlight_ok": true,
-      "dim_alpha": 168
-    },
-    {
-      "id": "40b_rel_existing_no_sql",
-      "title": "Sem SQL neste modo",
-      "body": "N\u00e3o usa SQL File nem MonthlyJob ao mesmo tempo.",
       "badge": "",
       "instructional": true,
       "anim_start": 495.76666666666716,
@@ -1018,14 +2388,47 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 503.76666666666716,
-      "spotlight": "0.08,0.12,0.92,0.60",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.16,
+          0.2,
+          0.545,
+          0.2143
+        ],
+        [
+          0.585,
+          0.1857,
+          0.97,
+          0.2
+        ]
+      ],
+      "spotlights_px": [
+        [
+          559,
+          154,
+          1026,
+          181
+        ],
+        [
+          1040,
+          142,
+          1508,
+          170
+        ]
+      ],
+      "n_cutouts": 2,
+      "margins": [
+        16,
+        16
+      ],
+      "review_ts": 498.76666666666716,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
-      "id": "41_rel_incompat",
-      "title": "Combina\u00e7\u00f5es indispon\u00edveis",
-      "body": "MonthlyJob n\u00e3o aceita Csv ou Table+Csv.",
+      "id": "40b_rel_existing_no_sql",
+      "title": "Sem SQL neste modo",
+      "body": "N\u00e3o usa SQL File nem MonthlyJob ao mesmo tempo.",
       "badge": "",
       "instructional": true,
       "anim_start": 504.0666666666672,
@@ -1035,14 +2438,34 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 512.0666666666672,
-      "spotlight": "0.10,0.04,0.94,0.32",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.16,
+          0.2,
+          0.545,
+          0.2143
+        ]
+      ],
+      "spotlights_px": [
+        [
+          559,
+          154,
+          1026,
+          181
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        16
+      ],
+      "review_ts": 507.0666666666672,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
-      "id": "41b_rel_incompat_et",
-      "title": "ExistingTable \u2014 limite",
-      "body": "ExistingTable n\u00e3o aceita Table ou Table+Csv.",
+      "id": "41_rel_incompat",
+      "title": "Combina\u00e7\u00f5es indispon\u00edveis",
+      "body": "MonthlyJob n\u00e3o aceita Csv ou Table+Csv.",
       "badge": "",
       "instructional": true,
       "anim_start": 512.3666666666671,
@@ -1052,9 +2475,66 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 520.3666666666671,
-      "spotlight": "0.10,0.04,0.94,0.32",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.155,
+          0.1,
+          0.995,
+          0.1571
+        ]
+      ],
+      "spotlights_px": [
+        [
+          549,
+          61,
+          1540,
+          147
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 515.3666666666671,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "41b_rel_incompat_et",
+      "title": "ExistingTable \u2014 limite",
+      "body": "ExistingTable n\u00e3o aceita Table ou Table+Csv.",
+      "badge": "",
+      "instructional": true,
+      "anim_start": 520.6666666666671,
+      "anim_end": 521.6666666666671,
+      "arrow_at": 521.6666666666671,
+      "anim_duration": 1.0,
+      "static_duration": 7.0,
+      "scene_duration": 8.0,
+      "scene_end": 528.6666666666671,
+      "spotlights_norm": [
+        [
+          0.155,
+          0.1,
+          0.995,
+          0.1571
+        ]
+      ],
+      "spotlights_px": [
+        [
+          549,
+          61,
+          1540,
+          147
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 523.6666666666671,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "42_val_bad",
@@ -1062,38 +2542,55 @@
       "body": "Se o formato estiver errado, o status mostra o problema.",
       "badge": "",
       "instructional": true,
-      "anim_start": 520.6666666666671,
-      "anim_end": 521.7000000000004,
-      "arrow_at": 521.7000000000004,
+      "anim_start": 528.966666666667,
+      "anim_end": 530.0000000000003,
+      "arrow_at": 530.0000000000003,
       "anim_duration": 1.0333333333333334,
       "static_duration": 6.966666666666667,
       "scene_duration": 8.0,
-      "scene_end": 528.6666666666671,
-      "spotlight": "0.18,0.68,0.98,0.84",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "scene_end": 536.966666666667,
+      "spotlights_norm": [
+        [
+          0.14,
+          0.5714,
+          0.99,
+          0.6143
+        ],
+        [
+          0.135,
+          0.9429,
+          0.85,
+          0.9857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          448,
+          1528,
+          511
+        ],
+        [
+          526,
+          748,
+          1376,
+          806
+        ]
+      ],
+      "n_cutouts": 2,
+      "margins": [
+        14,
+        20,
+        20
+      ],
+      "review_ts": 532.0000000000003,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "43_val_ok",
       "title": "Formul\u00e1rio pronto",
       "body": "Com os dados corrigidos, volta Ready to launch.",
-      "badge": "",
-      "instructional": true,
-      "anim_start": 528.966666666667,
-      "anim_end": 529.966666666667,
-      "arrow_at": 529.966666666667,
-      "anim_duration": 1.0,
-      "static_duration": 7.0,
-      "scene_duration": 8.0,
-      "scene_end": 536.966666666667,
-      "spotlight": "0.42,0.84,0.98,0.92",
-      "spotlight_ok": true,
-      "dim_alpha": 168
-    },
-    {
-      "id": "43b_val_review",
-      "title": "Revise antes de enviar",
-      "body": "Confira origem, destino, arquivo e fila.",
       "badge": "",
       "instructional": true,
       "anim_start": 537.266666666667,
@@ -1103,14 +2600,34 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 545.266666666667,
-      "spotlight": "0.08,0.18,0.92,0.62",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.135,
+          0.9429,
+          0.85,
+          0.9857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          526,
+          748,
+          1376,
+          806
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 540.266666666667,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
-      "id": "44_preview",
-      "title": "Preview SQL",
-      "body": "Mostra o conte\u00fado que ser\u00e1 usado no job.",
+      "id": "43b_val_review",
+      "title": "Revise antes de enviar",
+      "body": "Confira origem, destino, arquivo e fila.",
       "badge": "",
       "instructional": true,
       "anim_start": 545.566666666667,
@@ -1120,9 +2637,79 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 553.566666666667,
-      "spotlight": "0.30,0.20,0.94,0.76",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.15,
+          0.1571,
+          0.555,
+          0.2286
+        ],
+        [
+          0.575,
+          0.1571,
+          0.98,
+          0.2286
+        ]
+      ],
+      "spotlights_px": [
+        [
+          543,
+          107,
+          1042,
+          205
+        ],
+        [
+          1024,
+          107,
+          1523,
+          205
+        ]
+      ],
+      "n_cutouts": 2,
+      "margins": [
+        20,
+        20
+      ],
+      "review_ts": 548.566666666667,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "44_preview",
+      "title": "Preview SQL",
+      "body": "Mostra o conte\u00fado que ser\u00e1 usado no job.",
+      "badge": "",
+      "instructional": true,
+      "anim_start": 553.8666666666669,
+      "anim_end": 554.8666666666669,
+      "arrow_at": 554.8666666666669,
+      "anim_duration": 1.0,
+      "static_duration": 7.0,
+      "scene_duration": 8.0,
+      "scene_end": 561.8666666666669,
+      "spotlights_norm": [
+        [
+          0.855,
+          0.9429,
+          0.925,
+          0.9857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1345,
+          748,
+          1457,
+          806
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        16
+      ],
+      "review_ts": 556.8666666666669,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "44b_preview_check",
@@ -1130,16 +2717,49 @@
       "body": "Confira a consulta e o destino antes do envio.",
       "badge": "",
       "instructional": true,
-      "anim_start": 554.8000000000002,
-      "anim_end": 555.8333333333335,
-      "arrow_at": 555.8333333333335,
+      "anim_start": 563.1000000000001,
+      "anim_end": 564.1333333333334,
+      "arrow_at": 564.1333333333334,
       "anim_duration": 1.0333333333333334,
       "static_duration": 6.966666666666667,
       "scene_duration": 8.0,
-      "scene_end": 562.8000000000002,
-      "spotlight": "0.15,0.17,0.95,0.73",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "scene_end": 571.1000000000001,
+      "spotlights_norm": [
+        [
+          0.13,
+          0.0571,
+          1.0,
+          0.1
+        ],
+        [
+          0.14,
+          0.1143,
+          0.99,
+          0.5143
+        ]
+      ],
+      "spotlights_px": [
+        [
+          521,
+          31,
+          1546,
+          96
+        ],
+        [
+          532,
+          72,
+          1534,
+          436
+        ]
+      ],
+      "n_cutouts": 2,
+      "margins": [
+        20,
+        20
+      ],
+      "review_ts": 566.1333333333334,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "45_checklist",
@@ -1147,38 +2767,41 @@
       "body": "Origem, destino, arquivo ou tabela, / e fila de execu\u00e7\u00e3o.",
       "badge": "",
       "instructional": true,
-      "anim_start": 562.8000000000002,
-      "anim_end": 563.9666666666668,
-      "arrow_at": 563.9666666666668,
+      "anim_start": 571.1000000000001,
+      "anim_end": 572.2666666666668,
+      "arrow_at": 572.2666666666668,
       "anim_duration": 1.1666666666666667,
       "static_duration": 6.833333333333333,
       "scene_duration": 8.0,
-      "scene_end": 570.8000000000002,
-      "spotlight": "0.10,0.14,0.90,0.72",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "scene_end": 579.1000000000001,
+      "spotlights_norm": [
+        [
+          0.12,
+          0.14,
+          0.88,
+          0.7
+        ]
+      ],
+      "spotlights_px": [
+        [
+          80,
+          100,
+          1840,
+          786
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 574.2666666666668,
+      "manual_review": "PASS",
+      "fail_reason": "card content spotlight"
     },
     {
       "id": "45b_checklist_b",
       "title": "Tamb\u00e9m confira",
       "body": "Op\u00e7\u00f5es adicionais e e-mail de notifica\u00e7\u00e3o.",
-      "badge": "",
-      "instructional": true,
-      "anim_start": 570.8000000000002,
-      "anim_end": 571.8000000000002,
-      "arrow_at": 571.8000000000002,
-      "anim_duration": 1.0,
-      "static_duration": 7.0,
-      "scene_duration": 8.0,
-      "scene_end": 578.8000000000002,
-      "spotlight": "0.10,0.14,0.90,0.72",
-      "spotlight_ok": true,
-      "dim_alpha": 168
-    },
-    {
-      "id": "46_confirm",
-      "title": "Launch Job",
-      "body": "Inicia o job com as configura\u00e7\u00f5es revisadas.",
       "badge": "",
       "instructional": true,
       "anim_start": 579.1000000000001,
@@ -1188,9 +2811,66 @@
       "static_duration": 7.0,
       "scene_duration": 8.0,
       "scene_end": 587.1000000000001,
-      "spotlight": "0.14,0.27,0.86,0.83",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "spotlights_norm": [
+        [
+          0.12,
+          0.14,
+          0.88,
+          0.7
+        ]
+      ],
+      "spotlights_px": [
+        [
+          80,
+          100,
+          1840,
+          786
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 582.1000000000001,
+      "manual_review": "PASS",
+      "fail_reason": "card content spotlight"
+    },
+    {
+      "id": "46_confirm",
+      "title": "Launch Job",
+      "body": "Inicia o job com as configura\u00e7\u00f5es revisadas.",
+      "badge": "",
+      "instructional": true,
+      "anim_start": 587.4000000000001,
+      "anim_end": 588.4000000000001,
+      "arrow_at": 588.4000000000001,
+      "anim_duration": 1.0,
+      "static_duration": 7.0,
+      "scene_duration": 8.0,
+      "scene_end": 595.4000000000001,
+      "spotlights_norm": [
+        [
+          0.34,
+          0.3571,
+          0.66,
+          0.6714
+        ]
+      ],
+      "spotlights_px": [
+        [
+          758,
+          269,
+          1161,
+          563
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 590.4000000000001,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "46b_confirm_read",
@@ -1198,16 +2878,36 @@
       "body": "Leia o resumo antes de confirmar o envio.",
       "badge": "",
       "instructional": true,
-      "anim_start": 588.3333333333334,
-      "anim_end": 589.3666666666667,
-      "arrow_at": 589.3666666666667,
+      "anim_start": 596.6333333333333,
+      "anim_end": 597.6666666666666,
+      "arrow_at": 597.6666666666666,
       "anim_duration": 1.0333333333333334,
       "static_duration": 6.966666666666667,
       "scene_duration": 8.0,
-      "scene_end": 596.3333333333334,
-      "spotlight": "0.14,0.27,0.86,0.83",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "scene_end": 604.6333333333333,
+      "spotlights_norm": [
+        [
+          0.34,
+          0.3571,
+          0.66,
+          0.6714
+        ]
+      ],
+      "spotlights_px": [
+        [
+          758,
+          269,
+          1161,
+          563
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 599.6666666666666,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "47_launched",
@@ -1215,16 +2915,36 @@
       "body": "O job foi enviado pelo Dispatch. / Acompanhe na tela de monitoramento.",
       "badge": "",
       "instructional": true,
-      "anim_start": 596.6333333333333,
-      "anim_end": 597.7666666666667,
-      "arrow_at": 597.7666666666667,
+      "anim_start": 604.9333333333333,
+      "anim_end": 606.0666666666666,
+      "arrow_at": 606.0666666666666,
       "anim_duration": 1.1333333333333333,
       "static_duration": 6.866666666666667,
       "scene_duration": 8.0,
-      "scene_end": 604.6333333333333,
-      "spotlight": "0.15,0.52,0.95,0.88",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "scene_end": 612.9333333333333,
+      "spotlights_norm": [
+        [
+          0.135,
+          0.7714,
+          0.995,
+          0.7857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          526,
+          616,
+          1540,
+          644
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 608.0666666666666,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "48_overview",
@@ -1232,16 +2952,36 @@
       "body": "Ap\u00f3s o envio, acompanhe o status no Overview.",
       "badge": "",
       "instructional": true,
-      "anim_start": 604.9333333333333,
-      "anim_end": 605.9333333333333,
-      "arrow_at": 605.9333333333333,
+      "anim_start": 613.2333333333332,
+      "anim_end": 614.2333333333332,
+      "arrow_at": 614.2333333333332,
       "anim_duration": 1.0,
       "static_duration": 7.0,
       "scene_duration": 8.0,
-      "scene_end": 612.9333333333333,
-      "spotlight": "0.02,0.06,0.28,0.38",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "scene_end": 621.2333333333332,
+      "spotlights_norm": [
+        [
+          0.0,
+          0.0571,
+          0.125,
+          0.3
+        ]
+      ],
+      "spotlights_px": [
+        [
+          374,
+          26,
+          555,
+          263
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 616.2333333333332,
+      "manual_review": "PASS",
+      "fail_reason": ""
     },
     {
       "id": "49_close",
@@ -1249,16 +2989,36 @@
       "body": "Na aba New Job voc\u00ea define, revisa e inicia o job.",
       "badge": "",
       "instructional": true,
-      "anim_start": 613.8666666666666,
-      "anim_end": 614.8666666666666,
-      "arrow_at": 614.8666666666666,
+      "anim_start": 622.1666666666665,
+      "anim_end": 623.1666666666665,
+      "arrow_at": 623.1666666666665,
       "anim_duration": 1.0,
       "static_duration": 7.0,
       "scene_duration": 8.0,
-      "scene_end": 621.8666666666666,
-      "spotlight": "0.10,0.14,0.90,0.72",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "scene_end": 630.1666666666665,
+      "spotlights_norm": [
+        [
+          0.12,
+          0.14,
+          0.88,
+          0.7
+        ]
+      ],
+      "spotlights_px": [
+        [
+          80,
+          100,
+          1840,
+          786
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 625.1666666666665,
+      "manual_review": "PASS",
+      "fail_reason": "card content spotlight"
     },
     {
       "id": "49b_close_b",
@@ -1266,16 +3026,36 @@
       "body": "Acompanhe o resultado no Overview. / Revise os campos antes de Launch Job.",
       "badge": "",
       "instructional": true,
-      "anim_start": 621.8666666666666,
-      "anim_end": 623.1333333333332,
-      "arrow_at": 623.1333333333332,
+      "anim_start": 630.1666666666665,
+      "anim_end": 631.4333333333332,
+      "arrow_at": 631.4333333333332,
       "anim_duration": 1.2666666666666666,
       "static_duration": 6.733333333333333,
       "scene_duration": 8.0,
-      "scene_end": 629.8666666666666,
-      "spotlight": "0.10,0.14,0.90,0.72",
-      "spotlight_ok": true,
-      "dim_alpha": 168
+      "scene_end": 638.1666666666665,
+      "spotlights_norm": [
+        [
+          0.12,
+          0.14,
+          0.88,
+          0.7
+        ]
+      ],
+      "spotlights_px": [
+        [
+          80,
+          100,
+          1840,
+          786
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 633.4333333333332,
+      "manual_review": "PASS",
+      "fail_reason": "card content spotlight"
     }
   ]
 }

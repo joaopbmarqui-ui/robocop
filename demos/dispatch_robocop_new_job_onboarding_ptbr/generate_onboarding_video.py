@@ -1,20 +1,27 @@
 #!/usr/bin/env python3
 """Produce the Dispatch (Robocop) New Job onboarding package (PT-BR).
 
-Captures the real Textual New Job UI via Pilot, synthesizes Brazilian Portuguese
-narration with edge-tts, burns synchronized captions, and writes:
+Captures the **real** Dispatch Textual UI from this repository:
 
-  demos/dispatch_robocop_new_job_onboarding_ptbr/
-    dispatch_robocop_new_job_onboarding_ptbr.mp4
-    dispatch_robocop_new_job_narration_ptbr.txt
-    dispatch_robocop_new_job_captions_ptbr.srt
-    dispatch_robocop_new_job_storyboard.md
+- Instantiates ``dispatch.app.DispatchApp`` (same entry as ``python -m dispatch``)
+- Waits for the normal Overview startup, then opens New Job with ``n``
+- Drives ``NewJobScreen`` widgets and calls ``save_screenshot``
+
+Backend Edge tools (Kerberos/Impala/SMTP) use the repo ``mocks/`` layer so the
+recording stays safe and offline. The pixels are the real TUI, not a redrawn
+mockup.
+
+Kerberos TTL comes from mock ``klist`` on PATH (not a patched probe). Impala
+query success is **not** demonstrated as production truth: after Launch we show
+the in-app ``Launched Job`` message and the Overview screen for monitoring
+navigation, without relying on a mock Impala SUCCEEDED state as evidence.
 
 Dependencies (install into .venv if missing):
-  textual (from requirements.txt), cairosvg, pillow, edge-tts
+  textual==8.2.5 from requirements.txt (or vendor wheels), cairosvg, pillow, edge-tts
 System: ffmpeg on PATH
 
-Run from repo root:
+Run from repo root (with mocks available):
+  source mocks/dev-env.sh
   /workspace/.venv/bin/python demos/dispatch_robocop_new_job_onboarding_ptbr/generate_onboarding_video.py
 """
 
@@ -118,7 +125,7 @@ SEGMENTS: list[Segment] = [
             "Antes de começar, tenha pronto: um arquivo SQL na pasta de onde você abriu o Dispatch; "
             "um ticket Kerberos válido — o indicador K R B na barra lateral deve mostrar tempo restante; "
             "e, se quiser notificação, um e-mail no formato nome arroba domínio. "
-            "O e-mail é opcional; Kerberos e o arquivo SQL são necessários para lançar."
+            "O campo Email (notifications) é opcional; Kerberos e o arquivo SQL são necessários para lançar."
         ),
         on_screen="Antes de começar",
         highlight="Lista de pré-requisitos",
@@ -225,12 +232,12 @@ SEGMENTS: list[Segment] = [
         id="11_email_subject",
         section="Preenchimento dos campos",
         narration=(
-            "Email notifications é opcional. Se preencher, use um endereço válido com arroba e domínio. "
+            "O campo Email (notifications) é opcional. Se preencher, use um endereço válido com arroba e domínio. "
             "Vários e-mails podem ser separados por vírgula. "
-            "Subject email também é opcional; o padrão é Dispatch Job. "
+            "Subject (email) também é opcional; o padrão é Dispatch Job. "
             "Define o assunto da notificação."
         ),
-        on_screen="Email e Subject — opcionais",
+        on_screen="Email (notifications) e Subject — opcionais",
         highlight="Campos Email e Subject",
         expected="Preenche notificação se desejar",
         capture="email_ok",
@@ -335,9 +342,9 @@ SEGMENTS: list[Segment] = [
         id="19_launched",
         section="Envio do job",
         narration=(
-            "Após confirmar, o Dispatch lança o runner em segundo plano e mostra a mensagem "
-            "Launched Job com o identificador do job. "
-            "O job passa a rodar de forma desacoplada da interface."
+            "Após confirmar, o Dispatch cria o job e inicia o runner em segundo plano, "
+            "mostrando a mensagem Launched Job com o identificador. "
+            "A interface não fica responsável pela execução durável do job."
         ),
         on_screen="✓ Launched Job …",
         highlight="Mensagem de sucesso",
@@ -348,12 +355,12 @@ SEGMENTS: list[Segment] = [
         id="20_next",
         section="Próximos passos",
         narration=(
-            "Para acompanhar o job, volte à Overview com Esc ou B. "
-            "Lá você vê jobs em execução e recentes, logs e status. "
-            "View Logs e a linha do job na Overview são o caminho para monitorar."
+            "Para acompanhar, volte à Overview com Esc ou B. "
+            "Nessa tela você monitora jobs em execução e recentes, além dos logs. "
+            "O status final no Impala depende do ambiente real; use Overview e View Logs para acompanhar."
         ),
         on_screen="Próximo: Overview",
-        highlight="Overview com job lançado",
+        highlight="Tela Overview para monitorar",
         expected="Sabe para onde ir depois",
         capture="overview",
     ),
@@ -408,19 +415,35 @@ def _bootstrap_demo_env() -> Path:
     os.environ["DISPATCH_MOCK_SCENARIO"] = "happy_path"
     os.environ["DISPATCH_MOCK_DELAY"] = "0"
     os.environ["DISPATCH_SCR_DIR"] = str(REPO_ROOT / "scr")
+    os.environ["DISPATCH_MOCK_STATE_DIR"] = str(DEMO_ROOT / "mock_state")
     os.environ["MAILHOST"] = "127.0.0.1:9"
-    os.environ["PATH"] = f"{REPO_ROOT / 'mocks' / 'bin'}{os.pathsep}{os.environ.get('PATH', '')}"
+    mocks_bin = str(REPO_ROOT / "mocks" / "bin")
+    os.environ["PATH"] = f"{mocks_bin}{os.pathsep}{os.environ.get('PATH', '')}"
     os.environ.pop("DISPATCH_EMAIL", None)
+    Path(os.environ["DISPATCH_MOCK_STATE_DIR"]).mkdir(parents=True, exist_ok=True)
 
     os.chdir(LAUNCH_CWD)
-
-    import dispatch.kerberos as kerberos
-
-    async def _fake_ttl() -> int:
-        return HEALTHY_TTL_SECONDS
-
-    kerberos.ticket_ttl_seconds = _fake_ttl  # type: ignore[assignment]
+    # Kerberos TTL comes from mocks/bin/klist on PATH — same seam as local
+    # `source mocks/dev-env.sh`, not a patched probe.
     return LAUNCH_CWD
+
+
+async def _open_new_job(pilot, app) -> None:
+    """User path: wait for Overview startup, then press N."""
+    from dispatch.screens.dashboard import DashboardScreen
+    from dispatch.screens.new_job import NewJobScreen
+
+    await pilot.pause(1.2)
+    # Startup worker pushes DashboardScreen; open New Job like the footer binding.
+    if not isinstance(app.screen, NewJobScreen):
+        if not isinstance(app.screen, DashboardScreen):
+            await pilot.pause(0.8)
+        await pilot.press("n")
+        await pilot.pause(1.0)
+    if not isinstance(app.screen, NewJobScreen):
+        # Fallback if the binding was swallowed during focus settle.
+        app.push_screen(NewJobScreen(LAUNCH_CWD))
+        await pilot.pause(1.0)
 
 
 async def _capture_svg(name: str, setup) -> Path:
@@ -442,36 +465,27 @@ async def _capture_svg(name: str, setup) -> Path:
     out_svg = FRAMES_DIR / f"{name}.svg"
     app = DispatchApp()
     async with app.run_test(size=TERMINAL_SIZE) as pilot:
-        # Skip full startup dashboard noise for focused New Job captures,
-        # except when the scenario explicitly needs Overview.
         if name == "overview":
-            await pilot.pause(0.8)
-            # Startup already pushed Dashboard; open New Job, launch, go back.
-            screen = NewJobScreen(LAUNCH_CWD)
-            app.push_screen(screen)
-            await pilot.pause(0.8)
-            screen.query_one("#src-sqlfile", RadioButton).value = True
-            screen.query_one("#dst-csv", RadioButton).value = True
-            await pilot.pause(0.2)
-            screen.query_one("#email", Input).value = "analyst@example.com"
-            screen.query_one("#subject", Input).value = "Onboarding demo"
-            await pilot.pause(0.2)
-            screen.query_one("#source", RadioSet).focus()
-            await pilot.click("#launch")
-            await pilot.pause(0.5)
-            await pilot.press("y")
-            await pilot.pause(1.5)
-            await pilot.press("escape")
-            await pilot.pause(1.0)
-            # Ensure Overview is visible
-            if not isinstance(app.screen, DashboardScreen):
-                app.push_screen(DashboardScreen())
-                await pilot.pause(1.0)
+            # Show the real Overview (monitoring destination) without presenting
+            # a mock Impala SUCCEEDED result as production evidence. Clear any
+            # jobs created by earlier capture steps in this shared data root.
+            import shutil as _shutil
+
+            jobs_dir = DATA_ROOT / ".dispatch" / "jobs"
+            if jobs_dir.exists():
+                for child in jobs_dir.iterdir():
+                    if child.is_dir():
+                        _shutil.rmtree(child, ignore_errors=True)
+                    else:
+                        child.unlink(missing_ok=True)
+            await pilot.pause(0.6)
+            # Always mount a fresh Overview after clearing jobs.
+            app.push_screen(DashboardScreen())
+            await pilot.pause(1.2)
             app.save_screenshot(filename=str(out_svg))
             return out_svg
 
-        app.push_screen(NewJobScreen(LAUNCH_CWD))
-        await pilot.pause(1.0)
+        await _open_new_job(pilot, app)
         await setup(pilot, app)
         if isinstance(app.screen, NewJobScreen):
             _neutral_email(app.screen)
@@ -661,7 +675,7 @@ async def _setups():
         "preview": preview,
         "confirm": confirm,
         "launched": launched,
-        "overview": launched,  # handled specially in _capture_svg
+        "overview": arrive,  # unused; overview path is special-cased in _capture_svg
     }
 
 
@@ -1012,7 +1026,7 @@ def _verify_captures(capture_pngs: dict[str, Path]) -> None:
         "confirm": (["Launch Job", "SqlFile", "Csv", "analyst@example.com"], ["mastercard.com"]),
         "launched": (["Launched Job"], ["mastercard.com"]),
         "preview": (["SQL Preview", "SELECT"], ["mastercard.com"]),
-        "overview": (["Overview", "Jobs", "SUCCEEDED"], ["mastercard.com"]),
+        "overview": (["Overview", "Jobs", "running first"], ["mastercard.com", "SUCCEEDED"]),
     }
     for key, (need, forbid) in checks.items():
         svg = FRAMES_DIR / f"{key}.svg"

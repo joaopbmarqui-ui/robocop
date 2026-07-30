@@ -32,127 +32,32 @@
     "id": "02_purpose",
     "topic": "O que \u00e9 Overview",
     "targets": [
-      "status-strip",
       "jobs-title",
       "jobs-table"
     ],
     "pre_margin_boxes": [
       [
         0.13,
-        0.0429,
-        1.0,
-        0.3407
+        0.0651,
+        0.995,
+        0.1731
       ]
     ],
     "final_boxes": [
       [
-        527,
-        20,
-        1540,
-        289
+        539,
+        50,
+        1522,
+        142
       ]
     ],
     "margins": [
-      14,
-      14,
-      20
+      2,
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
     "review_timestamp": 9.533333333333333,
-    "manual_review": "PASS",
-    "fail_reason": ""
-  },
-  {
-    "id": "10_sidebar_what",
-    "topic": "O que \u00e9",
-    "targets": [
-      "sidebar-nav"
-    ],
-    "pre_margin_boxes": [
-      [
-        0.0,
-        0.0571,
-        0.125,
-        0.3
-      ]
-    ],
-    "final_boxes": [
-      [
-        374,
-        26,
-        555,
-        263
-      ]
-    ],
-    "margins": [
-      20
-    ],
-    "n_cutouts": 1,
-    "overlay_opacity": 170,
-    "review_timestamp": 15.933333333333334,
-    "manual_review": "PASS",
-    "fail_reason": ""
-  },
-  {
-    "id": "10b_sidebar_learn",
-    "topic": "O que voc\u00ea aprende aqui",
-    "targets": [
-      "sidebar-nav"
-    ],
-    "pre_margin_boxes": [
-      [
-        0.0,
-        0.0571,
-        0.125,
-        0.3
-      ]
-    ],
-    "final_boxes": [
-      [
-        374,
-        26,
-        555,
-        263
-      ]
-    ],
-    "margins": [
-      20
-    ],
-    "n_cutouts": 1,
-    "overlay_opacity": 170,
-    "review_timestamp": 22.233333333333334,
-    "manual_review": "PASS",
-    "fail_reason": ""
-  },
-  {
-    "id": "10c_sidebar_action",
-    "topic": "O que fazer",
-    "targets": [
-      "sidebar-nav"
-    ],
-    "pre_margin_boxes": [
-      [
-        0.0,
-        0.0571,
-        0.125,
-        0.3
-      ]
-    ],
-    "final_boxes": [
-      [
-        374,
-        26,
-        555,
-        263
-      ]
-    ],
-    "margins": [
-      20
-    ],
-    "n_cutouts": 1,
-    "overlay_opacity": 170,
-    "review_timestamp": 28.233333333333334,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -166,24 +71,24 @@
       [
         0.13,
         0.0429,
-        1.0,
+        0.478,
         0.0571
       ]
     ],
     "final_boxes": [
       [
-        527,
-        26,
-        1540,
-        54
+        539,
+        32,
+        937,
+        48
       ]
     ],
     "margins": [
-      14
+      2
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 34.56666666666667,
+    "review_timestamp": 15.866666666666667,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -197,24 +102,24 @@
       [
         0.13,
         0.0429,
-        1.0,
+        0.478,
         0.0571
       ]
     ],
     "final_boxes": [
       [
-        527,
-        26,
-        1540,
-        54
+        539,
+        32,
+        937,
+        48
       ]
     ],
     "margins": [
-      14
+      2
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 40.86666666666667,
+    "review_timestamp": 22.166666666666668,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -226,57 +131,88 @@
     ],
     "pre_margin_boxes": [
       [
-        0.13,
+        0.1343,
         0.0429,
-        0.3214,
+        0.2301,
         0.0571
       ]
     ],
     "final_boxes": [
       [
-        527,
-        26,
-        771,
-        54
+        544,
+        32,
+        656,
+        48
       ]
     ],
     "margins": [
-      14
+      2
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 47.166666666666664,
+    "review_timestamp": 28.46666666666667,
     "manual_review": "PASS",
     "fail_reason": ""
   },
   {
     "id": "21b_krb_action",
-    "topic": "O que observar",
+    "topic": "Se estiver MISSING ou curto",
     "targets": [
       "status-strip"
     ],
     "pre_margin_boxes": [
       [
-        0.13,
+        0.1343,
         0.0429,
-        0.3214,
+        0.2301,
         0.0571
       ]
     ],
     "final_boxes": [
       [
-        527,
-        26,
-        771,
-        54
+        544,
+        32,
+        656,
+        48
       ]
     ],
     "margins": [
-      14
+      2
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 53.46666666666666,
+    "review_timestamp": 34.46666666666667,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "21c_krb_password",
+    "topic": "Senha",
+    "targets": [
+      "status-strip"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.1343,
+        0.0429,
+        0.2301,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        544,
+        32,
+        656,
+        48
+      ]
+    ],
+    "margins": [
+      2
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 40.46666666666667,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -288,26 +224,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.3214,
+        0.2257,
         0.0429,
-        0.5476,
+        0.304,
         0.0571
       ]
     ],
     "final_boxes": [
       [
-        743,
-        26,
-        1027,
-        54
+        647,
+        32,
+        740,
+        48
       ]
     ],
     "margins": [
-      14
+      2
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 59.86666666666666,
+    "review_timestamp": 46.86666666666667,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -319,26 +255,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.3214,
+        0.2257,
         0.0429,
-        0.5476,
+        0.304,
         0.0571
       ]
     ],
     "final_boxes": [
       [
-        743,
-        26,
-        1027,
-        54
+        647,
+        32,
+        740,
+        48
       ]
     ],
     "margins": [
-      14
+      2
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 66.1,
+    "review_timestamp": 53.1,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -350,26 +286,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.5476,
+        0.3084,
         0.0429,
-        0.7738,
+        0.3953,
         0.0571
       ]
     ],
     "final_boxes": [
       [
-        999,
-        26,
-        1283,
-        54
+        741,
+        32,
+        843,
+        48
       ]
     ],
     "margins": [
-      14
+      2
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 72.56666666666666,
+    "review_timestamp": 59.4,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -381,26 +317,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.5476,
+        0.3084,
         0.0429,
-        0.7738,
+        0.3953,
         0.0571
       ]
     ],
     "final_boxes": [
       [
-        999,
-        26,
-        1283,
-        54
+        741,
+        32,
+        843,
+        48
       ]
     ],
     "margins": [
-      14
+      2
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 78.73333333333333,
+    "review_timestamp": 65.66666666666666,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -412,26 +348,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.7738,
+        0.391,
         0.0429,
-        1.0,
+        0.4737,
         0.0571
       ]
     ],
     "final_boxes": [
       [
-        1255,
-        26,
-        1540,
-        54
+        834,
+        32,
+        932,
+        48
       ]
     ],
     "margins": [
-      14
+      2
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 85.03333333333333,
+    "review_timestamp": 71.96666666666665,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -443,26 +379,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.7738,
+        0.391,
         0.0429,
-        1.0,
+        0.4737,
         0.0571
       ]
     ],
     "final_boxes": [
       [
-        1255,
-        26,
-        1540,
-        54
+        834,
+        32,
+        932,
+        48
       ]
     ],
     "margins": [
-      14
+      2
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 91.13333333333333,
+    "review_timestamp": 78.06666666666665,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -475,25 +411,25 @@
     "pre_margin_boxes": [
       [
         0.13,
-        0.0571,
-        1.0,
+        0.0651,
+        0.4954,
         0.0857
       ]
     ],
     "final_boxes": [
       [
-        527,
-        36,
-        1540,
-        79
+        539,
+        50,
+        956,
+        71
       ]
     ],
     "margins": [
-      14
+      2
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 97.69999999999999,
+    "review_timestamp": 84.46666666666664,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -506,25 +442,25 @@
     "pre_margin_boxes": [
       [
         0.13,
-        0.0571,
-        1.0,
+        0.0651,
+        0.4954,
         0.0857
       ]
     ],
     "final_boxes": [
       [
-        527,
-        36,
-        1540,
-        79
+        539,
+        50,
+        956,
+        71
       ]
     ],
     "margins": [
-      14
+      2
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 103.96666666666665,
+    "review_timestamp": 90.66666666666664,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -544,18 +480,18 @@
     ],
     "final_boxes": [
       [
-        538,
-        55,
-        1528,
-        118
+        548,
+        65,
+        1518,
+        108
       ]
     ],
     "margins": [
-      14
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 110.43333333333332,
+    "review_timestamp": 97.13333333333331,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -575,18 +511,18 @@
     ],
     "final_boxes": [
       [
-        538,
-        55,
-        1528,
-        118
+        548,
+        65,
+        1518,
+        108
       ]
     ],
     "margins": [
-      14
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 116.43333333333332,
+    "review_timestamp": 103.13333333333331,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -601,23 +537,23 @@
         0.135,
         0.0857,
         0.995,
-        0.5957
+        0.2169
       ]
     ],
     "final_boxes": [
       [
-        526,
-        49,
-        1540,
-        502
+        542,
+        65,
+        1524,
+        179
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 122.86666666666666,
+    "review_timestamp": 109.56666666666665,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -632,23 +568,23 @@
         0.135,
         0.0857,
         0.995,
-        0.5957
+        0.2169
       ]
     ],
     "final_boxes": [
       [
-        526,
-        49,
-        1540,
-        502
+        542,
+        65,
+        1524,
+        179
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 129.06666666666666,
+    "review_timestamp": 115.76666666666665,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -662,24 +598,24 @@
       [
         0.135,
         0.0857,
-        0.2898,
-        0.3917
+        0.2167,
+        0.1731
       ]
     ],
     "final_boxes": [
       [
-        526,
-        49,
-        742,
-        337
+        542,
+        65,
+        643,
+        144
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 135.43333333333334,
+    "review_timestamp": 122.13333333333331,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -693,24 +629,24 @@
       [
         0.135,
         0.0857,
-        0.2898,
-        0.3917
+        0.2167,
+        0.1731
       ]
     ],
     "final_boxes": [
       [
-        526,
-        49,
-        742,
-        337
+        542,
+        65,
+        643,
+        144
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 141.43333333333334,
+    "review_timestamp": 128.13333333333333,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -722,26 +658,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.2898,
+        0.2167,
         0.0857,
-        0.479,
-        0.3917
+        0.3027,
+        0.1731
       ]
     ],
     "final_boxes": [
       [
-        702,
-        49,
-        956,
-        337
+        635,
+        65,
+        740,
+        144
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 147.73333333333335,
+    "review_timestamp": 134.43333333333334,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -753,26 +689,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.2898,
+        0.2167,
         0.0857,
-        0.479,
-        0.3917
+        0.3027,
+        0.1731
       ]
     ],
     "final_boxes": [
       [
-        702,
-        49,
-        956,
-        337
+        635,
+        65,
+        740,
+        144
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 153.83333333333334,
+    "review_timestamp": 140.53333333333333,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -784,26 +720,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.479,
+        0.3027,
         0.0857,
-        0.651,
-        0.3917
+        0.4059,
+        0.1731
       ]
     ],
     "final_boxes": [
       [
-        916,
-        49,
-        1150,
-        337
+        732,
+        65,
+        857,
+        144
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 160.13333333333335,
+    "review_timestamp": 146.83333333333334,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -815,26 +751,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.479,
+        0.3027,
         0.0857,
-        0.651,
-        0.3917
+        0.4059,
+        0.1731
       ]
     ],
     "final_boxes": [
       [
-        916,
-        49,
-        1150,
-        337
+        732,
+        65,
+        857,
+        144
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 166.13333333333335,
+    "review_timestamp": 152.83333333333334,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -846,26 +782,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.651,
+        0.4059,
         0.0857,
-        0.8402,
-        0.3917
+        0.4893,
+        0.1731
       ]
     ],
     "final_boxes": [
       [
-        1110,
-        49,
-        1365,
-        337
+        849,
+        65,
+        951,
+        144
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 172.50000000000003,
+    "review_timestamp": 159.20000000000002,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -877,26 +813,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.651,
+        0.4059,
         0.0857,
-        0.8402,
-        0.3917
+        0.4893,
+        0.1731
       ]
     ],
     "final_boxes": [
       [
-        1110,
-        49,
-        1365,
-        337
+        849,
+        65,
+        951,
+        144
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 178.83333333333337,
+    "review_timestamp": 165.53333333333336,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -908,26 +844,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.6338,
-        0.246,
-        0.8746,
-        0.348
+        0.4059,
+        0.1134,
+        0.4893,
+        0.1294
       ]
     ],
     "final_boxes": [
       [
-        1091,
-        179,
-        1404,
-        301
+        849,
+        87,
+        951,
+        108
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 185.13333333333338,
+    "review_timestamp": 171.83333333333337,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -939,26 +875,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.6338,
-        0.246,
-        0.8746,
-        0.348
+        0.4059,
+        0.1134,
+        0.4893,
+        0.1294
       ]
     ],
     "final_boxes": [
       [
-        1091,
-        179,
-        1404,
-        301
+        849,
+        87,
+        951,
+        108
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 191.1666666666667,
+    "review_timestamp": 177.8666666666667,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -970,26 +906,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.6338,
-        0.144,
-        0.8746,
-        0.246
+        0.4059,
+        0.0988,
+        0.4893,
+        0.1149
       ]
     ],
     "final_boxes": [
       [
-        1091,
-        96,
-        1404,
-        219
+        849,
+        76,
+        951,
+        97
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 197.46666666666673,
+    "review_timestamp": 184.1666666666667,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1001,26 +937,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.6338,
-        0.144,
-        0.8746,
-        0.246
+        0.4059,
+        0.0988,
+        0.4893,
+        0.1149
       ]
     ],
     "final_boxes": [
       [
-        1091,
-        96,
-        1404,
-        219
+        849,
+        76,
+        951,
+        97
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 203.50000000000006,
+    "review_timestamp": 190.20000000000005,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1032,26 +968,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.6338,
-        0.348,
-        0.8746,
-        0.45
+        0.4059,
+        0.1557,
+        0.4893,
+        0.1731
       ]
     ],
     "final_boxes": [
       [
-        1091,
-        261,
-        1404,
-        384
+        849,
+        122,
+        951,
+        144
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 209.80000000000007,
+    "review_timestamp": 196.50000000000006,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1063,26 +999,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.6338,
-        0.348,
-        0.8746,
-        0.45
+        0.4059,
+        0.1557,
+        0.4893,
+        0.1731
       ]
     ],
     "final_boxes": [
       [
-        1091,
-        261,
-        1404,
-        384
+        849,
+        122,
+        951,
+        144
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 215.86666666666673,
+    "review_timestamp": 202.56666666666672,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1094,26 +1030,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.6338,
-        0.4571,
-        0.8746,
-        0.5611
+        0.4059,
+        0.1429,
+        0.4893,
+        0.16
       ]
     ],
     "final_boxes": [
       [
-        1091,
-        350,
-        1404,
-        474
+        849,
+        111,
+        951,
+        133
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 222.36666666666673,
+    "review_timestamp": 209.06666666666672,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1125,26 +1061,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.6338,
-        0.4571,
-        0.8746,
-        0.5611
+        0.4059,
+        0.1429,
+        0.4893,
+        0.16
       ]
     ],
     "final_boxes": [
       [
-        1091,
-        350,
-        1404,
-        474
+        849,
+        111,
+        951,
+        133
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 228.40000000000006,
+    "review_timestamp": 215.10000000000005,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1156,26 +1092,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.6338,
-        0.552,
-        0.8746,
-        0.654
+        0.4059,
+        0.1272,
+        0.4893,
+        0.144
       ]
     ],
     "final_boxes": [
       [
-        1091,
-        427,
-        1404,
-        549
+        849,
+        99,
+        951,
+        120
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 234.70000000000007,
+    "review_timestamp": 221.40000000000006,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1187,26 +1123,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.6338,
-        0.552,
-        0.8746,
-        0.654
+        0.4059,
+        0.1272,
+        0.4893,
+        0.144
       ]
     ],
     "final_boxes": [
       [
-        1091,
-        427,
-        1404,
-        549
+        849,
+        99,
+        951,
+        120
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 240.80000000000007,
+    "review_timestamp": 227.50000000000006,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1218,26 +1154,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.8402,
+        0.5048,
         0.0857,
-        0.995,
-        0.3917
+        0.5779,
+        0.1731
       ]
     ],
     "final_boxes": [
       [
-        1325,
-        49,
-        1540,
-        337
+        961,
+        65,
+        1052,
+        144
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 247.3333333333334,
+    "review_timestamp": 234.0333333333334,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1249,26 +1185,26 @@
     ],
     "pre_margin_boxes": [
       [
-        0.8402,
+        0.5048,
         0.0857,
-        0.995,
-        0.3917
+        0.5779,
+        0.1731
       ]
     ],
     "final_boxes": [
       [
-        1325,
-        49,
-        1540,
-        337
+        961,
+        65,
+        1052,
+        144
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 253.4333333333334,
+    "review_timestamp": 240.13333333333338,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1288,18 +1224,18 @@
     ],
     "final_boxes": [
       [
-        526,
-        54,
-        1540,
-        119
+        542,
+        65,
+        1524,
+        108
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 259.80000000000007,
+    "review_timestamp": 246.50000000000006,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1319,18 +1255,18 @@
     ],
     "final_boxes": [
       [
-        526,
-        54,
-        1540,
-        119
+        542,
+        65,
+        1524,
+        108
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 265.80000000000007,
+    "review_timestamp": 252.50000000000006,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1352,30 +1288,30 @@
         0.135,
         0.1286,
         0.995,
-        0.5136
+        0.2266
       ]
     ],
     "final_boxes": [
       [
-        526,
-        54,
-        1540,
-        119
+        542,
+        65,
+        1524,
+        108
       ],
       [
-        526,
-        84,
-        1540,
-        435
+        542,
+        100,
+        1524,
+        187
       ]
     ],
     "margins": [
-      20,
-      20
+      4,
+      4
     ],
     "n_cutouts": 2,
     "overlay_opacity": 170,
-    "review_timestamp": 272.2333333333334,
+    "review_timestamp": 258.9333333333334,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1395,18 +1331,18 @@
     ],
     "final_boxes": [
       [
-        526,
-        639,
-        1540,
-        749
+        542,
+        655,
+        1524,
+        733
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 279.63333333333344,
+    "review_timestamp": 266.3333333333334,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1426,18 +1362,18 @@
     ],
     "final_boxes": [
       [
-        526,
-        639,
-        1540,
-        749
+        542,
+        655,
+        1524,
+        733
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 285.9000000000001,
+    "review_timestamp": 272.6000000000001,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1457,18 +1393,18 @@
     ],
     "final_boxes": [
       [
-        544,
-        663,
-        1523,
-        690
+        554,
+        667,
+        1513,
+        686
       ]
     ],
     "margins": [
-      14
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 292.2000000000001,
+    "review_timestamp": 278.9000000000001,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1488,18 +1424,18 @@
     ],
     "final_boxes": [
       [
-        538,
-        667,
-        1529,
-        732
+        554,
+        678,
+        1513,
+        721
       ]
     ],
     "margins": [
-      20
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 298.60000000000014,
+    "review_timestamp": 285.3000000000001,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1519,18 +1455,18 @@
     ],
     "final_boxes": [
       [
-        532,
-        749,
-        1307,
-        806
+        542,
+        759,
+        1297,
+        802
       ]
     ],
     "margins": [
-      14
+      4
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 305.1333333333335,
+    "review_timestamp": 291.8333333333335,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1550,18 +1486,18 @@
     ],
     "final_boxes": [
       [
-        1283,
-        748,
-        1383,
-        806
+        1293,
+        757,
+        1373,
+        804
       ]
     ],
     "margins": [
-      16
+      6
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 311.4333333333335,
+    "review_timestamp": 298.1333333333335,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1581,18 +1517,18 @@
     ],
     "final_boxes": [
       [
-        1357,
-        748,
-        1457,
-        806
+        1367,
+        757,
+        1447,
+        804
       ]
     ],
     "margins": [
-      16
+      6
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 317.8000000000002,
+    "review_timestamp": 304.50000000000017,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1612,18 +1548,18 @@
     ],
     "final_boxes": [
       [
-        1357,
-        748,
-        1457,
-        806
+        1367,
+        757,
+        1447,
+        804
       ]
     ],
     "margins": [
-      16
+      6
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 323.8000000000002,
+    "review_timestamp": 310.50000000000017,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1643,18 +1579,18 @@
     ],
     "final_boxes": [
       [
-        1430,
-        748,
-        1530,
-        806
+        1440,
+        757,
+        1520,
+        804
       ]
     ],
     "margins": [
-      16
+      6
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 330.2000000000002,
+    "review_timestamp": 316.9000000000002,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1674,18 +1610,18 @@
     ],
     "final_boxes": [
       [
-        1430,
-        748,
-        1530,
-        806
+        1440,
+        757,
+        1520,
+        804
       ]
     ],
     "margins": [
-      16
+      6
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 336.2000000000002,
+    "review_timestamp": 322.9000000000002,
     "manual_review": "PASS",
     "fail_reason": ""
   },
@@ -1714,36 +1650,7 @@
     ],
     "n_cutouts": 1,
     "overlay_opacity": 170,
-    "review_timestamp": 342.2000000000002,
-    "manual_review": "PASS",
-    "fail_reason": "card content spotlight"
-  },
-  {
-    "id": "90b_close_b",
-    "topic": "Pr\u00f3ximo passo",
-    "targets": [],
-    "pre_margin_boxes": [
-      [
-        0.12,
-        0.14,
-        0.88,
-        0.7
-      ]
-    ],
-    "final_boxes": [
-      [
-        80,
-        100,
-        1840,
-        786
-      ]
-    ],
-    "margins": [
-      20
-    ],
-    "n_cutouts": 1,
-    "overlay_opacity": 170,
-    "review_timestamp": 348.33333333333354,
+    "review_timestamp": 328.9000000000002,
     "manual_review": "PASS",
     "fail_reason": "card content spotlight"
   }

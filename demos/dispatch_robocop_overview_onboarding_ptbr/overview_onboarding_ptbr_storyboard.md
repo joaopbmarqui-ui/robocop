@@ -27,10 +27,10 @@ Part 2 of the Dispatch onboarding series (after New Job).
 ## 02_purpose — Abertura
 
 - **Elemento:** O que é Overview
-- **Targets:** status-strip, jobs-title, jobs-table
+- **Targets:** jobs-title, jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.13, 0.0429, 1.0, 0.3407]]
-- **Final px boxes:** [[527, 20, 1540, 289]]
+- **Norm cutouts:** [[0.13, 0.0651, 0.995, 0.1731]]
+- **Final px boxes:** [[539, 50, 1522, 142]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que é Overview — Tela principal para acompanhar / jobs enviados e seu status.
@@ -43,78 +43,21 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Manual review:** PASS
 - **Evidência:** DashboardScreen
 
-## 10_sidebar_what — Navegação
-
-- **Elemento:** O que é
-- **Targets:** sidebar-nav
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.0, 0.0571, 0.125, 0.3]]
-- **Final px boxes:** [[374, 26, 555, 263]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** O que é — A barra lateral mostra onde você está / e as outras áreas do Dispatch.
-- **Typing:** 00:00:12,833 → 00:00:13,933 (1.10s)
-- **Hold complete:** 00:00:13,933 → 00:00:18,933 (5.00s)
-- **Spotlight group:** sidebar (reused=False)
-- **SFX / duck:** 00:00:12,833
-- **Seta:** 00:00:13,933
-- **Duração cena:** 6.10s
-- **Manual review:** PASS
-- **Evidência:** Sidebar
-
-## 10b_sidebar_learn — Navegação
-
-- **Elemento:** O que você aprende aqui
-- **Targets:** sidebar-nav
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.0, 0.0571, 0.125, 0.3]]
-- **Final px boxes:** [[374, 26, 555, 263]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** O que você aprende aqui — Overview fica destacado quando esta / é a tela ativa de monitoramento.
-- **Typing:** 00:00:18,933 → 00:00:20,233 (1.30s)
-- **Hold complete:** 00:00:20,233 → 00:00:25,233 (5.00s)
-- **Spotlight group:** sidebar (reused=True)
-- **SFX / duck:** 00:00:18,933
-- **Seta:** 00:00:20,233
-- **Duração cena:** 6.30s
-- **Manual review:** PASS
-- **Evidência:** active_screen="overview"
-
-## 10c_sidebar_action — Navegação
-
-- **Elemento:** O que fazer
-- **Targets:** sidebar-nav
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.0, 0.0571, 0.125, 0.3]]
-- **Final px boxes:** [[374, 26, 555, 263]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** O que fazer — Use a barra para ir a New Job, / Logs, History ou Browse.
-- **Typing:** 00:00:25,233 → 00:00:26,233 (1.00s)
-- **Hold complete:** 00:00:26,233 → 00:00:31,233 (5.00s)
-- **Spotlight group:** sidebar (reused=True)
-- **SFX / duck:** 00:00:25,233
-- **Seta:** 00:00:26,233
-- **Duração cena:** 6.00s
-- **Manual review:** PASS
-- **Evidência:** NavItem
-
 ## 20_strip_what — Status strip
 
 - **Elemento:** O que é
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.13, 0.0429, 1.0, 0.0571]]
-- **Final px boxes:** [[527, 26, 1540, 54]]
+- **Norm cutouts:** [[0.13, 0.0429, 0.478, 0.0571]]
+- **Final px boxes:** [[539, 32, 937, 48]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** O que é — A faixa superior resume o estado / do ambiente e dos jobs recentes.
-- **Typing:** 00:00:31,533 → 00:00:32,567 (1.03s)
-- **Hold complete:** 00:00:32,567 → 00:00:37,567 (5.00s)
+- **Diálogo:** O que é — A faixa superior resume autenticação / e o monitoramento dos jobs.
+- **Typing:** 00:00:12,833 → 00:00:13,867 (1.03s)
+- **Hold complete:** 00:00:13,867 → 00:00:18,867 (5.00s)
 - **Spotlight group:** status-strip (reused=False)
-- **SFX / duck:** 00:00:31,533
-- **Seta:** 00:00:32,567
+- **SFX / duck:** 00:00:12,833
+- **Seta:** 00:00:13,867
 - **Duração cena:** 6.03s
 - **Manual review:** PASS
 - **Evidência:** #status-strip
@@ -124,16 +67,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que você aprende aqui
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.13, 0.0429, 1.0, 0.0571]]
-- **Final px boxes:** [[527, 26, 1540, 54]]
+- **Norm cutouts:** [[0.13, 0.0429, 0.478, 0.0571]]
+- **Final px boxes:** [[539, 32, 937, 48]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** O que você aprende aqui — Em um olhar, vê autenticação, / jobs em execução e totais de 7 dias.
-- **Typing:** 00:00:37,567 → 00:00:38,867 (1.30s)
-- **Hold complete:** 00:00:38,867 → 00:00:43,867 (5.00s)
+- **Diálogo:** O que você aprende aqui — Em um olhar: autenticação, execução / e histórico dos últimos 7 dias.
+- **Typing:** 00:00:18,867 → 00:00:20,167 (1.30s)
+- **Hold complete:** 00:00:20,167 → 00:00:25,167 (5.00s)
 - **Spotlight group:** status-strip (reused=True)
-- **SFX / duck:** 00:00:37,567
-- **Seta:** 00:00:38,867
+- **SFX / duck:** 00:00:18,867
+- **Seta:** 00:00:20,167
 - **Duração cena:** 6.30s
 - **Manual review:** PASS
 - **Evidência:** _update_status_strip
@@ -143,54 +86,73 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** KERBEROS
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.13, 0.0429, 0.3214, 0.0571]]
-- **Final px boxes:** [[527, 26, 771, 54]]
+- **Norm cutouts:** [[0.1343, 0.0429, 0.2301, 0.0571]]
+- **Final px boxes:** [[544, 32, 656, 48]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** KERBEROS — Indica se sua autenticação / está disponível para executar jobs.
-- **Typing:** 00:00:44,167 → 00:00:45,167 (1.00s)
-- **Hold complete:** 00:00:45,167 → 00:00:50,167 (5.00s)
+- **Typing:** 00:00:25,467 → 00:00:26,467 (1.00s)
+- **Hold complete:** 00:00:26,467 → 00:00:31,467 (5.00s)
 - **Spotlight group:** krb (reused=False)
-- **SFX / duck:** 00:00:44,167
-- **Seta:** 00:00:45,167
+- **SFX / duck:** 00:00:25,467
+- **Seta:** 00:00:26,467
 - **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** KERBEROS label
 
 ## 21b_krb_action — Status strip
 
-- **Elemento:** O que observar
+- **Elemento:** Se estiver MISSING ou curto
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.13, 0.0429, 0.3214, 0.0571]]
-- **Final px boxes:** [[527, 26, 771, 54]]
+- **Norm cutouts:** [[0.1343, 0.0429, 0.2301, 0.0571]]
+- **Final px boxes:** [[544, 32, 656, 48]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** O que observar — Se aparecer MISSING ou tempo curto, / resolva a autenticação antes de enviar.
-- **Typing:** 00:00:50,167 → 00:00:51,467 (1.30s)
-- **Hold complete:** 00:00:51,467 → 00:00:56,467 (5.00s)
+- **Diálogo:** Se estiver MISSING ou curto — Abra um novo terminal e execute: / kinit
+- **Typing:** 00:00:31,467 → 00:00:32,467 (1.00s)
+- **Hold complete:** 00:00:32,467 → 00:00:37,467 (5.00s)
 - **Spotlight group:** krb (reused=True)
-- **SFX / duck:** 00:00:50,167
-- **Seta:** 00:00:51,467
-- **Duração cena:** 6.30s
+- **SFX / duck:** 00:00:31,467
+- **Seta:** 00:00:32,467
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
-- **Evidência:** format_kerberos_ttl
+- **Evidência:** kinit recovery
+
+## 21c_krb_password — Status strip
+
+- **Elemento:** Senha
+- **Targets:** status-strip
+- **Font:** Carlito 38px
+- **Norm cutouts:** [[0.1343, 0.0429, 0.2301, 0.0571]]
+- **Final px boxes:** [[544, 32, 656, 48]]
+- **Cutouts:** 1
+- **Overlay opacity:** 170/255
+- **Diálogo:** Senha — Informe sua senha Windows / quando o terminal solicitar.
+- **Typing:** 00:00:37,467 → 00:00:38,467 (1.00s)
+- **Hold complete:** 00:00:38,467 → 00:00:43,467 (5.00s)
+- **Spotlight group:** krb (reused=True)
+- **SFX / duck:** 00:00:37,467
+- **Seta:** 00:00:38,467
+- **Duração cena:** 6.00s
+- **Manual review:** PASS
+- **Evidência:** kinit password prompt
 
 ## 22_running_what — Status strip
 
 - **Elemento:** RUNNING
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.3214, 0.0429, 0.5476, 0.0571]]
-- **Final px boxes:** [[743, 26, 1027, 54]]
+- **Norm cutouts:** [[0.2257, 0.0429, 0.304, 0.0571]]
+- **Final px boxes:** [[647, 32, 740, 48]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** RUNNING — Quantos jobs estão em execução agora, / em relação ao limite de vagas.
-- **Typing:** 00:00:56,767 → 00:00:57,867 (1.10s)
-- **Hold complete:** 00:00:57,867 → 00:01:02,867 (5.00s)
+- **Typing:** 00:00:43,767 → 00:00:44,867 (1.10s)
+- **Hold complete:** 00:00:44,867 → 00:00:49,867 (5.00s)
 - **Spotlight group:** running-cap (reused=False)
-- **SFX / duck:** 00:00:56,767
-- **Seta:** 00:00:57,867
+- **SFX / duck:** 00:00:43,767
+- **Seta:** 00:00:44,867
 - **Duração cena:** 6.10s
 - **Manual review:** PASS
 - **Evidência:** RUNNING / RUNNING_CAP
@@ -200,16 +162,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que você aprende aqui
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.3214, 0.0429, 0.5476, 0.0571]]
-- **Final px boxes:** [[743, 26, 1027, 54]]
+- **Norm cutouts:** [[0.2257, 0.0429, 0.304, 0.0571]]
+- **Final px boxes:** [[647, 32, 740, 48]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que você aprende aqui — O limite é 2 vagas. Pending e Running / ocupam vaga de execução.
-- **Typing:** 00:01:02,867 → 00:01:04,100 (1.23s)
-- **Hold complete:** 00:01:04,100 → 00:01:09,100 (5.00s)
+- **Typing:** 00:00:49,867 → 00:00:51,100 (1.23s)
+- **Hold complete:** 00:00:51,100 → 00:00:56,100 (5.00s)
 - **Spotlight group:** running-cap (reused=True)
-- **SFX / duck:** 00:01:02,867
-- **Seta:** 00:01:04,100
+- **SFX / duck:** 00:00:49,867
+- **Seta:** 00:00:51,100
 - **Duração cena:** 6.23s
 - **Manual review:** PASS
 - **Evidência:** jobs.RUNNING_CAP
@@ -219,17 +181,17 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** FINISHED 7D
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.5476, 0.0429, 0.7738, 0.0571]]
-- **Final px boxes:** [[999, 26, 1283, 54]]
+- **Norm cutouts:** [[0.3084, 0.0429, 0.3953, 0.0571]]
+- **Final px boxes:** [[741, 32, 843, 48]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** FINISHED 7D — Quantos jobs concluíram com sucesso / nos últimos 7 dias (lista ativa).
-- **Typing:** 00:01:09,400 → 00:01:10,567 (1.17s)
-- **Hold complete:** 00:01:10,567 → 00:01:15,567 (5.00s)
+- **Diálogo:** FINISHED 7D — Histórico de jobs com sucesso / nos últimos 7 dias.
+- **Typing:** 00:00:56,400 → 00:00:57,400 (1.00s)
+- **Hold complete:** 00:00:57,400 → 00:01:02,400 (5.00s)
 - **Spotlight group:** finished (reused=False)
-- **SFX / duck:** 00:01:09,400
-- **Seta:** 00:01:10,567
-- **Duração cena:** 6.17s
+- **SFX / duck:** 00:00:56,400
+- **Seta:** 00:00:57,400
+- **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** FINISHED 7D
 
@@ -238,35 +200,35 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que você aprende aqui
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.5476, 0.0429, 0.7738, 0.0571]]
-- **Final px boxes:** [[999, 26, 1283, 54]]
+- **Norm cutouts:** [[0.3084, 0.0429, 0.3953, 0.0571]]
+- **Final px boxes:** [[741, 32, 843, 48]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** O que você aprende aqui — Serve para confirmar entregas recentes / sem abrir cada job.
-- **Typing:** 00:01:15,567 → 00:01:16,733 (1.17s)
-- **Hold complete:** 00:01:16,733 → 00:01:21,733 (5.00s)
+- **Diálogo:** O que você aprende aqui — Permite ver sete dias de histórico / e confirmar entregas recentes.
+- **Typing:** 00:01:02,400 → 00:01:03,667 (1.27s)
+- **Hold complete:** 00:01:03,667 → 00:01:08,667 (5.00s)
 - **Spotlight group:** finished (reused=True)
-- **SFX / duck:** 00:01:15,567
-- **Seta:** 00:01:16,733
-- **Duração cena:** 6.17s
+- **SFX / duck:** 00:01:02,400
+- **Seta:** 00:01:03,667
+- **Duração cena:** 6.27s
 - **Manual review:** PASS
-- **Evidência:** Succeeded count
+- **Evidência:** Succeeded count / ACTIVE_WINDOW
 
 ## 24_failed_what — Status strip
 
 - **Elemento:** FAILED 7D
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.7738, 0.0429, 1.0, 0.0571]]
-- **Final px boxes:** [[1255, 26, 1540, 54]]
+- **Norm cutouts:** [[0.391, 0.0429, 0.4737, 0.0571]]
+- **Final px boxes:** [[834, 32, 932, 48]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** FAILED 7D — Quantos jobs falharam / nos últimos 7 dias (lista ativa).
-- **Typing:** 00:01:22,033 → 00:01:23,033 (1.00s)
-- **Hold complete:** 00:01:23,033 → 00:01:28,033 (5.00s)
+- **Diálogo:** FAILED 7D — Histórico de jobs que falharam / nos últimos 7 dias.
+- **Typing:** 00:01:08,967 → 00:01:09,967 (1.00s)
+- **Hold complete:** 00:01:09,967 → 00:01:14,967 (5.00s)
 - **Spotlight group:** failed-count (reused=False)
-- **SFX / duck:** 00:01:22,033
-- **Seta:** 00:01:23,033
+- **SFX / duck:** 00:01:08,967
+- **Seta:** 00:01:09,967
 - **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** FAILED 7D
@@ -276,16 +238,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que fazer
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.7738, 0.0429, 1.0, 0.0571]]
-- **Final px boxes:** [[1255, 26, 1540, 54]]
+- **Norm cutouts:** [[0.391, 0.0429, 0.4737, 0.0571]]
+- **Final px boxes:** [[834, 32, 932, 48]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que fazer — Se o número subir, revise os jobs / FAILED antes de enviar outros.
-- **Typing:** 00:01:28,033 → 00:01:29,133 (1.10s)
-- **Hold complete:** 00:01:29,133 → 00:01:34,133 (5.00s)
+- **Typing:** 00:01:14,967 → 00:01:16,067 (1.10s)
+- **Hold complete:** 00:01:16,067 → 00:01:21,067 (5.00s)
 - **Spotlight group:** failed-count (reused=True)
-- **SFX / duck:** 00:01:28,033
-- **Seta:** 00:01:29,133
+- **SFX / duck:** 00:01:14,967
+- **Seta:** 00:01:16,067
 - **Duração cena:** 6.10s
 - **Manual review:** PASS
 - **Evidência:** Failed count
@@ -295,17 +257,17 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Lista de jobs
 - **Targets:** jobs-title
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.13, 0.0571, 1.0, 0.0857]]
-- **Final px boxes:** [[527, 36, 1540, 79]]
+- **Norm cutouts:** [[0.13, 0.0651, 0.4954, 0.0857]]
+- **Final px boxes:** [[539, 50, 956, 71]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** Lista de jobs — Jobs · running first · last 7 days: / lista dos jobs recentes para monitorar.
-- **Typing:** 00:01:34,433 → 00:01:35,700 (1.27s)
-- **Hold complete:** 00:01:35,700 → 00:01:40,700 (5.00s)
+- **Diálogo:** Lista de jobs — Jobs · running first · last 7 dias: / lista do histórico recente.
+- **Typing:** 00:01:21,367 → 00:01:22,467 (1.10s)
+- **Hold complete:** 00:01:22,467 → 00:01:27,467 (5.00s)
 - **Spotlight group:** jobs-title (reused=False)
-- **SFX / duck:** 00:01:34,433
-- **Seta:** 00:01:35,700
-- **Duração cena:** 6.27s
+- **SFX / duck:** 00:01:21,367
+- **Seta:** 00:01:22,467
+- **Duração cena:** 6.10s
 - **Manual review:** PASS
 - **Evidência:** #jobs-title
 
@@ -314,17 +276,17 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que você aprende aqui
 - **Targets:** jobs-title
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.13, 0.0571, 1.0, 0.0857]]
-- **Final px boxes:** [[527, 36, 1540, 79]]
+- **Norm cutouts:** [[0.13, 0.0651, 0.4954, 0.0857]]
+- **Final px boxes:** [[539, 50, 956, 71]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
-- **Diálogo:** O que você aprende aqui — Jobs em execução ficam no topo. / A janela cobre os últimos 7 dias.
-- **Typing:** 00:01:40,700 → 00:01:41,967 (1.27s)
-- **Hold complete:** 00:01:41,967 → 00:01:46,967 (5.00s)
+- **Diálogo:** O que você aprende aqui — Execução no topo; a janela cobre / sete dias de monitoramento.
+- **Typing:** 00:01:27,467 → 00:01:28,667 (1.20s)
+- **Hold complete:** 00:01:28,667 → 00:01:33,667 (5.00s)
 - **Spotlight group:** jobs-title (reused=True)
-- **SFX / duck:** 00:01:40,700
-- **Seta:** 00:01:41,967
-- **Duração cena:** 6.27s
+- **SFX / duck:** 00:01:27,467
+- **Seta:** 00:01:28,667
+- **Duração cena:** 6.20s
 - **Manual review:** PASS
 - **Evidência:** active_jobs ACTIVE_WINDOW
 
@@ -334,15 +296,15 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** jobs-empty
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.14, 0.0857, 0.99, 0.1286]]
-- **Final px boxes:** [[538, 55, 1528, 118]]
+- **Final px boxes:** [[548, 65, 1518, 108]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Lista vazia — Quando não há jobs nos últimos 7 dias, / a tela orienta a criar um novo.
-- **Typing:** 00:01:47,267 → 00:01:48,433 (1.17s)
-- **Hold complete:** 00:01:48,433 → 00:01:53,433 (5.00s)
+- **Typing:** 00:01:33,967 → 00:01:35,133 (1.17s)
+- **Hold complete:** 00:01:35,133 → 00:01:40,133 (5.00s)
 - **Spotlight group:** empty (reused=False)
-- **SFX / duck:** 00:01:47,267
-- **Seta:** 00:01:48,433
+- **SFX / duck:** 00:01:33,967
+- **Seta:** 00:01:35,133
 - **Duração cena:** 6.17s
 - **Manual review:** PASS
 - **Evidência:** #jobs-empty
@@ -353,15 +315,15 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** jobs-empty
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.14, 0.0857, 0.99, 0.1286]]
-- **Final px boxes:** [[538, 55, 1528, 118]]
+- **Final px boxes:** [[548, 65, 1518, 108]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que fazer — Pressione N ou New Job para / enviar a primeira execução.
-- **Typing:** 00:01:53,433 → 00:01:54,433 (1.00s)
-- **Hold complete:** 00:01:54,433 → 00:01:59,433 (5.00s)
+- **Typing:** 00:01:40,133 → 00:01:41,133 (1.00s)
+- **Hold complete:** 00:01:41,133 → 00:01:46,133 (5.00s)
 - **Spotlight group:** empty (reused=True)
-- **SFX / duck:** 00:01:53,433
-- **Seta:** 00:01:54,433
+- **SFX / duck:** 00:01:40,133
+- **Seta:** 00:01:41,133
 - **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** No jobs in the last 7 days
@@ -371,16 +333,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que é
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.135, 0.0857, 0.995, 0.5957]]
-- **Final px boxes:** [[526, 49, 1540, 502]]
+- **Norm cutouts:** [[0.135, 0.0857, 0.995, 0.2169]]
+- **Final px boxes:** [[542, 65, 1524, 179]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que é — A tabela lista cada job com identidade, / origem, destino, estado e tempo.
-- **Typing:** 00:01:59,733 → 00:02:00,867 (1.13s)
-- **Hold complete:** 00:02:00,867 → 00:02:05,867 (5.00s)
+- **Typing:** 00:01:46,433 → 00:01:47,567 (1.13s)
+- **Hold complete:** 00:01:47,567 → 00:01:52,567 (5.00s)
 - **Spotlight group:** table (reused=False)
-- **SFX / duck:** 00:01:59,733
-- **Seta:** 00:02:00,867
+- **SFX / duck:** 00:01:46,433
+- **Seta:** 00:01:47,567
 - **Duração cena:** 6.13s
 - **Manual review:** PASS
 - **Evidência:** #jobs-table
@@ -390,16 +352,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que você aprende aqui
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.135, 0.0857, 0.995, 0.5957]]
-- **Final px boxes:** [[526, 49, 1540, 502]]
+- **Norm cutouts:** [[0.135, 0.0857, 0.995, 0.2169]]
+- **Final px boxes:** [[542, 65, 1524, 179]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que você aprende aqui — Percorra as linhas para achar / sucesso, execução ou problemas.
-- **Typing:** 00:02:05,867 → 00:02:07,067 (1.20s)
-- **Hold complete:** 00:02:07,067 → 00:02:12,067 (5.00s)
+- **Typing:** 00:01:52,567 → 00:01:53,767 (1.20s)
+- **Hold complete:** 00:01:53,767 → 00:01:58,767 (5.00s)
 - **Spotlight group:** table (reused=True)
-- **SFX / duck:** 00:02:05,867
-- **Seta:** 00:02:07,067
+- **SFX / duck:** 00:01:52,567
+- **Seta:** 00:01:53,767
 - **Duração cena:** 6.20s
 - **Manual review:** PASS
 - **Evidência:** DataTable
@@ -409,16 +371,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Coluna ID
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.135, 0.0857, 0.2898, 0.3917]]
-- **Final px boxes:** [[526, 49, 742, 337]]
+- **Norm cutouts:** [[0.135, 0.0857, 0.2167, 0.1731]]
+- **Final px boxes:** [[542, 65, 643, 144]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Coluna ID — Identifica o job de forma curta / para localizar e abrir detalhes.
-- **Typing:** 00:02:12,367 → 00:02:13,433 (1.07s)
-- **Hold complete:** 00:02:13,433 → 00:02:18,433 (5.00s)
+- **Typing:** 00:01:59,067 → 00:02:00,133 (1.07s)
+- **Hold complete:** 00:02:00,133 → 00:02:05,133 (5.00s)
 - **Spotlight group:** col-id (reused=False)
-- **SFX / duck:** 00:02:12,367
-- **Seta:** 00:02:13,433
+- **SFX / duck:** 00:01:59,067
+- **Seta:** 00:02:00,133
 - **Duração cena:** 6.07s
 - **Manual review:** PASS
 - **Evidência:** format_job_id
@@ -428,16 +390,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Como usar
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.135, 0.0857, 0.2898, 0.3917]]
-- **Final px boxes:** [[526, 49, 742, 337]]
+- **Norm cutouts:** [[0.135, 0.0857, 0.2167, 0.1731]]
+- **Final px boxes:** [[542, 65, 643, 144]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Como usar — Use o ID para filtrar ou / confirmar qual execução está vendo.
-- **Typing:** 00:02:18,433 → 00:02:19,433 (1.00s)
-- **Hold complete:** 00:02:19,433 → 00:02:24,433 (5.00s)
+- **Typing:** 00:02:05,133 → 00:02:06,133 (1.00s)
+- **Hold complete:** 00:02:06,133 → 00:02:11,133 (5.00s)
 - **Spotlight group:** col-id (reused=True)
-- **SFX / duck:** 00:02:18,433
-- **Seta:** 00:02:19,433
+- **SFX / duck:** 00:02:05,133
+- **Seta:** 00:02:06,133
 - **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** ID column
@@ -447,16 +409,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Coluna Source
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.2898, 0.0857, 0.479, 0.3917]]
-- **Final px boxes:** [[702, 49, 956, 337]]
+- **Norm cutouts:** [[0.2167, 0.0857, 0.3027, 0.1731]]
+- **Final px boxes:** [[635, 65, 740, 144]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Coluna Source — Mostra a origem do job: / arquivo SQL, tabela ou tipo.
-- **Typing:** 00:02:24,733 → 00:02:25,733 (1.00s)
-- **Hold complete:** 00:02:25,733 → 00:02:30,733 (5.00s)
+- **Typing:** 00:02:11,433 → 00:02:12,433 (1.00s)
+- **Hold complete:** 00:02:12,433 → 00:02:17,433 (5.00s)
 - **Spotlight group:** col-src (reused=False)
-- **SFX / duck:** 00:02:24,733
-- **Seta:** 00:02:25,733
+- **SFX / duck:** 00:02:11,433
+- **Seta:** 00:02:12,433
 - **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** _source_label
@@ -466,16 +428,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Como usar
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.2898, 0.0857, 0.479, 0.3917]]
-- **Final px boxes:** [[702, 49, 956, 337]]
+- **Norm cutouts:** [[0.2167, 0.0857, 0.3027, 0.1731]]
+- **Final px boxes:** [[635, 65, 740, 144]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Como usar — Confirme se a origem corresponde / ao job que você esperava monitorar.
-- **Typing:** 00:02:30,733 → 00:02:31,833 (1.10s)
-- **Hold complete:** 00:02:31,833 → 00:02:36,833 (5.00s)
+- **Typing:** 00:02:17,433 → 00:02:18,533 (1.10s)
+- **Hold complete:** 00:02:18,533 → 00:02:23,533 (5.00s)
 - **Spotlight group:** col-src (reused=True)
-- **SFX / duck:** 00:02:30,733
-- **Seta:** 00:02:31,833
+- **SFX / duck:** 00:02:17,433
+- **Seta:** 00:02:18,533
 - **Duração cena:** 6.10s
 - **Manual review:** PASS
 - **Evidência:** Source column
@@ -485,16 +447,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Coluna Destination
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.479, 0.0857, 0.651, 0.3917]]
-- **Final px boxes:** [[916, 49, 1150, 337]]
+- **Norm cutouts:** [[0.3027, 0.0857, 0.4059, 0.1731]]
+- **Final px boxes:** [[732, 65, 857, 144]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Coluna Destination — Mostra para onde o resultado / foi ou será entregue.
-- **Typing:** 00:02:37,133 → 00:02:38,133 (1.00s)
-- **Hold complete:** 00:02:38,133 → 00:02:43,133 (5.00s)
+- **Typing:** 00:02:23,833 → 00:02:24,833 (1.00s)
+- **Hold complete:** 00:02:24,833 → 00:02:29,833 (5.00s)
 - **Spotlight group:** col-dst (reused=False)
-- **SFX / duck:** 00:02:37,133
-- **Seta:** 00:02:38,133
+- **SFX / duck:** 00:02:23,833
+- **Seta:** 00:02:24,833
 - **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** _dest_label
@@ -504,16 +466,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Como usar
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.479, 0.0857, 0.651, 0.3917]]
-- **Final px boxes:** [[916, 49, 1150, 337]]
+- **Norm cutouts:** [[0.3027, 0.0857, 0.4059, 0.1731]]
+- **Final px boxes:** [[732, 65, 857, 144]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Como usar — Verifique schema.tabela ou Csv / antes de validar o resultado.
-- **Typing:** 00:02:43,133 → 00:02:44,133 (1.00s)
-- **Hold complete:** 00:02:44,133 → 00:02:49,133 (5.00s)
+- **Typing:** 00:02:29,833 → 00:02:30,833 (1.00s)
+- **Hold complete:** 00:02:30,833 → 00:02:35,833 (5.00s)
 - **Spotlight group:** col-dst (reused=True)
-- **SFX / duck:** 00:02:43,133
-- **Seta:** 00:02:44,133
+- **SFX / duck:** 00:02:29,833
+- **Seta:** 00:02:30,833
 - **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** Destination column
@@ -523,16 +485,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Coluna State
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.651, 0.0857, 0.8402, 0.3917]]
-- **Final px boxes:** [[1110, 49, 1365, 337]]
+- **Norm cutouts:** [[0.4059, 0.0857, 0.4893, 0.1731]]
+- **Final px boxes:** [[849, 65, 951, 144]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Coluna State — Mostra o estado atual do job / com símbolo e rótulo em destaque.
-- **Typing:** 00:02:49,433 → 00:02:50,500 (1.07s)
-- **Hold complete:** 00:02:50,500 → 00:02:55,500 (5.00s)
+- **Typing:** 00:02:36,133 → 00:02:37,200 (1.07s)
+- **Hold complete:** 00:02:37,200 → 00:02:42,200 (5.00s)
 - **Spotlight group:** col-state (reused=False)
-- **SFX / duck:** 00:02:49,433
-- **Seta:** 00:02:50,500
+- **SFX / duck:** 00:02:36,133
+- **Seta:** 00:02:37,200
 - **Duração cena:** 6.07s
 - **Manual review:** PASS
 - **Evidência:** format_state
@@ -542,16 +504,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que você aprende aqui
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.651, 0.0857, 0.8402, 0.3917]]
-- **Final px boxes:** [[1110, 49, 1365, 337]]
+- **Norm cutouts:** [[0.4059, 0.0857, 0.4893, 0.1731]]
+- **Final px boxes:** [[849, 65, 951, 144]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que você aprende aqui — Dá para ver rápido se está aguardando, / rodando, ok ou precisa atenção.
-- **Typing:** 00:02:55,500 → 00:02:56,833 (1.33s)
-- **Hold complete:** 00:02:56,833 → 00:03:01,833 (5.00s)
+- **Typing:** 00:02:42,200 → 00:02:43,533 (1.33s)
+- **Hold complete:** 00:02:43,533 → 00:02:48,533 (5.00s)
 - **Spotlight group:** col-state (reused=True)
-- **SFX / duck:** 00:02:55,500
-- **Seta:** 00:02:56,833
+- **SFX / duck:** 00:02:42,200
+- **Seta:** 00:02:43,533
 - **Duração cena:** 6.33s
 - **Manual review:** PASS
 - **Evidência:** State column
@@ -561,16 +523,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** PENDING
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.6338, 0.246, 0.8746, 0.348]]
-- **Final px boxes:** [[1091, 179, 1404, 301]]
+- **Norm cutouts:** [[0.4059, 0.1134, 0.4893, 0.1294]]
+- **Final px boxes:** [[849, 87, 951, 108]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** PENDING — O job foi aceito e aguarda / início da execução.
-- **Typing:** 00:03:02,133 → 00:03:03,133 (1.00s)
-- **Hold complete:** 00:03:03,133 → 00:03:08,133 (5.00s)
+- **Typing:** 00:02:48,833 → 00:02:49,833 (1.00s)
+- **Hold complete:** 00:02:49,833 → 00:02:54,833 (5.00s)
 - **Spotlight group:** state-pending (reused=False)
-- **SFX / duck:** 00:03:02,133
-- **Seta:** 00:03:03,133
+- **SFX / duck:** 00:02:48,833
+- **Seta:** 00:02:49,833
 - **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** Pending
@@ -580,16 +542,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que fazer
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.6338, 0.246, 0.8746, 0.348]]
-- **Final px boxes:** [[1091, 179, 1404, 301]]
+- **Norm cutouts:** [[0.4059, 0.1134, 0.4893, 0.1294]]
+- **Final px boxes:** [[849, 87, 951, 108]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que fazer — Em geral, espere. Confira se / há vaga livre na faixa RUNNING.
-- **Typing:** 00:03:08,133 → 00:03:09,167 (1.03s)
-- **Hold complete:** 00:03:09,167 → 00:03:14,167 (5.00s)
+- **Typing:** 00:02:54,833 → 00:02:55,867 (1.03s)
+- **Hold complete:** 00:02:55,867 → 00:03:00,867 (5.00s)
 - **Spotlight group:** state-pending (reused=True)
-- **SFX / duck:** 00:03:08,133
-- **Seta:** 00:03:09,167
+- **SFX / duck:** 00:02:54,833
+- **Seta:** 00:02:55,867
 - **Duração cena:** 6.03s
 - **Manual review:** PASS
 - **Evidência:** Pending slot
@@ -599,16 +561,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** RUNNING
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.6338, 0.144, 0.8746, 0.246]]
-- **Final px boxes:** [[1091, 96, 1404, 219]]
+- **Norm cutouts:** [[0.4059, 0.0988, 0.4893, 0.1149]]
+- **Final px boxes:** [[849, 76, 951, 97]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** RUNNING — O job está em execução agora. / Acompanhe o progresso no painel.
-- **Typing:** 00:03:14,467 → 00:03:15,467 (1.00s)
-- **Hold complete:** 00:03:15,467 → 00:03:20,467 (5.00s)
+- **Typing:** 00:03:01,167 → 00:03:02,167 (1.00s)
+- **Hold complete:** 00:03:02,167 → 00:03:07,167 (5.00s)
 - **Spotlight group:** state-running (reused=False)
-- **SFX / duck:** 00:03:14,467
-- **Seta:** 00:03:15,467
+- **SFX / duck:** 00:03:01,167
+- **Seta:** 00:03:02,167
 - **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** Running
@@ -618,16 +580,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que fazer
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.6338, 0.144, 0.8746, 0.246]]
-- **Final px boxes:** [[1091, 96, 1404, 219]]
+- **Norm cutouts:** [[0.4059, 0.0988, 0.4893, 0.1149]]
+- **Final px boxes:** [[849, 76, 951, 97]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que fazer — Monitore o log. Só cancele se / realmente precisar interromper.
-- **Typing:** 00:03:20,467 → 00:03:21,500 (1.03s)
-- **Hold complete:** 00:03:21,500 → 00:03:26,500 (5.00s)
+- **Typing:** 00:03:07,167 → 00:03:08,200 (1.03s)
+- **Hold complete:** 00:03:08,200 → 00:03:13,200 (5.00s)
 - **Spotlight group:** state-running (reused=True)
-- **SFX / duck:** 00:03:20,467
-- **Seta:** 00:03:21,500
+- **SFX / duck:** 00:03:07,167
+- **Seta:** 00:03:08,200
 - **Duração cena:** 6.03s
 - **Manual review:** PASS
 - **Evidência:** Cancel Running only
@@ -637,16 +599,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** SUCCEEDED
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.6338, 0.348, 0.8746, 0.45]]
-- **Final px boxes:** [[1091, 261, 1404, 384]]
+- **Norm cutouts:** [[0.4059, 0.1557, 0.4893, 0.1731]]
+- **Final px boxes:** [[849, 122, 951, 144]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** SUCCEEDED — O job terminou com sucesso. / O resultado está disponível.
-- **Typing:** 00:03:26,800 → 00:03:27,800 (1.00s)
-- **Hold complete:** 00:03:27,800 → 00:03:32,800 (5.00s)
+- **Typing:** 00:03:13,500 → 00:03:14,500 (1.00s)
+- **Hold complete:** 00:03:14,500 → 00:03:19,500 (5.00s)
 - **Spotlight group:** state-ok (reused=False)
-- **SFX / duck:** 00:03:26,800
-- **Seta:** 00:03:27,800
+- **SFX / duck:** 00:03:13,500
+- **Seta:** 00:03:14,500
 - **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** Succeeded
@@ -656,16 +618,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que fazer
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.6338, 0.348, 0.8746, 0.45]]
-- **Final px boxes:** [[1091, 261, 1404, 384]]
+- **Norm cutouts:** [[0.4059, 0.1557, 0.4893, 0.1731]]
+- **Final px boxes:** [[849, 122, 951, 144]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que fazer — Valide a entrega (tabela ou CSV) / conforme o Destination do job.
-- **Typing:** 00:03:32,800 → 00:03:33,867 (1.07s)
-- **Hold complete:** 00:03:33,867 → 00:03:38,867 (5.00s)
+- **Typing:** 00:03:19,500 → 00:03:20,567 (1.07s)
+- **Hold complete:** 00:03:20,567 → 00:03:25,567 (5.00s)
 - **Spotlight group:** state-ok (reused=True)
-- **SFX / duck:** 00:03:32,800
-- **Seta:** 00:03:33,867
+- **SFX / duck:** 00:03:19,500
+- **Seta:** 00:03:20,567
 - **Duração cena:** 6.07s
 - **Manual review:** PASS
 - **Evidência:** Succeeded
@@ -675,16 +637,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** FAILED
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.6338, 0.4571, 0.8746, 0.5611]]
-- **Final px boxes:** [[1091, 350, 1404, 474]]
+- **Norm cutouts:** [[0.4059, 0.1429, 0.4893, 0.16]]
+- **Final px boxes:** [[849, 111, 951, 133]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** FAILED — O job falhou. Pode aparecer um código / (ex.: SYNTAX) para orientar a análise.
-- **Typing:** 00:03:39,167 → 00:03:40,367 (1.20s)
-- **Hold complete:** 00:03:40,367 → 00:03:45,367 (5.00s)
+- **Typing:** 00:03:25,867 → 00:03:27,067 (1.20s)
+- **Hold complete:** 00:03:27,067 → 00:03:32,067 (5.00s)
 - **Spotlight group:** state-fail (reused=False)
-- **SFX / duck:** 00:03:39,167
-- **Seta:** 00:03:40,367
+- **SFX / duck:** 00:03:25,867
+- **Seta:** 00:03:27,067
 - **Duração cena:** 6.20s
 - **Manual review:** PASS
 - **Evidência:** Failed + classify
@@ -694,16 +656,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que fazer
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.6338, 0.4571, 0.8746, 0.5611]]
-- **Final px boxes:** [[1091, 350, 1404, 474]]
+- **Norm cutouts:** [[0.4059, 0.1429, 0.4893, 0.16]]
+- **Final px boxes:** [[849, 111, 951, 133]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que fazer — Abra View Logs, entenda a causa / e corrija antes de reenviar.
-- **Typing:** 00:03:45,367 → 00:03:46,400 (1.03s)
-- **Hold complete:** 00:03:46,400 → 00:03:51,400 (5.00s)
+- **Typing:** 00:03:32,067 → 00:03:33,100 (1.03s)
+- **Hold complete:** 00:03:33,100 → 00:03:38,100 (5.00s)
 - **Spotlight group:** state-fail (reused=True)
-- **SFX / duck:** 00:03:45,367
-- **Seta:** 00:03:46,400
+- **SFX / duck:** 00:03:32,067
+- **Seta:** 00:03:33,100
 - **Duração cena:** 6.03s
 - **Manual review:** PASS
 - **Evidência:** View Logs
@@ -713,16 +675,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** CANCELLED
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.6338, 0.552, 0.8746, 0.654]]
-- **Final px boxes:** [[1091, 427, 1404, 549]]
+- **Norm cutouts:** [[0.4059, 0.1272, 0.4893, 0.144]]
+- **Final px boxes:** [[849, 99, 951, 120]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** CANCELLED — A execução foi cancelada. / Não houve conclusão bem-sucedida.
-- **Typing:** 00:03:51,700 → 00:03:52,700 (1.00s)
-- **Hold complete:** 00:03:52,700 → 00:03:57,700 (5.00s)
+- **Typing:** 00:03:38,400 → 00:03:39,400 (1.00s)
+- **Hold complete:** 00:03:39,400 → 00:03:44,400 (5.00s)
 - **Spotlight group:** state-cancel (reused=False)
-- **SFX / duck:** 00:03:51,700
-- **Seta:** 00:03:52,700
+- **SFX / duck:** 00:03:38,400
+- **Seta:** 00:03:39,400
 - **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** Cancelled
@@ -732,16 +694,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que fazer
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.6338, 0.552, 0.8746, 0.654]]
-- **Final px boxes:** [[1091, 427, 1404, 549]]
+- **Norm cutouts:** [[0.4059, 0.1272, 0.4893, 0.144]]
+- **Final px boxes:** [[849, 99, 951, 120]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que fazer — Confirme se o cancelamento / foi intencional; reenvie se precisar.
-- **Typing:** 00:03:57,700 → 00:03:58,800 (1.10s)
-- **Hold complete:** 00:03:58,800 → 00:04:03,800 (5.00s)
+- **Typing:** 00:03:44,400 → 00:03:45,500 (1.10s)
+- **Hold complete:** 00:03:45,500 → 00:03:50,500 (5.00s)
 - **Spotlight group:** state-cancel (reused=True)
-- **SFX / duck:** 00:03:57,700
-- **Seta:** 00:03:58,800
+- **SFX / duck:** 00:03:44,400
+- **Seta:** 00:03:45,500
 - **Duração cena:** 6.10s
 - **Manual review:** PASS
 - **Evidência:** Cancelled
@@ -751,16 +713,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Coluna Elapsed
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.8402, 0.0857, 0.995, 0.3917]]
-- **Final px boxes:** [[1325, 49, 1540, 337]]
+- **Norm cutouts:** [[0.5048, 0.0857, 0.5779, 0.1731]]
+- **Final px boxes:** [[961, 65, 1052, 144]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Coluna Elapsed — Tempo decorrido: em Running conta / desde o início; nos demais, a duração.
-- **Typing:** 00:04:04,100 → 00:04:05,333 (1.23s)
-- **Hold complete:** 00:04:05,333 → 00:04:10,333 (5.00s)
+- **Typing:** 00:03:50,800 → 00:03:52,033 (1.23s)
+- **Hold complete:** 00:03:52,033 → 00:03:57,033 (5.00s)
 - **Spotlight group:** col-elapsed (reused=False)
-- **SFX / duck:** 00:04:04,100
-- **Seta:** 00:04:05,333
+- **SFX / duck:** 00:03:50,800
+- **Seta:** 00:03:52,033
 - **Duração cena:** 6.23s
 - **Manual review:** PASS
 - **Evidência:** format_elapsed
@@ -770,16 +732,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Como usar
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.8402, 0.0857, 0.995, 0.3917]]
-- **Final px boxes:** [[1325, 49, 1540, 337]]
+- **Norm cutouts:** [[0.5048, 0.0857, 0.5779, 0.1731]]
+- **Final px boxes:** [[961, 65, 1052, 144]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Como usar — Compare duração esperada e detecte / jobs longos que merecem atenção.
-- **Typing:** 00:04:10,333 → 00:04:11,433 (1.10s)
-- **Hold complete:** 00:04:11,433 → 00:04:16,433 (5.00s)
+- **Typing:** 00:03:57,033 → 00:03:58,133 (1.10s)
+- **Hold complete:** 00:03:58,133 → 00:04:03,133 (5.00s)
 - **Spotlight group:** col-elapsed (reused=True)
-- **SFX / duck:** 00:04:10,333
-- **Seta:** 00:04:11,433
+- **SFX / duck:** 00:03:57,033
+- **Seta:** 00:03:58,133
 - **Duração cena:** 6.10s
 - **Manual review:** PASS
 - **Evidência:** Elapsed
@@ -790,15 +752,15 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** jobs-filter
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.135, 0.0857, 0.995, 0.1286]]
-- **Final px boxes:** [[526, 54, 1540, 119]]
+- **Final px boxes:** [[542, 65, 1524, 108]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Filtro — Pressione / para filtrar a lista / por id, arquivo, tabela ou estado.
-- **Typing:** 00:04:16,733 → 00:04:17,800 (1.07s)
-- **Hold complete:** 00:04:17,800 → 00:04:22,800 (5.00s)
+- **Typing:** 00:04:03,433 → 00:04:04,500 (1.07s)
+- **Hold complete:** 00:04:04,500 → 00:04:09,500 (5.00s)
 - **Spotlight group:** filter (reused=False)
-- **SFX / duck:** 00:04:16,733
-- **Seta:** 00:04:17,800
+- **SFX / duck:** 00:04:03,433
+- **Seta:** 00:04:04,500
 - **Duração cena:** 6.07s
 - **Manual review:** PASS
 - **Evidência:** #jobs-filter
@@ -809,15 +771,15 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** jobs-filter
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.135, 0.0857, 0.995, 0.1286]]
-- **Final px boxes:** [[526, 54, 1540, 119]]
+- **Final px boxes:** [[542, 65, 1524, 108]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Quando usar — Use para achar rápido um job / ou isolar só FAILED / RUNNING.
-- **Typing:** 00:04:22,800 → 00:04:23,800 (1.00s)
-- **Hold complete:** 00:04:23,800 → 00:04:28,800 (5.00s)
+- **Typing:** 00:04:09,500 → 00:04:10,500 (1.00s)
+- **Hold complete:** 00:04:10,500 → 00:04:15,500 (5.00s)
 - **Spotlight group:** filter (reused=True)
-- **SFX / duck:** 00:04:22,800
-- **Seta:** 00:04:23,800
+- **SFX / duck:** 00:04:09,500
+- **Seta:** 00:04:10,500
 - **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** action_filter_jobs
@@ -827,16 +789,16 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Exemplo
 - **Targets:** jobs-filter, jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.135, 0.0857, 0.995, 0.1286], [0.135, 0.1286, 0.995, 0.5136]]
-- **Final px boxes:** [[526, 54, 1540, 119], [526, 84, 1540, 435]]
+- **Norm cutouts:** [[0.135, 0.0857, 0.995, 0.1286], [0.135, 0.1286, 0.995, 0.2266]]
+- **Final px boxes:** [[542, 65, 1524, 108], [542, 100, 1524, 187]]
 - **Cutouts:** 2
 - **Overlay opacity:** 170/255
 - **Diálogo:** Exemplo — Digite failed para ver só falhas. / Esc limpa o filtro e restaura a lista.
-- **Typing:** 00:04:29,100 → 00:04:30,233 (1.13s)
-- **Hold complete:** 00:04:30,233 → 00:04:35,233 (5.00s)
+- **Typing:** 00:04:15,800 → 00:04:16,933 (1.13s)
+- **Hold complete:** 00:04:16,933 → 00:04:21,933 (5.00s)
 - **Spotlight group:** filter-ex (reused=False)
-- **SFX / duck:** 00:04:29,100
-- **Seta:** 00:04:30,233
+- **SFX / duck:** 00:04:15,800
+- **Seta:** 00:04:16,933
 - **Duração cena:** 6.13s
 - **Manual review:** PASS
 - **Evidência:** Esc clear_filter
@@ -847,15 +809,15 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** detail-pane
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.135, 0.8143, 0.995, 0.9]]
-- **Final px boxes:** [[526, 639, 1540, 749]]
+- **Final px boxes:** [[542, 655, 1524, 733]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Painel de detalhe — Mostra um resumo do job selecionado / e as últimas linhas do log.
-- **Typing:** 00:04:36,467 → 00:04:37,633 (1.17s)
-- **Hold complete:** 00:04:37,633 → 00:04:42,633 (5.00s)
+- **Typing:** 00:04:23,167 → 00:04:24,333 (1.17s)
+- **Hold complete:** 00:04:24,333 → 00:04:29,333 (5.00s)
 - **Spotlight group:** detail (reused=False)
-- **SFX / duck:** 00:04:36,467
-- **Seta:** 00:04:37,633
+- **SFX / duck:** 00:04:23,167
+- **Seta:** 00:04:24,333
 - **Duração cena:** 6.17s
 - **Manual review:** PASS
 - **Evidência:** #detail-pane
@@ -866,15 +828,15 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** detail-pane
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.135, 0.8143, 0.995, 0.9]]
-- **Final px boxes:** [[526, 639, 1540, 749]]
+- **Final px boxes:** [[542, 655, 1524, 733]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que você aprende aqui — Sem sair da Overview, vê se o job / avança ou se já há erro no log.
-- **Typing:** 00:04:42,633 → 00:04:43,900 (1.27s)
-- **Hold complete:** 00:04:43,900 → 00:04:48,900 (5.00s)
+- **Typing:** 00:04:29,333 → 00:04:30,600 (1.27s)
+- **Hold complete:** 00:04:30,600 → 00:04:35,600 (5.00s)
 - **Spotlight group:** detail (reused=True)
-- **SFX / duck:** 00:04:42,633
-- **Seta:** 00:04:43,900
+- **SFX / duck:** 00:04:29,333
+- **Seta:** 00:04:30,600
 - **Duração cena:** 6.27s
 - **Manual review:** PASS
 - **Evidência:** DETAIL_TAIL_LINES
@@ -885,15 +847,15 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** detail-title
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.145, 0.8286, 0.985, 0.8429]]
-- **Final px boxes:** [[544, 663, 1523, 690]]
+- **Final px boxes:** [[554, 667, 1513, 686]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Título do detalhe — Confirma ID, estado e tempo / do job em foco.
-- **Typing:** 00:04:49,200 → 00:04:50,200 (1.00s)
-- **Hold complete:** 00:04:50,200 → 00:04:55,200 (5.00s)
+- **Typing:** 00:04:35,900 → 00:04:36,900 (1.00s)
+- **Hold complete:** 00:04:36,900 → 00:04:41,900 (5.00s)
 - **Spotlight group:** detail-title (reused=False)
-- **SFX / duck:** 00:04:49,200
-- **Seta:** 00:04:50,200
+- **SFX / duck:** 00:04:35,900
+- **Seta:** 00:04:36,900
 - **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** #detail-title
@@ -904,15 +866,15 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** detail-log
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.145, 0.8429, 0.985, 0.8857]]
-- **Final px boxes:** [[538, 667, 1529, 732]]
+- **Final px boxes:** [[554, 678, 1513, 721]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Prévia do log — Últimas linhas do run.log. / Para o log completo, use View Logs.
-- **Typing:** 00:04:55,500 → 00:04:56,600 (1.10s)
-- **Hold complete:** 00:04:56,600 → 00:05:01,600 (5.00s)
+- **Typing:** 00:04:42,200 → 00:04:43,300 (1.10s)
+- **Hold complete:** 00:04:43,300 → 00:04:48,300 (5.00s)
 - **Spotlight group:** detail-log (reused=False)
-- **SFX / duck:** 00:04:55,500
-- **Seta:** 00:04:56,600
+- **SFX / duck:** 00:04:42,200
+- **Seta:** 00:04:43,300
 - **Duração cena:** 6.10s
 - **Manual review:** PASS
 - **Evidência:** #detail-log
@@ -923,15 +885,15 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** event-trail
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.135, 0.9429, 0.795, 0.9857]]
-- **Final px boxes:** [[532, 749, 1307, 806]]
+- **Final px boxes:** [[542, 759, 1297, 802]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Eventos recentes — Mostra o último aviso da Overview, / como início do Dispatch ou término.
-- **Typing:** 00:05:01,900 → 00:05:03,133 (1.23s)
-- **Hold complete:** 00:05:03,133 → 00:05:08,133 (5.00s)
+- **Typing:** 00:04:48,600 → 00:04:49,833 (1.23s)
+- **Hold complete:** 00:04:49,833 → 00:04:54,833 (5.00s)
 - **Spotlight group:** events (reused=False)
-- **SFX / duck:** 00:05:01,900
-- **Seta:** 00:05:03,133
+- **SFX / duck:** 00:04:48,600
+- **Seta:** 00:04:49,833
 - **Duração cena:** 6.23s
 - **Manual review:** PASS
 - **Evidência:** #event-trail
@@ -942,15 +904,15 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** new-job
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.8, 0.9429, 0.86, 0.9857]]
-- **Final px boxes:** [[1283, 748, 1383, 806]]
+- **Final px boxes:** [[1293, 757, 1373, 804]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** New Job [N] — Abre a tela para configurar / e enviar um novo job.
-- **Typing:** 00:05:08,433 → 00:05:09,433 (1.00s)
-- **Hold complete:** 00:05:09,433 → 00:05:14,433 (5.00s)
+- **Typing:** 00:04:55,133 → 00:04:56,133 (1.00s)
+- **Hold complete:** 00:04:56,133 → 00:05:01,133 (5.00s)
 - **Spotlight group:** btn-new (reused=False)
-- **SFX / duck:** 00:05:08,433
-- **Seta:** 00:05:09,433
+- **SFX / duck:** 00:04:55,133
+- **Seta:** 00:04:56,133
 - **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** #new-job
@@ -961,15 +923,15 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** view-logs
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.865, 0.9429, 0.925, 0.9857]]
-- **Final px boxes:** [[1357, 748, 1457, 806]]
+- **Final px boxes:** [[1367, 757, 1447, 804]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** View Logs [V] — Abre o detalhe completo do job / selecionado para diagnóstico.
-- **Typing:** 00:05:14,733 → 00:05:15,800 (1.07s)
-- **Hold complete:** 00:05:15,800 → 00:05:20,800 (5.00s)
+- **Typing:** 00:05:01,433 → 00:05:02,500 (1.07s)
+- **Hold complete:** 00:05:02,500 → 00:05:07,500 (5.00s)
 - **Spotlight group:** btn-logs (reused=False)
-- **SFX / duck:** 00:05:14,733
-- **Seta:** 00:05:15,800
+- **SFX / duck:** 00:05:01,433
+- **Seta:** 00:05:02,500
 - **Duração cena:** 6.07s
 - **Manual review:** PASS
 - **Evidência:** #view-logs
@@ -980,15 +942,15 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** view-logs
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.865, 0.9429, 0.925, 0.9857]]
-- **Final px boxes:** [[1357, 748, 1457, 806]]
+- **Final px boxes:** [[1367, 757, 1447, 804]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Quando usar — Use em FAILED ou quando o log / curto do painel não bastar.
-- **Typing:** 00:05:20,800 → 00:05:21,800 (1.00s)
-- **Hold complete:** 00:05:21,800 → 00:05:26,800 (5.00s)
+- **Typing:** 00:05:07,500 → 00:05:08,500 (1.00s)
+- **Hold complete:** 00:05:08,500 → 00:05:13,500 (5.00s)
 - **Spotlight group:** btn-logs (reused=True)
-- **SFX / duck:** 00:05:20,800
-- **Seta:** 00:05:21,800
+- **SFX / duck:** 00:05:07,500
+- **Seta:** 00:05:08,500
 - **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** open_job_detail
@@ -999,15 +961,15 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** cancel
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.93, 0.9429, 0.99, 0.9857]]
-- **Final px boxes:** [[1430, 748, 1530, 806]]
+- **Final px boxes:** [[1440, 757, 1520, 804]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Cancel [C] — Inicia o cancelamento somente / se o job selecionado estiver RUNNING.
-- **Typing:** 00:05:27,100 → 00:05:28,200 (1.10s)
-- **Hold complete:** 00:05:28,200 → 00:05:33,200 (5.00s)
+- **Typing:** 00:05:13,800 → 00:05:14,900 (1.10s)
+- **Hold complete:** 00:05:14,900 → 00:05:19,900 (5.00s)
 - **Spotlight group:** btn-cancel (reused=False)
-- **SFX / duck:** 00:05:27,100
-- **Seta:** 00:05:28,200
+- **SFX / duck:** 00:05:13,800
+- **Seta:** 00:05:14,900
 - **Duração cena:** 6.10s
 - **Manual review:** PASS
 - **Evidência:** #cancel
@@ -1018,15 +980,15 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** cancel
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.93, 0.9429, 0.99, 0.9857]]
-- **Final px boxes:** [[1430, 748, 1530, 806]]
+- **Final px boxes:** [[1440, 757, 1520, 804]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Atenção — Jobs que não estão RUNNING / não podem ser cancelados aqui.
-- **Typing:** 00:05:33,200 → 00:05:34,200 (1.00s)
-- **Hold complete:** 00:05:34,200 → 00:05:39,200 (5.00s)
+- **Typing:** 00:05:19,900 → 00:05:20,900 (1.00s)
+- **Hold complete:** 00:05:20,900 → 00:05:25,900 (5.00s)
 - **Spotlight group:** btn-cancel (reused=True)
-- **SFX / duck:** 00:05:33,200
-- **Seta:** 00:05:34,200
+- **SFX / duck:** 00:05:19,900
+- **Seta:** 00:05:20,900
 - **Duração cena:** 6.00s
 - **Manual review:** PASS
 - **Evidência:** Only Running jobs
@@ -1041,30 +1003,11 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Resumo — Na Overview você monitora status, / interpreta resultados e age.
-- **Typing:** 00:05:39,200 → 00:05:40,200 (1.00s)
-- **Hold complete:** 00:05:40,200 → 00:05:45,200 (5.00s)
+- **Typing:** 00:05:25,900 → 00:05:26,900 (1.00s)
+- **Hold complete:** 00:05:26,900 → 00:05:31,900 (5.00s)
 - **Spotlight group:** close (reused=False)
-- **SFX / duck:** 00:05:39,200
-- **Seta:** 00:05:40,200
+- **SFX / duck:** 00:05:25,900
+- **Seta:** 00:05:26,900
 - **Duração cena:** 6.00s
-- **Manual review:** PASS
-- **Evidência:** closing
-
-## 90b_close_b — Encerramento
-
-- **Elemento:** Próximo passo
-- **Targets:** (card)
-- **Font:** Carlito 38px
-- **Norm cutouts:** [[0.12, 0.14, 0.88, 0.7]]
-- **Final px boxes:** [[80, 100, 1840, 786]]
-- **Cutouts:** 1
-- **Overlay opacity:** 170/255
-- **Diálogo:** Próximo passo — Revise FAILED, acompanhe RUNNING / e confirme SUCCEEDED na entrega.
-- **Typing:** 00:05:45,200 → 00:05:46,333 (1.13s)
-- **Hold complete:** 00:05:46,333 → 00:05:51,333 (5.00s)
-- **Spotlight group:** close (reused=True)
-- **SFX / duck:** 00:05:45,200
-- **Seta:** 00:05:46,333
-- **Duração cena:** 6.13s
 - **Manual review:** PASS
 - **Evidência:** closing

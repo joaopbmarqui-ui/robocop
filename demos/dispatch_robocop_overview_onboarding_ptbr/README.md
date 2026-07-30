@@ -45,16 +45,17 @@ Mix: BGM ≈ 0.18, SFX ≈ 0.55, duck ≈ 0.06, fade down 0.12s / up 0.35s. No n
 ## Content order (top → bottom)
 
 1. Opening / what Overview is
-2. Sidebar navigation
-3. Status strip (KERBEROS, RUNNING, FINISHED 7D, FAILED 7D)
-4. Jobs title (running first · last 7 days)
-5. Empty list guidance
-6. Jobs table + columns (ID, Source, Destination, State, Elapsed)
-7. Status meanings (PENDING, RUNNING, SUCCEEDED, FAILED, CANCELLED)
-8. Filter (`/`) and example
-9. Detail pane (title + log preview)
-10. Actions (events, New Job, View Logs, Cancel)
-11. Closing summary
+2. Status strip (KERBEROS with kinit recovery, RUNNING, FINISHED 7D, FAILED 7D)
+3. Jobs title (running first · last 7 days of history)
+4. Empty list guidance
+5. Jobs table + columns (ID, Source, Destination, State, Elapsed)
+6. Status meanings (PENDING, RUNNING, SUCCEEDED, FAILED, CANCELLED)
+7. Filter (`/`) and example
+8. Detail pane (title + log preview)
+9. Actions (events, New Job, View Logs, Cancel)
+10. Closing summary (no “Next Step”)
+
+Sidebar navigation is visible but not explained.
 
 ## Regenerate
 

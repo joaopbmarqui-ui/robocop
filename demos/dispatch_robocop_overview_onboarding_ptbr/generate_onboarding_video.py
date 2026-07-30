@@ -110,220 +110,210 @@ def _steps() -> list[Step]:
              spotlight_group="open"),
         Step("02_purpose", "populated", "O que é Overview",
              "Tela principal para acompanhar\njobs enviados e seu status.",
-             "", (0.55, 0.12), section="Abertura", evidence="DashboardScreen",
+             "", (0.55, 0.14), section="Abertura", evidence="DashboardScreen",
              spotlight_group="purpose"),
-
-        # Sidebar
-        Step("10_sidebar_what", "populated", "O que é",
-             "A barra lateral mostra onde você está\ne as outras áreas do Dispatch.",
-             "", (0.08, 0.35), section="Navegação", evidence="Sidebar",
-             spotlight_group="sidebar"),
-        Step("10b_sidebar_learn", "populated", "O que você aprende aqui",
-             "Overview fica destacado quando esta\né a tela ativa de monitoramento.",
-             "", (0.08, 0.28), section="Navegação", evidence='active_screen="overview"',
-             spotlight_group="sidebar"),
-        Step("10c_sidebar_action", "populated", "O que fazer",
-             "Use a barra para ir a New Job,\nLogs, History ou Browse.",
-             "", (0.08, 0.40), section="Navegação", evidence="NavItem",
-             spotlight_group="sidebar"),
 
         # Status strip
         Step("20_strip_what", "populated", "O que é",
-             "A faixa superior resume o estado\ndo ambiente e dos jobs recentes.",
-             "", (0.55, 0.08), section="Status strip", evidence="#status-strip",
+             "A faixa superior resume autenticação\ne o monitoramento dos jobs.",
+             "", (0.55, 0.06), section="Status strip", evidence="#status-strip",
              spotlight_group="status-strip"),
         Step("20b_strip_learn", "populated", "O que você aprende aqui",
-             "Em um olhar, vê autenticação,\njobs em execução e totais de 7 dias.",
-             "", (0.55, 0.08), section="Status strip", evidence="_update_status_strip",
+             "Em um olhar: autenticação, execução\ne histórico dos últimos 7 dias.",
+             "", (0.55, 0.06), section="Status strip", evidence="_update_status_strip",
              spotlight_group="status-strip"),
 
         Step("21_krb_what", "populated", "KERBEROS",
              "Indica se sua autenticação\nestá disponível para executar jobs.",
-             "", (0.40, 0.08), section="Status strip", evidence="KERBEROS label",
+             "", (0.32, 0.06), section="Status strip", evidence="KERBEROS label",
              spotlight_group="krb"),
-        Step("21b_krb_action", "populated", "O que observar",
-             "Se aparecer MISSING ou tempo curto,\nresolva a autenticação antes de enviar.",
-             "", (0.40, 0.08), section="Status strip", evidence="format_kerberos_ttl",
+        Step("21b_krb_action", "populated", "Se estiver MISSING ou curto",
+             "Abra um novo terminal e execute:\nkinit",
+             "", (0.32, 0.06), section="Status strip", evidence="kinit recovery",
+             spotlight_group="krb"),
+        Step("21c_krb_password", "populated", "Senha",
+             "Informe sua senha Windows\nquando o terminal solicitar.",
+             "", (0.32, 0.06), section="Status strip", evidence="kinit password prompt",
              spotlight_group="krb"),
 
         Step("22_running_what", "populated", "RUNNING",
              "Quantos jobs estão em execução agora,\nem relação ao limite de vagas.",
-             "", (0.55, 0.08), section="Status strip", evidence="RUNNING / RUNNING_CAP",
+             "", (0.48, 0.06), section="Status strip", evidence="RUNNING / RUNNING_CAP",
              spotlight_group="running-cap"),
         Step("22b_running_learn", "populated", "O que você aprende aqui",
              "O limite é 2 vagas. Pending e Running\nocupam vaga de execução.",
-             "", (0.55, 0.08), section="Status strip", evidence="jobs.RUNNING_CAP",
+             "", (0.48, 0.06), section="Status strip", evidence="jobs.RUNNING_CAP",
              spotlight_group="running-cap"),
 
         Step("23_finished_what", "populated", "FINISHED 7D",
-             "Quantos jobs concluíram com sucesso\nnos últimos 7 dias (lista ativa).",
-             "", (0.68, 0.08), section="Status strip", evidence="FINISHED 7D",
+             "Histórico de jobs com sucesso\nnos últimos 7 dias.",
+             "", (0.66, 0.06), section="Status strip", evidence="FINISHED 7D",
              spotlight_group="finished"),
         Step("23b_finished_learn", "populated", "O que você aprende aqui",
-             "Serve para confirmar entregas recentes\nsem abrir cada job.",
-             "", (0.68, 0.08), section="Status strip", evidence="Succeeded count",
+             "Permite ver sete dias de histórico\ne confirmar entregas recentes.",
+             "", (0.66, 0.06), section="Status strip", evidence="Succeeded count / ACTIVE_WINDOW",
              spotlight_group="finished"),
 
         Step("24_failed_what", "populated", "FAILED 7D",
-             "Quantos jobs falharam\nnos últimos 7 dias (lista ativa).",
-             "", (0.82, 0.08), section="Status strip", evidence="FAILED 7D",
+             "Histórico de jobs que falharam\nnos últimos 7 dias.",
+             "", (0.84, 0.06), section="Status strip", evidence="FAILED 7D",
              spotlight_group="failed-count"),
         Step("24b_failed_action", "populated", "O que fazer",
              "Se o número subir, revise os jobs\nFAILED antes de enviar outros.",
-             "", (0.82, 0.08), section="Status strip", evidence="Failed count",
+             "", (0.84, 0.06), section="Status strip", evidence="Failed count",
              spotlight_group="failed-count"),
 
         # Jobs title
         Step("30_title_what", "populated", "Lista de jobs",
-             "Jobs · running first · last 7 days:\nlista dos jobs recentes para monitorar.",
-             "", (0.45, 0.14), section="Lista", evidence="#jobs-title",
+             "Jobs · running first · last 7 dias:\nlista do histórico recente.",
+             "", (0.45, 0.10), section="Lista", evidence="#jobs-title",
              spotlight_group="jobs-title"),
         Step("30b_title_learn", "populated", "O que você aprende aqui",
-             "Jobs em execução ficam no topo.\nA janela cobre os últimos 7 dias.",
-             "", (0.45, 0.14), section="Lista", evidence="active_jobs ACTIVE_WINDOW",
+             "Execução no topo; a janela cobre\nsete dias de monitoramento.",
+             "", (0.45, 0.10), section="Lista", evidence="active_jobs ACTIVE_WINDOW",
              spotlight_group="jobs-title"),
 
         # Empty state
         Step("31_empty_what", "empty", "Lista vazia",
              "Quando não há jobs nos últimos 7 dias,\na tela orienta a criar um novo.",
-             "", (0.55, 0.40), section="Lista", evidence="#jobs-empty",
+             "", (0.55, 0.18), section="Lista", evidence="#jobs-empty",
              spotlight_group="empty"),
         Step("31b_empty_action", "empty", "O que fazer",
              "Pressione N ou New Job para\nenviar a primeira execução.",
-             "", (0.55, 0.40), section="Lista", evidence="No jobs in the last 7 days",
+             "", (0.55, 0.18), section="Lista", evidence="No jobs in the last 7 days",
              spotlight_group="empty"),
 
         # Table overview + columns
         Step("40_table_what", "populated", "O que é",
              "A tabela lista cada job com identidade,\norigem, destino, estado e tempo.",
-             "", (0.55, 0.35), section="Tabela", evidence="#jobs-table",
+             "", (0.55, 0.22), section="Tabela", evidence="#jobs-table",
              spotlight_group="table"),
         Step("40b_table_learn", "populated", "O que você aprende aqui",
              "Percorra as linhas para achar\nsucesso, execução ou problemas.",
-             "", (0.55, 0.35), section="Tabela", evidence="DataTable",
+             "", (0.55, 0.22), section="Tabela", evidence="DataTable",
              spotlight_group="table"),
 
         Step("41_col_id", "populated", "Coluna ID",
              "Identifica o job de forma curta\npara localizar e abrir detalhes.",
-             "", (0.35, 0.28), section="Colunas", evidence="format_job_id",
+             "", (0.30, 0.18), section="Colunas", evidence="format_job_id",
              spotlight_group="col-id"),
         Step("41b_col_id_use", "populated", "Como usar",
              "Use o ID para filtrar ou\nconfirmar qual execução está vendo.",
-             "", (0.35, 0.28), section="Colunas", evidence="ID column",
+             "", (0.30, 0.18), section="Colunas", evidence="ID column",
              spotlight_group="col-id"),
 
         Step("42_col_src", "populated", "Coluna Source",
              "Mostra a origem do job:\narquivo SQL, tabela ou tipo.",
-             "", (0.48, 0.28), section="Colunas", evidence="_source_label",
+             "", (0.42, 0.18), section="Colunas", evidence="_source_label",
              spotlight_group="col-src"),
         Step("42b_col_src_use", "populated", "Como usar",
              "Confirme se a origem corresponde\nao job que você esperava monitorar.",
-             "", (0.48, 0.28), section="Colunas", evidence="Source column",
+             "", (0.42, 0.18), section="Colunas", evidence="Source column",
              spotlight_group="col-src"),
 
         Step("43_col_dst", "populated", "Coluna Destination",
              "Mostra para onde o resultado\nfoi ou será entregue.",
-             "", (0.62, 0.28), section="Colunas", evidence="_dest_label",
+             "", (0.54, 0.18), section="Colunas", evidence="_dest_label",
              spotlight_group="col-dst"),
         Step("43b_col_dst_use", "populated", "Como usar",
              "Verifique schema.tabela ou Csv\nantes de validar o resultado.",
-             "", (0.62, 0.28), section="Colunas", evidence="Destination column",
+             "", (0.54, 0.18), section="Colunas", evidence="Destination column",
              spotlight_group="col-dst"),
 
         Step("44_col_state", "populated", "Coluna State",
              "Mostra o estado atual do job\ncom símbolo e rótulo em destaque.",
-             "", (0.74, 0.28), section="Colunas", evidence="format_state",
+             "", (0.68, 0.18), section="Colunas", evidence="format_state",
              spotlight_group="col-state"),
         Step("44b_col_state_learn", "populated", "O que você aprende aqui",
              "Dá para ver rápido se está aguardando,\nrodando, ok ou precisa atenção.",
-             "", (0.74, 0.28), section="Colunas", evidence="State column",
+             "", (0.68, 0.18), section="Colunas", evidence="State column",
              spotlight_group="col-state"),
 
         # Status meanings
         Step("50_st_pending", "populated", "PENDING",
              "O job foi aceito e aguarda\ninício da execução.",
-             "", (0.74, 0.32), section="Estados", evidence="Pending",
+             "", (0.68, 0.22), section="Estados", evidence="Pending",
              spotlight_group="state-pending"),
         Step("50b_st_pending_act", "populated", "O que fazer",
              "Em geral, espere. Confira se\nhá vaga livre na faixa RUNNING.",
-             "", (0.74, 0.32), section="Estados", evidence="Pending slot",
+             "", (0.68, 0.22), section="Estados", evidence="Pending slot",
              spotlight_group="state-pending"),
 
         Step("51_st_running", "running_sel", "RUNNING",
              "O job está em execução agora.\nAcompanhe o progresso no painel.",
-             "", (0.74, 0.25), section="Estados", evidence="Running",
+             "", (0.68, 0.16), section="Estados", evidence="Running",
              spotlight_group="state-running"),
         Step("51b_st_running_act", "running_sel", "O que fazer",
              "Monitore o log. Só cancele se\nrealmente precisar interromper.",
-             "", (0.74, 0.25), section="Estados", evidence="Cancel Running only",
+             "", (0.68, 0.16), section="Estados", evidence="Cancel Running only",
              spotlight_group="state-running"),
 
         Step("52_st_ok", "populated", "SUCCEEDED",
              "O job terminou com sucesso.\nO resultado está disponível.",
-             "", (0.74, 0.36), section="Estados", evidence="Succeeded",
+             "", (0.68, 0.34), section="Estados", evidence="Succeeded",
              spotlight_group="state-ok"),
         Step("52b_st_ok_act", "populated", "O que fazer",
              "Valide a entrega (tabela ou CSV)\nconforme o Destination do job.",
-             "", (0.74, 0.36), section="Estados", evidence="Succeeded",
+             "", (0.68, 0.34), section="Estados", evidence="Succeeded",
              spotlight_group="state-ok"),
 
         Step("53_st_fail", "failed_sel", "FAILED",
              "O job falhou. Pode aparecer um código\n(ex.: SYNTAX) para orientar a análise.",
-             "", (0.74, 0.40), section="Estados", evidence="Failed + classify",
+             "", (0.68, 0.30), section="Estados", evidence="Failed + classify",
              spotlight_group="state-fail"),
         Step("53b_st_fail_act", "failed_sel", "O que fazer",
              "Abra View Logs, entenda a causa\ne corrija antes de reenviar.",
-             "", (0.74, 0.40), section="Estados", evidence="View Logs",
+             "", (0.68, 0.30), section="Estados", evidence="View Logs",
              spotlight_group="state-fail"),
 
         Step("54_st_cancel", "populated", "CANCELLED",
              "A execução foi cancelada.\nNão houve conclusão bem-sucedida.",
-             "", (0.74, 0.44), section="Estados", evidence="Cancelled",
+             "", (0.68, 0.26), section="Estados", evidence="Cancelled",
              spotlight_group="state-cancel"),
         Step("54b_st_cancel_act", "populated", "O que fazer",
              "Confirme se o cancelamento\nfoi intencional; reenvie se precisar.",
-             "", (0.74, 0.44), section="Estados", evidence="Cancelled",
+             "", (0.68, 0.26), section="Estados", evidence="Cancelled",
              spotlight_group="state-cancel"),
 
         Step("55_col_elapsed", "populated", "Coluna Elapsed",
              "Tempo decorrido: em Running conta\ndesde o início; nos demais, a duração.",
-             "", (0.88, 0.28), section="Colunas", evidence="format_elapsed",
+             "", (0.86, 0.18), section="Colunas", evidence="format_elapsed",
              spotlight_group="col-elapsed"),
         Step("55b_col_elapsed_use", "populated", "Como usar",
              "Compare duração esperada e detecte\njobs longos que merecem atenção.",
-             "", (0.88, 0.28), section="Colunas", evidence="Elapsed",
+             "", (0.86, 0.18), section="Colunas", evidence="Elapsed",
              spotlight_group="col-elapsed"),
 
         # Filter
         Step("60_filter_what", "filter_open", "Filtro",
              "Pressione / para filtrar a lista\npor id, arquivo, tabela ou estado.",
-             "", (0.55, 0.18), section="Filtro", evidence="#jobs-filter",
+             "", (0.55, 0.14), section="Filtro", evidence="#jobs-filter",
              spotlight_group="filter"),
         Step("60b_filter_when", "filter_open", "Quando usar",
              "Use para achar rápido um job\nou isolar só FAILED / RUNNING.",
-             "", (0.55, 0.18), section="Filtro", evidence="action_filter_jobs",
+             "", (0.55, 0.14), section="Filtro", evidence="action_filter_jobs",
              spotlight_group="filter"),
         Step("61_filter_ex", "filter_failed", "Exemplo",
              "Digite failed para ver só falhas.\nEsc limpa o filtro e restaura a lista.",
-             "", (0.55, 0.18), click=True, section="Filtro", evidence="Esc clear_filter",
+             "", (0.55, 0.14), click=True, section="Filtro", evidence="Esc clear_filter",
              spotlight_group="filter-ex"),
 
         # Detail pane
         Step("70_detail_what", "running_sel", "Painel de detalhe",
              "Mostra um resumo do job selecionado\ne as últimas linhas do log.",
-             "", (0.55, 0.72), section="Detalhe", evidence="#detail-pane",
+             "", (0.55, 0.78), section="Detalhe", evidence="#detail-pane",
              spotlight_group="detail"),
         Step("70b_detail_learn", "running_sel", "O que você aprende aqui",
              "Sem sair da Overview, vê se o job\navança ou se já há erro no log.",
-             "", (0.55, 0.72), section="Detalhe", evidence="DETAIL_TAIL_LINES",
+             "", (0.55, 0.78), section="Detalhe", evidence="DETAIL_TAIL_LINES",
              spotlight_group="detail"),
         Step("71_detail_title", "running_sel", "Título do detalhe",
              "Confirma ID, estado e tempo\ndo job em foco.",
-             "", (0.55, 0.68), section="Detalhe", evidence="#detail-title",
+             "", (0.55, 0.74), section="Detalhe", evidence="#detail-title",
              spotlight_group="detail-title"),
         Step("72_detail_log", "running_sel", "Prévia do log",
              "Últimas linhas do run.log.\nPara o log completo, use View Logs.",
-             "", (0.55, 0.78), section="Detalhe", evidence="#detail-log",
+             "", (0.55, 0.82), section="Detalhe", evidence="#detail-log",
              spotlight_group="detail-log"),
 
         # Actions
@@ -333,32 +323,28 @@ def _steps() -> list[Step]:
              spotlight_group="events"),
         Step("81_newjob", "populated", "New Job [N]",
              "Abre a tela para configurar\ne enviar um novo job.",
-             "", (0.72, 0.92), section="Ações", evidence="#new-job",
+             "", (0.78, 0.92), section="Ações", evidence="#new-job",
              spotlight_group="btn-new"),
         Step("82_viewlogs", "populated", "View Logs [V]",
              "Abre o detalhe completo do job\nselecionado para diagnóstico.",
-             "", (0.82, 0.92), section="Ações", evidence="#view-logs",
+             "", (0.86, 0.92), section="Ações", evidence="#view-logs",
              spotlight_group="btn-logs"),
         Step("82b_viewlogs_when", "failed_sel", "Quando usar",
              "Use em FAILED ou quando o log\ncurto do painel não bastar.",
-             "", (0.82, 0.92), section="Ações", evidence="open_job_detail",
+             "", (0.86, 0.92), section="Ações", evidence="open_job_detail",
              spotlight_group="btn-logs"),
         Step("83_cancel", "running_sel", "Cancel [C]",
              "Inicia o cancelamento somente\nse o job selecionado estiver RUNNING.",
-             "", (0.92, 0.92), section="Ações", evidence="#cancel",
+             "", (0.94, 0.92), section="Ações", evidence="#cancel",
              spotlight_group="btn-cancel"),
         Step("83b_cancel_note", "running_sel", "Atenção",
              "Jobs que não estão RUNNING\nnão podem ser cancelados aqui.",
-             "", (0.92, 0.92), section="Ações", evidence="Only Running jobs",
+             "", (0.94, 0.92), section="Ações", evidence="Only Running jobs",
              spotlight_group="btn-cancel"),
 
-        # Close
+        # Close — no Next Step
         Step("90_close", "card:close", "Resumo",
              "Na Overview você monitora status,\ninterpreta resultados e age.",
-             "", (0.50, 0.50), section="Encerramento", evidence="closing",
-             spotlight_group="close"),
-        Step("90b_close_b", "card:close", "Próximo passo",
-             "Revise FAILED, acompanhe RUNNING\ne confirme SUCCEEDED na entrega.",
              "", (0.50, 0.50), section="Encerramento", evidence="closing",
              spotlight_group="close"),
     ]
@@ -368,14 +354,12 @@ def _steps() -> list[Step]:
 def _apply_targets(steps: list[Step]) -> list[Step]:
     """Attach precise Textual widget ids for element-based spotlights."""
     mapping: dict[str, list[str]] = {
-        "02_purpose": ["status-strip", "jobs-title", "jobs-table"],
-        "10_sidebar_what": ["sidebar-nav"],
-        "10b_sidebar_learn": ["sidebar-nav"],
-        "10c_sidebar_action": ["sidebar-nav"],
+        "02_purpose": ["jobs-title", "jobs-table"],
         "20_strip_what": ["status-strip"],
         "20b_strip_learn": ["status-strip"],
         "21_krb_what": ["status-strip"],
         "21b_krb_action": ["status-strip"],
+        "21c_krb_password": ["status-strip"],
         "22_running_what": ["status-strip"],
         "22b_running_learn": ["status-strip"],
         "23_finished_what": ["status-strip"],
@@ -838,11 +822,16 @@ def _union_norms(boxes: list[tuple[float, float, float, float]]) -> tuple[float,
 
 
 def _margin_for(wid: str) -> int:
-    if wid in {"new-job", "view-logs", "cancel", "preview", "launch"}:
-        return MARGIN_BUTTON_PX
-    if wid in {"status-strip", "jobs-title", "event-trail", "jobs-empty", "detail-title"}:
-        return MARGIN_SMALL_PX
-    return MARGIN_FIELD_PX
+    # Tight margins: Overview spotlights must stay on the exact control.
+    if wid in {"status-strip", "jobs-title"}:
+        return 2
+    if wid in {"new-job", "view-logs", "cancel"}:
+        return 6
+    if wid in {"event-trail", "detail-title", "jobs-filter"}:
+        return 4
+    if wid in {"jobs-table", "detail-pane", "detail-log", "jobs-empty"}:
+        return 4
+    return 6
 
 
 def _slice_box(
@@ -906,61 +895,73 @@ def _spotlights_for_step(step: Step) -> list[tuple[float, float, float, float]]:
         return [(max(0.02, cx - 0.08), max(0.02, cy - 0.04),
                  min(0.98, cx + 0.08), min(0.88, cy + 0.04))]
 
-    # Overview: slice dense strip / table into tighter teaching cutouts.
+    # Overview: tight cutouts only — exact metric / column / row / control.
     g = step.spotlight_group
     by_id = {wid: box for wid, box in items}
     if "status-strip" in by_id:
         strip = by_id["status-strip"]
+        # Metrics are left-packed in the strip (measured from capture glyphs).
         strip_slices = {
-            "krb": (0.00, 0.22),
-            "running-cap": (0.22, 0.48),
-            "finished": (0.48, 0.74),
-            "failed-count": (0.74, 1.00),
+            "krb": (0.005, 0.115),
+            "running-cap": (0.110, 0.200),
+            "finished": (0.205, 0.305),
+            "failed-count": (0.300, 0.395),
         }
         if g in strip_slices:
             x0, x1 = strip_slices[g]
             return [_slice_box(strip, x0=x0, x1=x1)]
         if g == "status-strip":
-            return [strip]
+            # Only the four metrics — not the empty right half of the strip.
+            return [_slice_box(strip, x0=0.0, x1=0.40)]
     if "jobs-table" in by_id:
         table = by_id["jobs-table"]
-        # Approximate DataTable column bands (ID/Source/Dest/State/Elapsed).
+        # Column fractions measured from capture header/value glyph clusters.
         col_slices = {
-            "col-id": (0.00, 0.18),
-            "col-src": (0.18, 0.40),
-            "col-dst": (0.40, 0.60),
-            "col-state": (0.60, 0.82),
-            "col-elapsed": (0.82, 1.00),
+            "col-id": (0.00, 0.095),
+            "col-src": (0.095, 0.195),
+            "col-dst": (0.195, 0.315),
+            "col-state": (0.315, 0.412),
+            "col-elapsed": (0.430, 0.515),
         }
         if g in col_slices:
             x0, x1 = col_slices[g]
-            # Header + first few body rows for column teaching.
-            return [_slice_box(table, x0=x0, x1=x1, y0=0.0, y1=0.42)]
-        # State-row bands: Running pinned first, then others in seed order.
+            # Header + first few body rows only.
+            return [_slice_box(table, x0=x0, x1=x1, y0=0.0, y1=0.12)]
+        # Running first, then Pending, Cancelled, Failed, Succeeded.
+        # One DataTable body row ~= 1/51 of the jobs-table widget height.
         row_slices = {
-            "state-running": (0.08, 0.22),
-            "state-pending": (0.22, 0.36),
-            "state-ok": (0.36, 0.50),
-            "state-fail": (0.50, 0.64),
-            "state-cancel": (0.64, 0.78),
+            "state-running": (0.018, 0.040),
+            "state-pending": (0.038, 0.060),
+            "state-cancel": (0.057, 0.080),
+            "state-fail": (0.077, 0.100),
+            "state-ok": (0.096, 0.120),
         }
         if g in row_slices:
             y0, y1 = row_slices[g]
-            return [_slice_box(table, x0=0.58, x1=0.86, y0=y0, y1=y1)]
+            return [_slice_box(table, x0=0.315, x1=0.412, y0=y0, y1=y1)]
         if g == "table":
-            return [_slice_box(table, y0=0.0, y1=0.70)]
+            return [_slice_box(table, y0=0.0, y1=0.18)]
         if g == "filter-ex" and "jobs-filter" in by_id:
-            return [by_id["jobs-filter"], _slice_box(table, y0=0.0, y1=0.55)]
+            return [by_id["jobs-filter"], _slice_box(table, y0=0.0, y1=0.14)]
     if g == "purpose":
         boxes: list[tuple[float, float, float, float]] = []
-        if "status-strip" in by_id:
-            boxes.append(by_id["status-strip"])
         if "jobs-title" in by_id:
-            boxes.append(by_id["jobs-title"])
+            # Title text is left-packed; inset top to avoid status-strip bleed.
+            boxes.append(_slice_box(by_id["jobs-title"], x0=0.0, x1=0.42, y0=0.28, y1=1.0))
         if "jobs-table" in by_id:
-            boxes.append(_slice_box(by_id["jobs-table"], y0=0.0, y1=0.35))
+            boxes.append(_slice_box(by_id["jobs-table"], y0=0.0, y1=0.12))
         if boxes:
             return [_union_norms(boxes)] if len(boxes) > 1 else boxes
+    if g == "detail" and "detail-pane" in by_id:
+        return [by_id["detail-pane"]]
+    if g == "empty" and "jobs-empty" in by_id:
+        return [by_id["jobs-empty"]]
+    if g == "jobs-title" and "jobs-title" in by_id:
+        # Inset top edge so the strip metric line is not pulled into the cutout.
+        return [_slice_box(by_id["jobs-title"], x0=0.0, x1=0.42, y0=0.28, y1=1.0)]
+    if g == "filter" and "jobs-filter" in by_id:
+        # Filter input fills width when open; keep full control, low margin.
+        return [by_id["jobs-filter"]]
 
     refined: list[tuple[float, float, float, float]] = []
     used = [False] * len(items)
@@ -1373,16 +1374,15 @@ def _manual_review_spotlight(
     app_area = VIDEO_W * app_h
     allow_large = {
         "02_purpose", "40_table_what", "40b_table_learn",
-        "10_sidebar_what", "10b_sidebar_learn", "10c_sidebar_action",
         "70_detail_what", "70b_detail_learn", "61_filter_ex",
     }
     for b in boxes_px:
         if b[3] > VIDEO_H - DIALOGUE_H + 2:
             return "FAIL", "target covered by dialogue box"
         area = max(0, b[2] - b[0]) * max(0, b[3] - b[1])
-        if area > 0.40 * app_area and step.id not in allow_large:
+        if area > 0.22 * app_area and step.id not in allow_large:
             return "FAIL", "oversized generic spotlight"
-        if area > 0.55 * app_area:
+        if area > 0.40 * app_area:
             return "FAIL", "spotlight covers most of the application"
     # Peer controls (not label+control) must not collapse into one cutout.
     peers = [t for t in step.targets if not t.startswith("lbl-")]
@@ -1477,9 +1477,14 @@ def _verify_no_antes(steps: list[Step]) -> None:
 def _verify_overview_content(steps: list[Step]) -> None:
     blob = "\n".join(f"{s.title}\n{s.body}" for s in steps)
     for token in ("Overview", "RUNNING", "SUCCEEDED", "FAILED", "PENDING", "CANCELLED",
-                  "KERBEROS", "FINISHED 7D", "Filtro", "View Logs", "Cancel"):
+                  "KERBEROS", "FINISHED 7D", "Filtro", "View Logs", "Cancel", "kinit"):
         if token not in blob:
             raise AssertionError(f"Missing Overview content: {token}")
+    forbidden = ("barra lateral", "próximo passo", "sidebar", "History ou Browse")
+    low = blob.lower()
+    for bad in forbidden:
+        if bad in low:
+            raise AssertionError(f"Forbidden Overview content still present: {bad}")
 
 
 def _assert_font() -> None:
@@ -1537,7 +1542,7 @@ async def main() -> int:
           FRAMES_DIR / "card_open.png")
     bases["card:open"] = FRAMES_DIR / "card_open.png"
     _card("Resumo",
-          "Na Overview você:\n1. monitora status;\n2. interpreta resultados;\n3. age em falhas e execuções.",
+          "Na Overview você monitora status,\ninterpreta resultados e age nos jobs.",
           FRAMES_DIR / "card_close.png")
     bases["card:close"] = FRAMES_DIR / "card_close.png"
 

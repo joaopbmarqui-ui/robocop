@@ -9,271 +9,256 @@ O que é Overview
 Tela principal para acompanhar / jobs enviados e seu status.
 
 3
-00:00:12,833 --> 00:00:18,933
+00:00:12,833 --> 00:00:18,867
 O que é
-A barra lateral mostra onde você está / e as outras áreas do Dispatch.
+A faixa superior resume autenticação / e o monitoramento dos jobs.
 
 4
-00:00:18,933 --> 00:00:25,233
+00:00:18,867 --> 00:00:25,167
 O que você aprende aqui
-Overview fica destacado quando esta / é a tela ativa de monitoramento.
+Em um olhar: autenticação, execução / e histórico dos últimos 7 dias.
 
 5
-00:00:25,233 --> 00:00:31,233
-O que fazer
-Use a barra para ir a New Job, / Logs, History ou Browse.
-
-6
-00:00:31,533 --> 00:00:37,567
-O que é
-A faixa superior resume o estado / do ambiente e dos jobs recentes.
-
-7
-00:00:37,567 --> 00:00:43,867
-O que você aprende aqui
-Em um olhar, vê autenticação, / jobs em execução e totais de 7 dias.
-
-8
-00:00:44,167 --> 00:00:50,167
+00:00:25,467 --> 00:00:31,467
 KERBEROS
 Indica se sua autenticação / está disponível para executar jobs.
 
-9
-00:00:50,167 --> 00:00:56,467
-O que observar
-Se aparecer MISSING ou tempo curto, / resolva a autenticação antes de enviar.
+6
+00:00:31,467 --> 00:00:37,467
+Se estiver MISSING ou curto
+Abra um novo terminal e execute: / kinit
 
-10
-00:00:56,767 --> 00:01:02,867
+7
+00:00:37,467 --> 00:00:43,467
+Senha
+Informe sua senha Windows / quando o terminal solicitar.
+
+8
+00:00:43,767 --> 00:00:49,867
 RUNNING
 Quantos jobs estão em execução agora, / em relação ao limite de vagas.
 
-11
-00:01:02,867 --> 00:01:09,100
+9
+00:00:49,867 --> 00:00:56,100
 O que você aprende aqui
 O limite é 2 vagas. Pending e Running / ocupam vaga de execução.
 
-12
-00:01:09,400 --> 00:01:15,567
+10
+00:00:56,400 --> 00:01:02,400
 FINISHED 7D
-Quantos jobs concluíram com sucesso / nos últimos 7 dias (lista ativa).
+Histórico de jobs com sucesso / nos últimos 7 dias.
+
+11
+00:01:02,400 --> 00:01:08,667
+O que você aprende aqui
+Permite ver sete dias de histórico / e confirmar entregas recentes.
+
+12
+00:01:08,967 --> 00:01:14,967
+FAILED 7D
+Histórico de jobs que falharam / nos últimos 7 dias.
 
 13
-00:01:15,567 --> 00:01:21,733
-O que você aprende aqui
-Serve para confirmar entregas recentes / sem abrir cada job.
-
-14
-00:01:22,033 --> 00:01:28,033
-FAILED 7D
-Quantos jobs falharam / nos últimos 7 dias (lista ativa).
-
-15
-00:01:28,033 --> 00:01:34,133
+00:01:14,967 --> 00:01:21,067
 O que fazer
 Se o número subir, revise os jobs / FAILED antes de enviar outros.
 
-16
-00:01:34,433 --> 00:01:40,700
+14
+00:01:21,367 --> 00:01:27,467
 Lista de jobs
-Jobs · running first · last 7 days: / lista dos jobs recentes para monitorar.
+Jobs · running first · last 7 dias: / lista do histórico recente.
 
-17
-00:01:40,700 --> 00:01:46,967
+15
+00:01:27,467 --> 00:01:33,667
 O que você aprende aqui
-Jobs em execução ficam no topo. / A janela cobre os últimos 7 dias.
+Execução no topo; a janela cobre / sete dias de monitoramento.
 
-18
-00:01:47,267 --> 00:01:53,433
+16
+00:01:33,967 --> 00:01:40,133
 Lista vazia
 Quando não há jobs nos últimos 7 dias, / a tela orienta a criar um novo.
 
-19
-00:01:53,433 --> 00:01:59,433
+17
+00:01:40,133 --> 00:01:46,133
 O que fazer
 Pressione N ou New Job para / enviar a primeira execução.
 
-20
-00:01:59,733 --> 00:02:05,867
+18
+00:01:46,433 --> 00:01:52,567
 O que é
 A tabela lista cada job com identidade, / origem, destino, estado e tempo.
 
-21
-00:02:05,867 --> 00:02:12,067
+19
+00:01:52,567 --> 00:01:58,767
 O que você aprende aqui
 Percorra as linhas para achar / sucesso, execução ou problemas.
 
-22
-00:02:12,367 --> 00:02:18,433
+20
+00:01:59,067 --> 00:02:05,133
 Coluna ID
 Identifica o job de forma curta / para localizar e abrir detalhes.
 
-23
-00:02:18,433 --> 00:02:24,433
+21
+00:02:05,133 --> 00:02:11,133
 Como usar
 Use o ID para filtrar ou / confirmar qual execução está vendo.
 
-24
-00:02:24,733 --> 00:02:30,733
+22
+00:02:11,433 --> 00:02:17,433
 Coluna Source
 Mostra a origem do job: / arquivo SQL, tabela ou tipo.
 
-25
-00:02:30,733 --> 00:02:36,833
+23
+00:02:17,433 --> 00:02:23,533
 Como usar
 Confirme se a origem corresponde / ao job que você esperava monitorar.
 
-26
-00:02:37,133 --> 00:02:43,133
+24
+00:02:23,833 --> 00:02:29,833
 Coluna Destination
 Mostra para onde o resultado / foi ou será entregue.
 
-27
-00:02:43,133 --> 00:02:49,133
+25
+00:02:29,833 --> 00:02:35,833
 Como usar
 Verifique schema.tabela ou Csv / antes de validar o resultado.
 
-28
-00:02:49,433 --> 00:02:55,500
+26
+00:02:36,133 --> 00:02:42,200
 Coluna State
 Mostra o estado atual do job / com símbolo e rótulo em destaque.
 
-29
-00:02:55,500 --> 00:03:01,833
+27
+00:02:42,200 --> 00:02:48,533
 O que você aprende aqui
 Dá para ver rápido se está aguardando, / rodando, ok ou precisa atenção.
 
-30
-00:03:02,133 --> 00:03:08,133
+28
+00:02:48,833 --> 00:02:54,833
 PENDING
 O job foi aceito e aguarda / início da execução.
 
-31
-00:03:08,133 --> 00:03:14,167
+29
+00:02:54,833 --> 00:03:00,867
 O que fazer
 Em geral, espere. Confira se / há vaga livre na faixa RUNNING.
 
-32
-00:03:14,467 --> 00:03:20,467
+30
+00:03:01,167 --> 00:03:07,167
 RUNNING
 O job está em execução agora. / Acompanhe o progresso no painel.
 
-33
-00:03:20,467 --> 00:03:26,500
+31
+00:03:07,167 --> 00:03:13,200
 O que fazer
 Monitore o log. Só cancele se / realmente precisar interromper.
 
-34
-00:03:26,800 --> 00:03:32,800
+32
+00:03:13,500 --> 00:03:19,500
 SUCCEEDED
 O job terminou com sucesso. / O resultado está disponível.
 
-35
-00:03:32,800 --> 00:03:38,867
+33
+00:03:19,500 --> 00:03:25,567
 O que fazer
 Valide a entrega (tabela ou CSV) / conforme o Destination do job.
 
-36
-00:03:39,167 --> 00:03:45,367
+34
+00:03:25,867 --> 00:03:32,067
 FAILED
 O job falhou. Pode aparecer um código / (ex.: SYNTAX) para orientar a análise.
 
-37
-00:03:45,367 --> 00:03:51,400
+35
+00:03:32,067 --> 00:03:38,100
 O que fazer
 Abra View Logs, entenda a causa / e corrija antes de reenviar.
 
-38
-00:03:51,700 --> 00:03:57,700
+36
+00:03:38,400 --> 00:03:44,400
 CANCELLED
 A execução foi cancelada. / Não houve conclusão bem-sucedida.
 
-39
-00:03:57,700 --> 00:04:03,800
+37
+00:03:44,400 --> 00:03:50,500
 O que fazer
 Confirme se o cancelamento / foi intencional; reenvie se precisar.
 
-40
-00:04:04,100 --> 00:04:10,333
+38
+00:03:50,800 --> 00:03:57,033
 Coluna Elapsed
 Tempo decorrido: em Running conta / desde o início; nos demais, a duração.
 
-41
-00:04:10,333 --> 00:04:16,433
+39
+00:03:57,033 --> 00:04:03,133
 Como usar
 Compare duração esperada e detecte / jobs longos que merecem atenção.
 
-42
-00:04:16,733 --> 00:04:22,800
+40
+00:04:03,433 --> 00:04:09,500
 Filtro
 Pressione / para filtrar a lista / por id, arquivo, tabela ou estado.
 
-43
-00:04:22,800 --> 00:04:28,800
+41
+00:04:09,500 --> 00:04:15,500
 Quando usar
 Use para achar rápido um job / ou isolar só FAILED / RUNNING.
 
-44
-00:04:29,100 --> 00:04:35,233
+42
+00:04:15,800 --> 00:04:21,933
 Exemplo
 Digite failed para ver só falhas. / Esc limpa o filtro e restaura a lista.
 
-45
-00:04:36,467 --> 00:04:42,633
+43
+00:04:23,167 --> 00:04:29,333
 Painel de detalhe
 Mostra um resumo do job selecionado / e as últimas linhas do log.
 
-46
-00:04:42,633 --> 00:04:48,900
+44
+00:04:29,333 --> 00:04:35,600
 O que você aprende aqui
 Sem sair da Overview, vê se o job / avança ou se já há erro no log.
 
-47
-00:04:49,200 --> 00:04:55,200
+45
+00:04:35,900 --> 00:04:41,900
 Título do detalhe
 Confirma ID, estado e tempo / do job em foco.
 
-48
-00:04:55,500 --> 00:05:01,600
+46
+00:04:42,200 --> 00:04:48,300
 Prévia do log
 Últimas linhas do run.log. / Para o log completo, use View Logs.
 
-49
-00:05:01,900 --> 00:05:08,133
+47
+00:04:48,600 --> 00:04:54,833
 Eventos recentes
 Mostra o último aviso da Overview, / como início do Dispatch ou término.
 
-50
-00:05:08,433 --> 00:05:14,433
+48
+00:04:55,133 --> 00:05:01,133
 New Job [N]
 Abre a tela para configurar / e enviar um novo job.
 
-51
-00:05:14,733 --> 00:05:20,800
+49
+00:05:01,433 --> 00:05:07,500
 View Logs [V]
 Abre o detalhe completo do job / selecionado para diagnóstico.
 
-52
-00:05:20,800 --> 00:05:26,800
+50
+00:05:07,500 --> 00:05:13,500
 Quando usar
 Use em FAILED ou quando o log / curto do painel não bastar.
 
-53
-00:05:27,100 --> 00:05:33,200
+51
+00:05:13,800 --> 00:05:19,900
 Cancel [C]
 Inicia o cancelamento somente / se o job selecionado estiver RUNNING.
 
-54
-00:05:33,200 --> 00:05:39,200
+52
+00:05:19,900 --> 00:05:25,900
 Atenção
 Jobs que não estão RUNNING / não podem ser cancelados aqui.
 
-55
-00:05:39,200 --> 00:05:45,200
+53
+00:05:25,900 --> 00:05:31,900
 Resumo
 Na Overview você monitora status, / interpreta resultados e age.
-
-56
-00:05:45,200 --> 00:05:51,333
-Próximo passo
-Revise FAILED, acompanhe RUNNING / e confirme SUCCEEDED na entrega.

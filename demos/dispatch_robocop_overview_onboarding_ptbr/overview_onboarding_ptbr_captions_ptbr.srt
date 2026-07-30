@@ -1,0 +1,279 @@
+1
+00:00:00,000 --> 00:00:06,167
+Dispatch (Robocop)
+Como utilizar a aba Overview. / Monitore e interprete seus jobs.
+
+2
+00:00:06,467 --> 00:00:12,533
+O que é Overview
+Tela principal para acompanhar / jobs enviados e seu status.
+
+3
+00:00:12,833 --> 00:00:18,933
+O que é
+A barra lateral mostra onde você está / e as outras áreas do Dispatch.
+
+4
+00:00:18,933 --> 00:00:25,233
+O que você aprende aqui
+Overview fica destacado quando esta / é a tela ativa de monitoramento.
+
+5
+00:00:25,233 --> 00:00:31,233
+O que fazer
+Use a barra para ir a New Job, / Logs, History ou Browse.
+
+6
+00:00:31,533 --> 00:00:37,567
+O que é
+A faixa superior resume o estado / do ambiente e dos jobs recentes.
+
+7
+00:00:37,567 --> 00:00:43,867
+O que você aprende aqui
+Em um olhar, vê autenticação, / jobs em execução e totais de 7 dias.
+
+8
+00:00:44,167 --> 00:00:50,167
+KERBEROS
+Indica se sua autenticação / está disponível para executar jobs.
+
+9
+00:00:50,167 --> 00:00:56,467
+O que observar
+Se aparecer MISSING ou tempo curto, / resolva a autenticação antes de enviar.
+
+10
+00:00:56,767 --> 00:01:02,867
+RUNNING
+Quantos jobs estão em execução agora, / em relação ao limite de vagas.
+
+11
+00:01:02,867 --> 00:01:09,100
+O que você aprende aqui
+O limite é 2 vagas. Pending e Running / ocupam vaga de execução.
+
+12
+00:01:09,400 --> 00:01:15,567
+FINISHED 7D
+Quantos jobs concluíram com sucesso / nos últimos 7 dias (lista ativa).
+
+13
+00:01:15,567 --> 00:01:21,733
+O que você aprende aqui
+Serve para confirmar entregas recentes / sem abrir cada job.
+
+14
+00:01:22,033 --> 00:01:28,033
+FAILED 7D
+Quantos jobs falharam / nos últimos 7 dias (lista ativa).
+
+15
+00:01:28,033 --> 00:01:34,133
+O que fazer
+Se o número subir, revise os jobs / FAILED antes de enviar outros.
+
+16
+00:01:34,433 --> 00:01:40,700
+Lista de jobs
+Jobs · running first · last 7 days: / lista dos jobs recentes para monitorar.
+
+17
+00:01:40,700 --> 00:01:46,967
+O que você aprende aqui
+Jobs em execução ficam no topo. / A janela cobre os últimos 7 dias.
+
+18
+00:01:47,267 --> 00:01:53,433
+Lista vazia
+Quando não há jobs nos últimos 7 dias, / a tela orienta a criar um novo.
+
+19
+00:01:53,433 --> 00:01:59,433
+O que fazer
+Pressione N ou New Job para / enviar a primeira execução.
+
+20
+00:01:59,733 --> 00:02:05,867
+O que é
+A tabela lista cada job com identidade, / origem, destino, estado e tempo.
+
+21
+00:02:05,867 --> 00:02:12,067
+O que você aprende aqui
+Percorra as linhas para achar / sucesso, execução ou problemas.
+
+22
+00:02:12,367 --> 00:02:18,433
+Coluna ID
+Identifica o job de forma curta / para localizar e abrir detalhes.
+
+23
+00:02:18,433 --> 00:02:24,433
+Como usar
+Use o ID para filtrar ou / confirmar qual execução está vendo.
+
+24
+00:02:24,733 --> 00:02:30,733
+Coluna Source
+Mostra a origem do job: / arquivo SQL, tabela ou tipo.
+
+25
+00:02:30,733 --> 00:02:36,833
+Como usar
+Confirme se a origem corresponde / ao job que você esperava monitorar.
+
+26
+00:02:37,133 --> 00:02:43,133
+Coluna Destination
+Mostra para onde o resultado / foi ou será entregue.
+
+27
+00:02:43,133 --> 00:02:49,133
+Como usar
+Verifique schema.tabela ou Csv / antes de validar o resultado.
+
+28
+00:02:49,433 --> 00:02:55,500
+Coluna State
+Mostra o estado atual do job / com símbolo e rótulo em destaque.
+
+29
+00:02:55,500 --> 00:03:01,833
+O que você aprende aqui
+Dá para ver rápido se está aguardando, / rodando, ok ou precisa atenção.
+
+30
+00:03:02,133 --> 00:03:08,133
+PENDING
+O job foi aceito e aguarda / início da execução.
+
+31
+00:03:08,133 --> 00:03:14,167
+O que fazer
+Em geral, espere. Confira se / há vaga livre na faixa RUNNING.
+
+32
+00:03:14,467 --> 00:03:20,467
+RUNNING
+O job está em execução agora. / Acompanhe o progresso no painel.
+
+33
+00:03:20,467 --> 00:03:26,500
+O que fazer
+Monitore o log. Só cancele se / realmente precisar interromper.
+
+34
+00:03:26,800 --> 00:03:32,800
+SUCCEEDED
+O job terminou com sucesso. / O resultado está disponível.
+
+35
+00:03:32,800 --> 00:03:38,867
+O que fazer
+Valide a entrega (tabela ou CSV) / conforme o Destination do job.
+
+36
+00:03:39,167 --> 00:03:45,367
+FAILED
+O job falhou. Pode aparecer um código / (ex.: SYNTAX) para orientar a análise.
+
+37
+00:03:45,367 --> 00:03:51,400
+O que fazer
+Abra View Logs, entenda a causa / e corrija antes de reenviar.
+
+38
+00:03:51,700 --> 00:03:57,700
+CANCELLED
+A execução foi cancelada. / Não houve conclusão bem-sucedida.
+
+39
+00:03:57,700 --> 00:04:03,800
+O que fazer
+Confirme se o cancelamento / foi intencional; reenvie se precisar.
+
+40
+00:04:04,100 --> 00:04:10,333
+Coluna Elapsed
+Tempo decorrido: em Running conta / desde o início; nos demais, a duração.
+
+41
+00:04:10,333 --> 00:04:16,433
+Como usar
+Compare duração esperada e detecte / jobs longos que merecem atenção.
+
+42
+00:04:16,733 --> 00:04:22,800
+Filtro
+Pressione / para filtrar a lista / por id, arquivo, tabela ou estado.
+
+43
+00:04:22,800 --> 00:04:28,800
+Quando usar
+Use para achar rápido um job / ou isolar só FAILED / RUNNING.
+
+44
+00:04:29,100 --> 00:04:35,233
+Exemplo
+Digite failed para ver só falhas. / Esc limpa o filtro e restaura a lista.
+
+45
+00:04:36,467 --> 00:04:42,633
+Painel de detalhe
+Mostra um resumo do job selecionado / e as últimas linhas do log.
+
+46
+00:04:42,633 --> 00:04:48,900
+O que você aprende aqui
+Sem sair da Overview, vê se o job / avança ou se já há erro no log.
+
+47
+00:04:49,200 --> 00:04:55,200
+Título do detalhe
+Confirma ID, estado e tempo / do job em foco.
+
+48
+00:04:55,500 --> 00:05:01,600
+Prévia do log
+Últimas linhas do run.log. / Para o log completo, use View Logs.
+
+49
+00:05:01,900 --> 00:05:08,133
+Eventos recentes
+Mostra o último aviso da Overview, / como início do Dispatch ou término.
+
+50
+00:05:08,433 --> 00:05:14,433
+New Job [N]
+Abre a tela para configurar / e enviar um novo job.
+
+51
+00:05:14,733 --> 00:05:20,800
+View Logs [V]
+Abre o detalhe completo do job / selecionado para diagnóstico.
+
+52
+00:05:20,800 --> 00:05:26,800
+Quando usar
+Use em FAILED ou quando o log / curto do painel não bastar.
+
+53
+00:05:27,100 --> 00:05:33,200
+Cancel [C]
+Inicia o cancelamento somente / se o job selecionado estiver RUNNING.
+
+54
+00:05:33,200 --> 00:05:39,200
+Atenção
+Jobs que não estão RUNNING / não podem ser cancelados aqui.
+
+55
+00:05:39,200 --> 00:05:45,200
+Resumo
+Na Overview você monitora status, / interpreta resultados e age.
+
+56
+00:05:45,200 --> 00:05:51,333
+Próximo passo
+Revise FAILED, acompanhe RUNNING / e confirme SUCCEEDED na entrega.

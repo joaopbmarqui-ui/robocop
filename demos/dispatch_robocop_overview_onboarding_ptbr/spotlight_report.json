@@ -1,0 +1,1750 @@
+[
+  {
+    "id": "01_open",
+    "topic": "Dispatch (Robocop)",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 3.166666666666667,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  },
+  {
+    "id": "02_purpose",
+    "topic": "O que \u00e9 Overview",
+    "targets": [
+      "status-strip",
+      "jobs-title",
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.13,
+        0.0429,
+        1.0,
+        0.3407
+      ]
+    ],
+    "final_boxes": [
+      [
+        527,
+        20,
+        1540,
+        289
+      ]
+    ],
+    "margins": [
+      14,
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 9.533333333333333,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "10_sidebar_what",
+    "topic": "O que \u00e9",
+    "targets": [
+      "sidebar-nav"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.0,
+        0.0571,
+        0.125,
+        0.3
+      ]
+    ],
+    "final_boxes": [
+      [
+        374,
+        26,
+        555,
+        263
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 15.933333333333334,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "10b_sidebar_learn",
+    "topic": "O que voc\u00ea aprende aqui",
+    "targets": [
+      "sidebar-nav"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.0,
+        0.0571,
+        0.125,
+        0.3
+      ]
+    ],
+    "final_boxes": [
+      [
+        374,
+        26,
+        555,
+        263
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 22.233333333333334,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "10c_sidebar_action",
+    "topic": "O que fazer",
+    "targets": [
+      "sidebar-nav"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.0,
+        0.0571,
+        0.125,
+        0.3
+      ]
+    ],
+    "final_boxes": [
+      [
+        374,
+        26,
+        555,
+        263
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 28.233333333333334,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "20_strip_what",
+    "topic": "O que \u00e9",
+    "targets": [
+      "status-strip"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.13,
+        0.0429,
+        1.0,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        527,
+        26,
+        1540,
+        54
+      ]
+    ],
+    "margins": [
+      14
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 34.56666666666667,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "20b_strip_learn",
+    "topic": "O que voc\u00ea aprende aqui",
+    "targets": [
+      "status-strip"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.13,
+        0.0429,
+        1.0,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        527,
+        26,
+        1540,
+        54
+      ]
+    ],
+    "margins": [
+      14
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 40.86666666666667,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "21_krb_what",
+    "topic": "KERBEROS",
+    "targets": [
+      "status-strip"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.13,
+        0.0429,
+        0.3214,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        527,
+        26,
+        771,
+        54
+      ]
+    ],
+    "margins": [
+      14
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 47.166666666666664,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "21b_krb_action",
+    "topic": "O que observar",
+    "targets": [
+      "status-strip"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.13,
+        0.0429,
+        0.3214,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        527,
+        26,
+        771,
+        54
+      ]
+    ],
+    "margins": [
+      14
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 53.46666666666666,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "22_running_what",
+    "topic": "RUNNING",
+    "targets": [
+      "status-strip"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.3214,
+        0.0429,
+        0.5476,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        743,
+        26,
+        1027,
+        54
+      ]
+    ],
+    "margins": [
+      14
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 59.86666666666666,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "22b_running_learn",
+    "topic": "O que voc\u00ea aprende aqui",
+    "targets": [
+      "status-strip"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.3214,
+        0.0429,
+        0.5476,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        743,
+        26,
+        1027,
+        54
+      ]
+    ],
+    "margins": [
+      14
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 66.1,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "23_finished_what",
+    "topic": "FINISHED 7D",
+    "targets": [
+      "status-strip"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.5476,
+        0.0429,
+        0.7738,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        999,
+        26,
+        1283,
+        54
+      ]
+    ],
+    "margins": [
+      14
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 72.56666666666666,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "23b_finished_learn",
+    "topic": "O que voc\u00ea aprende aqui",
+    "targets": [
+      "status-strip"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.5476,
+        0.0429,
+        0.7738,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        999,
+        26,
+        1283,
+        54
+      ]
+    ],
+    "margins": [
+      14
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 78.73333333333333,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "24_failed_what",
+    "topic": "FAILED 7D",
+    "targets": [
+      "status-strip"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.7738,
+        0.0429,
+        1.0,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        1255,
+        26,
+        1540,
+        54
+      ]
+    ],
+    "margins": [
+      14
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 85.03333333333333,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "24b_failed_action",
+    "topic": "O que fazer",
+    "targets": [
+      "status-strip"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.7738,
+        0.0429,
+        1.0,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        1255,
+        26,
+        1540,
+        54
+      ]
+    ],
+    "margins": [
+      14
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 91.13333333333333,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "30_title_what",
+    "topic": "Lista de jobs",
+    "targets": [
+      "jobs-title"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.13,
+        0.0571,
+        1.0,
+        0.0857
+      ]
+    ],
+    "final_boxes": [
+      [
+        527,
+        36,
+        1540,
+        79
+      ]
+    ],
+    "margins": [
+      14
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 97.69999999999999,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "30b_title_learn",
+    "topic": "O que voc\u00ea aprende aqui",
+    "targets": [
+      "jobs-title"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.13,
+        0.0571,
+        1.0,
+        0.0857
+      ]
+    ],
+    "final_boxes": [
+      [
+        527,
+        36,
+        1540,
+        79
+      ]
+    ],
+    "margins": [
+      14
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 103.96666666666665,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "31_empty_what",
+    "topic": "Lista vazia",
+    "targets": [
+      "jobs-empty"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.0857,
+        0.99,
+        0.1286
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        55,
+        1528,
+        118
+      ]
+    ],
+    "margins": [
+      14
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 110.43333333333332,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "31b_empty_action",
+    "topic": "O que fazer",
+    "targets": [
+      "jobs-empty"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.0857,
+        0.99,
+        0.1286
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        55,
+        1528,
+        118
+      ]
+    ],
+    "margins": [
+      14
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 116.43333333333332,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "40_table_what",
+    "topic": "O que \u00e9",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.0857,
+        0.995,
+        0.5957
+      ]
+    ],
+    "final_boxes": [
+      [
+        526,
+        49,
+        1540,
+        502
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 122.86666666666666,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "40b_table_learn",
+    "topic": "O que voc\u00ea aprende aqui",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.0857,
+        0.995,
+        0.5957
+      ]
+    ],
+    "final_boxes": [
+      [
+        526,
+        49,
+        1540,
+        502
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 129.06666666666666,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "41_col_id",
+    "topic": "Coluna ID",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.0857,
+        0.2898,
+        0.3917
+      ]
+    ],
+    "final_boxes": [
+      [
+        526,
+        49,
+        742,
+        337
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 135.43333333333334,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "41b_col_id_use",
+    "topic": "Como usar",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.0857,
+        0.2898,
+        0.3917
+      ]
+    ],
+    "final_boxes": [
+      [
+        526,
+        49,
+        742,
+        337
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 141.43333333333334,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "42_col_src",
+    "topic": "Coluna Source",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.2898,
+        0.0857,
+        0.479,
+        0.3917
+      ]
+    ],
+    "final_boxes": [
+      [
+        702,
+        49,
+        956,
+        337
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 147.73333333333335,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "42b_col_src_use",
+    "topic": "Como usar",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.2898,
+        0.0857,
+        0.479,
+        0.3917
+      ]
+    ],
+    "final_boxes": [
+      [
+        702,
+        49,
+        956,
+        337
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 153.83333333333334,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "43_col_dst",
+    "topic": "Coluna Destination",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.479,
+        0.0857,
+        0.651,
+        0.3917
+      ]
+    ],
+    "final_boxes": [
+      [
+        916,
+        49,
+        1150,
+        337
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 160.13333333333335,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "43b_col_dst_use",
+    "topic": "Como usar",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.479,
+        0.0857,
+        0.651,
+        0.3917
+      ]
+    ],
+    "final_boxes": [
+      [
+        916,
+        49,
+        1150,
+        337
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 166.13333333333335,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "44_col_state",
+    "topic": "Coluna State",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.651,
+        0.0857,
+        0.8402,
+        0.3917
+      ]
+    ],
+    "final_boxes": [
+      [
+        1110,
+        49,
+        1365,
+        337
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 172.50000000000003,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "44b_col_state_learn",
+    "topic": "O que voc\u00ea aprende aqui",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.651,
+        0.0857,
+        0.8402,
+        0.3917
+      ]
+    ],
+    "final_boxes": [
+      [
+        1110,
+        49,
+        1365,
+        337
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 178.83333333333337,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "50_st_pending",
+    "topic": "PENDING",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.6338,
+        0.246,
+        0.8746,
+        0.348
+      ]
+    ],
+    "final_boxes": [
+      [
+        1091,
+        179,
+        1404,
+        301
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 185.13333333333338,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "50b_st_pending_act",
+    "topic": "O que fazer",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.6338,
+        0.246,
+        0.8746,
+        0.348
+      ]
+    ],
+    "final_boxes": [
+      [
+        1091,
+        179,
+        1404,
+        301
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 191.1666666666667,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "51_st_running",
+    "topic": "RUNNING",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.6338,
+        0.144,
+        0.8746,
+        0.246
+      ]
+    ],
+    "final_boxes": [
+      [
+        1091,
+        96,
+        1404,
+        219
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 197.46666666666673,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "51b_st_running_act",
+    "topic": "O que fazer",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.6338,
+        0.144,
+        0.8746,
+        0.246
+      ]
+    ],
+    "final_boxes": [
+      [
+        1091,
+        96,
+        1404,
+        219
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 203.50000000000006,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "52_st_ok",
+    "topic": "SUCCEEDED",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.6338,
+        0.348,
+        0.8746,
+        0.45
+      ]
+    ],
+    "final_boxes": [
+      [
+        1091,
+        261,
+        1404,
+        384
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 209.80000000000007,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "52b_st_ok_act",
+    "topic": "O que fazer",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.6338,
+        0.348,
+        0.8746,
+        0.45
+      ]
+    ],
+    "final_boxes": [
+      [
+        1091,
+        261,
+        1404,
+        384
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 215.86666666666673,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "53_st_fail",
+    "topic": "FAILED",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.6338,
+        0.4571,
+        0.8746,
+        0.5611
+      ]
+    ],
+    "final_boxes": [
+      [
+        1091,
+        350,
+        1404,
+        474
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 222.36666666666673,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "53b_st_fail_act",
+    "topic": "O que fazer",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.6338,
+        0.4571,
+        0.8746,
+        0.5611
+      ]
+    ],
+    "final_boxes": [
+      [
+        1091,
+        350,
+        1404,
+        474
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 228.40000000000006,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "54_st_cancel",
+    "topic": "CANCELLED",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.6338,
+        0.552,
+        0.8746,
+        0.654
+      ]
+    ],
+    "final_boxes": [
+      [
+        1091,
+        427,
+        1404,
+        549
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 234.70000000000007,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "54b_st_cancel_act",
+    "topic": "O que fazer",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.6338,
+        0.552,
+        0.8746,
+        0.654
+      ]
+    ],
+    "final_boxes": [
+      [
+        1091,
+        427,
+        1404,
+        549
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 240.80000000000007,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "55_col_elapsed",
+    "topic": "Coluna Elapsed",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.8402,
+        0.0857,
+        0.995,
+        0.3917
+      ]
+    ],
+    "final_boxes": [
+      [
+        1325,
+        49,
+        1540,
+        337
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 247.3333333333334,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "55b_col_elapsed_use",
+    "topic": "Como usar",
+    "targets": [
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.8402,
+        0.0857,
+        0.995,
+        0.3917
+      ]
+    ],
+    "final_boxes": [
+      [
+        1325,
+        49,
+        1540,
+        337
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 253.4333333333334,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "60_filter_what",
+    "topic": "Filtro",
+    "targets": [
+      "jobs-filter"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.0857,
+        0.995,
+        0.1286
+      ]
+    ],
+    "final_boxes": [
+      [
+        526,
+        54,
+        1540,
+        119
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 259.80000000000007,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "60b_filter_when",
+    "topic": "Quando usar",
+    "targets": [
+      "jobs-filter"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.0857,
+        0.995,
+        0.1286
+      ]
+    ],
+    "final_boxes": [
+      [
+        526,
+        54,
+        1540,
+        119
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 265.80000000000007,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "61_filter_ex",
+    "topic": "Exemplo",
+    "targets": [
+      "jobs-filter",
+      "jobs-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.0857,
+        0.995,
+        0.1286
+      ],
+      [
+        0.135,
+        0.1286,
+        0.995,
+        0.5136
+      ]
+    ],
+    "final_boxes": [
+      [
+        526,
+        54,
+        1540,
+        119
+      ],
+      [
+        526,
+        84,
+        1540,
+        435
+      ]
+    ],
+    "margins": [
+      20,
+      20
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 272.2333333333334,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "70_detail_what",
+    "topic": "Painel de detalhe",
+    "targets": [
+      "detail-pane"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.8143,
+        0.995,
+        0.9
+      ]
+    ],
+    "final_boxes": [
+      [
+        526,
+        639,
+        1540,
+        749
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 279.63333333333344,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "70b_detail_learn",
+    "topic": "O que voc\u00ea aprende aqui",
+    "targets": [
+      "detail-pane"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.8143,
+        0.995,
+        0.9
+      ]
+    ],
+    "final_boxes": [
+      [
+        526,
+        639,
+        1540,
+        749
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 285.9000000000001,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "71_detail_title",
+    "topic": "T\u00edtulo do detalhe",
+    "targets": [
+      "detail-title"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.145,
+        0.8286,
+        0.985,
+        0.8429
+      ]
+    ],
+    "final_boxes": [
+      [
+        544,
+        663,
+        1523,
+        690
+      ]
+    ],
+    "margins": [
+      14
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 292.2000000000001,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "72_detail_log",
+    "topic": "Pr\u00e9via do log",
+    "targets": [
+      "detail-log"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.145,
+        0.8429,
+        0.985,
+        0.8857
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        667,
+        1529,
+        732
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 298.60000000000014,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "80_events",
+    "topic": "Eventos recentes",
+    "targets": [
+      "event-trail"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.9429,
+        0.795,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        532,
+        749,
+        1307,
+        806
+      ]
+    ],
+    "margins": [
+      14
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 305.1333333333335,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "81_newjob",
+    "topic": "New Job [N]",
+    "targets": [
+      "new-job"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.8,
+        0.9429,
+        0.86,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        1283,
+        748,
+        1383,
+        806
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 311.4333333333335,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "82_viewlogs",
+    "topic": "View Logs [V]",
+    "targets": [
+      "view-logs"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.865,
+        0.9429,
+        0.925,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        1357,
+        748,
+        1457,
+        806
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 317.8000000000002,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "82b_viewlogs_when",
+    "topic": "Quando usar",
+    "targets": [
+      "view-logs"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.865,
+        0.9429,
+        0.925,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        1357,
+        748,
+        1457,
+        806
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 323.8000000000002,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "83_cancel",
+    "topic": "Cancel [C]",
+    "targets": [
+      "cancel"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.93,
+        0.9429,
+        0.99,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        1430,
+        748,
+        1530,
+        806
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 330.2000000000002,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "83b_cancel_note",
+    "topic": "Aten\u00e7\u00e3o",
+    "targets": [
+      "cancel"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.93,
+        0.9429,
+        0.99,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        1430,
+        748,
+        1530,
+        806
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 336.2000000000002,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "90_close",
+    "topic": "Resumo",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 342.2000000000002,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  },
+  {
+    "id": "90b_close_b",
+    "topic": "Pr\u00f3ximo passo",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 348.33333333333354,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  }
+]

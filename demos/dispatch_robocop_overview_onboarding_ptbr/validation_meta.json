@@ -1,0 +1,2690 @@
+{
+  "font_name": "Carlito",
+  "font_regular": "/workspace/demos/dispatch_robocop_overview_onboarding_ptbr/fonts/Carlito-Regular.ttf",
+  "font_bold": "/workspace/demos/dispatch_robocop_overview_onboarding_ptbr/fonts/Carlito-Bold.ttf",
+  "font_reason": "Calibri is not installed in this Linux environment. Using Carlito (fonts-crosextra-carlito), the OFL metric-compatible substitute.",
+  "body_font_px": 38,
+  "title_font_px": 42,
+  "resolution": [
+    1920,
+    1080
+  ],
+  "hold_complete_s": 5.0,
+  "instructional_scenes": 56,
+  "min_scene_s": 6.0,
+  "max_scene_s": 6.333333333333333,
+  "min_hold_s": 5.0,
+  "max_hold_s": 5.0,
+  "min_typing_s": 1.0,
+  "max_typing_s": 1.3333333333333333,
+  "dim_alpha": 170,
+  "scenes_multi_cutout": 1,
+  "spotlighted_cards": 56,
+  "reused_spotlight_groups": 24,
+  "duration_s": 351.33333333333354,
+  "topic": "Overview",
+  "timing_validation_passed": true,
+  "spotlight_validation_passed": true,
+  "spotlight_failures": [],
+  "audio": {
+    "bgm_source": "audio/original/town_walk_original_chiptune.wav",
+    "sfx_source": "audio/original/dialogue_open_ui_blip.wav",
+    "license": "Original generated composition for this package (not Pok\u00e9mon-derived).",
+    "generation": "NumPy square/triangle oscillators; seed 20260727; BPM 96; G-centered.",
+    "bgm_level": 0.18,
+    "sfx_level": 0.55,
+    "duck_level": 0.06,
+    "fade_down_s": 0.12,
+    "fade_up_s": 0.35,
+    "cue_count": 56,
+    "peak_abs": 0.25472853785821103,
+    "volumedetect": "ize=       0kB time=00:00:00.00 bitrate=N/A speed=N/A    \n[out#0/null @ 0x559c87f55bc0] video:0kB audio:30261kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: unknown\nsize=N/A time=00:05:51.31 bitrate=N/A speed=2.41e+03x    \n[Parsed_volumedetect_0 @ 0x559c87f86440] n_samples: 15493800\n[Parsed_volumedetect_0 @ 0x559c87f86440] mean_volume: -35.4 dB\n[Parsed_volumedetect_0 @ 0x559c87f86440] max_volume: -11.9 dB\n[Parsed_volumedetect_0 @ 0x559c87f86440] histogram_11db: 35\n[Parsed_volumedetect_0 @ 0x559c87f86440] histogram_12db: 663\n[Parsed_volumedetect_0 @ 0x559c87f86440] histogram_13db: 2057\n[Parsed_volumedetect_0 @ 0x559c87f86440] histogram_14db: 4374\n[Parsed_volumedetect_0 @ 0x559c87f86440] histogram_15db: 6483\n[Parsed_volumedetect_0 @ 0x559c87f86440] histogram_16db: 8220\n",
+    "validation": "PASS"
+  },
+  "holds": [
+    {
+      "id": "01_open",
+      "title": "Dispatch (Robocop)",
+      "body": "Como utilizar a aba Overview. / Monitore e interprete seus jobs.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "open",
+      "spotlight_reused": false,
+      "targets": [],
+      "anim_start": 0.0,
+      "anim_end": 1.1666666666666667,
+      "hold_start": 1.1666666666666667,
+      "hold_end": 6.166666666666667,
+      "arrow_at": 1.1666666666666667,
+      "sfx_at": 0.0,
+      "duck_at": 0.0,
+      "restore_at": 0.61,
+      "anim_duration": 1.1666666666666667,
+      "static_duration": 5.0,
+      "scene_duration": 6.166666666666667,
+      "scene_end": 6.166666666666667,
+      "spotlights_norm": [
+        [
+          0.12,
+          0.14,
+          0.88,
+          0.7
+        ]
+      ],
+      "spotlights_px": [
+        [
+          80,
+          100,
+          1840,
+          786
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 3.166666666666667,
+      "manual_review": "PASS",
+      "fail_reason": "card content spotlight"
+    },
+    {
+      "id": "02_purpose",
+      "title": "O que \u00e9 Overview",
+      "body": "Tela principal para acompanhar / jobs enviados e seu status.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "purpose",
+      "spotlight_reused": false,
+      "targets": [
+        "status-strip",
+        "jobs-title",
+        "jobs-table"
+      ],
+      "anim_start": 6.466666666666667,
+      "anim_end": 7.533333333333333,
+      "hold_start": 7.533333333333333,
+      "hold_end": 12.533333333333333,
+      "arrow_at": 7.533333333333333,
+      "sfx_at": 6.466666666666667,
+      "duck_at": 6.466666666666667,
+      "restore_at": 7.076666666666666,
+      "anim_duration": 1.0666666666666667,
+      "static_duration": 5.0,
+      "scene_duration": 6.066666666666666,
+      "scene_end": 12.533333333333333,
+      "spotlights_norm": [
+        [
+          0.13,
+          0.0429,
+          1.0,
+          0.3407
+        ]
+      ],
+      "spotlights_px": [
+        [
+          527,
+          20,
+          1540,
+          289
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14,
+        14,
+        20
+      ],
+      "review_ts": 9.533333333333333,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "10_sidebar_what",
+      "title": "O que \u00e9",
+      "body": "A barra lateral mostra onde voc\u00ea est\u00e1 / e as outras \u00e1reas do Dispatch.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "sidebar",
+      "spotlight_reused": false,
+      "targets": [
+        "sidebar-nav"
+      ],
+      "anim_start": 12.833333333333334,
+      "anim_end": 13.933333333333334,
+      "hold_start": 13.933333333333334,
+      "hold_end": 18.933333333333334,
+      "arrow_at": 13.933333333333334,
+      "sfx_at": 12.833333333333334,
+      "duck_at": 12.833333333333334,
+      "restore_at": 13.443333333333333,
+      "anim_duration": 1.1,
+      "static_duration": 5.0,
+      "scene_duration": 6.1,
+      "scene_end": 18.933333333333334,
+      "spotlights_norm": [
+        [
+          0.0,
+          0.0571,
+          0.125,
+          0.3
+        ]
+      ],
+      "spotlights_px": [
+        [
+          374,
+          26,
+          555,
+          263
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 15.933333333333334,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "10b_sidebar_learn",
+      "title": "O que voc\u00ea aprende aqui",
+      "body": "Overview fica destacado quando esta / \u00e9 a tela ativa de monitoramento.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "sidebar",
+      "spotlight_reused": true,
+      "targets": [
+        "sidebar-nav"
+      ],
+      "anim_start": 18.933333333333334,
+      "anim_end": 20.233333333333334,
+      "hold_start": 20.233333333333334,
+      "hold_end": 25.233333333333334,
+      "arrow_at": 20.233333333333334,
+      "sfx_at": 18.933333333333334,
+      "duck_at": 18.933333333333334,
+      "restore_at": 19.543333333333337,
+      "anim_duration": 1.3,
+      "static_duration": 5.0,
+      "scene_duration": 6.3,
+      "scene_end": 25.233333333333334,
+      "spotlights_norm": [
+        [
+          0.0,
+          0.0571,
+          0.125,
+          0.3
+        ]
+      ],
+      "spotlights_px": [
+        [
+          374,
+          26,
+          555,
+          263
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 22.233333333333334,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "10c_sidebar_action",
+      "title": "O que fazer",
+      "body": "Use a barra para ir a New Job, / Logs, History ou Browse.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "sidebar",
+      "spotlight_reused": true,
+      "targets": [
+        "sidebar-nav"
+      ],
+      "anim_start": 25.233333333333334,
+      "anim_end": 26.233333333333334,
+      "hold_start": 26.233333333333334,
+      "hold_end": 31.233333333333334,
+      "arrow_at": 26.233333333333334,
+      "sfx_at": 25.233333333333334,
+      "duck_at": 25.233333333333334,
+      "restore_at": 25.843333333333337,
+      "anim_duration": 1.0,
+      "static_duration": 5.0,
+      "scene_duration": 6.0,
+      "scene_end": 31.233333333333334,
+      "spotlights_norm": [
+        [
+          0.0,
+          0.0571,
+          0.125,
+          0.3
+        ]
+      ],
+      "spotlights_px": [
+        [
+          374,
+          26,
+          555,
+          263
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 28.233333333333334,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "20_strip_what",
+      "title": "O que \u00e9",
+      "body": "A faixa superior resume o estado / do ambiente e dos jobs recentes.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "status-strip",
+      "spotlight_reused": false,
+      "targets": [
+        "status-strip"
+      ],
+      "anim_start": 31.533333333333335,
+      "anim_end": 32.56666666666667,
+      "hold_start": 32.56666666666667,
+      "hold_end": 37.56666666666667,
+      "arrow_at": 32.56666666666667,
+      "sfx_at": 31.533333333333335,
+      "duck_at": 31.533333333333335,
+      "restore_at": 32.14333333333334,
+      "anim_duration": 1.0333333333333334,
+      "static_duration": 5.0,
+      "scene_duration": 6.033333333333333,
+      "scene_end": 37.56666666666667,
+      "spotlights_norm": [
+        [
+          0.13,
+          0.0429,
+          1.0,
+          0.0571
+        ]
+      ],
+      "spotlights_px": [
+        [
+          527,
+          26,
+          1540,
+          54
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14
+      ],
+      "review_ts": 34.56666666666667,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "20b_strip_learn",
+      "title": "O que voc\u00ea aprende aqui",
+      "body": "Em um olhar, v\u00ea autentica\u00e7\u00e3o, / jobs em execu\u00e7\u00e3o e totais de 7 dias.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "status-strip",
+      "spotlight_reused": true,
+      "targets": [
+        "status-strip"
+      ],
+      "anim_start": 37.56666666666667,
+      "anim_end": 38.86666666666667,
+      "hold_start": 38.86666666666667,
+      "hold_end": 43.86666666666667,
+      "arrow_at": 38.86666666666667,
+      "sfx_at": 37.56666666666667,
+      "duck_at": 37.56666666666667,
+      "restore_at": 38.17666666666667,
+      "anim_duration": 1.3,
+      "static_duration": 5.0,
+      "scene_duration": 6.3,
+      "scene_end": 43.86666666666667,
+      "spotlights_norm": [
+        [
+          0.13,
+          0.0429,
+          1.0,
+          0.0571
+        ]
+      ],
+      "spotlights_px": [
+        [
+          527,
+          26,
+          1540,
+          54
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14
+      ],
+      "review_ts": 40.86666666666667,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "21_krb_what",
+      "title": "KERBEROS",
+      "body": "Indica se sua autentica\u00e7\u00e3o / est\u00e1 dispon\u00edvel para executar jobs.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "krb",
+      "spotlight_reused": false,
+      "targets": [
+        "status-strip"
+      ],
+      "anim_start": 44.166666666666664,
+      "anim_end": 45.166666666666664,
+      "hold_start": 45.166666666666664,
+      "hold_end": 50.166666666666664,
+      "arrow_at": 45.166666666666664,
+      "sfx_at": 44.166666666666664,
+      "duck_at": 44.166666666666664,
+      "restore_at": 44.776666666666664,
+      "anim_duration": 1.0,
+      "static_duration": 5.0,
+      "scene_duration": 6.0,
+      "scene_end": 50.166666666666664,
+      "spotlights_norm": [
+        [
+          0.13,
+          0.0429,
+          0.3214,
+          0.0571
+        ]
+      ],
+      "spotlights_px": [
+        [
+          527,
+          26,
+          771,
+          54
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14
+      ],
+      "review_ts": 47.166666666666664,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "21b_krb_action",
+      "title": "O que observar",
+      "body": "Se aparecer MISSING ou tempo curto, / resolva a autentica\u00e7\u00e3o antes de enviar.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "krb",
+      "spotlight_reused": true,
+      "targets": [
+        "status-strip"
+      ],
+      "anim_start": 50.166666666666664,
+      "anim_end": 51.46666666666666,
+      "hold_start": 51.46666666666666,
+      "hold_end": 56.46666666666666,
+      "arrow_at": 51.46666666666666,
+      "sfx_at": 50.166666666666664,
+      "duck_at": 50.166666666666664,
+      "restore_at": 50.776666666666664,
+      "anim_duration": 1.3,
+      "static_duration": 5.0,
+      "scene_duration": 6.3,
+      "scene_end": 56.46666666666666,
+      "spotlights_norm": [
+        [
+          0.13,
+          0.0429,
+          0.3214,
+          0.0571
+        ]
+      ],
+      "spotlights_px": [
+        [
+          527,
+          26,
+          771,
+          54
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14
+      ],
+      "review_ts": 53.46666666666666,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "22_running_what",
+      "title": "RUNNING",
+      "body": "Quantos jobs est\u00e3o em execu\u00e7\u00e3o agora, / em rela\u00e7\u00e3o ao limite de vagas.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "running-cap",
+      "spotlight_reused": false,
+      "targets": [
+        "status-strip"
+      ],
+      "anim_start": 56.76666666666666,
+      "anim_end": 57.86666666666666,
+      "hold_start": 57.86666666666666,
+      "hold_end": 62.86666666666666,
+      "arrow_at": 57.86666666666666,
+      "sfx_at": 56.76666666666666,
+      "duck_at": 56.76666666666666,
+      "restore_at": 57.37666666666666,
+      "anim_duration": 1.1,
+      "static_duration": 5.0,
+      "scene_duration": 6.1,
+      "scene_end": 62.86666666666666,
+      "spotlights_norm": [
+        [
+          0.3214,
+          0.0429,
+          0.5476,
+          0.0571
+        ]
+      ],
+      "spotlights_px": [
+        [
+          743,
+          26,
+          1027,
+          54
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14
+      ],
+      "review_ts": 59.86666666666666,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "22b_running_learn",
+      "title": "O que voc\u00ea aprende aqui",
+      "body": "O limite \u00e9 2 vagas. Pending e Running / ocupam vaga de execu\u00e7\u00e3o.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "running-cap",
+      "spotlight_reused": true,
+      "targets": [
+        "status-strip"
+      ],
+      "anim_start": 62.86666666666666,
+      "anim_end": 64.1,
+      "hold_start": 64.1,
+      "hold_end": 69.1,
+      "arrow_at": 64.1,
+      "sfx_at": 62.86666666666666,
+      "duck_at": 62.86666666666666,
+      "restore_at": 63.47666666666666,
+      "anim_duration": 1.2333333333333334,
+      "static_duration": 5.0,
+      "scene_duration": 6.233333333333333,
+      "scene_end": 69.1,
+      "spotlights_norm": [
+        [
+          0.3214,
+          0.0429,
+          0.5476,
+          0.0571
+        ]
+      ],
+      "spotlights_px": [
+        [
+          743,
+          26,
+          1027,
+          54
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14
+      ],
+      "review_ts": 66.1,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "23_finished_what",
+      "title": "FINISHED 7D",
+      "body": "Quantos jobs conclu\u00edram com sucesso / nos \u00faltimos 7 dias (lista ativa).",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "finished",
+      "spotlight_reused": false,
+      "targets": [
+        "status-strip"
+      ],
+      "anim_start": 69.39999999999999,
+      "anim_end": 70.56666666666666,
+      "hold_start": 70.56666666666666,
+      "hold_end": 75.56666666666666,
+      "arrow_at": 70.56666666666666,
+      "sfx_at": 69.39999999999999,
+      "duck_at": 69.39999999999999,
+      "restore_at": 70.00999999999999,
+      "anim_duration": 1.1666666666666667,
+      "static_duration": 5.0,
+      "scene_duration": 6.166666666666667,
+      "scene_end": 75.56666666666666,
+      "spotlights_norm": [
+        [
+          0.5476,
+          0.0429,
+          0.7738,
+          0.0571
+        ]
+      ],
+      "spotlights_px": [
+        [
+          999,
+          26,
+          1283,
+          54
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14
+      ],
+      "review_ts": 72.56666666666666,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "23b_finished_learn",
+      "title": "O que voc\u00ea aprende aqui",
+      "body": "Serve para confirmar entregas recentes / sem abrir cada job.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "finished",
+      "spotlight_reused": true,
+      "targets": [
+        "status-strip"
+      ],
+      "anim_start": 75.56666666666666,
+      "anim_end": 76.73333333333333,
+      "hold_start": 76.73333333333333,
+      "hold_end": 81.73333333333333,
+      "arrow_at": 76.73333333333333,
+      "sfx_at": 75.56666666666666,
+      "duck_at": 75.56666666666666,
+      "restore_at": 76.17666666666666,
+      "anim_duration": 1.1666666666666667,
+      "static_duration": 5.0,
+      "scene_duration": 6.166666666666667,
+      "scene_end": 81.73333333333333,
+      "spotlights_norm": [
+        [
+          0.5476,
+          0.0429,
+          0.7738,
+          0.0571
+        ]
+      ],
+      "spotlights_px": [
+        [
+          999,
+          26,
+          1283,
+          54
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14
+      ],
+      "review_ts": 78.73333333333333,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "24_failed_what",
+      "title": "FAILED 7D",
+      "body": "Quantos jobs falharam / nos \u00faltimos 7 dias (lista ativa).",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "failed-count",
+      "spotlight_reused": false,
+      "targets": [
+        "status-strip"
+      ],
+      "anim_start": 82.03333333333333,
+      "anim_end": 83.03333333333333,
+      "hold_start": 83.03333333333333,
+      "hold_end": 88.03333333333333,
+      "arrow_at": 83.03333333333333,
+      "sfx_at": 82.03333333333333,
+      "duck_at": 82.03333333333333,
+      "restore_at": 82.64333333333333,
+      "anim_duration": 1.0,
+      "static_duration": 5.0,
+      "scene_duration": 6.0,
+      "scene_end": 88.03333333333333,
+      "spotlights_norm": [
+        [
+          0.7738,
+          0.0429,
+          1.0,
+          0.0571
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1255,
+          26,
+          1540,
+          54
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14
+      ],
+      "review_ts": 85.03333333333333,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "24b_failed_action",
+      "title": "O que fazer",
+      "body": "Se o n\u00famero subir, revise os jobs / FAILED antes de enviar outros.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "failed-count",
+      "spotlight_reused": true,
+      "targets": [
+        "status-strip"
+      ],
+      "anim_start": 88.03333333333333,
+      "anim_end": 89.13333333333333,
+      "hold_start": 89.13333333333333,
+      "hold_end": 94.13333333333333,
+      "arrow_at": 89.13333333333333,
+      "sfx_at": 88.03333333333333,
+      "duck_at": 88.03333333333333,
+      "restore_at": 88.64333333333333,
+      "anim_duration": 1.1,
+      "static_duration": 5.0,
+      "scene_duration": 6.1,
+      "scene_end": 94.13333333333333,
+      "spotlights_norm": [
+        [
+          0.7738,
+          0.0429,
+          1.0,
+          0.0571
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1255,
+          26,
+          1540,
+          54
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14
+      ],
+      "review_ts": 91.13333333333333,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "30_title_what",
+      "title": "Lista de jobs",
+      "body": "Jobs \u00b7 running first \u00b7 last 7 days: / lista dos jobs recentes para monitorar.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "jobs-title",
+      "spotlight_reused": false,
+      "targets": [
+        "jobs-title"
+      ],
+      "anim_start": 94.43333333333332,
+      "anim_end": 95.69999999999999,
+      "hold_start": 95.69999999999999,
+      "hold_end": 100.69999999999999,
+      "arrow_at": 95.69999999999999,
+      "sfx_at": 94.43333333333332,
+      "duck_at": 94.43333333333332,
+      "restore_at": 95.04333333333332,
+      "anim_duration": 1.2666666666666666,
+      "static_duration": 5.0,
+      "scene_duration": 6.266666666666667,
+      "scene_end": 100.69999999999999,
+      "spotlights_norm": [
+        [
+          0.13,
+          0.0571,
+          1.0,
+          0.0857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          527,
+          36,
+          1540,
+          79
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14
+      ],
+      "review_ts": 97.69999999999999,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "30b_title_learn",
+      "title": "O que voc\u00ea aprende aqui",
+      "body": "Jobs em execu\u00e7\u00e3o ficam no topo. / A janela cobre os \u00faltimos 7 dias.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "jobs-title",
+      "spotlight_reused": true,
+      "targets": [
+        "jobs-title"
+      ],
+      "anim_start": 100.69999999999999,
+      "anim_end": 101.96666666666665,
+      "hold_start": 101.96666666666665,
+      "hold_end": 106.96666666666665,
+      "arrow_at": 101.96666666666665,
+      "sfx_at": 100.69999999999999,
+      "duck_at": 100.69999999999999,
+      "restore_at": 101.30999999999999,
+      "anim_duration": 1.2666666666666666,
+      "static_duration": 5.0,
+      "scene_duration": 6.266666666666667,
+      "scene_end": 106.96666666666665,
+      "spotlights_norm": [
+        [
+          0.13,
+          0.0571,
+          1.0,
+          0.0857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          527,
+          36,
+          1540,
+          79
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14
+      ],
+      "review_ts": 103.96666666666665,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "31_empty_what",
+      "title": "Lista vazia",
+      "body": "Quando n\u00e3o h\u00e1 jobs nos \u00faltimos 7 dias, / a tela orienta a criar um novo.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "empty",
+      "spotlight_reused": false,
+      "targets": [
+        "jobs-empty"
+      ],
+      "anim_start": 107.26666666666665,
+      "anim_end": 108.43333333333332,
+      "hold_start": 108.43333333333332,
+      "hold_end": 113.43333333333332,
+      "arrow_at": 108.43333333333332,
+      "sfx_at": 107.26666666666665,
+      "duck_at": 107.26666666666665,
+      "restore_at": 107.87666666666665,
+      "anim_duration": 1.1666666666666667,
+      "static_duration": 5.0,
+      "scene_duration": 6.166666666666667,
+      "scene_end": 113.43333333333332,
+      "spotlights_norm": [
+        [
+          0.14,
+          0.0857,
+          0.99,
+          0.1286
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          55,
+          1528,
+          118
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14
+      ],
+      "review_ts": 110.43333333333332,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "31b_empty_action",
+      "title": "O que fazer",
+      "body": "Pressione N ou New Job para / enviar a primeira execu\u00e7\u00e3o.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "empty",
+      "spotlight_reused": true,
+      "targets": [
+        "jobs-empty"
+      ],
+      "anim_start": 113.43333333333332,
+      "anim_end": 114.43333333333332,
+      "hold_start": 114.43333333333332,
+      "hold_end": 119.43333333333332,
+      "arrow_at": 114.43333333333332,
+      "sfx_at": 113.43333333333332,
+      "duck_at": 113.43333333333332,
+      "restore_at": 114.04333333333332,
+      "anim_duration": 1.0,
+      "static_duration": 5.0,
+      "scene_duration": 6.0,
+      "scene_end": 119.43333333333332,
+      "spotlights_norm": [
+        [
+          0.14,
+          0.0857,
+          0.99,
+          0.1286
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          55,
+          1528,
+          118
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14
+      ],
+      "review_ts": 116.43333333333332,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "40_table_what",
+      "title": "O que \u00e9",
+      "body": "A tabela lista cada job com identidade, / origem, destino, estado e tempo.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "table",
+      "spotlight_reused": false,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 119.73333333333332,
+      "anim_end": 120.86666666666666,
+      "hold_start": 120.86666666666666,
+      "hold_end": 125.86666666666666,
+      "arrow_at": 120.86666666666666,
+      "sfx_at": 119.73333333333332,
+      "duck_at": 119.73333333333332,
+      "restore_at": 120.34333333333332,
+      "anim_duration": 1.1333333333333333,
+      "static_duration": 5.0,
+      "scene_duration": 6.133333333333333,
+      "scene_end": 125.86666666666666,
+      "spotlights_norm": [
+        [
+          0.135,
+          0.0857,
+          0.995,
+          0.5957
+        ]
+      ],
+      "spotlights_px": [
+        [
+          526,
+          49,
+          1540,
+          502
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 122.86666666666666,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "40b_table_learn",
+      "title": "O que voc\u00ea aprende aqui",
+      "body": "Percorra as linhas para achar / sucesso, execu\u00e7\u00e3o ou problemas.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "table",
+      "spotlight_reused": true,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 125.86666666666666,
+      "anim_end": 127.06666666666666,
+      "hold_start": 127.06666666666666,
+      "hold_end": 132.06666666666666,
+      "arrow_at": 127.06666666666666,
+      "sfx_at": 125.86666666666666,
+      "duck_at": 125.86666666666666,
+      "restore_at": 126.47666666666666,
+      "anim_duration": 1.2,
+      "static_duration": 5.0,
+      "scene_duration": 6.2,
+      "scene_end": 132.06666666666666,
+      "spotlights_norm": [
+        [
+          0.135,
+          0.0857,
+          0.995,
+          0.5957
+        ]
+      ],
+      "spotlights_px": [
+        [
+          526,
+          49,
+          1540,
+          502
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 129.06666666666666,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "41_col_id",
+      "title": "Coluna ID",
+      "body": "Identifica o job de forma curta / para localizar e abrir detalhes.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "col-id",
+      "spotlight_reused": false,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 132.36666666666667,
+      "anim_end": 133.43333333333334,
+      "hold_start": 133.43333333333334,
+      "hold_end": 138.43333333333334,
+      "arrow_at": 133.43333333333334,
+      "sfx_at": 132.36666666666667,
+      "duck_at": 132.36666666666667,
+      "restore_at": 132.97666666666666,
+      "anim_duration": 1.0666666666666667,
+      "static_duration": 5.0,
+      "scene_duration": 6.066666666666666,
+      "scene_end": 138.43333333333334,
+      "spotlights_norm": [
+        [
+          0.135,
+          0.0857,
+          0.2898,
+          0.3917
+        ]
+      ],
+      "spotlights_px": [
+        [
+          526,
+          49,
+          742,
+          337
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 135.43333333333334,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "41b_col_id_use",
+      "title": "Como usar",
+      "body": "Use o ID para filtrar ou / confirmar qual execu\u00e7\u00e3o est\u00e1 vendo.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "col-id",
+      "spotlight_reused": true,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 138.43333333333334,
+      "anim_end": 139.43333333333334,
+      "hold_start": 139.43333333333334,
+      "hold_end": 144.43333333333334,
+      "arrow_at": 139.43333333333334,
+      "sfx_at": 138.43333333333334,
+      "duck_at": 138.43333333333334,
+      "restore_at": 139.04333333333332,
+      "anim_duration": 1.0,
+      "static_duration": 5.0,
+      "scene_duration": 6.0,
+      "scene_end": 144.43333333333334,
+      "spotlights_norm": [
+        [
+          0.135,
+          0.0857,
+          0.2898,
+          0.3917
+        ]
+      ],
+      "spotlights_px": [
+        [
+          526,
+          49,
+          742,
+          337
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 141.43333333333334,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "42_col_src",
+      "title": "Coluna Source",
+      "body": "Mostra a origem do job: / arquivo SQL, tabela ou tipo.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "col-src",
+      "spotlight_reused": false,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 144.73333333333335,
+      "anim_end": 145.73333333333335,
+      "hold_start": 145.73333333333335,
+      "hold_end": 150.73333333333335,
+      "arrow_at": 145.73333333333335,
+      "sfx_at": 144.73333333333335,
+      "duck_at": 144.73333333333335,
+      "restore_at": 145.34333333333333,
+      "anim_duration": 1.0,
+      "static_duration": 5.0,
+      "scene_duration": 6.0,
+      "scene_end": 150.73333333333335,
+      "spotlights_norm": [
+        [
+          0.2898,
+          0.0857,
+          0.479,
+          0.3917
+        ]
+      ],
+      "spotlights_px": [
+        [
+          702,
+          49,
+          956,
+          337
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 147.73333333333335,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "42b_col_src_use",
+      "title": "Como usar",
+      "body": "Confirme se a origem corresponde / ao job que voc\u00ea esperava monitorar.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "col-src",
+      "spotlight_reused": true,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 150.73333333333335,
+      "anim_end": 151.83333333333334,
+      "hold_start": 151.83333333333334,
+      "hold_end": 156.83333333333334,
+      "arrow_at": 151.83333333333334,
+      "sfx_at": 150.73333333333335,
+      "duck_at": 150.73333333333335,
+      "restore_at": 151.34333333333333,
+      "anim_duration": 1.1,
+      "static_duration": 5.0,
+      "scene_duration": 6.1,
+      "scene_end": 156.83333333333334,
+      "spotlights_norm": [
+        [
+          0.2898,
+          0.0857,
+          0.479,
+          0.3917
+        ]
+      ],
+      "spotlights_px": [
+        [
+          702,
+          49,
+          956,
+          337
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 153.83333333333334,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "43_col_dst",
+      "title": "Coluna Destination",
+      "body": "Mostra para onde o resultado / foi ou ser\u00e1 entregue.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "col-dst",
+      "spotlight_reused": false,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 157.13333333333335,
+      "anim_end": 158.13333333333335,
+      "hold_start": 158.13333333333335,
+      "hold_end": 163.13333333333335,
+      "arrow_at": 158.13333333333335,
+      "sfx_at": 157.13333333333335,
+      "duck_at": 157.13333333333335,
+      "restore_at": 157.74333333333334,
+      "anim_duration": 1.0,
+      "static_duration": 5.0,
+      "scene_duration": 6.0,
+      "scene_end": 163.13333333333335,
+      "spotlights_norm": [
+        [
+          0.479,
+          0.0857,
+          0.651,
+          0.3917
+        ]
+      ],
+      "spotlights_px": [
+        [
+          916,
+          49,
+          1150,
+          337
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 160.13333333333335,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "43b_col_dst_use",
+      "title": "Como usar",
+      "body": "Verifique schema.tabela ou Csv / antes de validar o resultado.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "col-dst",
+      "spotlight_reused": true,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 163.13333333333335,
+      "anim_end": 164.13333333333335,
+      "hold_start": 164.13333333333335,
+      "hold_end": 169.13333333333335,
+      "arrow_at": 164.13333333333335,
+      "sfx_at": 163.13333333333335,
+      "duck_at": 163.13333333333335,
+      "restore_at": 163.74333333333334,
+      "anim_duration": 1.0,
+      "static_duration": 5.0,
+      "scene_duration": 6.0,
+      "scene_end": 169.13333333333335,
+      "spotlights_norm": [
+        [
+          0.479,
+          0.0857,
+          0.651,
+          0.3917
+        ]
+      ],
+      "spotlights_px": [
+        [
+          916,
+          49,
+          1150,
+          337
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 166.13333333333335,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "44_col_state",
+      "title": "Coluna State",
+      "body": "Mostra o estado atual do job / com s\u00edmbolo e r\u00f3tulo em destaque.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "col-state",
+      "spotlight_reused": false,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 169.43333333333337,
+      "anim_end": 170.50000000000003,
+      "hold_start": 170.50000000000003,
+      "hold_end": 175.50000000000003,
+      "arrow_at": 170.50000000000003,
+      "sfx_at": 169.43333333333337,
+      "duck_at": 169.43333333333337,
+      "restore_at": 170.04333333333335,
+      "anim_duration": 1.0666666666666667,
+      "static_duration": 5.0,
+      "scene_duration": 6.066666666666666,
+      "scene_end": 175.50000000000003,
+      "spotlights_norm": [
+        [
+          0.651,
+          0.0857,
+          0.8402,
+          0.3917
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1110,
+          49,
+          1365,
+          337
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 172.50000000000003,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "44b_col_state_learn",
+      "title": "O que voc\u00ea aprende aqui",
+      "body": "D\u00e1 para ver r\u00e1pido se est\u00e1 aguardando, / rodando, ok ou precisa aten\u00e7\u00e3o.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "col-state",
+      "spotlight_reused": true,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 175.50000000000003,
+      "anim_end": 176.83333333333337,
+      "hold_start": 176.83333333333337,
+      "hold_end": 181.83333333333337,
+      "arrow_at": 176.83333333333337,
+      "sfx_at": 175.50000000000003,
+      "duck_at": 175.50000000000003,
+      "restore_at": 176.11,
+      "anim_duration": 1.3333333333333333,
+      "static_duration": 5.0,
+      "scene_duration": 6.333333333333333,
+      "scene_end": 181.83333333333337,
+      "spotlights_norm": [
+        [
+          0.651,
+          0.0857,
+          0.8402,
+          0.3917
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1110,
+          49,
+          1365,
+          337
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 178.83333333333337,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "50_st_pending",
+      "title": "PENDING",
+      "body": "O job foi aceito e aguarda / in\u00edcio da execu\u00e7\u00e3o.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "state-pending",
+      "spotlight_reused": false,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 182.13333333333338,
+      "anim_end": 183.13333333333338,
+      "hold_start": 183.13333333333338,
+      "hold_end": 188.13333333333338,
+      "arrow_at": 183.13333333333338,
+      "sfx_at": 182.13333333333338,
+      "duck_at": 182.13333333333338,
+      "restore_at": 182.74333333333337,
+      "anim_duration": 1.0,
+      "static_duration": 5.0,
+      "scene_duration": 6.0,
+      "scene_end": 188.13333333333338,
+      "spotlights_norm": [
+        [
+          0.6338,
+          0.246,
+          0.8746,
+          0.348
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1091,
+          179,
+          1404,
+          301
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 185.13333333333338,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "50b_st_pending_act",
+      "title": "O que fazer",
+      "body": "Em geral, espere. Confira se / h\u00e1 vaga livre na faixa RUNNING.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "state-pending",
+      "spotlight_reused": true,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 188.13333333333338,
+      "anim_end": 189.1666666666667,
+      "hold_start": 189.1666666666667,
+      "hold_end": 194.1666666666667,
+      "arrow_at": 189.1666666666667,
+      "sfx_at": 188.13333333333338,
+      "duck_at": 188.13333333333338,
+      "restore_at": 188.74333333333337,
+      "anim_duration": 1.0333333333333334,
+      "static_duration": 5.0,
+      "scene_duration": 6.033333333333333,
+      "scene_end": 194.1666666666667,
+      "spotlights_norm": [
+        [
+          0.6338,
+          0.246,
+          0.8746,
+          0.348
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1091,
+          179,
+          1404,
+          301
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 191.1666666666667,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "51_st_running",
+      "title": "RUNNING",
+      "body": "O job est\u00e1 em execu\u00e7\u00e3o agora. / Acompanhe o progresso no painel.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "state-running",
+      "spotlight_reused": false,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 194.46666666666673,
+      "anim_end": 195.46666666666673,
+      "hold_start": 195.46666666666673,
+      "hold_end": 200.46666666666673,
+      "arrow_at": 195.46666666666673,
+      "sfx_at": 194.46666666666673,
+      "duck_at": 194.46666666666673,
+      "restore_at": 195.0766666666667,
+      "anim_duration": 1.0,
+      "static_duration": 5.0,
+      "scene_duration": 6.0,
+      "scene_end": 200.46666666666673,
+      "spotlights_norm": [
+        [
+          0.6338,
+          0.144,
+          0.8746,
+          0.246
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1091,
+          96,
+          1404,
+          219
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 197.46666666666673,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "51b_st_running_act",
+      "title": "O que fazer",
+      "body": "Monitore o log. S\u00f3 cancele se / realmente precisar interromper.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "state-running",
+      "spotlight_reused": true,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 200.46666666666673,
+      "anim_end": 201.50000000000006,
+      "hold_start": 201.50000000000006,
+      "hold_end": 206.50000000000006,
+      "arrow_at": 201.50000000000006,
+      "sfx_at": 200.46666666666673,
+      "duck_at": 200.46666666666673,
+      "restore_at": 201.0766666666667,
+      "anim_duration": 1.0333333333333334,
+      "static_duration": 5.0,
+      "scene_duration": 6.033333333333333,
+      "scene_end": 206.50000000000006,
+      "spotlights_norm": [
+        [
+          0.6338,
+          0.144,
+          0.8746,
+          0.246
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1091,
+          96,
+          1404,
+          219
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 203.50000000000006,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "52_st_ok",
+      "title": "SUCCEEDED",
+      "body": "O job terminou com sucesso. / O resultado est\u00e1 dispon\u00edvel.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "state-ok",
+      "spotlight_reused": false,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 206.80000000000007,
+      "anim_end": 207.80000000000007,
+      "hold_start": 207.80000000000007,
+      "hold_end": 212.80000000000007,
+      "arrow_at": 207.80000000000007,
+      "sfx_at": 206.80000000000007,
+      "duck_at": 206.80000000000007,
+      "restore_at": 207.41000000000005,
+      "anim_duration": 1.0,
+      "static_duration": 5.0,
+      "scene_duration": 6.0,
+      "scene_end": 212.80000000000007,
+      "spotlights_norm": [
+        [
+          0.6338,
+          0.348,
+          0.8746,
+          0.45
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1091,
+          261,
+          1404,
+          384
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 209.80000000000007,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "52b_st_ok_act",
+      "title": "O que fazer",
+      "body": "Valide a entrega (tabela ou CSV) / conforme o Destination do job.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "state-ok",
+      "spotlight_reused": true,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 212.80000000000007,
+      "anim_end": 213.86666666666673,
+      "hold_start": 213.86666666666673,
+      "hold_end": 218.86666666666673,
+      "arrow_at": 213.86666666666673,
+      "sfx_at": 212.80000000000007,
+      "duck_at": 212.80000000000007,
+      "restore_at": 213.41000000000005,
+      "anim_duration": 1.0666666666666667,
+      "static_duration": 5.0,
+      "scene_duration": 6.066666666666666,
+      "scene_end": 218.86666666666673,
+      "spotlights_norm": [
+        [
+          0.6338,
+          0.348,
+          0.8746,
+          0.45
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1091,
+          261,
+          1404,
+          384
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 215.86666666666673,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "53_st_fail",
+      "title": "FAILED",
+      "body": "O job falhou. Pode aparecer um c\u00f3digo / (ex.: SYNTAX) para orientar a an\u00e1lise.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "state-fail",
+      "spotlight_reused": false,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 219.16666666666674,
+      "anim_end": 220.36666666666673,
+      "hold_start": 220.36666666666673,
+      "hold_end": 225.36666666666673,
+      "arrow_at": 220.36666666666673,
+      "sfx_at": 219.16666666666674,
+      "duck_at": 219.16666666666674,
+      "restore_at": 219.77666666666673,
+      "anim_duration": 1.2,
+      "static_duration": 5.0,
+      "scene_duration": 6.2,
+      "scene_end": 225.36666666666673,
+      "spotlights_norm": [
+        [
+          0.6338,
+          0.4571,
+          0.8746,
+          0.5611
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1091,
+          350,
+          1404,
+          474
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 222.36666666666673,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "53b_st_fail_act",
+      "title": "O que fazer",
+      "body": "Abra View Logs, entenda a causa / e corrija antes de reenviar.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "state-fail",
+      "spotlight_reused": true,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 225.36666666666673,
+      "anim_end": 226.40000000000006,
+      "hold_start": 226.40000000000006,
+      "hold_end": 231.40000000000006,
+      "arrow_at": 226.40000000000006,
+      "sfx_at": 225.36666666666673,
+      "duck_at": 225.36666666666673,
+      "restore_at": 225.97666666666672,
+      "anim_duration": 1.0333333333333334,
+      "static_duration": 5.0,
+      "scene_duration": 6.033333333333333,
+      "scene_end": 231.40000000000006,
+      "spotlights_norm": [
+        [
+          0.6338,
+          0.4571,
+          0.8746,
+          0.5611
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1091,
+          350,
+          1404,
+          474
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 228.40000000000006,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "54_st_cancel",
+      "title": "CANCELLED",
+      "body": "A execu\u00e7\u00e3o foi cancelada. / N\u00e3o houve conclus\u00e3o bem-sucedida.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "state-cancel",
+      "spotlight_reused": false,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 231.70000000000007,
+      "anim_end": 232.70000000000007,
+      "hold_start": 232.70000000000007,
+      "hold_end": 237.70000000000007,
+      "arrow_at": 232.70000000000007,
+      "sfx_at": 231.70000000000007,
+      "duck_at": 231.70000000000007,
+      "restore_at": 232.31000000000006,
+      "anim_duration": 1.0,
+      "static_duration": 5.0,
+      "scene_duration": 6.0,
+      "scene_end": 237.70000000000007,
+      "spotlights_norm": [
+        [
+          0.6338,
+          0.552,
+          0.8746,
+          0.654
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1091,
+          427,
+          1404,
+          549
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 234.70000000000007,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "54b_st_cancel_act",
+      "title": "O que fazer",
+      "body": "Confirme se o cancelamento / foi intencional; reenvie se precisar.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "state-cancel",
+      "spotlight_reused": true,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 237.70000000000007,
+      "anim_end": 238.80000000000007,
+      "hold_start": 238.80000000000007,
+      "hold_end": 243.80000000000007,
+      "arrow_at": 238.80000000000007,
+      "sfx_at": 237.70000000000007,
+      "duck_at": 237.70000000000007,
+      "restore_at": 238.31000000000006,
+      "anim_duration": 1.1,
+      "static_duration": 5.0,
+      "scene_duration": 6.1,
+      "scene_end": 243.80000000000007,
+      "spotlights_norm": [
+        [
+          0.6338,
+          0.552,
+          0.8746,
+          0.654
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1091,
+          427,
+          1404,
+          549
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 240.80000000000007,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "55_col_elapsed",
+      "title": "Coluna Elapsed",
+      "body": "Tempo decorrido: em Running conta / desde o in\u00edcio; nos demais, a dura\u00e7\u00e3o.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "col-elapsed",
+      "spotlight_reused": false,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 244.10000000000008,
+      "anim_end": 245.3333333333334,
+      "hold_start": 245.3333333333334,
+      "hold_end": 250.3333333333334,
+      "arrow_at": 245.3333333333334,
+      "sfx_at": 244.10000000000008,
+      "duck_at": 244.10000000000008,
+      "restore_at": 244.71000000000006,
+      "anim_duration": 1.2333333333333334,
+      "static_duration": 5.0,
+      "scene_duration": 6.233333333333333,
+      "scene_end": 250.3333333333334,
+      "spotlights_norm": [
+        [
+          0.8402,
+          0.0857,
+          0.995,
+          0.3917
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1325,
+          49,
+          1540,
+          337
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 247.3333333333334,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "55b_col_elapsed_use",
+      "title": "Como usar",
+      "body": "Compare dura\u00e7\u00e3o esperada e detecte / jobs longos que merecem aten\u00e7\u00e3o.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "col-elapsed",
+      "spotlight_reused": true,
+      "targets": [
+        "jobs-table"
+      ],
+      "anim_start": 250.3333333333334,
+      "anim_end": 251.4333333333334,
+      "hold_start": 251.4333333333334,
+      "hold_end": 256.4333333333334,
+      "arrow_at": 251.4333333333334,
+      "sfx_at": 250.3333333333334,
+      "duck_at": 250.3333333333334,
+      "restore_at": 250.94333333333338,
+      "anim_duration": 1.1,
+      "static_duration": 5.0,
+      "scene_duration": 6.1,
+      "scene_end": 256.4333333333334,
+      "spotlights_norm": [
+        [
+          0.8402,
+          0.0857,
+          0.995,
+          0.3917
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1325,
+          49,
+          1540,
+          337
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 253.4333333333334,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "60_filter_what",
+      "title": "Filtro",
+      "body": "Pressione / para filtrar a lista / por id, arquivo, tabela ou estado.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "filter",
+      "spotlight_reused": false,
+      "targets": [
+        "jobs-filter"
+      ],
+      "anim_start": 256.7333333333334,
+      "anim_end": 257.80000000000007,
+      "hold_start": 257.80000000000007,
+      "hold_end": 262.80000000000007,
+      "arrow_at": 257.80000000000007,
+      "sfx_at": 256.7333333333334,
+      "duck_at": 256.7333333333334,
+      "restore_at": 257.3433333333334,
+      "anim_duration": 1.0666666666666667,
+      "static_duration": 5.0,
+      "scene_duration": 6.066666666666666,
+      "scene_end": 262.80000000000007,
+      "spotlights_norm": [
+        [
+          0.135,
+          0.0857,
+          0.995,
+          0.1286
+        ]
+      ],
+      "spotlights_px": [
+        [
+          526,
+          54,
+          1540,
+          119
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 259.80000000000007,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "60b_filter_when",
+      "title": "Quando usar",
+      "body": "Use para achar r\u00e1pido um job / ou isolar s\u00f3 FAILED / RUNNING.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "filter",
+      "spotlight_reused": true,
+      "targets": [
+        "jobs-filter"
+      ],
+      "anim_start": 262.80000000000007,
+      "anim_end": 263.80000000000007,
+      "hold_start": 263.80000000000007,
+      "hold_end": 268.80000000000007,
+      "arrow_at": 263.80000000000007,
+      "sfx_at": 262.80000000000007,
+      "duck_at": 262.80000000000007,
+      "restore_at": 263.4100000000001,
+      "anim_duration": 1.0,
+      "static_duration": 5.0,
+      "scene_duration": 6.0,
+      "scene_end": 268.80000000000007,
+      "spotlights_norm": [
+        [
+          0.135,
+          0.0857,
+          0.995,
+          0.1286
+        ]
+      ],
+      "spotlights_px": [
+        [
+          526,
+          54,
+          1540,
+          119
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 265.80000000000007,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "61_filter_ex",
+      "title": "Exemplo",
+      "body": "Digite failed para ver s\u00f3 falhas. / Esc limpa o filtro e restaura a lista.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "filter-ex",
+      "spotlight_reused": false,
+      "targets": [
+        "jobs-filter",
+        "jobs-table"
+      ],
+      "anim_start": 269.1000000000001,
+      "anim_end": 270.2333333333334,
+      "hold_start": 270.2333333333334,
+      "hold_end": 275.2333333333334,
+      "arrow_at": 270.2333333333334,
+      "sfx_at": 269.1000000000001,
+      "duck_at": 269.1000000000001,
+      "restore_at": 269.7100000000001,
+      "anim_duration": 1.1333333333333333,
+      "static_duration": 5.0,
+      "scene_duration": 6.133333333333333,
+      "scene_end": 275.2333333333334,
+      "spotlights_norm": [
+        [
+          0.135,
+          0.0857,
+          0.995,
+          0.1286
+        ],
+        [
+          0.135,
+          0.1286,
+          0.995,
+          0.5136
+        ]
+      ],
+      "spotlights_px": [
+        [
+          526,
+          54,
+          1540,
+          119
+        ],
+        [
+          526,
+          84,
+          1540,
+          435
+        ]
+      ],
+      "n_cutouts": 2,
+      "margins": [
+        20,
+        20
+      ],
+      "review_ts": 272.2333333333334,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "70_detail_what",
+      "title": "Painel de detalhe",
+      "body": "Mostra um resumo do job selecionado / e as \u00faltimas linhas do log.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "detail",
+      "spotlight_reused": false,
+      "targets": [
+        "detail-pane"
+      ],
+      "anim_start": 276.46666666666675,
+      "anim_end": 277.63333333333344,
+      "hold_start": 277.63333333333344,
+      "hold_end": 282.63333333333344,
+      "arrow_at": 277.63333333333344,
+      "sfx_at": 276.46666666666675,
+      "duck_at": 276.46666666666675,
+      "restore_at": 277.07666666666677,
+      "anim_duration": 1.1666666666666667,
+      "static_duration": 5.0,
+      "scene_duration": 6.166666666666667,
+      "scene_end": 282.63333333333344,
+      "spotlights_norm": [
+        [
+          0.135,
+          0.8143,
+          0.995,
+          0.9
+        ]
+      ],
+      "spotlights_px": [
+        [
+          526,
+          639,
+          1540,
+          749
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 279.63333333333344,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "70b_detail_learn",
+      "title": "O que voc\u00ea aprende aqui",
+      "body": "Sem sair da Overview, v\u00ea se o job / avan\u00e7a ou se j\u00e1 h\u00e1 erro no log.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "detail",
+      "spotlight_reused": true,
+      "targets": [
+        "detail-pane"
+      ],
+      "anim_start": 282.63333333333344,
+      "anim_end": 283.9000000000001,
+      "hold_start": 283.9000000000001,
+      "hold_end": 288.9000000000001,
+      "arrow_at": 283.9000000000001,
+      "sfx_at": 282.63333333333344,
+      "duck_at": 282.63333333333344,
+      "restore_at": 283.24333333333345,
+      "anim_duration": 1.2666666666666666,
+      "static_duration": 5.0,
+      "scene_duration": 6.266666666666667,
+      "scene_end": 288.9000000000001,
+      "spotlights_norm": [
+        [
+          0.135,
+          0.8143,
+          0.995,
+          0.9
+        ]
+      ],
+      "spotlights_px": [
+        [
+          526,
+          639,
+          1540,
+          749
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 285.9000000000001,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "71_detail_title",
+      "title": "T\u00edtulo do detalhe",
+      "body": "Confirma ID, estado e tempo / do job em foco.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "detail-title",
+      "spotlight_reused": false,
+      "targets": [
+        "detail-title"
+      ],
+      "anim_start": 289.2000000000001,
+      "anim_end": 290.2000000000001,
+      "hold_start": 290.2000000000001,
+      "hold_end": 295.2000000000001,
+      "arrow_at": 290.2000000000001,
+      "sfx_at": 289.2000000000001,
+      "duck_at": 289.2000000000001,
+      "restore_at": 289.8100000000001,
+      "anim_duration": 1.0,
+      "static_duration": 5.0,
+      "scene_duration": 6.0,
+      "scene_end": 295.2000000000001,
+      "spotlights_norm": [
+        [
+          0.145,
+          0.8286,
+          0.985,
+          0.8429
+        ]
+      ],
+      "spotlights_px": [
+        [
+          544,
+          663,
+          1523,
+          690
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14
+      ],
+      "review_ts": 292.2000000000001,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "72_detail_log",
+      "title": "Pr\u00e9via do log",
+      "body": "\u00daltimas linhas do run.log. / Para o log completo, use View Logs.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "detail-log",
+      "spotlight_reused": false,
+      "targets": [
+        "detail-log"
+      ],
+      "anim_start": 295.5000000000001,
+      "anim_end": 296.60000000000014,
+      "hold_start": 296.60000000000014,
+      "hold_end": 301.60000000000014,
+      "arrow_at": 296.60000000000014,
+      "sfx_at": 295.5000000000001,
+      "duck_at": 295.5000000000001,
+      "restore_at": 296.1100000000001,
+      "anim_duration": 1.1,
+      "static_duration": 5.0,
+      "scene_duration": 6.1,
+      "scene_end": 301.60000000000014,
+      "spotlights_norm": [
+        [
+          0.145,
+          0.8429,
+          0.985,
+          0.8857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          538,
+          667,
+          1529,
+          732
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 298.60000000000014,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "80_events",
+      "title": "Eventos recentes",
+      "body": "Mostra o \u00faltimo aviso da Overview, / como in\u00edcio do Dispatch ou t\u00e9rmino.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "events",
+      "spotlight_reused": false,
+      "targets": [
+        "event-trail"
+      ],
+      "anim_start": 301.90000000000015,
+      "anim_end": 303.1333333333335,
+      "hold_start": 303.1333333333335,
+      "hold_end": 308.1333333333335,
+      "arrow_at": 303.1333333333335,
+      "sfx_at": 301.90000000000015,
+      "duck_at": 301.90000000000015,
+      "restore_at": 302.51000000000016,
+      "anim_duration": 1.2333333333333334,
+      "static_duration": 5.0,
+      "scene_duration": 6.233333333333333,
+      "scene_end": 308.1333333333335,
+      "spotlights_norm": [
+        [
+          0.135,
+          0.9429,
+          0.795,
+          0.9857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          532,
+          749,
+          1307,
+          806
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        14
+      ],
+      "review_ts": 305.1333333333335,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "81_newjob",
+      "title": "New Job [N]",
+      "body": "Abre a tela para configurar / e enviar um novo job.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "btn-new",
+      "spotlight_reused": false,
+      "targets": [
+        "new-job"
+      ],
+      "anim_start": 308.4333333333335,
+      "anim_end": 309.4333333333335,
+      "hold_start": 309.4333333333335,
+      "hold_end": 314.4333333333335,
+      "arrow_at": 309.4333333333335,
+      "sfx_at": 308.4333333333335,
+      "duck_at": 308.4333333333335,
+      "restore_at": 309.0433333333335,
+      "anim_duration": 1.0,
+      "static_duration": 5.0,
+      "scene_duration": 6.0,
+      "scene_end": 314.4333333333335,
+      "spotlights_norm": [
+        [
+          0.8,
+          0.9429,
+          0.86,
+          0.9857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1283,
+          748,
+          1383,
+          806
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        16
+      ],
+      "review_ts": 311.4333333333335,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "82_viewlogs",
+      "title": "View Logs [V]",
+      "body": "Abre o detalhe completo do job / selecionado para diagn\u00f3stico.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "btn-logs",
+      "spotlight_reused": false,
+      "targets": [
+        "view-logs"
+      ],
+      "anim_start": 314.7333333333335,
+      "anim_end": 315.8000000000002,
+      "hold_start": 315.8000000000002,
+      "hold_end": 320.8000000000002,
+      "arrow_at": 315.8000000000002,
+      "sfx_at": 314.7333333333335,
+      "duck_at": 314.7333333333335,
+      "restore_at": 315.34333333333353,
+      "anim_duration": 1.0666666666666667,
+      "static_duration": 5.0,
+      "scene_duration": 6.066666666666666,
+      "scene_end": 320.8000000000002,
+      "spotlights_norm": [
+        [
+          0.865,
+          0.9429,
+          0.925,
+          0.9857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1357,
+          748,
+          1457,
+          806
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        16
+      ],
+      "review_ts": 317.8000000000002,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "82b_viewlogs_when",
+      "title": "Quando usar",
+      "body": "Use em FAILED ou quando o log / curto do painel n\u00e3o bastar.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "btn-logs",
+      "spotlight_reused": true,
+      "targets": [
+        "view-logs"
+      ],
+      "anim_start": 320.8000000000002,
+      "anim_end": 321.8000000000002,
+      "hold_start": 321.8000000000002,
+      "hold_end": 326.8000000000002,
+      "arrow_at": 321.8000000000002,
+      "sfx_at": 320.8000000000002,
+      "duck_at": 320.8000000000002,
+      "restore_at": 321.4100000000002,
+      "anim_duration": 1.0,
+      "static_duration": 5.0,
+      "scene_duration": 6.0,
+      "scene_end": 326.8000000000002,
+      "spotlights_norm": [
+        [
+          0.865,
+          0.9429,
+          0.925,
+          0.9857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1357,
+          748,
+          1457,
+          806
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        16
+      ],
+      "review_ts": 323.8000000000002,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "83_cancel",
+      "title": "Cancel [C]",
+      "body": "Inicia o cancelamento somente / se o job selecionado estiver RUNNING.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "btn-cancel",
+      "spotlight_reused": false,
+      "targets": [
+        "cancel"
+      ],
+      "anim_start": 327.1000000000002,
+      "anim_end": 328.2000000000002,
+      "hold_start": 328.2000000000002,
+      "hold_end": 333.2000000000002,
+      "arrow_at": 328.2000000000002,
+      "sfx_at": 327.1000000000002,
+      "duck_at": 327.1000000000002,
+      "restore_at": 327.7100000000002,
+      "anim_duration": 1.1,
+      "static_duration": 5.0,
+      "scene_duration": 6.1,
+      "scene_end": 333.2000000000002,
+      "spotlights_norm": [
+        [
+          0.93,
+          0.9429,
+          0.99,
+          0.9857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1430,
+          748,
+          1530,
+          806
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        16
+      ],
+      "review_ts": 330.2000000000002,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "83b_cancel_note",
+      "title": "Aten\u00e7\u00e3o",
+      "body": "Jobs que n\u00e3o est\u00e3o RUNNING / n\u00e3o podem ser cancelados aqui.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "btn-cancel",
+      "spotlight_reused": true,
+      "targets": [
+        "cancel"
+      ],
+      "anim_start": 333.2000000000002,
+      "anim_end": 334.2000000000002,
+      "hold_start": 334.2000000000002,
+      "hold_end": 339.2000000000002,
+      "arrow_at": 334.2000000000002,
+      "sfx_at": 333.2000000000002,
+      "duck_at": 333.2000000000002,
+      "restore_at": 333.81000000000023,
+      "anim_duration": 1.0,
+      "static_duration": 5.0,
+      "scene_duration": 6.0,
+      "scene_end": 339.2000000000002,
+      "spotlights_norm": [
+        [
+          0.93,
+          0.9429,
+          0.99,
+          0.9857
+        ]
+      ],
+      "spotlights_px": [
+        [
+          1430,
+          748,
+          1530,
+          806
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        16
+      ],
+      "review_ts": 336.2000000000002,
+      "manual_review": "PASS",
+      "fail_reason": ""
+    },
+    {
+      "id": "90_close",
+      "title": "Resumo",
+      "body": "Na Overview voc\u00ea monitora status, / interpreta resultados e age.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "close",
+      "spotlight_reused": false,
+      "targets": [],
+      "anim_start": 339.2000000000002,
+      "anim_end": 340.2000000000002,
+      "hold_start": 340.2000000000002,
+      "hold_end": 345.2000000000002,
+      "arrow_at": 340.2000000000002,
+      "sfx_at": 339.2000000000002,
+      "duck_at": 339.2000000000002,
+      "restore_at": 339.81000000000023,
+      "anim_duration": 1.0,
+      "static_duration": 5.0,
+      "scene_duration": 6.0,
+      "scene_end": 345.2000000000002,
+      "spotlights_norm": [
+        [
+          0.12,
+          0.14,
+          0.88,
+          0.7
+        ]
+      ],
+      "spotlights_px": [
+        [
+          80,
+          100,
+          1840,
+          786
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 342.2000000000002,
+      "manual_review": "PASS",
+      "fail_reason": "card content spotlight"
+    },
+    {
+      "id": "90b_close_b",
+      "title": "Pr\u00f3ximo passo",
+      "body": "Revise FAILED, acompanhe RUNNING / e confirme SUCCEEDED na entrega.",
+      "badge": "",
+      "instructional": true,
+      "spotlight_group": "close",
+      "spotlight_reused": true,
+      "targets": [],
+      "anim_start": 345.2000000000002,
+      "anim_end": 346.33333333333354,
+      "hold_start": 346.33333333333354,
+      "hold_end": 351.33333333333354,
+      "arrow_at": 346.33333333333354,
+      "sfx_at": 345.2000000000002,
+      "duck_at": 345.2000000000002,
+      "restore_at": 345.81000000000023,
+      "anim_duration": 1.1333333333333333,
+      "static_duration": 5.0,
+      "scene_duration": 6.133333333333333,
+      "scene_end": 351.33333333333354,
+      "spotlights_norm": [
+        [
+          0.12,
+          0.14,
+          0.88,
+          0.7
+        ]
+      ],
+      "spotlights_px": [
+        [
+          80,
+          100,
+          1840,
+          786
+        ]
+      ],
+      "n_cutouts": 1,
+      "margins": [
+        20
+      ],
+      "review_ts": 348.33333333333354,
+      "manual_review": "PASS",
+      "fail_reason": "card content spotlight"
+    }
+  ]
+}

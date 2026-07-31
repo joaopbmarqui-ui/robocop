@@ -29,8 +29,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que é Overview
 - **Targets:** jobs-title, jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.13, 0.0651, 0.995, 0.1731]]
-- **Final px boxes:** [[539, 50, 1522, 142]]
+- **Norm cutouts:** [[0.135, 0.0714, 0.555, 0.1]]
+- **Final px boxes:** [[541, 52, 1027, 86]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que é Overview — Tela principal para acompanhar / jobs enviados e seu status.
@@ -48,8 +48,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que é
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.13, 0.0429, 0.478, 0.0571]]
-- **Final px boxes:** [[539, 32, 937, 48]]
+- **Norm cutouts:** [[0.14, 0.0429, 0.46, 0.0571]]
+- **Final px boxes:** [[549, 31, 917, 49]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que é — A faixa superior resume autenticação / e o monitoramento dos jobs.
@@ -67,8 +67,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que você aprende aqui
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.13, 0.0429, 0.478, 0.0571]]
-- **Final px boxes:** [[539, 32, 937, 48]]
+- **Norm cutouts:** [[0.14, 0.0429, 0.46, 0.0571]]
+- **Final px boxes:** [[549, 31, 917, 49]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que você aprende aqui — Em um olhar: autenticação, execução / e histórico dos últimos 7 dias.
@@ -86,8 +86,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** KERBEROS
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.1343, 0.0429, 0.2301, 0.0571]]
-- **Final px boxes:** [[544, 32, 656, 48]]
+- **Norm cutouts:** [[0.14, 0.0429, 0.215, 0.0571]]
+- **Final px boxes:** [[549, 31, 640, 49]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** KERBEROS — Indica se sua autenticação / está disponível para executar jobs.
@@ -105,8 +105,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Se estiver MISSING ou curto
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.1343, 0.0429, 0.2301, 0.0571]]
-- **Final px boxes:** [[544, 32, 656, 48]]
+- **Norm cutouts:** [[0.14, 0.0429, 0.215, 0.0571]]
+- **Final px boxes:** [[549, 31, 640, 49]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Se estiver MISSING ou curto — Abra um novo terminal e execute: / kinit
@@ -124,8 +124,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Senha
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.1343, 0.0429, 0.2301, 0.0571]]
-- **Final px boxes:** [[544, 32, 656, 48]]
+- **Norm cutouts:** [[0.14, 0.0429, 0.215, 0.0571]]
+- **Final px boxes:** [[549, 31, 640, 49]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Senha — Informe sua senha Windows / quando o terminal solicitar.
@@ -143,8 +143,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** RUNNING
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.2257, 0.0429, 0.304, 0.0571]]
-- **Final px boxes:** [[647, 32, 740, 48]]
+- **Norm cutouts:** [[0.235, 0.0429, 0.3, 0.0571]]
+- **Final px boxes:** [[657, 31, 736, 49]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** RUNNING — Quantos jobs estão em execução agora, / em relação ao limite de vagas.
@@ -162,8 +162,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que você aprende aqui
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.2257, 0.0429, 0.304, 0.0571]]
-- **Final px boxes:** [[647, 32, 740, 48]]
+- **Norm cutouts:** [[0.235, 0.0429, 0.3, 0.0571]]
+- **Final px boxes:** [[657, 31, 736, 49]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que você aprende aqui — O limite é 2 vagas. Pending e Running / ocupam vaga de execução.
@@ -181,8 +181,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** FINISHED 7D
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.3084, 0.0429, 0.3953, 0.0571]]
-- **Final px boxes:** [[741, 32, 843, 48]]
+- **Norm cutouts:** [[0.32, 0.0429, 0.385, 0.0571]]
+- **Final px boxes:** [[753, 31, 832, 49]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** FINISHED 7D — Histórico de jobs com sucesso / nos últimos 7 dias.
@@ -200,8 +200,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que você aprende aqui
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.3084, 0.0429, 0.3953, 0.0571]]
-- **Final px boxes:** [[741, 32, 843, 48]]
+- **Norm cutouts:** [[0.32, 0.0429, 0.385, 0.0571]]
+- **Final px boxes:** [[753, 31, 832, 49]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que você aprende aqui — Permite ver sete dias de histórico / e confirmar entregas recentes.
@@ -219,8 +219,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** FAILED 7D
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.391, 0.0429, 0.4737, 0.0571]]
-- **Final px boxes:** [[834, 32, 932, 48]]
+- **Norm cutouts:** [[0.405, 0.0429, 0.46, 0.0571]]
+- **Final px boxes:** [[849, 31, 917, 49]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** FAILED 7D — Histórico de jobs que falharam / nos últimos 7 dias.
@@ -238,8 +238,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que fazer
 - **Targets:** status-strip
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.391, 0.0429, 0.4737, 0.0571]]
-- **Final px boxes:** [[834, 32, 932, 48]]
+- **Norm cutouts:** [[0.405, 0.0429, 0.46, 0.0571]]
+- **Final px boxes:** [[849, 31, 917, 49]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que fazer — Se o número subir, revise os jobs / FAILED antes de enviar outros.
@@ -257,8 +257,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Lista de jobs
 - **Targets:** jobs-title
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.13, 0.0651, 0.4954, 0.0857]]
-- **Final px boxes:** [[539, 50, 956, 71]]
+- **Norm cutouts:** [[0.135, 0.0714, 0.305, 0.0857]]
+- **Final px boxes:** [[543, 54, 742, 72]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Lista de jobs — Jobs · running first · last 7 dias: / lista do histórico recente.
@@ -276,8 +276,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que você aprende aqui
 - **Targets:** jobs-title
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.13, 0.0651, 0.4954, 0.0857]]
-- **Final px boxes:** [[539, 50, 956, 71]]
+- **Norm cutouts:** [[0.135, 0.0714, 0.305, 0.0857]]
+- **Final px boxes:** [[543, 54, 742, 72]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que você aprende aqui — Execução no topo; a janela cobre / sete dias de monitoramento.
@@ -296,7 +296,7 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** jobs-empty
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.14, 0.0857, 0.99, 0.1286]]
-- **Final px boxes:** [[548, 65, 1518, 108]]
+- **Final px boxes:** [[547, 64, 1519, 109]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Lista vazia — Quando não há jobs nos últimos 7 dias, / a tela orienta a criar um novo.
@@ -315,7 +315,7 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** jobs-empty
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.14, 0.0857, 0.99, 0.1286]]
-- **Final px boxes:** [[548, 65, 1518, 108]]
+- **Final px boxes:** [[547, 64, 1519, 109]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que fazer — Pressione N ou New Job para / enviar a primeira execução.
@@ -333,8 +333,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que é
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.135, 0.0857, 0.995, 0.2169]]
-- **Final px boxes:** [[542, 65, 1524, 179]]
+- **Norm cutouts:** [[0.14, 0.0857, 0.555, 0.1714]]
+- **Final px boxes:** [[547, 64, 1027, 143]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que é — A tabela lista cada job com identidade, / origem, destino, estado e tempo.
@@ -352,8 +352,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que você aprende aqui
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.135, 0.0857, 0.995, 0.2169]]
-- **Final px boxes:** [[542, 65, 1524, 179]]
+- **Norm cutouts:** [[0.14, 0.0857, 0.555, 0.1714]]
+- **Final px boxes:** [[547, 64, 1027, 143]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que você aprende aqui — Percorra as linhas para achar / sucesso, execução ou problemas.
@@ -371,8 +371,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Coluna ID
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.135, 0.0857, 0.2167, 0.1731]]
-- **Final px boxes:** [[542, 65, 643, 144]]
+- **Norm cutouts:** [[0.14, 0.0857, 0.22, 0.1714]]
+- **Final px boxes:** [[548, 65, 647, 142]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Coluna ID — Identifica o job de forma curta / para localizar e abrir detalhes.
@@ -390,8 +390,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Como usar
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.135, 0.0857, 0.2167, 0.1731]]
-- **Final px boxes:** [[542, 65, 643, 144]]
+- **Norm cutouts:** [[0.14, 0.0857, 0.22, 0.1714]]
+- **Final px boxes:** [[548, 65, 647, 142]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Como usar — Use o ID para filtrar ou / confirmar qual execução está vendo.
@@ -409,8 +409,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Coluna Source
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.2167, 0.0857, 0.3027, 0.1731]]
-- **Final px boxes:** [[635, 65, 740, 144]]
+- **Norm cutouts:** [[0.22, 0.0857, 0.31, 0.1714]]
+- **Final px boxes:** [[639, 65, 748, 142]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Coluna Source — Mostra a origem do job: / arquivo SQL, tabela ou tipo.
@@ -428,8 +428,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Como usar
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.2167, 0.0857, 0.3027, 0.1731]]
-- **Final px boxes:** [[635, 65, 740, 144]]
+- **Norm cutouts:** [[0.22, 0.0857, 0.31, 0.1714]]
+- **Final px boxes:** [[639, 65, 748, 142]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Como usar — Confirme se a origem corresponde / ao job que você esperava monitorar.
@@ -447,8 +447,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Coluna Destination
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.3027, 0.0857, 0.4059, 0.1731]]
-- **Final px boxes:** [[732, 65, 857, 144]]
+- **Norm cutouts:** [[0.31, 0.0857, 0.415, 0.1714]]
+- **Final px boxes:** [[740, 65, 867, 142]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Coluna Destination — Mostra para onde o resultado / foi ou será entregue.
@@ -466,8 +466,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Como usar
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.3027, 0.0857, 0.4059, 0.1731]]
-- **Final px boxes:** [[732, 65, 857, 144]]
+- **Norm cutouts:** [[0.31, 0.0857, 0.415, 0.1714]]
+- **Final px boxes:** [[740, 65, 867, 142]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Como usar — Verifique schema.tabela ou Csv / antes de validar o resultado.
@@ -485,8 +485,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Coluna State
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.4059, 0.0857, 0.4893, 0.1731]]
-- **Final px boxes:** [[849, 65, 951, 144]]
+- **Norm cutouts:** [[0.415, 0.0857, 0.51, 0.1714]]
+- **Final px boxes:** [[859, 65, 975, 142]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Coluna State — Mostra o estado atual do job / com símbolo e rótulo em destaque.
@@ -504,8 +504,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que você aprende aqui
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.4059, 0.0857, 0.4893, 0.1731]]
-- **Final px boxes:** [[849, 65, 951, 144]]
+- **Norm cutouts:** [[0.415, 0.0857, 0.51, 0.1714]]
+- **Final px boxes:** [[859, 65, 975, 142]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que você aprende aqui — Dá para ver rápido se está aguardando, / rodando, ok ou precisa atenção.
@@ -523,8 +523,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** PENDING
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.4059, 0.1134, 0.4893, 0.1294]]
-- **Final px boxes:** [[849, 87, 951, 108]]
+- **Norm cutouts:** [[0.415, 0.1143, 0.51, 0.1286]]
+- **Final px boxes:** [[860, 89, 974, 107]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** PENDING — O job foi aceito e aguarda / início da execução.
@@ -542,8 +542,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que fazer
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.4059, 0.1134, 0.4893, 0.1294]]
-- **Final px boxes:** [[849, 87, 951, 108]]
+- **Norm cutouts:** [[0.415, 0.1143, 0.51, 0.1286]]
+- **Final px boxes:** [[860, 89, 974, 107]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que fazer — Em geral, espere. Confira se / há vaga livre na faixa RUNNING.
@@ -561,8 +561,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** RUNNING
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.4059, 0.0988, 0.4893, 0.1149]]
-- **Final px boxes:** [[849, 76, 951, 97]]
+- **Norm cutouts:** [[0.415, 0.1, 0.51, 0.1143]]
+- **Final px boxes:** [[860, 78, 974, 95]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** RUNNING — O job está em execução agora. / Acompanhe o progresso no painel.
@@ -580,8 +580,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que fazer
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.4059, 0.0988, 0.4893, 0.1149]]
-- **Final px boxes:** [[849, 76, 951, 97]]
+- **Norm cutouts:** [[0.415, 0.1, 0.51, 0.1143]]
+- **Final px boxes:** [[860, 78, 974, 95]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que fazer — Monitore o log. Só cancele se / realmente precisar interromper.
@@ -599,8 +599,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** SUCCEEDED
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.4059, 0.1557, 0.4893, 0.1731]]
-- **Final px boxes:** [[849, 122, 951, 144]]
+- **Norm cutouts:** [[0.415, 0.1571, 0.51, 0.1714]]
+- **Final px boxes:** [[860, 124, 974, 141]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** SUCCEEDED — O job terminou com sucesso. / O resultado está disponível.
@@ -618,8 +618,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que fazer
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.4059, 0.1557, 0.4893, 0.1731]]
-- **Final px boxes:** [[849, 122, 951, 144]]
+- **Norm cutouts:** [[0.415, 0.1571, 0.51, 0.1714]]
+- **Final px boxes:** [[860, 124, 974, 141]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que fazer — Valide a entrega (tabela ou CSV) / conforme o Destination do job.
@@ -637,8 +637,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** FAILED
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.4059, 0.1429, 0.4893, 0.16]]
-- **Final px boxes:** [[849, 111, 951, 133]]
+- **Norm cutouts:** [[0.415, 0.1429, 0.51, 0.1571]]
+- **Final px boxes:** [[860, 112, 974, 130]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** FAILED — O job falhou. Pode aparecer um código / (ex.: SYNTAX) para orientar a análise.
@@ -656,8 +656,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que fazer
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.4059, 0.1429, 0.4893, 0.16]]
-- **Final px boxes:** [[849, 111, 951, 133]]
+- **Norm cutouts:** [[0.415, 0.1429, 0.51, 0.1571]]
+- **Final px boxes:** [[860, 112, 974, 130]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que fazer — Abra View Logs, entenda a causa / e corrija antes de reenviar.
@@ -675,8 +675,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** CANCELLED
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.4059, 0.1272, 0.4893, 0.144]]
-- **Final px boxes:** [[849, 99, 951, 120]]
+- **Norm cutouts:** [[0.415, 0.1286, 0.51, 0.1429]]
+- **Final px boxes:** [[860, 101, 974, 118]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** CANCELLED — A execução foi cancelada. / Não houve conclusão bem-sucedida.
@@ -694,8 +694,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** O que fazer
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.4059, 0.1272, 0.4893, 0.144]]
-- **Final px boxes:** [[849, 99, 951, 120]]
+- **Norm cutouts:** [[0.415, 0.1286, 0.51, 0.1429]]
+- **Final px boxes:** [[860, 101, 974, 118]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que fazer — Confirme se o cancelamento / foi intencional; reenvie se precisar.
@@ -713,8 +713,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Coluna Elapsed
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.5048, 0.0857, 0.5779, 0.1731]]
-- **Final px boxes:** [[961, 65, 1052, 144]]
+- **Norm cutouts:** [[0.51, 0.0857, 0.555, 0.1714]]
+- **Final px boxes:** [[967, 65, 1026, 142]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Coluna Elapsed — Tempo decorrido: em Running conta / desde o início; nos demais, a duração.
@@ -732,8 +732,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Como usar
 - **Targets:** jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.5048, 0.0857, 0.5779, 0.1731]]
-- **Final px boxes:** [[961, 65, 1052, 144]]
+- **Norm cutouts:** [[0.51, 0.0857, 0.555, 0.1714]]
+- **Final px boxes:** [[967, 65, 1026, 142]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Como usar — Compare duração esperada e detecte / jobs longos que merecem atenção.
@@ -789,8 +789,8 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Elemento:** Exemplo
 - **Targets:** jobs-filter, jobs-table
 - **Font:** Carlito 38px
-- **Norm cutouts:** [[0.135, 0.0857, 0.995, 0.1286], [0.135, 0.1286, 0.995, 0.2266]]
-- **Final px boxes:** [[542, 65, 1524, 108], [542, 100, 1524, 187]]
+- **Norm cutouts:** [[0.135, 0.0857, 0.995, 0.1286], [0.14, 0.1286, 0.555, 0.1571]]
+- **Final px boxes:** [[541, 64, 1525, 109], [547, 99, 1027, 132]]
 - **Cutouts:** 2
 - **Overlay opacity:** 170/255
 - **Diálogo:** Exemplo — Digite failed para ver só falhas. / Esc limpa o filtro e restaura a lista.
@@ -809,7 +809,7 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** detail-pane
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.135, 0.8143, 0.995, 0.9]]
-- **Final px boxes:** [[542, 655, 1524, 733]]
+- **Final px boxes:** [[541, 654, 1525, 734]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Painel de detalhe — Mostra um resumo do job selecionado / e as últimas linhas do log.
@@ -828,7 +828,7 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** detail-pane
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.135, 0.8143, 0.995, 0.9]]
-- **Final px boxes:** [[542, 655, 1524, 733]]
+- **Final px boxes:** [[541, 654, 1525, 734]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** O que você aprende aqui — Sem sair da Overview, vê se o job / avança ou se já há erro no log.
@@ -847,7 +847,7 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** detail-title
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.145, 0.8286, 0.985, 0.8429]]
-- **Final px boxes:** [[554, 667, 1513, 686]]
+- **Final px boxes:** [[555, 668, 1512, 685]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Título do detalhe — Confirma ID, estado e tempo / do job em foco.
@@ -866,7 +866,7 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** detail-log
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.145, 0.8429, 0.985, 0.8857]]
-- **Final px boxes:** [[554, 678, 1513, 721]]
+- **Final px boxes:** [[553, 677, 1514, 722]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Prévia do log — Últimas linhas do run.log. / Para o log completo, use View Logs.
@@ -904,7 +904,7 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** new-job
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.8, 0.9429, 0.86, 0.9857]]
-- **Final px boxes:** [[1293, 757, 1373, 804]]
+- **Final px boxes:** [[1295, 759, 1371, 802]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** New Job [N] — Abre a tela para configurar / e enviar um novo job.
@@ -923,7 +923,7 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** view-logs
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.865, 0.9429, 0.925, 0.9857]]
-- **Final px boxes:** [[1367, 757, 1447, 804]]
+- **Final px boxes:** [[1369, 759, 1445, 802]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** View Logs [V] — Abre o detalhe completo do job / selecionado para diagnóstico.
@@ -942,7 +942,7 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** view-logs
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.865, 0.9429, 0.925, 0.9857]]
-- **Final px boxes:** [[1367, 757, 1447, 804]]
+- **Final px boxes:** [[1369, 759, 1445, 802]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Quando usar — Use em FAILED ou quando o log / curto do painel não bastar.
@@ -961,7 +961,7 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** cancel
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.93, 0.9429, 0.99, 0.9857]]
-- **Final px boxes:** [[1440, 757, 1520, 804]]
+- **Final px boxes:** [[1442, 759, 1518, 802]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Cancel [C] — Inicia o cancelamento somente / se o job selecionado estiver RUNNING.
@@ -980,7 +980,7 @@ Part 2 of the Dispatch onboarding series (after New Job).
 - **Targets:** cancel
 - **Font:** Carlito 38px
 - **Norm cutouts:** [[0.93, 0.9429, 0.99, 0.9857]]
-- **Final px boxes:** [[1440, 757, 1520, 804]]
+- **Final px boxes:** [[1442, 759, 1518, 802]]
 - **Cutouts:** 1
 - **Overlay opacity:** 170/255
 - **Diálogo:** Atenção — Jobs que não estão RUNNING / não podem ser cancelados aqui.

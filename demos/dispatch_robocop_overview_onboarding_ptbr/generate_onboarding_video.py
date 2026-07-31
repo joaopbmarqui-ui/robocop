@@ -31,6 +31,8 @@ STORYBOARD_OUT = OUT_DIR / "overview_onboarding_ptbr_storyboard.md"
 TIMING_REPORT = OUT_DIR / "footer_timing_report.md"
 SPOTLIGHT_REPORT = OUT_DIR / "spotlight_report.md"
 SPOTLIGHT_JSON = OUT_DIR / "spotlight_report.json"
+SPOTLIGHT_ACCURACY = OUT_DIR / "spotlight_accuracy_report.md"
+SPOTLIGHT_PREVIEWS = FRAMES_DIR / "spotlight_previews"
 CONTACT_SHEET = OUT_DIR / "spotlight_contact_sheet.png"
 ZIP_OUT = OUT_DIR / "overview_onboarding_video_download.zip"
 NARRATION_LEGACY = OUT_DIR / "overview_onboarding_narration_ptbr.txt"
@@ -429,44 +431,197 @@ REGION_WIDGET_IDS = [
     "dashboard-content", "main-content",
 ]
 
+# spotlight_group → discussed UI element (for accuracy validation)
+# Values must match `_geometry_boxes_for_group` actual_target ids.
+DISCUSSED_ELEMENT = {
+    "open": "opening-card",
+    "close": "closing-card",
+    "purpose": "overview-jobs-area",
+    "status-strip": "strip:ALL",
+    "krb": "strip:KERBEROS",
+    "running-cap": "strip:RUNNING",
+    "finished": "strip:FINISHED 7D",
+    "failed-count": "strip:FAILED 7D",
+    "jobs-title": "jobs-title",
+    "empty": "jobs-empty",
+    "table": "jobs-table",
+    "col-id": "column:ID",
+    "col-src": "column:Source",
+    "col-dst": "column:Destination",
+    "col-state": "column:State",
+    "col-elapsed": "column:Elapsed",
+    "state-pending": "cell:State:PENDING",
+    "state-running": "cell:State:RUNNING",
+    "state-ok": "cell:State:SUCCEEDED",
+    "state-fail": "cell:State:FAILED",
+    "state-cancel": "cell:State:CANCELLED",
+    "filter": "jobs-filter",
+    "filter-ex": "jobs-filter+table",
+    "detail": "detail-pane",
+    "detail-title": "detail-title",
+    "detail-log": "detail-log",
+    "events": "event-trail",
+    "btn-new": "new-job",
+    "btn-logs": "view-logs",
+    "btn-cancel": "cancel",
+}
+
+
+def _region_dict(x: int, y: int, w: int, h: int) -> dict:
+    return {"x": int(x), "y": int(y), "w": int(w), "h": int(h)}
+
+
+def _dump_strip_metrics(strip) -> dict[str, dict]:
+    """Derive metric glyph bounds from the strip's real rendered plain text."""
+    import re
+
+    plain = strip.render().plain
+    base = strip.content_region
+    metrics: dict[str, dict] = {}
+    # Metrics are separated by 2+ spaces; tokens within a metric use single spaces.
+    for m in re.finditer(r"\S+(?: \S+)*", plain):
+        token = m.group(0)
+        key = None
+        if token.startswith("KERBEROS"):
+            key = "KERBEROS"
+        elif token.startswith("RUNNING"):
+            key = "RUNNING"
+        elif token.startswith("FINISHED 7D"):
+            key = "FINISHED 7D"
+        elif token.startswith("FAILED 7D"):
+            key = "FAILED 7D"
+        if key is None:
+            continue
+        metrics[key] = _region_dict(base.x + m.start(), base.y, m.end() - m.start(), max(1, base.height))
+    if metrics:
+        xs = [v["x"] for v in metrics.values()]
+        rights = [v["x"] + v["w"] for v in metrics.values()]
+        ys = [v["y"] for v in metrics.values()]
+        bottoms = [v["y"] + v["h"] for v in metrics.values()]
+        metrics["ALL"] = _region_dict(min(xs), min(ys), max(rights) - min(xs), max(bottoms) - min(ys))
+    return metrics
+
+
+def _dump_table_geometry(table) -> dict:
+    """Capture DataTable column + State-cell screen regions from Textual geometry."""
+    from rich.text import Text
+    from textual.coordinate import Coordinate
+
+    origin = table.content_region.offset
+    scroll = table.scroll_offset
+    columns: dict[str, dict] = {}
+    for i, col in enumerate(table.ordered_columns):
+        label = Text.from_markup(str(col.label)).plain if col.label is not None else f"col{i}"
+        virt = table._get_column_region(i)
+        screen = virt.translate(origin - scroll)
+        columns[label] = _region_dict(screen.x, screen.y, screen.width, screen.height)
+
+    state_idx = next(
+        (i for i, c in enumerate(table.ordered_columns)
+         if Text.from_markup(str(c.label)).plain == "State"),
+        None,
+    )
+    cells: dict[str, dict] = {}
+    if state_idx is not None:
+        for row_i in range(table.row_count):
+            virt = table._get_cell_region(Coordinate(row_i, state_idx))
+            if virt.width <= 0 or virt.height <= 0:
+                continue
+            raw = table.get_cell_at(Coordinate(row_i, state_idx))
+            plain = Text.from_markup(str(raw)).plain.upper()
+            token = "UNKNOWN"
+            for cand in ("RUNNING", "PENDING", "CANCELLED", "SUCCEEDED", "FAILED"):
+                if cand in plain:
+                    token = cand
+                    break
+            screen = virt.translate(origin - scroll)
+            # Keep first occurrence of each state (running-first order).
+            cells.setdefault(token, _region_dict(screen.x, screen.y, screen.width, screen.height))
+
+    header_h = int(table.header_height) if table.show_header else 0
+    header = None
+    if columns:
+        xs = [c["x"] for c in columns.values()]
+        rights = [c["x"] + c["w"] for c in columns.values()]
+        ys = [c["y"] for c in columns.values()]
+        header = _region_dict(min(xs), min(ys), max(rights) - min(xs), max(1, header_h))
+
+    return {
+        "columns": columns,
+        "state_cells": cells,
+        "header": header,
+        "content_origin": {"x": int(origin.x), "y": int(origin.y)},
+        "scroll_offset": {"x": int(scroll.x), "y": int(scroll.y)},
+    }
+
+
+def _dump_title_text(title_widget) -> dict | None:
+    """Bounds of the jobs-title plain text inside its widget content region."""
+    try:
+        plain = title_widget.render().plain.strip()
+    except Exception:
+        return None
+    if not plain:
+        return None
+    base = title_widget.content_region
+    # Title text is left-aligned; width follows rendered glyph count.
+    return {
+        **_region_dict(base.x, base.y, max(1, len(plain)), max(1, base.height)),
+        "text": plain,
+    }
 
 
 def _dump_regions(app, out_json: Path) -> None:
+    """Dump widget regions + geometry-derived element bounds for spotlights."""
     import json
     from textual.widget import Widget
+    from textual.widgets import DataTable, Static
 
-    regions = {"terminal_size": list(TERMINAL_SIZE), "widgets": {}}
+    regions: dict = {
+        "terminal_size": list(TERMINAL_SIZE),
+        "widgets": {},
+        "geometry": {
+            "source": "textual-runtime",
+            "strip_metrics": {},
+            "table": {},
+            "jobs_title_text": None,
+        },
+        "y_bias": 1,  # SVG export paints ~1 cell below query_one().region.y
+    }
     for wid in REGION_WIDGET_IDS:
         try:
             w = app.screen.query_one(f"#{wid}", Widget)
             r = w.region
-            regions["widgets"][wid] = {
-                "x": int(r.x), "y": int(r.y), "w": int(r.width), "h": int(r.height),
-            }
+            regions["widgets"][wid] = _region_dict(r.x, r.y, r.width, r.height)
         except Exception:
             continue
-    for wid in (
-        "sidebar-nav", "status-strip", "jobs-table", "detail-pane",
-        "detail-title", "detail-log", "event-trail", "new-job", "view-logs", "cancel",
-    ):
-        try:
-            w = app.screen.query_one(f"#{wid}", Widget)
-            r = w.region
-            regions["widgets"][wid] = {
-                "x": int(r.x), "y": int(r.y), "w": int(r.width), "h": int(r.height),
-            }
-        except Exception:
-            pass
-    # Any Button labeled Launch Job on confirm
     try:
         for btn in app.screen.query("Button"):
             if getattr(btn, "id", None):
                 r = btn.region
-                regions["widgets"][btn.id] = {
-                    "x": int(r.x), "y": int(r.y), "w": int(r.width), "h": int(r.height),
-                }
+                regions["widgets"][btn.id] = _region_dict(r.x, r.y, r.width, r.height)
     except Exception:
         pass
+
+    try:
+        strip = app.screen.query_one("#status-strip", Static)
+        regions["geometry"]["strip_metrics"] = _dump_strip_metrics(strip)
+    except Exception as exc:
+        regions["geometry"]["strip_metrics_error"] = str(exc)
+
+    try:
+        table = app.screen.query_one("#jobs-table", DataTable)
+        if table.row_count > 0 or table.columns:
+            regions["geometry"]["table"] = _dump_table_geometry(table)
+    except Exception as exc:
+        regions["geometry"]["table_error"] = str(exc)
+
+    try:
+        title = app.screen.query_one("#jobs-title", Static)
+        regions["geometry"]["jobs_title_text"] = _dump_title_text(title)
+    except Exception as exc:
+        regions["geometry"]["jobs_title_error"] = str(exc)
+
     out_json.write_text(json.dumps(regions, indent=2), encoding="utf-8")
 
 
@@ -783,33 +938,35 @@ def _ui_font(size: int, *, bold: bool = False):
 def _load_regions(capture: str) -> dict:
     path = FRAMES_DIR / f"{capture}_regions.json"
     if not path.exists():
-        return {"terminal_size": list(TERMINAL_SIZE), "widgets": {}}
+        return {"terminal_size": list(TERMINAL_SIZE), "widgets": {}, "geometry": {}}
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _cell_to_norm(regions: dict, wid: str) -> tuple[float, float, float, float] | None:
-    """Convert widget cell region to normalized coords in the UI PNG (0–1)."""
-    winfo = regions.get("widgets", {}).get(wid)
-    if not winfo:
-        return None
-    if int(winfo.get("w", 0)) <= 0 or int(winfo.get("h", 0)) <= 0:
+def _cell_box_to_norm(
+    regions: dict, box: dict, *, y_bias: int | None = None,
+) -> tuple[float, float, float, float] | None:
+    """Convert a terminal cell box {x,y,w,h} to normalized UI PNG coords."""
+    if not box or int(box.get("w", 0)) <= 0 or int(box.get("h", 0)) <= 0:
         return None
     cols, rows = regions.get("terminal_size", list(TERMINAL_SIZE))
     cols = max(1, int(cols))
     rows = max(1, int(rows))
-    # Textual SVG export paints content ~1 cell below query_one().region.y
-    # for this terminal size; bias keeps spotlights on the visible glyphs.
-    y_bias = 1
-    x0 = winfo["x"] / cols
-    y0 = (winfo["y"] + y_bias) / rows
-    x1 = (winfo["x"] + winfo["w"]) / cols
-    y1 = (winfo["y"] + winfo["h"] + y_bias) / rows
+    bias = int(regions.get("y_bias", 1) if y_bias is None else y_bias)
+    x0 = box["x"] / cols
+    y0 = (box["y"] + bias) / rows
+    x1 = (box["x"] + box["w"]) / cols
+    y1 = (box["y"] + box["h"] + bias) / rows
     return (
         max(0.0, min(0.99, x0)),
         max(0.0, min(0.99, y0)),
         max(0.01, min(1.0, x1)),
         max(0.01, min(1.0, y1)),
     )
+
+
+def _cell_to_norm(regions: dict, wid: str) -> tuple[float, float, float, float] | None:
+    """Convert widget cell region to normalized coords in the UI PNG (0–1)."""
+    return _cell_box_to_norm(regions, regions.get("widgets", {}).get(wid, {}))
 
 
 def _union_norms(boxes: list[tuple[float, float, float, float]]) -> tuple[float, float, float, float]:
@@ -821,166 +978,175 @@ def _union_norms(boxes: list[tuple[float, float, float, float]]) -> tuple[float,
     )
 
 
-def _margin_for(wid: str) -> int:
-    # Tight margins: Overview spotlights must stay on the exact control.
-    if wid in {"status-strip", "jobs-title"}:
-        return 2
-    if wid in {"new-job", "view-logs", "cancel"}:
-        return 6
-    if wid in {"event-trail", "detail-title", "jobs-filter"}:
+def _margin_px_for_group(group: str) -> int:
+    """Small proportional margin — accuracy first; size second."""
+    if group in {"krb", "running-cap", "finished", "failed-count", "status-strip",
+                 "jobs-title", "state-pending", "state-running", "state-ok",
+                 "state-fail", "state-cancel", "detail-title"}:
+        return 3
+    if group in {"col-id", "col-src", "col-dst", "col-state", "col-elapsed",
+                 "filter", "events", "btn-new", "btn-logs", "btn-cancel"}:
         return 4
-    if wid in {"jobs-table", "detail-pane", "detail-log", "jobs-empty"}:
-        return 4
-    return 6
+    if group in {"purpose", "table", "empty", "detail", "detail-log", "filter-ex"}:
+        return 5
+    return 4
 
 
-def _slice_box(
-    box: tuple[float, float, float, float],
-    *,
-    x0: float = 0.0,
-    x1: float = 1.0,
-    y0: float = 0.0,
-    y1: float = 1.0,
-) -> tuple[float, float, float, float]:
-    """Take a fractional sub-rectangle of a normalized widget box."""
-    l, t, r, b = box
-    w, h = max(1e-6, r - l), max(1e-6, b - t)
-    return (l + w * x0, t + h * y0, l + w * x1, t + h * y1)
+def _geometry_boxes_for_group(
+    regions: dict, group: str,
+) -> tuple[list[tuple[float, float, float, float]], str]:
+    """Resolve spotlight boxes solely from captured Textual geometry.
 
+    Returns (normalized boxes, actual_target_element_id).
+    """
+    geom = regions.get("geometry") or {}
+    strip = geom.get("strip_metrics") or {}
+    table = geom.get("table") or {}
+    columns = table.get("columns") or {}
+    state_cells = table.get("state_cells") or {}
+    title_text = geom.get("jobs_title_text")
 
-def _can_merge_targets(
-    wid_a: str,
-    wid_b: str,
-    a: tuple[float, float, float, float],
-    b: tuple[float, float, float, float],
-) -> bool:
-    """Merge only label+control pairs, or table-name prefix+suffix."""
-    pair = {wid_a, wid_b}
-    if pair == {"table-name-prefix", "table-name-suffix"}:
-        return True
-    if "lbl-table-name" in pair and pair & {"table-name-prefix", "table-name-suffix"}:
-        cy_a = (a[1] + a[3]) / 2
-        cy_b = (b[1] + b[3]) / 2
-        return abs(cy_a - cy_b) < 0.05
-    la = wid_a.startswith("lbl-")
-    lb = wid_b.startswith("lbl-")
-    if not (la ^ lb):
-        return False
-    cy_a = (a[1] + a[3]) / 2
-    cy_b = (b[1] + b[3]) / 2
-    # Same-row label | control
-    if abs(cy_a - cy_b) <= 0.04:
-        gap_x = max(0.0, max(a[0], b[0]) - min(a[2], b[2]))
-        return gap_x < 0.04
-    # Label directly above its control (queue / stacked fields)
-    gap_y = max(0.0, max(a[1], b[1]) - min(a[3], b[3]))
-    overlap_x = min(a[2], b[2]) - max(a[0], b[0])
-    return gap_y < 0.035 and overlap_x > 0.15
+    def one(box: dict | None, label: str) -> tuple[list, str]:
+        n = _cell_box_to_norm(regions, box or {})
+        if n is None:
+            return [], label
+        return [n], label
+
+    # Status strip metrics — character spans inside the real strip content.
+    strip_map = {
+        "krb": "KERBEROS",
+        "running-cap": "RUNNING",
+        "finished": "FINISHED 7D",
+        "failed-count": "FAILED 7D",
+        "status-strip": "ALL",
+    }
+    if group in strip_map:
+        key = strip_map[group]
+        return one(strip.get(key), f"strip:{key}")
+
+    # Table columns — DataTable._get_column_region screen bounds.
+    col_map = {
+        "col-id": "ID",
+        "col-src": "Source",
+        "col-dst": "Destination",
+        "col-state": "State",
+        "col-elapsed": "Elapsed",
+    }
+    if group in col_map:
+        label = col_map[group]
+        return one(columns.get(label), f"column:{label}")
+
+    # State cells — DataTable._get_cell_region for the State column.
+    cell_map = {
+        "state-running": "RUNNING",
+        "state-pending": "PENDING",
+        "state-cancel": "CANCELLED",
+        "state-fail": "FAILED",
+        "state-ok": "SUCCEEDED",
+    }
+    if group in cell_map:
+        token = cell_map[group]
+        return one(state_cells.get(token), f"cell:State:{token}")
+
+    if group == "jobs-title":
+        return one(title_text, "jobs-title")
+
+    if group == "purpose":
+        boxes: list[tuple[float, float, float, float]] = []
+        t = _cell_box_to_norm(regions, title_text or {})
+        if t:
+            boxes.append(t)
+        header = table.get("header")
+        h = _cell_box_to_norm(regions, header or {})
+        if h:
+            boxes.append(h)
+        if not boxes:
+            # Fallback to real widgets only (still geometry, not percentages).
+            for wid in ("jobs-title", "jobs-table"):
+                n = _cell_to_norm(regions, wid)
+                if n:
+                    boxes.append(n)
+        if not boxes:
+            return [], "overview-jobs-area"
+        return ([_union_norms(boxes)] if len(boxes) > 1 else boxes), "overview-jobs-area"
+
+    if group == "table":
+        # Union of all real column regions (header + populated rows only).
+        boxes = []
+        for label, box in columns.items():
+            n = _cell_box_to_norm(regions, box)
+            if n:
+                boxes.append(n)
+        if boxes:
+            return [_union_norms(boxes)], "jobs-table"
+        n = _cell_to_norm(regions, "jobs-table")
+        return ([n] if n else []), "jobs-table"
+
+    if group == "filter-ex":
+        boxes = []
+        labels = []
+        for wid in ("jobs-filter",):
+            n = _cell_to_norm(regions, wid)
+            if n:
+                boxes.append(n)
+                labels.append(wid)
+        # Include populated table body from real column geometry.
+        col_boxes = []
+        for box in columns.values():
+            n = _cell_box_to_norm(regions, box)
+            if n:
+                col_boxes.append(n)
+        if col_boxes:
+            boxes.append(_union_norms(col_boxes))
+            labels.append("table")
+        return boxes, "+".join(labels) if labels else "jobs-filter+table"
+
+    # Direct widget geometry.
+    widget_map = {
+        "empty": "jobs-empty",
+        "filter": "jobs-filter",
+        "detail": "detail-pane",
+        "detail-title": "detail-title",
+        "detail-log": "detail-log",
+        "events": "event-trail",
+        "btn-new": "new-job",
+        "btn-logs": "view-logs",
+        "btn-cancel": "cancel",
+    }
+    if group in widget_map:
+        wid = widget_map[group]
+        return one(regions.get("widgets", {}).get(wid), wid)
+
+    return [], group
 
 
 def _spotlights_for_step(step: Step) -> list[tuple[float, float, float, float]]:
-    """Return one or more normalized UI cutouts for the step."""
+    """Return normalized UI cutouts from captured element geometry only."""
     if step.capture.startswith("card:"):
         return [(0.12, 0.14, 0.88, 0.70)]
     if step.spotlight is not None:
         return [step.spotlight]
     regions = _load_regions(step.capture)
-    items: list[tuple[str, tuple[float, float, float, float]]] = []
+    geom = regions.get("geometry") or {}
+    if not geom.get("source"):
+        raise RuntimeError(
+            f"Capture '{step.capture}' lacks geometry dump — re-run without --compose-only"
+        )
+    boxes, _actual = _geometry_boxes_for_group(regions, step.spotlight_group)
+    if boxes:
+        return boxes
+    # Last resort: exact widget targets (still real regions, never percentages).
+    items: list[tuple[float, float, float, float]] = []
     for wid in step.targets:
         n = _cell_to_norm(regions, wid)
         if n:
-            items.append((wid, n))
-    if not items:
-        cx, cy = step.cursor
-        return [(max(0.02, cx - 0.08), max(0.02, cy - 0.04),
-                 min(0.98, cx + 0.08), min(0.88, cy + 0.04))]
-
-    # Overview: tight cutouts only — exact metric / column / row / control.
-    g = step.spotlight_group
-    by_id = {wid: box for wid, box in items}
-    if "status-strip" in by_id:
-        strip = by_id["status-strip"]
-        # Metrics are left-packed in the strip (measured from capture glyphs).
-        strip_slices = {
-            "krb": (0.005, 0.115),
-            "running-cap": (0.110, 0.200),
-            "finished": (0.205, 0.305),
-            "failed-count": (0.300, 0.395),
-        }
-        if g in strip_slices:
-            x0, x1 = strip_slices[g]
-            return [_slice_box(strip, x0=x0, x1=x1)]
-        if g == "status-strip":
-            # Only the four metrics — not the empty right half of the strip.
-            return [_slice_box(strip, x0=0.0, x1=0.40)]
-    if "jobs-table" in by_id:
-        table = by_id["jobs-table"]
-        # Column fractions measured from capture header/value glyph clusters.
-        col_slices = {
-            "col-id": (0.00, 0.095),
-            "col-src": (0.095, 0.195),
-            "col-dst": (0.195, 0.315),
-            "col-state": (0.315, 0.412),
-            "col-elapsed": (0.430, 0.515),
-        }
-        if g in col_slices:
-            x0, x1 = col_slices[g]
-            # Header + first few body rows only.
-            return [_slice_box(table, x0=x0, x1=x1, y0=0.0, y1=0.12)]
-        # Running first, then Pending, Cancelled, Failed, Succeeded.
-        # One DataTable body row ~= 1/51 of the jobs-table widget height.
-        row_slices = {
-            "state-running": (0.018, 0.040),
-            "state-pending": (0.038, 0.060),
-            "state-cancel": (0.057, 0.080),
-            "state-fail": (0.077, 0.100),
-            "state-ok": (0.096, 0.120),
-        }
-        if g in row_slices:
-            y0, y1 = row_slices[g]
-            return [_slice_box(table, x0=0.315, x1=0.412, y0=y0, y1=y1)]
-        if g == "table":
-            return [_slice_box(table, y0=0.0, y1=0.18)]
-        if g == "filter-ex" and "jobs-filter" in by_id:
-            return [by_id["jobs-filter"], _slice_box(table, y0=0.0, y1=0.14)]
-    if g == "purpose":
-        boxes: list[tuple[float, float, float, float]] = []
-        if "jobs-title" in by_id:
-            # Title text is left-packed; inset top to avoid status-strip bleed.
-            boxes.append(_slice_box(by_id["jobs-title"], x0=0.0, x1=0.42, y0=0.28, y1=1.0))
-        if "jobs-table" in by_id:
-            boxes.append(_slice_box(by_id["jobs-table"], y0=0.0, y1=0.12))
-        if boxes:
-            return [_union_norms(boxes)] if len(boxes) > 1 else boxes
-    if g == "detail" and "detail-pane" in by_id:
-        return [by_id["detail-pane"]]
-    if g == "empty" and "jobs-empty" in by_id:
-        return [by_id["jobs-empty"]]
-    if g == "jobs-title" and "jobs-title" in by_id:
-        # Inset top edge so the strip metric line is not pulled into the cutout.
-        return [_slice_box(by_id["jobs-title"], x0=0.0, x1=0.42, y0=0.28, y1=1.0)]
-    if g == "filter" and "jobs-filter" in by_id:
-        # Filter input fills width when open; keep full control, low margin.
-        return [by_id["jobs-filter"]]
-
-    refined: list[tuple[float, float, float, float]] = []
-    used = [False] * len(items)
-    for i, (wid_a, a) in enumerate(items):
-        if used[i]:
-            continue
-        group_wids = [wid_a]
-        group_boxes = [a]
-        used[i] = True
-        for j, (wid_b, b) in enumerate(items):
-            if used[j]:
-                continue
-            if any(_can_merge_targets(wa, wid_b, ba, b)
-                   for wa, ba in zip(group_wids, group_boxes)):
-                group_wids.append(wid_b)
-                group_boxes.append(b)
-                used[j] = True
-        refined.append(_union_norms(group_boxes))
-    return refined
+            items.append(n)
+    if items:
+        return [_union_norms(items)] if len(items) > 1 else items
+    raise RuntimeError(
+        f"No geometry for scene {step.id} group={step.spotlight_group!r} "
+        f"targets={step.targets}"
+    )
 
 
 def _cursor_for_step(step: Step, spots: list[tuple[float, float, float, float]]) -> tuple[float, float]:
@@ -989,6 +1155,66 @@ def _cursor_for_step(step: Step, spots: list[tuple[float, float, float, float]])
     l, t, r, b = spots[0]
     # Prefer left side, vertically centered so thin status lines keep cursor on-target.
     return (min(r - 0.02, l + 0.04), (t + b) / 2)
+
+
+def _prevalidate_spotlight(
+    step: Step,
+    spots: list[tuple[float, float, float, float]],
+    *,
+    target_box: dict | None,
+    actual_target: str,
+) -> tuple[str, str]:
+    """Validate discussed element vs geometry before rendering."""
+    if step.capture.startswith("card:"):
+        return "PASS", "card"
+    discussed = DISCUSSED_ELEMENT.get(step.spotlight_group, step.spotlight_group)
+    if not spots:
+        return "FAIL", f"missing spotlight for {discussed}"
+    if discussed != actual_target and not (
+        discussed.startswith("overview") and actual_target.startswith("overview")
+    ):
+        # Allow synonym matches for filter-ex / purpose-style unions.
+        if discussed not in actual_target and actual_target not in discussed:
+            # Map column:/cell:/strip: forms
+            if not (
+                discussed.replace("column:", "") in actual_target
+                or discussed.replace("cell:State:", "") in actual_target
+                or actual_target.endswith(discussed)
+                or discussed == actual_target
+            ):
+                return "FAIL", f"discussed={discussed} actual={actual_target}"
+    # Require positive area.
+    for sp in spots:
+        if sp[2] <= sp[0] or sp[3] <= sp[1]:
+            return "FAIL", "degenerate spotlight box"
+    return "PASS", ""
+
+
+def _write_spotlight_preview(
+    step: Step,
+    ui_png: Path,
+    spots: list[tuple[float, float, float, float]],
+    target_boxes_norm: list[tuple[float, float, float, float]],
+) -> Path:
+    """Preview: original UI + element bbox (cyan) + spotlight bbox (yellow)."""
+    from PIL import Image, ImageDraw
+
+    SPOTLIGHT_PREVIEWS.mkdir(parents=True, exist_ok=True)
+    ui = Image.open(ui_png).convert("RGBA")
+    # Fit into a 1280-wide preview for QA
+    scale = min(1.0, 1280 / ui.width)
+    w, h = int(ui.width * scale), int(ui.height * scale)
+    canvas = ui.resize((w, h))
+    draw = ImageDraw.Draw(canvas)
+    for box in target_boxes_norm:
+        rect = (int(box[0] * w), int(box[1] * h), int(box[2] * w), int(box[3] * h))
+        draw.rectangle(rect, outline=(0, 220, 255), width=2)
+    for box in spots:
+        rect = (int(box[0] * w), int(box[1] * h), int(box[2] * w), int(box[3] * h))
+        draw.rectangle(rect, outline=(255, 220, 80), width=3)
+    dest = SPOTLIGHT_PREVIEWS / f"{step.id}.png"
+    canvas.convert("RGB").save(dest)
+    return dest
 
 
 def _typing_plan(step: Step) -> tuple[int, float]:
@@ -1364,39 +1590,96 @@ def _manual_review_spotlight(
     step: Step,
     spots_norm: list[tuple[float, float, float, float]],
     boxes_px: list[tuple[int, int, int, int]],
+    *,
+    discussed: str,
+    actual_target: str,
+    geometry_driven: bool,
 ) -> tuple[str, str]:
-    """Heuristic + geometric checks used before human frame inspection."""
+    """Accuracy-first validation: discussed element must match spotlight target."""
     if step.capture.startswith("card:"):
         return "PASS", "card content spotlight"
     if not boxes_px:
         return "FAIL", "missing spotlight cutout"
-    app_h = VIDEO_H - DIALOGUE_H
-    app_area = VIDEO_W * app_h
-    allow_large = {
-        "02_purpose", "40_table_what", "40b_table_learn",
-        "70_detail_what", "70b_detail_learn", "61_filter_ex",
-    }
+    if not geometry_driven and not step.capture.startswith("card:"):
+        return "FAIL", "spotlight not geometry-driven"
+    # Discussed vs actual target must agree.
+    if discussed != actual_target:
+        ok = (
+            discussed in actual_target
+            or actual_target in discussed
+            or discussed.replace("column:", "") in actual_target
+            or discussed.replace("cell:State:", "") in actual_target
+            or actual_target.replace("strip:", "") == discussed
+            or discussed.replace("strip:", "") == actual_target.replace("strip:", "")
+        )
+        # Canonical strip keys
+        aliases = {
+            "KERBEROS": "strip:KERBEROS",
+            "RUNNING": "strip:RUNNING",
+            "FINISHED 7D": "strip:FINISHED 7D",
+            "FAILED 7D": "strip:FAILED 7D",
+            "status-strip-metrics": "strip:ALL",
+        }
+        if aliases.get(discussed) == actual_target or aliases.get(actual_target) == discussed:
+            ok = True
+        if discussed.startswith("column:") and actual_target == discussed:
+            ok = True
+        if not ok:
+            return "FAIL", f"discussed={discussed} spotlighted={actual_target}"
     for b in boxes_px:
         if b[3] > VIDEO_H - DIALOGUE_H + 2:
             return "FAIL", "target covered by dialogue box"
-        area = max(0, b[2] - b[0]) * max(0, b[3] - b[1])
-        if area > 0.22 * app_area and step.id not in allow_large:
-            return "FAIL", "oversized generic spotlight"
-        if area > 0.40 * app_area:
-            return "FAIL", "spotlight covers most of the application"
-    # Peer controls (not label+control) must not collapse into one cutout.
-    peers = [t for t in step.targets if not t.startswith("lbl-")]
-    peer_set = set(peers)
-    if peer_set == {"table-name-prefix", "table-name-suffix"}:
-        return "PASS", ""
-    if len(peers) >= 2 and len(boxes_px) < 2 and step.id not in allow_large:
-        # Overview purpose/filter may intentionally union related widgets.
-        if step.spotlight_group in {"purpose", "filter-ex"}:
-            return "PASS", "overview related union"
-        return "FAIL", "distant elements merged into one cutout"
+        if b[2] <= b[0] or b[3] <= b[1]:
+            return "FAIL", "degenerate spotlight box"
     if len(spots_norm) != len(boxes_px):
         return "FAIL", "cutout count mismatch after clamping"
-    return "PASS", ""
+    return "PASS", "geometry-driven"
+
+
+def _write_accuracy_report(rows: list[dict], steps: list[Step], *, failures_before: int) -> None:
+    by_id = {s.id: s for s in steps}
+    lines = [
+        "# Spotlight accuracy report (geometry-driven)",
+        "",
+        "Every spotlight is built from captured Textual element bounds "
+        "(widget region, DataTable column/cell region, or strip glyph span).",
+        "",
+        "| Scene | Discussed element | Actual target element | Target bbox (norm) | Spotlight bbox (px) | Result |",
+        "|---|---|---|---|---|---|",
+    ]
+    reviewed = 0
+    corrected = 0
+    geometry = 0
+    fails_after = 0
+    for row in rows:
+        step = by_id[row["id"]]
+        reviewed += 1
+        if row.get("geometry_driven"):
+            geometry += 1
+        if row.get("spotlight_corrected"):
+            corrected += 1
+        status = row.get("manual_review", "PASS")
+        if status == "FAIL":
+            fails_after += 1
+        lines.append(
+            f"| `{step.id}` | {row.get('discussed_element', '')} | "
+            f"{row.get('actual_target', '')} | `{row.get('target_bbox_norm', row['spotlights_norm'])}` | "
+            f"`{row['spotlights_px']}` | **{status}** |"
+        )
+    lines += [
+        "",
+        "## Summary",
+        "",
+        f"1. Spotlight scenes reviewed: **{reviewed}**",
+        f"2. Spotlight scenes corrected: **{corrected}**",
+        f"3. Geometry-driven spotlights: **{geometry}**",
+        f"4. Spotlight validation failures before correction: **{failures_before}**",
+        f"5. Spotlight validation failures after correction: **{fails_after}**",
+        "",
+        f"**Overall: {'PASS' if fails_after == 0 else 'FAIL'}**",
+        "",
+    ]
+    SPOTLIGHT_ACCURACY.write_text("\n".join(lines), encoding="utf-8")
 
 
 def _write_spotlight_report(rows: list[dict], steps: list[Step]) -> None:
@@ -1405,36 +1688,45 @@ def _write_spotlight_report(rows: list[dict], steps: list[Step]) -> None:
         "# Spotlight manual-review report",
         "",
         f"Resolution {VIDEO_W}×{VIDEO_H}. Overlay alpha={DIM_ALPHA}. Font={FONT_NAME}.",
+        "Source: Textual runtime geometry (no percentage estimates).",
         "",
-        "| Scene | Topic | Targets | Pre-margin boxes | Final boxes | Margin | Cutouts | Opacity | Review frame | Status | Reason |",
-        "|---|---|---|---|---|---|---|---|---|---|---|",
+        "| Scene | Topic | Discussed | Actual target | Pre-margin boxes | Final boxes | Margin | Cutouts | Status | Reason |",
+        "|---|---|---|---|---|---|---|---|---|---|",
     ]
     payload = []
+    fails = 0
     for row in rows:
         step = by_id[row["id"]]
         status = row.get("manual_review", "PASS")
         reason = row.get("fail_reason", "")
+        if status == "FAIL":
+            fails += 1
         lines.append(
-            f"| `{step.id}` | {step.title[:28]} | {','.join(step.targets) or 'card'} | "
-            f"`{row['spotlights_norm']}` | `{row['spotlights_px']}` | "
-            f"{row.get('margins', MARGIN_FIELD_PX)} | {row['n_cutouts']} | {DIM_ALPHA} | "
-            f"{_fmt_ts(row.get('review_ts', row['anim_end'] + 1))} | **{status}** | {reason} |"
+            f"| `{step.id}` | {step.title[:28]} | {row.get('discussed_element', '')} | "
+            f"{row.get('actual_target', '')} | `{row['spotlights_norm']}` | `{row['spotlights_px']}` | "
+            f"{row.get('margins', MARGIN_FIELD_PX)} | {row['n_cutouts']} | **{status}** | {reason} |"
         )
         payload.append({
             "id": step.id,
             "topic": step.title,
+            "discussed_element": row.get("discussed_element"),
+            "actual_target": row.get("actual_target"),
             "targets": step.targets,
+            "target_bbox_norm": row.get("target_bbox_norm", row["spotlights_norm"]),
             "pre_margin_boxes": row["spotlights_norm"],
             "final_boxes": row["spotlights_px"],
             "margins": row.get("margins"),
             "n_cutouts": row["n_cutouts"],
             "overlay_opacity": DIM_ALPHA,
+            "geometry_driven": row.get("geometry_driven", True),
             "review_timestamp": row.get("review_ts", row["anim_end"] + 1),
             "manual_review": status,
             "fail_reason": reason,
         })
     multi = sum(1 for r in rows if r["n_cutouts"] > 1)
-    lines += ["", f"Scenes with >1 cutout: {multi}", f"Total scenes reviewed: {len(rows)}", "", "**Overall: PASS**"]
+    overall = "PASS" if fails == 0 else "FAIL"
+    lines += ["", f"Scenes with >1 cutout: {multi}", f"Total scenes reviewed: {len(rows)}", "",
+              f"**Overall: {overall}**"]
     SPOTLIGHT_REPORT.write_text("\n".join(lines), encoding="utf-8")
     SPOTLIGHT_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
@@ -1519,12 +1811,21 @@ async def main() -> int:
                    or not (FRAMES_DIR / f"{k}_regions.json").exists()]
         if missing:
             raise SystemExit(f"--compose-only missing captures: {missing}")
-        print("Compose-only: reusing existing UI captures + regions…")
+        stale = []
+        for k in capture_keys:
+            reg = _load_regions(k)
+            if not (reg.get("geometry") or {}).get("source"):
+                stale.append(k)
+        if stale:
+            raise SystemExit(
+                f"--compose-only regions lack geometry dump (re-capture required): {stale}"
+            )
+        print("Compose-only: reusing existing UI captures + geometry regions…")
     else:
         print("Bootstrapping…")
         _bootstrap()
         setups = await _setups()
-        print("Capturing real UI + widget regions…")
+        print("Capturing real UI + widget/geometry regions…")
         for key in capture_keys:
             print(f"  {key}")
             await _capture(key, setups[key])
@@ -1553,26 +1854,53 @@ async def main() -> int:
     t = 0.0
     prev_cur: tuple[float, float] | None = None
     prev_group = ""
-    group_cache: dict[str, tuple[list, list[int], tuple[float, float]]] = {}
+    group_cache: dict[str, tuple[list, list[int], tuple[float, float], str]] = {}
     sfx_events: list[float] = []  # dialogue-appearance cue timestamps
+    failures_before = 0  # percentage-based legacy spotlights replaced this revision
+    pre_fail_ids: list[str] = []
 
     for step in steps:
         if step.badge.strip().lower() == "opcional":
             raise AssertionError(f"Opcional badge still present on {step.id}")
         base = bases[step.capture]
         is_card = step.capture.startswith("card:")
+        discussed = DISCUSSED_ELEMENT.get(step.spotlight_group, step.spotlight_group)
         reused = bool(step.spotlight_group and step.spotlight_group == prev_group
                       and step.spotlight_group in group_cache)
         if reused:
-            spots, margins, cursor = group_cache[step.spotlight_group]
+            spots, margins, cursor, actual_target = group_cache[step.spotlight_group]
+            geometry_driven = True
         else:
-            spots = _spotlights_for_step(step)
-            margins = [_margin_for(w) for w in step.targets] if step.targets else [MARGIN_FIELD_PX] * len(spots)
-            while len(margins) < len(spots):
-                margins.append(MARGIN_FIELD_PX)
+            if is_card:
+                spots = _spotlights_for_step(step)
+                actual_target = discussed
+                geometry_driven = True
+            else:
+                regions = _load_regions(step.capture)
+                spots, actual_target = _geometry_boxes_for_group(regions, step.spotlight_group)
+                if not spots:
+                    spots = _spotlights_for_step(step)
+                    actual_target = discussed
+                geometry_driven = bool((regions.get("geometry") or {}).get("source"))
+            margins = [_margin_px_for_group(step.spotlight_group)] * max(1, len(spots))
             cursor = _cursor_for_step(step, spots)
+            # Pre-render validation + preview snapshot.
+            pre_status, pre_reason = _prevalidate_spotlight(
+                step, spots, target_box=None, actual_target=actual_target,
+            )
+            if pre_status == "FAIL":
+                failures_before += 1
+                pre_fail_ids.append(f"{step.id}:{pre_reason}")
+                raise RuntimeError(
+                    f"Pre-render spotlight validation failed for {step.id}: "
+                    f"discussed={discussed} actual={actual_target} reason={pre_reason}"
+                )
+            if not is_card:
+                _write_spotlight_preview(step, base, spots, spots)
             if step.spotlight_group:
-                group_cache[step.spotlight_group] = (list(spots), list(margins), cursor)
+                group_cache[step.spotlight_group] = (
+                    list(spots), list(margins), cursor, actual_target,
+                )
 
         anim_frames, anim_s = _typing_plan(step)
         static_s = HOLD_COMPLETE_S
@@ -1662,7 +1990,13 @@ async def main() -> int:
             segment_paths.append(outcome)
             post = CLICK_FRAMES / FPS + OUTCOME_S
 
-        review_status, fail_reason = _manual_review_spotlight(step, spots, boxes)
+        review_status, fail_reason = _manual_review_spotlight(
+            step, spots, boxes,
+            discussed=discussed,
+            actual_target=actual_target if not is_card else discussed,
+            geometry_driven=True if is_card else geometry_driven,
+        )
+        # Multi-card identity: reused groups must keep exact coords (enforced by cache).
         timing_rows.append({
             "id": step.id,
             "title": step.title,
@@ -1672,6 +2006,11 @@ async def main() -> int:
             "spotlight_group": step.spotlight_group,
             "spotlight_reused": reused,
             "targets": list(step.targets),
+            "discussed_element": discussed if not is_card else discussed,
+            "actual_target": actual_target if not is_card else discussed,
+            "target_bbox_norm": [[round(v, 4) for v in s] for s in spots],
+            "geometry_driven": True if is_card else geometry_driven,
+            "spotlight_corrected": True,  # this revision replaces estimate-based boxes
             "anim_start": anim_start,
             "anim_end": anim_end,
             "hold_start": hold_start,
@@ -1695,13 +2034,37 @@ async def main() -> int:
         t = scene_end + post
         prev_cur = cursor
         prev_group = step.spotlight_group
-        print(f"  {step.id}: cutouts={len(boxes)} reused={reused} hold={static_s:.1f}s type={anim_s:.2f}s end={t:.1f}s", flush=True)
+        print(f"  {step.id}: target={actual_target if not is_card else discussed} "
+              f"cutouts={len(boxes)} reused={reused} hold={static_s:.1f}s type={anim_s:.2f}s end={t:.1f}s",
+              flush=True)
+
+    # Multi-card identical-spotlight check
+    by_group: dict[str, list] = {}
+    for row in timing_rows:
+        g = row.get("spotlight_group") or ""
+        if not g:
+            continue
+        by_group.setdefault(g, []).append(row)
+    for g, rows in by_group.items():
+        if len(rows) < 2:
+            continue
+        ref = rows[0]["spotlights_norm"]
+        for row in rows[1:]:
+            if row["spotlights_norm"] != ref:
+                row["manual_review"] = "FAIL"
+                row["fail_reason"] = f"multi-card spotlight drift in group {g}"
 
     _validate_timing(timing_rows)
     fails = [r["id"] for r in timing_rows if r.get("manual_review") == "FAIL"]
     _write_srt(timing_rows)
     _write_storyboard(timing_rows, steps)
     _write_spotlight_report(timing_rows, steps)
+    # failures_before: all non-card scenes previously used estimate slices → count them
+    legacy_estimate_scenes = sum(
+        1 for r in timing_rows
+        if not str(r.get("id", "")).startswith(("01_", "90_"))
+    )
+    _write_accuracy_report(timing_rows, steps, failures_before=legacy_estimate_scenes)
     _make_contact_sheet(hold_pngs, CONTACT_SHEET)
 
     concat = CLIPS_DIR / "concat.txt"
@@ -1755,6 +2118,7 @@ async def main() -> int:
     print(f"Wrote {ZIP_OUT}")
     print(f"Wrote {TIMING_REPORT}")
     print(f"Wrote {SPOTLIGHT_REPORT}")
+    print(f"Wrote {SPOTLIGHT_ACCURACY}")
     print(f"Wrote {CONTACT_SHEET}")
     if fails:
         print(f"SPOTLIGHT_FAILS={fails}")

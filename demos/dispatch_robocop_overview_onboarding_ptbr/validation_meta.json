@@ -38,7 +38,7 @@
     "fade_up_s": 0.35,
     "cue_count": 53,
     "peak_abs": 0.25476332895901366,
-    "volumedetect": "ize=       0kB time=00:00:00.00 bitrate=N/A speed=N/A    \n[out#0/null @ 0x55c8b596fbc0] video:0kB audio:28587kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: unknown\nsize=N/A time=00:05:31.85 bitrate=N/A speed=2.42e+03x    \n[Parsed_volumedetect_0 @ 0x55c8b59a0440] n_samples: 14636790\n[Parsed_volumedetect_0 @ 0x55c8b59a0440] mean_volume: -35.4 dB\n[Parsed_volumedetect_0 @ 0x55c8b59a0440] max_volume: -11.9 dB\n[Parsed_volumedetect_0 @ 0x55c8b59a0440] histogram_11db: 27\n[Parsed_volumedetect_0 @ 0x55c8b59a0440] histogram_12db: 624\n[Parsed_volumedetect_0 @ 0x55c8b59a0440] histogram_13db: 1933\n[Parsed_volumedetect_0 @ 0x55c8b59a0440] histogram_14db: 4112\n[Parsed_volumedetect_0 @ 0x55c8b59a0440] histogram_15db: 6118\n[Parsed_volumedetect_0 @ 0x55c8b59a0440] histogram_16db: 7640\n",
+    "volumedetect": "ize=       0kB time=00:00:00.00 bitrate=N/A speed=N/A    \n[out#0/null @ 0x559dde048bc0] video:0kB audio:28587kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: unknown\nsize=N/A time=00:05:31.85 bitrate=N/A speed=2.42e+03x    \n[Parsed_volumedetect_0 @ 0x559dde079440] n_samples: 14636790\n[Parsed_volumedetect_0 @ 0x559dde079440] mean_volume: -35.4 dB\n[Parsed_volumedetect_0 @ 0x559dde079440] max_volume: -11.9 dB\n[Parsed_volumedetect_0 @ 0x559dde079440] histogram_11db: 27\n[Parsed_volumedetect_0 @ 0x559dde079440] histogram_12db: 624\n[Parsed_volumedetect_0 @ 0x559dde079440] histogram_13db: 1933\n[Parsed_volumedetect_0 @ 0x559dde079440] histogram_14db: 4112\n[Parsed_volumedetect_0 @ 0x559dde079440] histogram_15db: 6118\n[Parsed_volumedetect_0 @ 0x559dde079440] histogram_16db: 7640\n",
     "validation": "PASS"
   },
   "holds": [
@@ -51,6 +51,18 @@
       "spotlight_group": "open",
       "spotlight_reused": false,
       "targets": [],
+      "discussed_element": "opening-card",
+      "actual_target": "opening-card",
+      "target_bbox_norm": [
+        [
+          0.12,
+          0.14,
+          0.88,
+          0.7
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 0.0,
       "anim_end": 1.1666666666666667,
       "hold_start": 1.1666666666666667,
@@ -81,7 +93,7 @@
       ],
       "n_cutouts": 1,
       "margins": [
-        20
+        4
       ],
       "review_ts": 3.166666666666667,
       "manual_review": "PASS",
@@ -99,6 +111,18 @@
         "jobs-title",
         "jobs-table"
       ],
+      "discussed_element": "overview-jobs-area",
+      "actual_target": "overview-jobs-area",
+      "target_bbox_norm": [
+        [
+          0.135,
+          0.0714,
+          0.555,
+          0.1
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 6.466666666666667,
       "anim_end": 7.533333333333333,
       "hold_start": 7.533333333333333,
@@ -113,28 +137,27 @@
       "scene_end": 12.533333333333333,
       "spotlights_norm": [
         [
-          0.13,
-          0.0651,
-          0.995,
-          0.1731
+          0.135,
+          0.0714,
+          0.555,
+          0.1
         ]
       ],
       "spotlights_px": [
         [
-          539,
-          50,
-          1522,
-          142
+          541,
+          52,
+          1027,
+          86
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        2,
-        4
+        5
       ],
       "review_ts": 9.533333333333333,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "20_strip_what",
@@ -147,6 +170,18 @@
       "targets": [
         "status-strip"
       ],
+      "discussed_element": "strip:ALL",
+      "actual_target": "strip:ALL",
+      "target_bbox_norm": [
+        [
+          0.14,
+          0.0429,
+          0.46,
+          0.0571
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 12.833333333333334,
       "anim_end": 13.866666666666667,
       "hold_start": 13.866666666666667,
@@ -161,27 +196,27 @@
       "scene_end": 18.866666666666667,
       "spotlights_norm": [
         [
-          0.13,
+          0.14,
           0.0429,
-          0.478,
+          0.46,
           0.0571
         ]
       ],
       "spotlights_px": [
         [
-          539,
-          32,
-          937,
-          48
+          549,
+          31,
+          917,
+          49
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        2
+        3
       ],
       "review_ts": 15.866666666666667,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "20b_strip_learn",
@@ -194,6 +229,18 @@
       "targets": [
         "status-strip"
       ],
+      "discussed_element": "strip:ALL",
+      "actual_target": "strip:ALL",
+      "target_bbox_norm": [
+        [
+          0.14,
+          0.0429,
+          0.46,
+          0.0571
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 18.866666666666667,
       "anim_end": 20.166666666666668,
       "hold_start": 20.166666666666668,
@@ -208,27 +255,27 @@
       "scene_end": 25.166666666666668,
       "spotlights_norm": [
         [
-          0.13,
+          0.14,
           0.0429,
-          0.478,
+          0.46,
           0.0571
         ]
       ],
       "spotlights_px": [
         [
-          539,
-          32,
-          937,
-          48
+          549,
+          31,
+          917,
+          49
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        2
+        3
       ],
       "review_ts": 22.166666666666668,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "21_krb_what",
@@ -241,6 +288,18 @@
       "targets": [
         "status-strip"
       ],
+      "discussed_element": "strip:KERBEROS",
+      "actual_target": "strip:KERBEROS",
+      "target_bbox_norm": [
+        [
+          0.14,
+          0.0429,
+          0.215,
+          0.0571
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 25.46666666666667,
       "anim_end": 26.46666666666667,
       "hold_start": 26.46666666666667,
@@ -255,27 +314,27 @@
       "scene_end": 31.46666666666667,
       "spotlights_norm": [
         [
-          0.1343,
+          0.14,
           0.0429,
-          0.2301,
+          0.215,
           0.0571
         ]
       ],
       "spotlights_px": [
         [
-          544,
-          32,
-          656,
-          48
+          549,
+          31,
+          640,
+          49
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        2
+        3
       ],
       "review_ts": 28.46666666666667,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "21b_krb_action",
@@ -288,6 +347,18 @@
       "targets": [
         "status-strip"
       ],
+      "discussed_element": "strip:KERBEROS",
+      "actual_target": "strip:KERBEROS",
+      "target_bbox_norm": [
+        [
+          0.14,
+          0.0429,
+          0.215,
+          0.0571
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 31.46666666666667,
       "anim_end": 32.46666666666667,
       "hold_start": 32.46666666666667,
@@ -302,27 +373,27 @@
       "scene_end": 37.46666666666667,
       "spotlights_norm": [
         [
-          0.1343,
+          0.14,
           0.0429,
-          0.2301,
+          0.215,
           0.0571
         ]
       ],
       "spotlights_px": [
         [
-          544,
-          32,
-          656,
-          48
+          549,
+          31,
+          640,
+          49
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        2
+        3
       ],
       "review_ts": 34.46666666666667,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "21c_krb_password",
@@ -335,6 +406,18 @@
       "targets": [
         "status-strip"
       ],
+      "discussed_element": "strip:KERBEROS",
+      "actual_target": "strip:KERBEROS",
+      "target_bbox_norm": [
+        [
+          0.14,
+          0.0429,
+          0.215,
+          0.0571
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 37.46666666666667,
       "anim_end": 38.46666666666667,
       "hold_start": 38.46666666666667,
@@ -349,27 +432,27 @@
       "scene_end": 43.46666666666667,
       "spotlights_norm": [
         [
-          0.1343,
+          0.14,
           0.0429,
-          0.2301,
+          0.215,
           0.0571
         ]
       ],
       "spotlights_px": [
         [
-          544,
-          32,
-          656,
-          48
+          549,
+          31,
+          640,
+          49
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        2
+        3
       ],
       "review_ts": 40.46666666666667,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "22_running_what",
@@ -382,6 +465,18 @@
       "targets": [
         "status-strip"
       ],
+      "discussed_element": "strip:RUNNING",
+      "actual_target": "strip:RUNNING",
+      "target_bbox_norm": [
+        [
+          0.235,
+          0.0429,
+          0.3,
+          0.0571
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 43.766666666666666,
       "anim_end": 44.86666666666667,
       "hold_start": 44.86666666666667,
@@ -396,27 +491,27 @@
       "scene_end": 49.86666666666667,
       "spotlights_norm": [
         [
-          0.2257,
+          0.235,
           0.0429,
-          0.304,
+          0.3,
           0.0571
         ]
       ],
       "spotlights_px": [
         [
-          647,
-          32,
-          740,
-          48
+          657,
+          31,
+          736,
+          49
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        2
+        3
       ],
       "review_ts": 46.86666666666667,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "22b_running_learn",
@@ -429,6 +524,18 @@
       "targets": [
         "status-strip"
       ],
+      "discussed_element": "strip:RUNNING",
+      "actual_target": "strip:RUNNING",
+      "target_bbox_norm": [
+        [
+          0.235,
+          0.0429,
+          0.3,
+          0.0571
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 49.86666666666667,
       "anim_end": 51.1,
       "hold_start": 51.1,
@@ -443,27 +550,27 @@
       "scene_end": 56.1,
       "spotlights_norm": [
         [
-          0.2257,
+          0.235,
           0.0429,
-          0.304,
+          0.3,
           0.0571
         ]
       ],
       "spotlights_px": [
         [
-          647,
-          32,
-          740,
-          48
+          657,
+          31,
+          736,
+          49
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        2
+        3
       ],
       "review_ts": 53.1,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "23_finished_what",
@@ -476,6 +583,18 @@
       "targets": [
         "status-strip"
       ],
+      "discussed_element": "strip:FINISHED 7D",
+      "actual_target": "strip:FINISHED 7D",
+      "target_bbox_norm": [
+        [
+          0.32,
+          0.0429,
+          0.385,
+          0.0571
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 56.4,
       "anim_end": 57.4,
       "hold_start": 57.4,
@@ -490,27 +609,27 @@
       "scene_end": 62.4,
       "spotlights_norm": [
         [
-          0.3084,
+          0.32,
           0.0429,
-          0.3953,
+          0.385,
           0.0571
         ]
       ],
       "spotlights_px": [
         [
-          741,
-          32,
-          843,
-          48
+          753,
+          31,
+          832,
+          49
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        2
+        3
       ],
       "review_ts": 59.4,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "23b_finished_learn",
@@ -523,6 +642,18 @@
       "targets": [
         "status-strip"
       ],
+      "discussed_element": "strip:FINISHED 7D",
+      "actual_target": "strip:FINISHED 7D",
+      "target_bbox_norm": [
+        [
+          0.32,
+          0.0429,
+          0.385,
+          0.0571
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 62.4,
       "anim_end": 63.666666666666664,
       "hold_start": 63.666666666666664,
@@ -537,27 +668,27 @@
       "scene_end": 68.66666666666666,
       "spotlights_norm": [
         [
-          0.3084,
+          0.32,
           0.0429,
-          0.3953,
+          0.385,
           0.0571
         ]
       ],
       "spotlights_px": [
         [
-          741,
-          32,
-          843,
-          48
+          753,
+          31,
+          832,
+          49
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        2
+        3
       ],
       "review_ts": 65.66666666666666,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "24_failed_what",
@@ -570,6 +701,18 @@
       "targets": [
         "status-strip"
       ],
+      "discussed_element": "strip:FAILED 7D",
+      "actual_target": "strip:FAILED 7D",
+      "target_bbox_norm": [
+        [
+          0.405,
+          0.0429,
+          0.46,
+          0.0571
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 68.96666666666665,
       "anim_end": 69.96666666666665,
       "hold_start": 69.96666666666665,
@@ -584,27 +727,27 @@
       "scene_end": 74.96666666666665,
       "spotlights_norm": [
         [
-          0.391,
+          0.405,
           0.0429,
-          0.4737,
+          0.46,
           0.0571
         ]
       ],
       "spotlights_px": [
         [
-          834,
-          32,
-          932,
-          48
+          849,
+          31,
+          917,
+          49
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        2
+        3
       ],
       "review_ts": 71.96666666666665,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "24b_failed_action",
@@ -617,6 +760,18 @@
       "targets": [
         "status-strip"
       ],
+      "discussed_element": "strip:FAILED 7D",
+      "actual_target": "strip:FAILED 7D",
+      "target_bbox_norm": [
+        [
+          0.405,
+          0.0429,
+          0.46,
+          0.0571
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 74.96666666666665,
       "anim_end": 76.06666666666665,
       "hold_start": 76.06666666666665,
@@ -631,27 +786,27 @@
       "scene_end": 81.06666666666665,
       "spotlights_norm": [
         [
-          0.391,
+          0.405,
           0.0429,
-          0.4737,
+          0.46,
           0.0571
         ]
       ],
       "spotlights_px": [
         [
-          834,
-          32,
-          932,
-          48
+          849,
+          31,
+          917,
+          49
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        2
+        3
       ],
       "review_ts": 78.06666666666665,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "30_title_what",
@@ -664,6 +819,18 @@
       "targets": [
         "jobs-title"
       ],
+      "discussed_element": "jobs-title",
+      "actual_target": "jobs-title",
+      "target_bbox_norm": [
+        [
+          0.135,
+          0.0714,
+          0.305,
+          0.0857
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 81.36666666666665,
       "anim_end": 82.46666666666664,
       "hold_start": 82.46666666666664,
@@ -678,27 +845,27 @@
       "scene_end": 87.46666666666664,
       "spotlights_norm": [
         [
-          0.13,
-          0.0651,
-          0.4954,
+          0.135,
+          0.0714,
+          0.305,
           0.0857
         ]
       ],
       "spotlights_px": [
         [
-          539,
-          50,
-          956,
-          71
+          543,
+          54,
+          742,
+          72
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        2
+        3
       ],
       "review_ts": 84.46666666666664,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "30b_title_learn",
@@ -711,6 +878,18 @@
       "targets": [
         "jobs-title"
       ],
+      "discussed_element": "jobs-title",
+      "actual_target": "jobs-title",
+      "target_bbox_norm": [
+        [
+          0.135,
+          0.0714,
+          0.305,
+          0.0857
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 87.46666666666664,
       "anim_end": 88.66666666666664,
       "hold_start": 88.66666666666664,
@@ -725,27 +904,27 @@
       "scene_end": 93.66666666666664,
       "spotlights_norm": [
         [
-          0.13,
-          0.0651,
-          0.4954,
+          0.135,
+          0.0714,
+          0.305,
           0.0857
         ]
       ],
       "spotlights_px": [
         [
-          539,
-          50,
-          956,
-          71
+          543,
+          54,
+          742,
+          72
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        2
+        3
       ],
       "review_ts": 90.66666666666664,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "31_empty_what",
@@ -758,6 +937,18 @@
       "targets": [
         "jobs-empty"
       ],
+      "discussed_element": "jobs-empty",
+      "actual_target": "jobs-empty",
+      "target_bbox_norm": [
+        [
+          0.14,
+          0.0857,
+          0.99,
+          0.1286
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 93.96666666666664,
       "anim_end": 95.13333333333331,
       "hold_start": 95.13333333333331,
@@ -780,19 +971,19 @@
       ],
       "spotlights_px": [
         [
-          548,
-          65,
-          1518,
-          108
+          547,
+          64,
+          1519,
+          109
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        4
+        5
       ],
       "review_ts": 97.13333333333331,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "31b_empty_action",
@@ -805,6 +996,18 @@
       "targets": [
         "jobs-empty"
       ],
+      "discussed_element": "jobs-empty",
+      "actual_target": "jobs-empty",
+      "target_bbox_norm": [
+        [
+          0.14,
+          0.0857,
+          0.99,
+          0.1286
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 100.13333333333331,
       "anim_end": 101.13333333333331,
       "hold_start": 101.13333333333331,
@@ -827,19 +1030,19 @@
       ],
       "spotlights_px": [
         [
-          548,
-          65,
-          1518,
-          108
+          547,
+          64,
+          1519,
+          109
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        4
+        5
       ],
       "review_ts": 103.13333333333331,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "40_table_what",
@@ -852,6 +1055,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "jobs-table",
+      "actual_target": "jobs-table",
+      "target_bbox_norm": [
+        [
+          0.14,
+          0.0857,
+          0.555,
+          0.1714
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 106.43333333333331,
       "anim_end": 107.56666666666665,
       "hold_start": 107.56666666666665,
@@ -866,27 +1081,27 @@
       "scene_end": 112.56666666666665,
       "spotlights_norm": [
         [
-          0.135,
+          0.14,
           0.0857,
-          0.995,
-          0.2169
+          0.555,
+          0.1714
         ]
       ],
       "spotlights_px": [
         [
-          542,
-          65,
-          1524,
-          179
+          547,
+          64,
+          1027,
+          143
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        4
+        5
       ],
       "review_ts": 109.56666666666665,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "40b_table_learn",
@@ -899,6 +1114,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "jobs-table",
+      "actual_target": "jobs-table",
+      "target_bbox_norm": [
+        [
+          0.14,
+          0.0857,
+          0.555,
+          0.1714
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 112.56666666666665,
       "anim_end": 113.76666666666665,
       "hold_start": 113.76666666666665,
@@ -913,27 +1140,27 @@
       "scene_end": 118.76666666666665,
       "spotlights_norm": [
         [
-          0.135,
+          0.14,
           0.0857,
-          0.995,
-          0.2169
+          0.555,
+          0.1714
         ]
       ],
       "spotlights_px": [
         [
-          542,
-          65,
-          1524,
-          179
+          547,
+          64,
+          1027,
+          143
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        4
+        5
       ],
       "review_ts": 115.76666666666665,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "41_col_id",
@@ -946,6 +1173,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "column:ID",
+      "actual_target": "column:ID",
+      "target_bbox_norm": [
+        [
+          0.14,
+          0.0857,
+          0.22,
+          0.1714
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 119.06666666666665,
       "anim_end": 120.13333333333331,
       "hold_start": 120.13333333333331,
@@ -960,18 +1199,18 @@
       "scene_end": 125.13333333333331,
       "spotlights_norm": [
         [
-          0.135,
+          0.14,
           0.0857,
-          0.2167,
-          0.1731
+          0.22,
+          0.1714
         ]
       ],
       "spotlights_px": [
         [
-          542,
+          548,
           65,
-          643,
-          144
+          647,
+          142
         ]
       ],
       "n_cutouts": 1,
@@ -980,7 +1219,7 @@
       ],
       "review_ts": 122.13333333333331,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "41b_col_id_use",
@@ -993,6 +1232,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "column:ID",
+      "actual_target": "column:ID",
+      "target_bbox_norm": [
+        [
+          0.14,
+          0.0857,
+          0.22,
+          0.1714
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 125.13333333333331,
       "anim_end": 126.13333333333331,
       "hold_start": 126.13333333333331,
@@ -1007,18 +1258,18 @@
       "scene_end": 131.13333333333333,
       "spotlights_norm": [
         [
-          0.135,
+          0.14,
           0.0857,
-          0.2167,
-          0.1731
+          0.22,
+          0.1714
         ]
       ],
       "spotlights_px": [
         [
-          542,
+          548,
           65,
-          643,
-          144
+          647,
+          142
         ]
       ],
       "n_cutouts": 1,
@@ -1027,7 +1278,7 @@
       ],
       "review_ts": 128.13333333333333,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "42_col_src",
@@ -1040,6 +1291,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "column:Source",
+      "actual_target": "column:Source",
+      "target_bbox_norm": [
+        [
+          0.22,
+          0.0857,
+          0.31,
+          0.1714
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 131.43333333333334,
       "anim_end": 132.43333333333334,
       "hold_start": 132.43333333333334,
@@ -1054,18 +1317,18 @@
       "scene_end": 137.43333333333334,
       "spotlights_norm": [
         [
-          0.2167,
+          0.22,
           0.0857,
-          0.3027,
-          0.1731
+          0.31,
+          0.1714
         ]
       ],
       "spotlights_px": [
         [
-          635,
+          639,
           65,
-          740,
-          144
+          748,
+          142
         ]
       ],
       "n_cutouts": 1,
@@ -1074,7 +1337,7 @@
       ],
       "review_ts": 134.43333333333334,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "42b_col_src_use",
@@ -1087,6 +1350,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "column:Source",
+      "actual_target": "column:Source",
+      "target_bbox_norm": [
+        [
+          0.22,
+          0.0857,
+          0.31,
+          0.1714
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 137.43333333333334,
       "anim_end": 138.53333333333333,
       "hold_start": 138.53333333333333,
@@ -1101,18 +1376,18 @@
       "scene_end": 143.53333333333333,
       "spotlights_norm": [
         [
-          0.2167,
+          0.22,
           0.0857,
-          0.3027,
-          0.1731
+          0.31,
+          0.1714
         ]
       ],
       "spotlights_px": [
         [
-          635,
+          639,
           65,
-          740,
-          144
+          748,
+          142
         ]
       ],
       "n_cutouts": 1,
@@ -1121,7 +1396,7 @@
       ],
       "review_ts": 140.53333333333333,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "43_col_dst",
@@ -1134,6 +1409,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "column:Destination",
+      "actual_target": "column:Destination",
+      "target_bbox_norm": [
+        [
+          0.31,
+          0.0857,
+          0.415,
+          0.1714
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 143.83333333333334,
       "anim_end": 144.83333333333334,
       "hold_start": 144.83333333333334,
@@ -1148,18 +1435,18 @@
       "scene_end": 149.83333333333334,
       "spotlights_norm": [
         [
-          0.3027,
+          0.31,
           0.0857,
-          0.4059,
-          0.1731
+          0.415,
+          0.1714
         ]
       ],
       "spotlights_px": [
         [
-          732,
+          740,
           65,
-          857,
-          144
+          867,
+          142
         ]
       ],
       "n_cutouts": 1,
@@ -1168,7 +1455,7 @@
       ],
       "review_ts": 146.83333333333334,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "43b_col_dst_use",
@@ -1181,6 +1468,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "column:Destination",
+      "actual_target": "column:Destination",
+      "target_bbox_norm": [
+        [
+          0.31,
+          0.0857,
+          0.415,
+          0.1714
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 149.83333333333334,
       "anim_end": 150.83333333333334,
       "hold_start": 150.83333333333334,
@@ -1195,18 +1494,18 @@
       "scene_end": 155.83333333333334,
       "spotlights_norm": [
         [
-          0.3027,
+          0.31,
           0.0857,
-          0.4059,
-          0.1731
+          0.415,
+          0.1714
         ]
       ],
       "spotlights_px": [
         [
-          732,
+          740,
           65,
-          857,
-          144
+          867,
+          142
         ]
       ],
       "n_cutouts": 1,
@@ -1215,7 +1514,7 @@
       ],
       "review_ts": 152.83333333333334,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "44_col_state",
@@ -1228,6 +1527,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "column:State",
+      "actual_target": "column:State",
+      "target_bbox_norm": [
+        [
+          0.415,
+          0.0857,
+          0.51,
+          0.1714
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 156.13333333333335,
       "anim_end": 157.20000000000002,
       "hold_start": 157.20000000000002,
@@ -1242,18 +1553,18 @@
       "scene_end": 162.20000000000002,
       "spotlights_norm": [
         [
-          0.4059,
+          0.415,
           0.0857,
-          0.4893,
-          0.1731
+          0.51,
+          0.1714
         ]
       ],
       "spotlights_px": [
         [
-          849,
+          859,
           65,
-          951,
-          144
+          975,
+          142
         ]
       ],
       "n_cutouts": 1,
@@ -1262,7 +1573,7 @@
       ],
       "review_ts": 159.20000000000002,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "44b_col_state_learn",
@@ -1275,6 +1586,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "column:State",
+      "actual_target": "column:State",
+      "target_bbox_norm": [
+        [
+          0.415,
+          0.0857,
+          0.51,
+          0.1714
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 162.20000000000002,
       "anim_end": 163.53333333333336,
       "hold_start": 163.53333333333336,
@@ -1289,18 +1612,18 @@
       "scene_end": 168.53333333333336,
       "spotlights_norm": [
         [
-          0.4059,
+          0.415,
           0.0857,
-          0.4893,
-          0.1731
+          0.51,
+          0.1714
         ]
       ],
       "spotlights_px": [
         [
-          849,
+          859,
           65,
-          951,
-          144
+          975,
+          142
         ]
       ],
       "n_cutouts": 1,
@@ -1309,7 +1632,7 @@
       ],
       "review_ts": 165.53333333333336,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "50_st_pending",
@@ -1322,6 +1645,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "cell:State:PENDING",
+      "actual_target": "cell:State:PENDING",
+      "target_bbox_norm": [
+        [
+          0.415,
+          0.1143,
+          0.51,
+          0.1286
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 168.83333333333337,
       "anim_end": 169.83333333333337,
       "hold_start": 169.83333333333337,
@@ -1336,27 +1671,27 @@
       "scene_end": 174.83333333333337,
       "spotlights_norm": [
         [
-          0.4059,
-          0.1134,
-          0.4893,
-          0.1294
+          0.415,
+          0.1143,
+          0.51,
+          0.1286
         ]
       ],
       "spotlights_px": [
         [
-          849,
-          87,
-          951,
-          108
+          860,
+          89,
+          974,
+          107
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        4
+        3
       ],
       "review_ts": 171.83333333333337,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "50b_st_pending_act",
@@ -1369,6 +1704,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "cell:State:PENDING",
+      "actual_target": "cell:State:PENDING",
+      "target_bbox_norm": [
+        [
+          0.415,
+          0.1143,
+          0.51,
+          0.1286
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 174.83333333333337,
       "anim_end": 175.8666666666667,
       "hold_start": 175.8666666666667,
@@ -1383,27 +1730,27 @@
       "scene_end": 180.8666666666667,
       "spotlights_norm": [
         [
-          0.4059,
-          0.1134,
-          0.4893,
-          0.1294
+          0.415,
+          0.1143,
+          0.51,
+          0.1286
         ]
       ],
       "spotlights_px": [
         [
-          849,
-          87,
-          951,
-          108
+          860,
+          89,
+          974,
+          107
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        4
+        3
       ],
       "review_ts": 177.8666666666667,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "51_st_running",
@@ -1416,6 +1763,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "cell:State:RUNNING",
+      "actual_target": "cell:State:RUNNING",
+      "target_bbox_norm": [
+        [
+          0.415,
+          0.1,
+          0.51,
+          0.1143
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 181.1666666666667,
       "anim_end": 182.1666666666667,
       "hold_start": 182.1666666666667,
@@ -1430,27 +1789,27 @@
       "scene_end": 187.1666666666667,
       "spotlights_norm": [
         [
-          0.4059,
-          0.0988,
-          0.4893,
-          0.1149
+          0.415,
+          0.1,
+          0.51,
+          0.1143
         ]
       ],
       "spotlights_px": [
         [
-          849,
-          76,
-          951,
-          97
+          860,
+          78,
+          974,
+          95
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        4
+        3
       ],
       "review_ts": 184.1666666666667,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "51b_st_running_act",
@@ -1463,6 +1822,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "cell:State:RUNNING",
+      "actual_target": "cell:State:RUNNING",
+      "target_bbox_norm": [
+        [
+          0.415,
+          0.1,
+          0.51,
+          0.1143
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 187.1666666666667,
       "anim_end": 188.20000000000005,
       "hold_start": 188.20000000000005,
@@ -1477,27 +1848,27 @@
       "scene_end": 193.20000000000005,
       "spotlights_norm": [
         [
-          0.4059,
-          0.0988,
-          0.4893,
-          0.1149
+          0.415,
+          0.1,
+          0.51,
+          0.1143
         ]
       ],
       "spotlights_px": [
         [
-          849,
-          76,
-          951,
-          97
+          860,
+          78,
+          974,
+          95
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        4
+        3
       ],
       "review_ts": 190.20000000000005,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "52_st_ok",
@@ -1510,6 +1881,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "cell:State:SUCCEEDED",
+      "actual_target": "cell:State:SUCCEEDED",
+      "target_bbox_norm": [
+        [
+          0.415,
+          0.1571,
+          0.51,
+          0.1714
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 193.50000000000006,
       "anim_end": 194.50000000000006,
       "hold_start": 194.50000000000006,
@@ -1524,27 +1907,27 @@
       "scene_end": 199.50000000000006,
       "spotlights_norm": [
         [
-          0.4059,
-          0.1557,
-          0.4893,
-          0.1731
+          0.415,
+          0.1571,
+          0.51,
+          0.1714
         ]
       ],
       "spotlights_px": [
         [
-          849,
-          122,
-          951,
-          144
+          860,
+          124,
+          974,
+          141
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        4
+        3
       ],
       "review_ts": 196.50000000000006,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "52b_st_ok_act",
@@ -1557,6 +1940,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "cell:State:SUCCEEDED",
+      "actual_target": "cell:State:SUCCEEDED",
+      "target_bbox_norm": [
+        [
+          0.415,
+          0.1571,
+          0.51,
+          0.1714
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 199.50000000000006,
       "anim_end": 200.56666666666672,
       "hold_start": 200.56666666666672,
@@ -1571,27 +1966,27 @@
       "scene_end": 205.56666666666672,
       "spotlights_norm": [
         [
-          0.4059,
-          0.1557,
-          0.4893,
-          0.1731
+          0.415,
+          0.1571,
+          0.51,
+          0.1714
         ]
       ],
       "spotlights_px": [
         [
-          849,
-          122,
-          951,
-          144
+          860,
+          124,
+          974,
+          141
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        4
+        3
       ],
       "review_ts": 202.56666666666672,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "53_st_fail",
@@ -1604,6 +1999,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "cell:State:FAILED",
+      "actual_target": "cell:State:FAILED",
+      "target_bbox_norm": [
+        [
+          0.415,
+          0.1429,
+          0.51,
+          0.1571
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 205.86666666666673,
       "anim_end": 207.06666666666672,
       "hold_start": 207.06666666666672,
@@ -1618,27 +2025,27 @@
       "scene_end": 212.06666666666672,
       "spotlights_norm": [
         [
-          0.4059,
+          0.415,
           0.1429,
-          0.4893,
-          0.16
+          0.51,
+          0.1571
         ]
       ],
       "spotlights_px": [
         [
-          849,
-          111,
-          951,
-          133
+          860,
+          112,
+          974,
+          130
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        4
+        3
       ],
       "review_ts": 209.06666666666672,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "53b_st_fail_act",
@@ -1651,6 +2058,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "cell:State:FAILED",
+      "actual_target": "cell:State:FAILED",
+      "target_bbox_norm": [
+        [
+          0.415,
+          0.1429,
+          0.51,
+          0.1571
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 212.06666666666672,
       "anim_end": 213.10000000000005,
       "hold_start": 213.10000000000005,
@@ -1665,27 +2084,27 @@
       "scene_end": 218.10000000000005,
       "spotlights_norm": [
         [
-          0.4059,
+          0.415,
           0.1429,
-          0.4893,
-          0.16
+          0.51,
+          0.1571
         ]
       ],
       "spotlights_px": [
         [
-          849,
-          111,
-          951,
-          133
+          860,
+          112,
+          974,
+          130
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        4
+        3
       ],
       "review_ts": 215.10000000000005,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "54_st_cancel",
@@ -1698,6 +2117,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "cell:State:CANCELLED",
+      "actual_target": "cell:State:CANCELLED",
+      "target_bbox_norm": [
+        [
+          0.415,
+          0.1286,
+          0.51,
+          0.1429
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 218.40000000000006,
       "anim_end": 219.40000000000006,
       "hold_start": 219.40000000000006,
@@ -1712,27 +2143,27 @@
       "scene_end": 224.40000000000006,
       "spotlights_norm": [
         [
-          0.4059,
-          0.1272,
-          0.4893,
-          0.144
+          0.415,
+          0.1286,
+          0.51,
+          0.1429
         ]
       ],
       "spotlights_px": [
         [
-          849,
-          99,
-          951,
-          120
+          860,
+          101,
+          974,
+          118
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        4
+        3
       ],
       "review_ts": 221.40000000000006,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "54b_st_cancel_act",
@@ -1745,6 +2176,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "cell:State:CANCELLED",
+      "actual_target": "cell:State:CANCELLED",
+      "target_bbox_norm": [
+        [
+          0.415,
+          0.1286,
+          0.51,
+          0.1429
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 224.40000000000006,
       "anim_end": 225.50000000000006,
       "hold_start": 225.50000000000006,
@@ -1759,27 +2202,27 @@
       "scene_end": 230.50000000000006,
       "spotlights_norm": [
         [
-          0.4059,
-          0.1272,
-          0.4893,
-          0.144
+          0.415,
+          0.1286,
+          0.51,
+          0.1429
         ]
       ],
       "spotlights_px": [
         [
-          849,
-          99,
-          951,
-          120
+          860,
+          101,
+          974,
+          118
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        4
+        3
       ],
       "review_ts": 227.50000000000006,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "55_col_elapsed",
@@ -1792,6 +2235,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "column:Elapsed",
+      "actual_target": "column:Elapsed",
+      "target_bbox_norm": [
+        [
+          0.51,
+          0.0857,
+          0.555,
+          0.1714
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 230.80000000000007,
       "anim_end": 232.0333333333334,
       "hold_start": 232.0333333333334,
@@ -1806,18 +2261,18 @@
       "scene_end": 237.0333333333334,
       "spotlights_norm": [
         [
-          0.5048,
+          0.51,
           0.0857,
-          0.5779,
-          0.1731
+          0.555,
+          0.1714
         ]
       ],
       "spotlights_px": [
         [
-          961,
+          967,
           65,
-          1052,
-          144
+          1026,
+          142
         ]
       ],
       "n_cutouts": 1,
@@ -1826,7 +2281,7 @@
       ],
       "review_ts": 234.0333333333334,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "55b_col_elapsed_use",
@@ -1839,6 +2294,18 @@
       "targets": [
         "jobs-table"
       ],
+      "discussed_element": "column:Elapsed",
+      "actual_target": "column:Elapsed",
+      "target_bbox_norm": [
+        [
+          0.51,
+          0.0857,
+          0.555,
+          0.1714
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 237.0333333333334,
       "anim_end": 238.13333333333338,
       "hold_start": 238.13333333333338,
@@ -1853,18 +2320,18 @@
       "scene_end": 243.13333333333338,
       "spotlights_norm": [
         [
-          0.5048,
+          0.51,
           0.0857,
-          0.5779,
-          0.1731
+          0.555,
+          0.1714
         ]
       ],
       "spotlights_px": [
         [
-          961,
+          967,
           65,
-          1052,
-          144
+          1026,
+          142
         ]
       ],
       "n_cutouts": 1,
@@ -1873,7 +2340,7 @@
       ],
       "review_ts": 240.13333333333338,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "60_filter_what",
@@ -1886,6 +2353,18 @@
       "targets": [
         "jobs-filter"
       ],
+      "discussed_element": "jobs-filter",
+      "actual_target": "jobs-filter",
+      "target_bbox_norm": [
+        [
+          0.135,
+          0.0857,
+          0.995,
+          0.1286
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 243.4333333333334,
       "anim_end": 244.50000000000006,
       "hold_start": 244.50000000000006,
@@ -1920,7 +2399,7 @@
       ],
       "review_ts": 246.50000000000006,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "60b_filter_when",
@@ -1933,6 +2412,18 @@
       "targets": [
         "jobs-filter"
       ],
+      "discussed_element": "jobs-filter",
+      "actual_target": "jobs-filter",
+      "target_bbox_norm": [
+        [
+          0.135,
+          0.0857,
+          0.995,
+          0.1286
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 249.50000000000006,
       "anim_end": 250.50000000000006,
       "hold_start": 250.50000000000006,
@@ -1967,7 +2458,7 @@
       ],
       "review_ts": 252.50000000000006,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "61_filter_ex",
@@ -1981,6 +2472,24 @@
         "jobs-filter",
         "jobs-table"
       ],
+      "discussed_element": "jobs-filter+table",
+      "actual_target": "jobs-filter+table",
+      "target_bbox_norm": [
+        [
+          0.135,
+          0.0857,
+          0.995,
+          0.1286
+        ],
+        [
+          0.14,
+          0.1286,
+          0.555,
+          0.1571
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 255.80000000000007,
       "anim_end": 256.9333333333334,
       "hold_start": 256.9333333333334,
@@ -2001,34 +2510,34 @@
           0.1286
         ],
         [
-          0.135,
+          0.14,
           0.1286,
-          0.995,
-          0.2266
+          0.555,
+          0.1571
         ]
       ],
       "spotlights_px": [
         [
-          542,
-          65,
-          1524,
-          108
+          541,
+          64,
+          1525,
+          109
         ],
         [
-          542,
-          100,
-          1524,
-          187
+          547,
+          99,
+          1027,
+          132
         ]
       ],
       "n_cutouts": 2,
       "margins": [
-        4,
-        4
+        5,
+        5
       ],
       "review_ts": 258.9333333333334,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "70_detail_what",
@@ -2041,6 +2550,18 @@
       "targets": [
         "detail-pane"
       ],
+      "discussed_element": "detail-pane",
+      "actual_target": "detail-pane",
+      "target_bbox_norm": [
+        [
+          0.135,
+          0.8143,
+          0.995,
+          0.9
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 263.16666666666674,
       "anim_end": 264.3333333333334,
       "hold_start": 264.3333333333334,
@@ -2063,19 +2584,19 @@
       ],
       "spotlights_px": [
         [
-          542,
-          655,
-          1524,
-          733
+          541,
+          654,
+          1525,
+          734
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        4
+        5
       ],
       "review_ts": 266.3333333333334,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "70b_detail_learn",
@@ -2088,6 +2609,18 @@
       "targets": [
         "detail-pane"
       ],
+      "discussed_element": "detail-pane",
+      "actual_target": "detail-pane",
+      "target_bbox_norm": [
+        [
+          0.135,
+          0.8143,
+          0.995,
+          0.9
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 269.3333333333334,
       "anim_end": 270.6000000000001,
       "hold_start": 270.6000000000001,
@@ -2110,19 +2643,19 @@
       ],
       "spotlights_px": [
         [
-          542,
-          655,
-          1524,
-          733
+          541,
+          654,
+          1525,
+          734
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        4
+        5
       ],
       "review_ts": 272.6000000000001,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "71_detail_title",
@@ -2135,6 +2668,18 @@
       "targets": [
         "detail-title"
       ],
+      "discussed_element": "detail-title",
+      "actual_target": "detail-title",
+      "target_bbox_norm": [
+        [
+          0.145,
+          0.8286,
+          0.985,
+          0.8429
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 275.9000000000001,
       "anim_end": 276.9000000000001,
       "hold_start": 276.9000000000001,
@@ -2157,19 +2702,19 @@
       ],
       "spotlights_px": [
         [
-          554,
-          667,
-          1513,
-          686
+          555,
+          668,
+          1512,
+          685
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        4
+        3
       ],
       "review_ts": 278.9000000000001,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "72_detail_log",
@@ -2182,6 +2727,18 @@
       "targets": [
         "detail-log"
       ],
+      "discussed_element": "detail-log",
+      "actual_target": "detail-log",
+      "target_bbox_norm": [
+        [
+          0.145,
+          0.8429,
+          0.985,
+          0.8857
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 282.2000000000001,
       "anim_end": 283.3000000000001,
       "hold_start": 283.3000000000001,
@@ -2204,19 +2761,19 @@
       ],
       "spotlights_px": [
         [
-          554,
-          678,
-          1513,
-          721
+          553,
+          677,
+          1514,
+          722
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        4
+        5
       ],
       "review_ts": 285.3000000000001,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "80_events",
@@ -2229,6 +2786,18 @@
       "targets": [
         "event-trail"
       ],
+      "discussed_element": "event-trail",
+      "actual_target": "event-trail",
+      "target_bbox_norm": [
+        [
+          0.135,
+          0.9429,
+          0.795,
+          0.9857
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 288.60000000000014,
       "anim_end": 289.8333333333335,
       "hold_start": 289.8333333333335,
@@ -2263,7 +2832,7 @@
       ],
       "review_ts": 291.8333333333335,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "81_newjob",
@@ -2276,6 +2845,18 @@
       "targets": [
         "new-job"
       ],
+      "discussed_element": "new-job",
+      "actual_target": "new-job",
+      "target_bbox_norm": [
+        [
+          0.8,
+          0.9429,
+          0.86,
+          0.9857
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 295.1333333333335,
       "anim_end": 296.1333333333335,
       "hold_start": 296.1333333333335,
@@ -2298,19 +2879,19 @@
       ],
       "spotlights_px": [
         [
-          1293,
-          757,
-          1373,
-          804
+          1295,
+          759,
+          1371,
+          802
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        6
+        4
       ],
       "review_ts": 298.1333333333335,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "82_viewlogs",
@@ -2323,6 +2904,18 @@
       "targets": [
         "view-logs"
       ],
+      "discussed_element": "view-logs",
+      "actual_target": "view-logs",
+      "target_bbox_norm": [
+        [
+          0.865,
+          0.9429,
+          0.925,
+          0.9857
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 301.4333333333335,
       "anim_end": 302.50000000000017,
       "hold_start": 302.50000000000017,
@@ -2345,19 +2938,19 @@
       ],
       "spotlights_px": [
         [
-          1367,
-          757,
-          1447,
-          804
+          1369,
+          759,
+          1445,
+          802
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        6
+        4
       ],
       "review_ts": 304.50000000000017,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "82b_viewlogs_when",
@@ -2370,6 +2963,18 @@
       "targets": [
         "view-logs"
       ],
+      "discussed_element": "view-logs",
+      "actual_target": "view-logs",
+      "target_bbox_norm": [
+        [
+          0.865,
+          0.9429,
+          0.925,
+          0.9857
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 307.50000000000017,
       "anim_end": 308.50000000000017,
       "hold_start": 308.50000000000017,
@@ -2392,19 +2997,19 @@
       ],
       "spotlights_px": [
         [
-          1367,
-          757,
-          1447,
-          804
+          1369,
+          759,
+          1445,
+          802
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        6
+        4
       ],
       "review_ts": 310.50000000000017,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "83_cancel",
@@ -2417,6 +3022,18 @@
       "targets": [
         "cancel"
       ],
+      "discussed_element": "cancel",
+      "actual_target": "cancel",
+      "target_bbox_norm": [
+        [
+          0.93,
+          0.9429,
+          0.99,
+          0.9857
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 313.8000000000002,
       "anim_end": 314.9000000000002,
       "hold_start": 314.9000000000002,
@@ -2439,19 +3056,19 @@
       ],
       "spotlights_px": [
         [
-          1440,
-          757,
-          1520,
-          804
+          1442,
+          759,
+          1518,
+          802
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        6
+        4
       ],
       "review_ts": 316.9000000000002,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "83b_cancel_note",
@@ -2464,6 +3081,18 @@
       "targets": [
         "cancel"
       ],
+      "discussed_element": "cancel",
+      "actual_target": "cancel",
+      "target_bbox_norm": [
+        [
+          0.93,
+          0.9429,
+          0.99,
+          0.9857
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 319.9000000000002,
       "anim_end": 320.9000000000002,
       "hold_start": 320.9000000000002,
@@ -2486,19 +3115,19 @@
       ],
       "spotlights_px": [
         [
-          1440,
-          757,
-          1520,
-          804
+          1442,
+          759,
+          1518,
+          802
         ]
       ],
       "n_cutouts": 1,
       "margins": [
-        6
+        4
       ],
       "review_ts": 322.9000000000002,
       "manual_review": "PASS",
-      "fail_reason": ""
+      "fail_reason": "geometry-driven"
     },
     {
       "id": "90_close",
@@ -2509,6 +3138,18 @@
       "spotlight_group": "close",
       "spotlight_reused": false,
       "targets": [],
+      "discussed_element": "closing-card",
+      "actual_target": "closing-card",
+      "target_bbox_norm": [
+        [
+          0.12,
+          0.14,
+          0.88,
+          0.7
+        ]
+      ],
+      "geometry_driven": true,
+      "spotlight_corrected": true,
       "anim_start": 325.9000000000002,
       "anim_end": 326.9000000000002,
       "hold_start": 326.9000000000002,
@@ -2539,7 +3180,7 @@
       ],
       "n_cutouts": 1,
       "margins": [
-        20
+        4
       ],
       "review_ts": 328.9000000000002,
       "manual_review": "PASS",

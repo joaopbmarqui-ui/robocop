@@ -1,0 +1,2245 @@
+[
+  {
+    "id": "01_open",
+    "topic": "Dispatch (Robocop)",
+    "discussed_element": "opening-card",
+    "actual_target": "opening-card",
+    "targets": [],
+    "target_bbox_norm": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 3.166666666666667,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  },
+  {
+    "id": "02_purpose",
+    "topic": "O que \u00e9 Overview",
+    "discussed_element": "overview-jobs-area",
+    "actual_target": "overview-jobs-area",
+    "targets": [
+      "jobs-title",
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.135,
+        0.0714,
+        0.555,
+        0.1
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.0714,
+        0.555,
+        0.1
+      ]
+    ],
+    "final_boxes": [
+      [
+        541,
+        52,
+        1027,
+        86
+      ]
+    ],
+    "margins": [
+      5
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 9.533333333333333,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "20_strip_what",
+    "topic": "O que \u00e9",
+    "discussed_element": "strip:ALL",
+    "actual_target": "strip:ALL",
+    "targets": [
+      "status-strip"
+    ],
+    "target_bbox_norm": [
+      [
+        0.14,
+        0.0429,
+        0.46,
+        0.0571
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.0429,
+        0.46,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        549,
+        31,
+        917,
+        49
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 15.866666666666667,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "20b_strip_learn",
+    "topic": "O que voc\u00ea aprende aqui",
+    "discussed_element": "strip:ALL",
+    "actual_target": "strip:ALL",
+    "targets": [
+      "status-strip"
+    ],
+    "target_bbox_norm": [
+      [
+        0.14,
+        0.0429,
+        0.46,
+        0.0571
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.0429,
+        0.46,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        549,
+        31,
+        917,
+        49
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 22.166666666666668,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "21_krb_what",
+    "topic": "KERBEROS",
+    "discussed_element": "strip:KERBEROS",
+    "actual_target": "strip:KERBEROS",
+    "targets": [
+      "status-strip"
+    ],
+    "target_bbox_norm": [
+      [
+        0.14,
+        0.0429,
+        0.215,
+        0.0571
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.0429,
+        0.215,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        549,
+        31,
+        640,
+        49
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 28.46666666666667,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "21b_krb_action",
+    "topic": "Se estiver MISSING ou curto",
+    "discussed_element": "strip:KERBEROS",
+    "actual_target": "strip:KERBEROS",
+    "targets": [
+      "status-strip"
+    ],
+    "target_bbox_norm": [
+      [
+        0.14,
+        0.0429,
+        0.215,
+        0.0571
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.0429,
+        0.215,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        549,
+        31,
+        640,
+        49
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 34.46666666666667,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "21c_krb_password",
+    "topic": "Senha",
+    "discussed_element": "strip:KERBEROS",
+    "actual_target": "strip:KERBEROS",
+    "targets": [
+      "status-strip"
+    ],
+    "target_bbox_norm": [
+      [
+        0.14,
+        0.0429,
+        0.215,
+        0.0571
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.0429,
+        0.215,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        549,
+        31,
+        640,
+        49
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 40.46666666666667,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "22_running_what",
+    "topic": "RUNNING",
+    "discussed_element": "strip:RUNNING",
+    "actual_target": "strip:RUNNING",
+    "targets": [
+      "status-strip"
+    ],
+    "target_bbox_norm": [
+      [
+        0.235,
+        0.0429,
+        0.3,
+        0.0571
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.235,
+        0.0429,
+        0.3,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        657,
+        31,
+        736,
+        49
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 46.86666666666667,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "22b_running_learn",
+    "topic": "O que voc\u00ea aprende aqui",
+    "discussed_element": "strip:RUNNING",
+    "actual_target": "strip:RUNNING",
+    "targets": [
+      "status-strip"
+    ],
+    "target_bbox_norm": [
+      [
+        0.235,
+        0.0429,
+        0.3,
+        0.0571
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.235,
+        0.0429,
+        0.3,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        657,
+        31,
+        736,
+        49
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 53.1,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "23_finished_what",
+    "topic": "FINISHED 7D",
+    "discussed_element": "strip:FINISHED 7D",
+    "actual_target": "strip:FINISHED 7D",
+    "targets": [
+      "status-strip"
+    ],
+    "target_bbox_norm": [
+      [
+        0.32,
+        0.0429,
+        0.385,
+        0.0571
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.32,
+        0.0429,
+        0.385,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        753,
+        31,
+        832,
+        49
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 59.4,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "23b_finished_learn",
+    "topic": "O que voc\u00ea aprende aqui",
+    "discussed_element": "strip:FINISHED 7D",
+    "actual_target": "strip:FINISHED 7D",
+    "targets": [
+      "status-strip"
+    ],
+    "target_bbox_norm": [
+      [
+        0.32,
+        0.0429,
+        0.385,
+        0.0571
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.32,
+        0.0429,
+        0.385,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        753,
+        31,
+        832,
+        49
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 65.66666666666666,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "24_failed_what",
+    "topic": "FAILED 7D",
+    "discussed_element": "strip:FAILED 7D",
+    "actual_target": "strip:FAILED 7D",
+    "targets": [
+      "status-strip"
+    ],
+    "target_bbox_norm": [
+      [
+        0.405,
+        0.0429,
+        0.46,
+        0.0571
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.405,
+        0.0429,
+        0.46,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        849,
+        31,
+        917,
+        49
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 71.96666666666665,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "24b_failed_action",
+    "topic": "O que fazer",
+    "discussed_element": "strip:FAILED 7D",
+    "actual_target": "strip:FAILED 7D",
+    "targets": [
+      "status-strip"
+    ],
+    "target_bbox_norm": [
+      [
+        0.405,
+        0.0429,
+        0.46,
+        0.0571
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.405,
+        0.0429,
+        0.46,
+        0.0571
+      ]
+    ],
+    "final_boxes": [
+      [
+        849,
+        31,
+        917,
+        49
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 78.06666666666665,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "30_title_what",
+    "topic": "Lista de jobs",
+    "discussed_element": "jobs-title",
+    "actual_target": "jobs-title",
+    "targets": [
+      "jobs-title"
+    ],
+    "target_bbox_norm": [
+      [
+        0.135,
+        0.0714,
+        0.305,
+        0.0857
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.0714,
+        0.305,
+        0.0857
+      ]
+    ],
+    "final_boxes": [
+      [
+        543,
+        54,
+        742,
+        72
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 84.46666666666664,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "30b_title_learn",
+    "topic": "O que voc\u00ea aprende aqui",
+    "discussed_element": "jobs-title",
+    "actual_target": "jobs-title",
+    "targets": [
+      "jobs-title"
+    ],
+    "target_bbox_norm": [
+      [
+        0.135,
+        0.0714,
+        0.305,
+        0.0857
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.0714,
+        0.305,
+        0.0857
+      ]
+    ],
+    "final_boxes": [
+      [
+        543,
+        54,
+        742,
+        72
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 90.66666666666664,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "31_empty_what",
+    "topic": "Lista vazia",
+    "discussed_element": "jobs-empty",
+    "actual_target": "jobs-empty",
+    "targets": [
+      "jobs-empty"
+    ],
+    "target_bbox_norm": [
+      [
+        0.14,
+        0.0857,
+        0.99,
+        0.1286
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.0857,
+        0.99,
+        0.1286
+      ]
+    ],
+    "final_boxes": [
+      [
+        547,
+        64,
+        1519,
+        109
+      ]
+    ],
+    "margins": [
+      5
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 97.13333333333331,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "31b_empty_action",
+    "topic": "O que fazer",
+    "discussed_element": "jobs-empty",
+    "actual_target": "jobs-empty",
+    "targets": [
+      "jobs-empty"
+    ],
+    "target_bbox_norm": [
+      [
+        0.14,
+        0.0857,
+        0.99,
+        0.1286
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.0857,
+        0.99,
+        0.1286
+      ]
+    ],
+    "final_boxes": [
+      [
+        547,
+        64,
+        1519,
+        109
+      ]
+    ],
+    "margins": [
+      5
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 103.13333333333331,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "40_table_what",
+    "topic": "O que \u00e9",
+    "discussed_element": "jobs-table",
+    "actual_target": "jobs-table",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.14,
+        0.0857,
+        0.555,
+        0.1714
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.0857,
+        0.555,
+        0.1714
+      ]
+    ],
+    "final_boxes": [
+      [
+        547,
+        64,
+        1027,
+        143
+      ]
+    ],
+    "margins": [
+      5
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 109.56666666666665,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "40b_table_learn",
+    "topic": "O que voc\u00ea aprende aqui",
+    "discussed_element": "jobs-table",
+    "actual_target": "jobs-table",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.14,
+        0.0857,
+        0.555,
+        0.1714
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.0857,
+        0.555,
+        0.1714
+      ]
+    ],
+    "final_boxes": [
+      [
+        547,
+        64,
+        1027,
+        143
+      ]
+    ],
+    "margins": [
+      5
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 115.76666666666665,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "41_col_id",
+    "topic": "Coluna ID",
+    "discussed_element": "column:ID",
+    "actual_target": "column:ID",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.14,
+        0.0857,
+        0.22,
+        0.1714
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.0857,
+        0.22,
+        0.1714
+      ]
+    ],
+    "final_boxes": [
+      [
+        548,
+        65,
+        647,
+        142
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 122.13333333333331,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "41b_col_id_use",
+    "topic": "Como usar",
+    "discussed_element": "column:ID",
+    "actual_target": "column:ID",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.14,
+        0.0857,
+        0.22,
+        0.1714
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.0857,
+        0.22,
+        0.1714
+      ]
+    ],
+    "final_boxes": [
+      [
+        548,
+        65,
+        647,
+        142
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 128.13333333333333,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "42_col_src",
+    "topic": "Coluna Source",
+    "discussed_element": "column:Source",
+    "actual_target": "column:Source",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.22,
+        0.0857,
+        0.31,
+        0.1714
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.22,
+        0.0857,
+        0.31,
+        0.1714
+      ]
+    ],
+    "final_boxes": [
+      [
+        639,
+        65,
+        748,
+        142
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 134.43333333333334,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "42b_col_src_use",
+    "topic": "Como usar",
+    "discussed_element": "column:Source",
+    "actual_target": "column:Source",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.22,
+        0.0857,
+        0.31,
+        0.1714
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.22,
+        0.0857,
+        0.31,
+        0.1714
+      ]
+    ],
+    "final_boxes": [
+      [
+        639,
+        65,
+        748,
+        142
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 140.53333333333333,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "43_col_dst",
+    "topic": "Coluna Destination",
+    "discussed_element": "column:Destination",
+    "actual_target": "column:Destination",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.31,
+        0.0857,
+        0.415,
+        0.1714
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.31,
+        0.0857,
+        0.415,
+        0.1714
+      ]
+    ],
+    "final_boxes": [
+      [
+        740,
+        65,
+        867,
+        142
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 146.83333333333334,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "43b_col_dst_use",
+    "topic": "Como usar",
+    "discussed_element": "column:Destination",
+    "actual_target": "column:Destination",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.31,
+        0.0857,
+        0.415,
+        0.1714
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.31,
+        0.0857,
+        0.415,
+        0.1714
+      ]
+    ],
+    "final_boxes": [
+      [
+        740,
+        65,
+        867,
+        142
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 152.83333333333334,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "44_col_state",
+    "topic": "Coluna State",
+    "discussed_element": "column:State",
+    "actual_target": "column:State",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.415,
+        0.0857,
+        0.51,
+        0.1714
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.415,
+        0.0857,
+        0.51,
+        0.1714
+      ]
+    ],
+    "final_boxes": [
+      [
+        859,
+        65,
+        975,
+        142
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 159.20000000000002,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "44b_col_state_learn",
+    "topic": "O que voc\u00ea aprende aqui",
+    "discussed_element": "column:State",
+    "actual_target": "column:State",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.415,
+        0.0857,
+        0.51,
+        0.1714
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.415,
+        0.0857,
+        0.51,
+        0.1714
+      ]
+    ],
+    "final_boxes": [
+      [
+        859,
+        65,
+        975,
+        142
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 165.53333333333336,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "50_st_pending",
+    "topic": "PENDING",
+    "discussed_element": "cell:State:PENDING",
+    "actual_target": "cell:State:PENDING",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.415,
+        0.1143,
+        0.51,
+        0.1286
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.415,
+        0.1143,
+        0.51,
+        0.1286
+      ]
+    ],
+    "final_boxes": [
+      [
+        860,
+        89,
+        974,
+        107
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 171.83333333333337,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "50b_st_pending_act",
+    "topic": "O que fazer",
+    "discussed_element": "cell:State:PENDING",
+    "actual_target": "cell:State:PENDING",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.415,
+        0.1143,
+        0.51,
+        0.1286
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.415,
+        0.1143,
+        0.51,
+        0.1286
+      ]
+    ],
+    "final_boxes": [
+      [
+        860,
+        89,
+        974,
+        107
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 177.8666666666667,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "51_st_running",
+    "topic": "RUNNING",
+    "discussed_element": "cell:State:RUNNING",
+    "actual_target": "cell:State:RUNNING",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.415,
+        0.1,
+        0.51,
+        0.1143
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.415,
+        0.1,
+        0.51,
+        0.1143
+      ]
+    ],
+    "final_boxes": [
+      [
+        860,
+        78,
+        974,
+        95
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 184.1666666666667,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "51b_st_running_act",
+    "topic": "O que fazer",
+    "discussed_element": "cell:State:RUNNING",
+    "actual_target": "cell:State:RUNNING",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.415,
+        0.1,
+        0.51,
+        0.1143
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.415,
+        0.1,
+        0.51,
+        0.1143
+      ]
+    ],
+    "final_boxes": [
+      [
+        860,
+        78,
+        974,
+        95
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 190.20000000000005,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "52_st_ok",
+    "topic": "SUCCEEDED",
+    "discussed_element": "cell:State:SUCCEEDED",
+    "actual_target": "cell:State:SUCCEEDED",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.415,
+        0.1571,
+        0.51,
+        0.1714
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.415,
+        0.1571,
+        0.51,
+        0.1714
+      ]
+    ],
+    "final_boxes": [
+      [
+        860,
+        124,
+        974,
+        141
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 196.50000000000006,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "52b_st_ok_act",
+    "topic": "O que fazer",
+    "discussed_element": "cell:State:SUCCEEDED",
+    "actual_target": "cell:State:SUCCEEDED",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.415,
+        0.1571,
+        0.51,
+        0.1714
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.415,
+        0.1571,
+        0.51,
+        0.1714
+      ]
+    ],
+    "final_boxes": [
+      [
+        860,
+        124,
+        974,
+        141
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 202.56666666666672,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "53_st_fail",
+    "topic": "FAILED",
+    "discussed_element": "cell:State:FAILED",
+    "actual_target": "cell:State:FAILED",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.415,
+        0.1429,
+        0.51,
+        0.1571
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.415,
+        0.1429,
+        0.51,
+        0.1571
+      ]
+    ],
+    "final_boxes": [
+      [
+        860,
+        112,
+        974,
+        130
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 209.06666666666672,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "53b_st_fail_act",
+    "topic": "O que fazer",
+    "discussed_element": "cell:State:FAILED",
+    "actual_target": "cell:State:FAILED",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.415,
+        0.1429,
+        0.51,
+        0.1571
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.415,
+        0.1429,
+        0.51,
+        0.1571
+      ]
+    ],
+    "final_boxes": [
+      [
+        860,
+        112,
+        974,
+        130
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 215.10000000000005,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "54_st_cancel",
+    "topic": "CANCELLED",
+    "discussed_element": "cell:State:CANCELLED",
+    "actual_target": "cell:State:CANCELLED",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.415,
+        0.1286,
+        0.51,
+        0.1429
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.415,
+        0.1286,
+        0.51,
+        0.1429
+      ]
+    ],
+    "final_boxes": [
+      [
+        860,
+        101,
+        974,
+        118
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 221.40000000000006,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "54b_st_cancel_act",
+    "topic": "O que fazer",
+    "discussed_element": "cell:State:CANCELLED",
+    "actual_target": "cell:State:CANCELLED",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.415,
+        0.1286,
+        0.51,
+        0.1429
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.415,
+        0.1286,
+        0.51,
+        0.1429
+      ]
+    ],
+    "final_boxes": [
+      [
+        860,
+        101,
+        974,
+        118
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 227.50000000000006,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "55_col_elapsed",
+    "topic": "Coluna Elapsed",
+    "discussed_element": "column:Elapsed",
+    "actual_target": "column:Elapsed",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.51,
+        0.0857,
+        0.555,
+        0.1714
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.51,
+        0.0857,
+        0.555,
+        0.1714
+      ]
+    ],
+    "final_boxes": [
+      [
+        967,
+        65,
+        1026,
+        142
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 234.0333333333334,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "55b_col_elapsed_use",
+    "topic": "Como usar",
+    "discussed_element": "column:Elapsed",
+    "actual_target": "column:Elapsed",
+    "targets": [
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.51,
+        0.0857,
+        0.555,
+        0.1714
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.51,
+        0.0857,
+        0.555,
+        0.1714
+      ]
+    ],
+    "final_boxes": [
+      [
+        967,
+        65,
+        1026,
+        142
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 240.13333333333338,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "60_filter_what",
+    "topic": "Filtro",
+    "discussed_element": "jobs-filter",
+    "actual_target": "jobs-filter",
+    "targets": [
+      "jobs-filter"
+    ],
+    "target_bbox_norm": [
+      [
+        0.135,
+        0.0857,
+        0.995,
+        0.1286
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.0857,
+        0.995,
+        0.1286
+      ]
+    ],
+    "final_boxes": [
+      [
+        542,
+        65,
+        1524,
+        108
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 246.50000000000006,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "60b_filter_when",
+    "topic": "Quando usar",
+    "discussed_element": "jobs-filter",
+    "actual_target": "jobs-filter",
+    "targets": [
+      "jobs-filter"
+    ],
+    "target_bbox_norm": [
+      [
+        0.135,
+        0.0857,
+        0.995,
+        0.1286
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.0857,
+        0.995,
+        0.1286
+      ]
+    ],
+    "final_boxes": [
+      [
+        542,
+        65,
+        1524,
+        108
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 252.50000000000006,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "61_filter_ex",
+    "topic": "Exemplo",
+    "discussed_element": "jobs-filter+table",
+    "actual_target": "jobs-filter+table",
+    "targets": [
+      "jobs-filter",
+      "jobs-table"
+    ],
+    "target_bbox_norm": [
+      [
+        0.135,
+        0.0857,
+        0.995,
+        0.1286
+      ],
+      [
+        0.14,
+        0.1286,
+        0.555,
+        0.1571
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.0857,
+        0.995,
+        0.1286
+      ],
+      [
+        0.14,
+        0.1286,
+        0.555,
+        0.1571
+      ]
+    ],
+    "final_boxes": [
+      [
+        541,
+        64,
+        1525,
+        109
+      ],
+      [
+        547,
+        99,
+        1027,
+        132
+      ]
+    ],
+    "margins": [
+      5,
+      5
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 258.9333333333334,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "70_detail_what",
+    "topic": "Painel de detalhe",
+    "discussed_element": "detail-pane",
+    "actual_target": "detail-pane",
+    "targets": [
+      "detail-pane"
+    ],
+    "target_bbox_norm": [
+      [
+        0.135,
+        0.8143,
+        0.995,
+        0.9
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.8143,
+        0.995,
+        0.9
+      ]
+    ],
+    "final_boxes": [
+      [
+        541,
+        654,
+        1525,
+        734
+      ]
+    ],
+    "margins": [
+      5
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 266.3333333333334,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "70b_detail_learn",
+    "topic": "O que voc\u00ea aprende aqui",
+    "discussed_element": "detail-pane",
+    "actual_target": "detail-pane",
+    "targets": [
+      "detail-pane"
+    ],
+    "target_bbox_norm": [
+      [
+        0.135,
+        0.8143,
+        0.995,
+        0.9
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.8143,
+        0.995,
+        0.9
+      ]
+    ],
+    "final_boxes": [
+      [
+        541,
+        654,
+        1525,
+        734
+      ]
+    ],
+    "margins": [
+      5
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 272.6000000000001,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "71_detail_title",
+    "topic": "T\u00edtulo do detalhe",
+    "discussed_element": "detail-title",
+    "actual_target": "detail-title",
+    "targets": [
+      "detail-title"
+    ],
+    "target_bbox_norm": [
+      [
+        0.145,
+        0.8286,
+        0.985,
+        0.8429
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.145,
+        0.8286,
+        0.985,
+        0.8429
+      ]
+    ],
+    "final_boxes": [
+      [
+        555,
+        668,
+        1512,
+        685
+      ]
+    ],
+    "margins": [
+      3
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 278.9000000000001,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "72_detail_log",
+    "topic": "Pr\u00e9via do log",
+    "discussed_element": "detail-log",
+    "actual_target": "detail-log",
+    "targets": [
+      "detail-log"
+    ],
+    "target_bbox_norm": [
+      [
+        0.145,
+        0.8429,
+        0.985,
+        0.8857
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.145,
+        0.8429,
+        0.985,
+        0.8857
+      ]
+    ],
+    "final_boxes": [
+      [
+        553,
+        677,
+        1514,
+        722
+      ]
+    ],
+    "margins": [
+      5
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 285.3000000000001,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "80_events",
+    "topic": "Eventos recentes",
+    "discussed_element": "event-trail",
+    "actual_target": "event-trail",
+    "targets": [
+      "event-trail"
+    ],
+    "target_bbox_norm": [
+      [
+        0.135,
+        0.9429,
+        0.795,
+        0.9857
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.9429,
+        0.795,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        542,
+        759,
+        1297,
+        802
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 291.8333333333335,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "81_newjob",
+    "topic": "New Job [N]",
+    "discussed_element": "new-job",
+    "actual_target": "new-job",
+    "targets": [
+      "new-job"
+    ],
+    "target_bbox_norm": [
+      [
+        0.8,
+        0.9429,
+        0.86,
+        0.9857
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.8,
+        0.9429,
+        0.86,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        1295,
+        759,
+        1371,
+        802
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 298.1333333333335,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "82_viewlogs",
+    "topic": "View Logs [V]",
+    "discussed_element": "view-logs",
+    "actual_target": "view-logs",
+    "targets": [
+      "view-logs"
+    ],
+    "target_bbox_norm": [
+      [
+        0.865,
+        0.9429,
+        0.925,
+        0.9857
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.865,
+        0.9429,
+        0.925,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        1369,
+        759,
+        1445,
+        802
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 304.50000000000017,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "82b_viewlogs_when",
+    "topic": "Quando usar",
+    "discussed_element": "view-logs",
+    "actual_target": "view-logs",
+    "targets": [
+      "view-logs"
+    ],
+    "target_bbox_norm": [
+      [
+        0.865,
+        0.9429,
+        0.925,
+        0.9857
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.865,
+        0.9429,
+        0.925,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        1369,
+        759,
+        1445,
+        802
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 310.50000000000017,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "83_cancel",
+    "topic": "Cancel [C]",
+    "discussed_element": "cancel",
+    "actual_target": "cancel",
+    "targets": [
+      "cancel"
+    ],
+    "target_bbox_norm": [
+      [
+        0.93,
+        0.9429,
+        0.99,
+        0.9857
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.93,
+        0.9429,
+        0.99,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        1442,
+        759,
+        1518,
+        802
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 316.9000000000002,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "83b_cancel_note",
+    "topic": "Aten\u00e7\u00e3o",
+    "discussed_element": "cancel",
+    "actual_target": "cancel",
+    "targets": [
+      "cancel"
+    ],
+    "target_bbox_norm": [
+      [
+        0.93,
+        0.9429,
+        0.99,
+        0.9857
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.93,
+        0.9429,
+        0.99,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        1442,
+        759,
+        1518,
+        802
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 322.9000000000002,
+    "manual_review": "PASS",
+    "fail_reason": "geometry-driven"
+  },
+  {
+    "id": "90_close",
+    "topic": "Resumo",
+    "discussed_element": "closing-card",
+    "actual_target": "closing-card",
+    "targets": [],
+    "target_bbox_norm": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      4
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "geometry_driven": true,
+    "review_timestamp": 328.9000000000002,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  }
+]

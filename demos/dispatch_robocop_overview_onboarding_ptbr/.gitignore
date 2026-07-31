@@ -1,0 +1,13 @@
+# Intermediate production artifacts (regenerate with generate_onboarding_video.py)
+frames/
+audio/**
+!audio/original/
+!audio/original/**
+clips/
+*.svg
+*_raw.png
+__pycache__/
+
+# Keep the downloadable video ZIP
+!overview_onboarding_video_download.zip
+__pycache__/

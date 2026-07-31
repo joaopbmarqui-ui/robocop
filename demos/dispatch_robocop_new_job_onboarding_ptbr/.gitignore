@@ -1,0 +1,11 @@
+# Intermediate production artifacts (regenerate with generate_onboarding_video.py)
+frames/
+audio/**
+!audio/original/
+!audio/original/**
+clips/
+*.svg
+*_raw.png
+
+# Keep the downloadable video ZIP
+!dispatch_robocop_new_job_video_download.zip

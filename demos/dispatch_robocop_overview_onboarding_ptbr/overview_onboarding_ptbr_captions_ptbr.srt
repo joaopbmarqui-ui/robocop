@@ -1,0 +1,264 @@
+1
+00:00:00,000 --> 00:00:06,167
+Dispatch (Robocop)
+Como utilizar a aba Overview. / Monitore e interprete seus jobs.
+
+2
+00:00:06,467 --> 00:00:12,533
+O que é Overview
+Tela principal para acompanhar / jobs enviados e seu status.
+
+3
+00:00:12,833 --> 00:00:18,867
+O que é
+A faixa superior resume autenticação / e o monitoramento dos jobs.
+
+4
+00:00:18,867 --> 00:00:25,167
+O que você aprende aqui
+Em um olhar: autenticação, execução / e histórico dos últimos 7 dias.
+
+5
+00:00:25,467 --> 00:00:31,467
+KERBEROS
+Indica se sua autenticação / está disponível para executar jobs.
+
+6
+00:00:31,467 --> 00:00:37,467
+Se estiver MISSING ou curto
+Abra um novo terminal e execute: / kinit
+
+7
+00:00:37,467 --> 00:00:43,467
+Senha
+Informe sua senha Windows / quando o terminal solicitar.
+
+8
+00:00:43,767 --> 00:00:49,867
+RUNNING
+Quantos jobs estão em execução agora, / em relação ao limite de vagas.
+
+9
+00:00:49,867 --> 00:00:56,100
+O que você aprende aqui
+O limite é 2 vagas. Pending e Running / ocupam vaga de execução.
+
+10
+00:00:56,400 --> 00:01:02,400
+FINISHED 7D
+Histórico de jobs com sucesso / nos últimos 7 dias.
+
+11
+00:01:02,400 --> 00:01:08,667
+O que você aprende aqui
+Permite ver sete dias de histórico / e confirmar entregas recentes.
+
+12
+00:01:08,967 --> 00:01:14,967
+FAILED 7D
+Histórico de jobs que falharam / nos últimos 7 dias.
+
+13
+00:01:14,967 --> 00:01:21,067
+O que fazer
+Se o número subir, revise os jobs / FAILED antes de enviar outros.
+
+14
+00:01:21,367 --> 00:01:27,467
+Lista de jobs
+Jobs · running first · last 7 dias: / lista do histórico recente.
+
+15
+00:01:27,467 --> 00:01:33,667
+O que você aprende aqui
+Execução no topo; a janela cobre / sete dias de monitoramento.
+
+16
+00:01:33,967 --> 00:01:40,133
+Lista vazia
+Quando não há jobs nos últimos 7 dias, / a tela orienta a criar um novo.
+
+17
+00:01:40,133 --> 00:01:46,133
+O que fazer
+Pressione N ou New Job para / enviar a primeira execução.
+
+18
+00:01:46,433 --> 00:01:52,567
+O que é
+A tabela lista cada job com identidade, / origem, destino, estado e tempo.
+
+19
+00:01:52,567 --> 00:01:58,767
+O que você aprende aqui
+Percorra as linhas para achar / sucesso, execução ou problemas.
+
+20
+00:01:59,067 --> 00:02:05,133
+Coluna ID
+Identifica o job de forma curta / para localizar e abrir detalhes.
+
+21
+00:02:05,133 --> 00:02:11,133
+Como usar
+Use o ID para filtrar ou / confirmar qual execução está vendo.
+
+22
+00:02:11,433 --> 00:02:17,433
+Coluna Source
+Mostra a origem do job: / arquivo SQL, tabela ou tipo.
+
+23
+00:02:17,433 --> 00:02:23,533
+Como usar
+Confirme se a origem corresponde / ao job que você esperava monitorar.
+
+24
+00:02:23,833 --> 00:02:29,833
+Coluna Destination
+Mostra para onde o resultado / foi ou será entregue.
+
+25
+00:02:29,833 --> 00:02:35,833
+Como usar
+Verifique schema.tabela ou Csv / antes de validar o resultado.
+
+26
+00:02:36,133 --> 00:02:42,200
+Coluna State
+Mostra o estado atual do job / com símbolo e rótulo em destaque.
+
+27
+00:02:42,200 --> 00:02:48,533
+O que você aprende aqui
+Dá para ver rápido se está aguardando, / rodando, ok ou precisa atenção.
+
+28
+00:02:48,833 --> 00:02:54,833
+PENDING
+O job foi aceito e aguarda / início da execução.
+
+29
+00:02:54,833 --> 00:03:00,867
+O que fazer
+Em geral, espere. Confira se / há vaga livre na faixa RUNNING.
+
+30
+00:03:01,167 --> 00:03:07,167
+RUNNING
+O job está em execução agora. / Acompanhe o progresso no painel.
+
+31
+00:03:07,167 --> 00:03:13,200
+O que fazer
+Monitore o log. Só cancele se / realmente precisar interromper.
+
+32
+00:03:13,500 --> 00:03:19,500
+SUCCEEDED
+O job terminou com sucesso. / O resultado está disponível.
+
+33
+00:03:19,500 --> 00:03:25,567
+O que fazer
+Valide a entrega (tabela ou CSV) / conforme o Destination do job.
+
+34
+00:03:25,867 --> 00:03:32,067
+FAILED
+O job falhou. Pode aparecer um código / (ex.: SYNTAX) para orientar a análise.
+
+35
+00:03:32,067 --> 00:03:38,100
+O que fazer
+Abra View Logs, entenda a causa / e corrija antes de reenviar.
+
+36
+00:03:38,400 --> 00:03:44,400
+CANCELLED
+A execução foi cancelada. / Não houve conclusão bem-sucedida.
+
+37
+00:03:44,400 --> 00:03:50,500
+O que fazer
+Confirme se o cancelamento / foi intencional; reenvie se precisar.
+
+38
+00:03:50,800 --> 00:03:57,033
+Coluna Elapsed
+Tempo decorrido: em Running conta / desde o início; nos demais, a duração.
+
+39
+00:03:57,033 --> 00:04:03,133
+Como usar
+Compare duração esperada e detecte / jobs longos que merecem atenção.
+
+40
+00:04:03,433 --> 00:04:09,500
+Filtro
+Pressione / para filtrar a lista / por id, arquivo, tabela ou estado.
+
+41
+00:04:09,500 --> 00:04:15,500
+Quando usar
+Use para achar rápido um job / ou isolar só FAILED / RUNNING.
+
+42
+00:04:15,800 --> 00:04:21,933
+Exemplo
+Digite failed para ver só falhas. / Esc limpa o filtro e restaura a lista.
+
+43
+00:04:23,167 --> 00:04:29,333
+Painel de detalhe
+Mostra um resumo do job selecionado / e as últimas linhas do log.
+
+44
+00:04:29,333 --> 00:04:35,600
+O que você aprende aqui
+Sem sair da Overview, vê se o job / avança ou se já há erro no log.
+
+45
+00:04:35,900 --> 00:04:41,900
+Título do detalhe
+Confirma ID, estado e tempo / do job em foco.
+
+46
+00:04:42,200 --> 00:04:48,300
+Prévia do log
+Últimas linhas do run.log. / Para o log completo, use View Logs.
+
+47
+00:04:48,600 --> 00:04:54,833
+Eventos recentes
+Mostra o último aviso da Overview, / como início do Dispatch ou término.
+
+48
+00:04:55,133 --> 00:05:01,133
+New Job [N]
+Abre a tela para configurar / e enviar um novo job.
+
+49
+00:05:01,433 --> 00:05:07,500
+View Logs [V]
+Abre o detalhe completo do job / selecionado para diagnóstico.
+
+50
+00:05:07,500 --> 00:05:13,500
+Quando usar
+Use em FAILED ou quando o log / curto do painel não bastar.
+
+51
+00:05:13,800 --> 00:05:19,900
+Cancel [C]
+Inicia o cancelamento somente / se o job selecionado estiver RUNNING.
+
+52
+00:05:19,900 --> 00:05:25,900
+Atenção
+Jobs que não estão RUNNING / não podem ser cancelados aqui.
+
+53
+00:05:25,900 --> 00:05:31,900
+Resumo
+Na Overview você monitora status, / interpreta resultados e age.

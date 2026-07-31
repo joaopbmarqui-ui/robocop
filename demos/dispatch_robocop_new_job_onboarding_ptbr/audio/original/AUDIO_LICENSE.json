@@ -1,0 +1,9 @@
+{
+  "bgm_file": "audio/original/town_walk_original_chiptune.wav",
+  "sfx_file": "audio/original/dialogue_open_ui_blip.wav",
+  "license": "Original work created for this onboarding package. All rights granted for use in this repository. Not derived from Nintendo/Game Freak/Pok\u00e9mon works.",
+  "generation": "Synthesized with NumPy (square/triangle oscillators + ADSR). Seed=20260727. BPM=96. Key center=G.",
+  "bgm_duration_s": 39.99945578231293,
+  "sfx_duration_s": 0.14,
+  "note": "Deliberately avoids recognizable Pallet Town / Pok\u00e9mon melodic phrases."
+}

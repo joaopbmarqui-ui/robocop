@@ -1,0 +1,1834 @@
+[
+  {
+    "id": "01_open",
+    "topic": "Dispatch (Robocop)",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 3.2666666666666666,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  },
+  {
+    "id": "02_purpose",
+    "topic": "O que \u00e9 New Job",
+    "targets": [
+      "radio-panel"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.1857,
+        0.99,
+        0.3143
+      ]
+    ],
+    "final_boxes": [
+      [
+        532,
+        130,
+        1534,
+        274
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 9.666666666666666,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "10_source_what",
+    "topic": "O que \u00e9",
+    "targets": [
+      "source"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.15,
+        0.1571,
+        0.555,
+        0.2286
+      ]
+    ],
+    "final_boxes": [
+      [
+        543,
+        107,
+        1042,
+        205
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 15.966666666666667,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "10b_source_decide",
+    "topic": "O que voc\u00ea decide aqui",
+    "targets": [
+      "source"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.15,
+        0.1571,
+        0.555,
+        0.2286
+      ]
+    ],
+    "final_boxes": [
+      [
+        543,
+        107,
+        1042,
+        205
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 21.96666666666667,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "11_source_sqlfile",
+    "topic": "SqlFile",
+    "targets": [
+      "src-sqlfile"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.16,
+        0.1714,
+        0.545,
+        0.1857
+      ]
+    ],
+    "final_boxes": [
+      [
+        559,
+        130,
+        1026,
+        158
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 28.26666666666667,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "11b_source_sqlfile_effect",
+    "topic": "Efeito",
+    "targets": [
+      "src-sqlfile"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.16,
+        0.1714,
+        0.545,
+        0.1857
+      ]
+    ],
+    "final_boxes": [
+      [
+        559,
+        130,
+        1026,
+        158
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 35.2,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "20_dest_what",
+    "topic": "O que \u00e9",
+    "targets": [
+      "destination"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.575,
+        0.1571,
+        0.98,
+        0.2286
+      ]
+    ],
+    "final_boxes": [
+      [
+        1024,
+        107,
+        1523,
+        205
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 41.5,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "20b_dest_decide",
+    "topic": "O que voc\u00ea decide aqui",
+    "targets": [
+      "destination"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.575,
+        0.1571,
+        0.98,
+        0.2286
+      ]
+    ],
+    "final_boxes": [
+      [
+        1024,
+        107,
+        1523,
+        205
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 47.6,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "21_dest_csv",
+    "topic": "Csv",
+    "targets": [
+      "dst-csv"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.585,
+        0.1857,
+        0.97,
+        0.2
+      ]
+    ],
+    "final_boxes": [
+      [
+        1040,
+        142,
+        1508,
+        170
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 53.9,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "21b_dest_csv_effect",
+    "topic": "Efeito",
+    "targets": [
+      "dst-csv"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.585,
+        0.1857,
+        0.97,
+        0.2
+      ]
+    ],
+    "final_boxes": [
+      [
+        1040,
+        142,
+        1508,
+        170
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 60.83333333333333,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "35_detected",
+    "topic": "Detected source",
+    "targets": [
+      "info-detected"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.1714,
+        0.995,
+        0.1857
+      ]
+    ],
+    "final_boxes": [
+      [
+        532,
+        130,
+        1534,
+        158
+      ]
+    ],
+    "margins": [
+      14
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 67.26666666666667,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "36_matrix",
+    "topic": "Source \u00d7 Destination",
+    "targets": [
+      "matrix-collapsible"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.0571,
+        0.995,
+        0.1714
+      ]
+    ],
+    "final_boxes": [
+      [
+        526,
+        26,
+        1540,
+        158
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 73.83333333333333,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "40_queue_what",
+    "topic": "O que \u00e9",
+    "targets": [
+      "lbl-queue",
+      "queue"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.15,
+        0.2714,
+        0.98,
+        0.3714
+      ]
+    ],
+    "final_boxes": [
+      [
+        549,
+        205,
+        1517,
+        314
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 81.06666666666666,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "40b_queue_none",
+    "topic": "Sem marca\u00e7\u00e3o",
+    "targets": [
+      "queue-panel"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.15,
+        0.2714,
+        0.98,
+        0.3714
+      ]
+    ],
+    "final_boxes": [
+      [
+        549,
+        205,
+        1517,
+        314
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 87.26666666666667,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "40c_queue_decide",
+    "topic": "O que voc\u00ea decide aqui",
+    "targets": [
+      "queue-panel"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.15,
+        0.2714,
+        0.98,
+        0.3714
+      ]
+    ],
+    "final_boxes": [
+      [
+        549,
+        205,
+        1517,
+        314
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 93.66666666666667,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "41_queue_example",
+    "topic": "Exemplo de escolha",
+    "targets": [
+      "queue"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.15,
+        0.3,
+        0.98,
+        0.3714
+      ]
+    ],
+    "final_boxes": [
+      [
+        543,
+        223,
+        1523,
+        320
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 100.0,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "30_sql_what",
+    "topic": "O que \u00e9",
+    "targets": [
+      "lbl-sql-file",
+      "sql-file"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.5,
+        0.99,
+        0.5429
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        391,
+        1528,
+        453
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 107.23333333333333,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "30b_sql_decide",
+    "topic": "O que voc\u00ea decide aqui",
+    "targets": [
+      "lbl-sql-file",
+      "sql-file"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.5,
+        0.99,
+        0.5429
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        391,
+        1528,
+        453
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 113.53333333333333,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "31_sql_picker",
+    "topic": "Lista de arquivos SQL",
+    "targets": [
+      "sql-file-picker"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.4429,
+        0.99,
+        0.4857
+      ]
+    ],
+    "final_boxes": [
+      [
+        532,
+        343,
+        1534,
+        408
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 119.96666666666667,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "31b_sql_path",
+    "topic": "Efeito",
+    "targets": [
+      "lbl-sql-file",
+      "sql-file"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.4429,
+        0.99,
+        0.4857
+      ]
+    ],
+    "final_boxes": [
+      [
+        532,
+        343,
+        1534,
+        408
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 126.9,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "32_sql_dest",
+    "topic": "SQL File e Destination",
+    "targets": [
+      "sql-file",
+      "destination"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.25,
+        0.5,
+        0.99,
+        0.5429
+      ],
+      [
+        0.575,
+        0.1571,
+        0.98,
+        0.2286
+      ]
+    ],
+    "final_boxes": [
+      [
+        657,
+        390,
+        1534,
+        454
+      ],
+      [
+        1024,
+        107,
+        1523,
+        205
+      ]
+    ],
+    "margins": [
+      20,
+      20
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 133.33333333333334,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "50_email",
+    "topic": "Email (notifications)",
+    "targets": [
+      "lbl-email",
+      "email"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.5714,
+        0.99,
+        0.6143
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        448,
+        1528,
+        511
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 139.90000000000003,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "51_subject",
+    "topic": "Subject (email)",
+    "targets": [
+      "lbl-subject",
+      "subject"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.6286,
+        0.99,
+        0.6714
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        495,
+        1528,
+        557
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 147.23333333333338,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "60_mj_what",
+    "topic": "O que \u00e9",
+    "targets": [
+      "src-sqltemplate"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.16,
+        0.1857,
+        0.54,
+        0.2
+      ]
+    ],
+    "final_boxes": [
+      [
+        559,
+        142,
+        1021,
+        170
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 154.60000000000005,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "60b_mj_decide",
+    "topic": "O que voc\u00ea decide aqui",
+    "targets": [
+      "src-sqltemplate"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.16,
+        0.1857,
+        0.54,
+        0.2
+      ]
+    ],
+    "final_boxes": [
+      [
+        559,
+        142,
+        1021,
+        170
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 161.7666666666667,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "61_mj_dest",
+    "topic": "Destination = Table",
+    "targets": [
+      "dst-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.58,
+        0.1714,
+        0.96,
+        0.1857
+      ]
+    ],
+    "final_boxes": [
+      [
+        1034,
+        130,
+        1496,
+        158
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 168.1666666666667,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "62_mj_sql_a",
+    "topic": "Regra do arquivo SQL",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 174.1666666666667,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  },
+  {
+    "id": "62b_mj_sql_b",
+    "topic": "Marcadores obrigat\u00f3rios",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 180.1666666666667,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  },
+  {
+    "id": "62c_mj_sql_c",
+    "topic": "Como conferir",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 186.1666666666667,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  },
+  {
+    "id": "63_mj_picker",
+    "topic": "SQL do MonthlyJob",
+    "targets": [
+      "sql-file-picker"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.4571,
+        0.98,
+        0.5
+      ]
+    ],
+    "final_boxes": [
+      [
+        532,
+        355,
+        1523,
+        420
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 192.46666666666673,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "64_mj_schema",
+    "topic": "Schema",
+    "targets": [
+      "lbl-schema",
+      "schema"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.5857,
+        0.98,
+        0.6286
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        460,
+        1517,
+        523
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 199.70000000000007,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "65_mj_table",
+    "topic": "Table Name",
+    "targets": [
+      "lbl-table-name",
+      "table-name-prefix",
+      "table-name-suffix"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.6429,
+        0.98,
+        0.6857
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        506,
+        1517,
+        569
+      ]
+    ],
+    "margins": [
+      14,
+      20,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 206.03333333333342,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "66_mj_start",
+    "topic": "Start Date",
+    "targets": [
+      "lbl-start-date",
+      "start-date"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.7,
+        0.98,
+        0.7429
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        553,
+        1517,
+        615
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 212.46666666666675,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "66b_mj_start_ex",
+    "topic": "Exemplo",
+    "targets": [
+      "lbl-start-date",
+      "start-date"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.7,
+        0.98,
+        0.7429
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        553,
+        1517,
+        615
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 218.46666666666675,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "67_mj_end",
+    "topic": "End Date",
+    "targets": [
+      "lbl-end-date",
+      "end-date"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.7571,
+        0.98,
+        0.8
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        599,
+        1517,
+        662
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 224.8000000000001,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "67b_mj_end_ex",
+    "topic": "Exemplo",
+    "targets": [
+      "lbl-end-date",
+      "end-date"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.7571,
+        0.98,
+        0.8
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        599,
+        1517,
+        662
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 230.8000000000001,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "68_mj_dates_rel",
+    "topic": "Start Date e End Date",
+    "targets": [
+      "lbl-start-date",
+      "start-date",
+      "lbl-end-date",
+      "end-date"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.7,
+        0.98,
+        0.7429
+      ],
+      [
+        0.14,
+        0.7571,
+        0.98,
+        0.8
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        553,
+        1517,
+        615
+      ],
+      [
+        532,
+        598,
+        1523,
+        663
+      ]
+    ],
+    "margins": [
+      14,
+      20,
+      14,
+      20
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 237.13333333333344,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "70_et_what",
+    "topic": "O que \u00e9",
+    "targets": [
+      "src-existingtable"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.16,
+        0.2,
+        0.545,
+        0.2143
+      ]
+    ],
+    "final_boxes": [
+      [
+        559,
+        154,
+        1026,
+        181
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 243.46666666666678,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "70b_et_decide",
+    "topic": "O que voc\u00ea decide aqui",
+    "targets": [
+      "src-existingtable"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.16,
+        0.2,
+        0.545,
+        0.2143
+      ]
+    ],
+    "final_boxes": [
+      [
+        559,
+        154,
+        1026,
+        181
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 250.6000000000001,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "71_et_dest",
+    "topic": "Destination = Csv",
+    "targets": [
+      "dst-csv"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.585,
+        0.1857,
+        0.97,
+        0.2
+      ]
+    ],
+    "final_boxes": [
+      [
+        1040,
+        142,
+        1508,
+        170
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 257.0666666666668,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "72_et_schema",
+    "topic": "Schema",
+    "targets": [
+      "lbl-existing-schema",
+      "existing-schema"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.4571,
+        0.99,
+        0.5
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        356,
+        1528,
+        419
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 263.3666666666668,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "72b_et_other",
+    "topic": "Custom Schema",
+    "targets": [
+      "lbl-existing-schema-custom",
+      "existing-schema-custom"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.5143,
+        0.99,
+        0.5571
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        402,
+        1528,
+        465
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 270.8000000000001,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "73_et_table",
+    "topic": "Existing Table",
+    "targets": [
+      "lbl-existing-table",
+      "existing-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.5143,
+        0.99,
+        0.5571
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        402,
+        1528,
+        465
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 277.10000000000014,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "73b_et_effect",
+    "topic": "Efeito",
+    "targets": [
+      "lbl-existing-table",
+      "existing-table"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.14,
+        0.5143,
+        0.99,
+        0.5571
+      ]
+    ],
+    "final_boxes": [
+      [
+        538,
+        402,
+        1528,
+        465
+      ]
+    ],
+    "margins": [
+      14,
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 284.0333333333335,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "80_status",
+    "topic": "Status do formul\u00e1rio",
+    "targets": [
+      "validation-summary"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.9429,
+        0.555,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        526,
+        748,
+        1042,
+        806
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 290.4333333333335,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "81_val_bad",
+    "topic": "Valida\u00e7\u00e3o",
+    "targets": [
+      "validation-summary"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.9429,
+        0.555,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        526,
+        748,
+        1042,
+        806
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 296.7333333333335,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "82_val_ok",
+    "topic": "Formul\u00e1rio pronto",
+    "targets": [
+      "validation-summary"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.9429,
+        0.555,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        526,
+        748,
+        1042,
+        806
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 303.03333333333353,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "83_preview",
+    "topic": "Preview SQL",
+    "targets": [
+      "preview"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.855,
+        0.9429,
+        0.925,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        1345,
+        748,
+        1457,
+        806
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 309.33333333333354,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "83b_preview_check",
+    "topic": "O que conferir",
+    "targets": [
+      "preview-header",
+      "preview-body"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.13,
+        0.0571,
+        1.0,
+        0.1
+      ],
+      [
+        0.14,
+        0.1143,
+        0.99,
+        0.5143
+      ]
+    ],
+    "final_boxes": [
+      [
+        521,
+        31,
+        1546,
+        96
+      ],
+      [
+        532,
+        72,
+        1534,
+        436
+      ]
+    ],
+    "margins": [
+      20,
+      20
+    ],
+    "n_cutouts": 2,
+    "overlay_opacity": 170,
+    "review_timestamp": 316.5666666666669,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "84_check_a",
+    "topic": "Antes de iniciar, confirme",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 322.6666666666669,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  },
+  {
+    "id": "84b_check_b",
+    "topic": "Tamb\u00e9m confira",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 328.6666666666669,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  },
+  {
+    "id": "85_launch",
+    "topic": "Launch",
+    "targets": [
+      "launch"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.93,
+        0.9429,
+        0.99,
+        0.9857
+      ]
+    ],
+    "final_boxes": [
+      [
+        1430,
+        748,
+        1530,
+        806
+      ]
+    ],
+    "margins": [
+      16
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 334.9666666666669,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "86_confirm",
+    "topic": "Confirma\u00e7\u00e3o",
+    "targets": [
+      "confirm-dialog"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.34,
+        0.3571,
+        0.66,
+        0.6714
+      ]
+    ],
+    "final_boxes": [
+      [
+        758,
+        269,
+        1161,
+        563
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 341.26666666666694,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "87_launched",
+    "topic": "Job enviado",
+    "targets": [
+      "warning-text"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.135,
+        0.7714,
+        0.995,
+        0.7857
+      ]
+    ],
+    "final_boxes": [
+      [
+        526,
+        616,
+        1540,
+        644
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 348.56666666666695,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "88_overview",
+    "topic": "Overview",
+    "targets": [
+      "sidebar-nav"
+    ],
+    "pre_margin_boxes": [
+      [
+        0.0,
+        0.0571,
+        0.125,
+        0.3
+      ]
+    ],
+    "final_boxes": [
+      [
+        374,
+        26,
+        555,
+        263
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 354.86666666666696,
+    "manual_review": "PASS",
+    "fail_reason": ""
+  },
+  {
+    "id": "89_close",
+    "topic": "Resumo",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 361.8000000000003,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  },
+  {
+    "id": "89b_close_b",
+    "topic": "Depois do envio",
+    "targets": [],
+    "pre_margin_boxes": [
+      [
+        0.12,
+        0.14,
+        0.88,
+        0.7
+      ]
+    ],
+    "final_boxes": [
+      [
+        80,
+        100,
+        1840,
+        786
+      ]
+    ],
+    "margins": [
+      20
+    ],
+    "n_cutouts": 1,
+    "overlay_opacity": 170,
+    "review_timestamp": 367.8000000000003,
+    "manual_review": "PASS",
+    "fail_reason": "card content spotlight"
+  }
+]

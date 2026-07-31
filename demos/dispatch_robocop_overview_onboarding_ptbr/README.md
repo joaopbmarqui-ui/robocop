@@ -42,6 +42,18 @@ Mix: BGM ≈ 0.18, SFX ≈ 0.55, duck ≈ 0.06, fade down 0.12s / up 0.35s. No n
 - Red arrow only after typing completes
 - Related cards keep the **same spotlight group**
 
+## Spotlights (geometry-driven)
+
+Every instructional spotlight is built from **captured Textual runtime geometry**,
+not screen percentages:
+
+- Widget `region` / `content_region` for controls
+- `DataTable._get_column_region` / `_get_cell_region` for table columns and State cells
+- Status-strip metric spans from the strip’s rendered plain text
+
+Related cards that explain the same element reuse the **identical** spotlight
+coordinates. See `spotlight_accuracy_report.md`.
+
 ## Content order (top → bottom)
 
 1. Opening / what Overview is
